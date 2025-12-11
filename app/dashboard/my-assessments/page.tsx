@@ -23,7 +23,7 @@ export default function MyAssessmentsPage() {
     const { data: assessments, isLoading } = useQuery<Assessment[]>({
         queryKey: ['my-assessments'],
         queryFn: async () => {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/assessments', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar avaliações');
@@ -37,7 +37,7 @@ export default function MyAssessmentsPage() {
     // Mock de adicionar créditos (para demo)
     const handleAddCredit = async () => {
         try {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/users/request-credit', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/users/request-credit`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

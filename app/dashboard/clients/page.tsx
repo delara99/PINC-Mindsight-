@@ -52,7 +52,7 @@ export default function ClientsPage() {
     const { data: clients, isLoading } = useQuery<Client[]>({
         queryKey: ['clients'],
         queryFn: async () => {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/users/clients', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/users/clients`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar clientes');
@@ -89,7 +89,7 @@ export default function ClientsPage() {
     // Registrar novo cliente
     const registerClient = useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/users/register-client', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/users/register-client`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -20,7 +20,7 @@ export default function Home() {
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
         queryFn: async () => {
-            const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/site-settings');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/site-settings`);
             return res.json();
         }
     });

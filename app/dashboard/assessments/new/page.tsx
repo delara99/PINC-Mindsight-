@@ -60,7 +60,7 @@ export default function CreateAssessmentPage() {
                 }
             };
 
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/assessments', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -23,7 +23,7 @@ export default function AssessmentTemplatesPage() {
     const { data: templates, isLoading } = useQuery<Template[]>({
         queryKey: ['assessment-templates'],
         queryFn: async () => {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/assessments/templates', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments/templates`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar templates');

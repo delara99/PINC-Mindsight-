@@ -28,7 +28,7 @@ export default function ReportsPage() {
     const { data: reports, isLoading } = useQuery<Report[]>({
         queryKey: ['reports'],
         queryFn: async () => {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/assessments/completed', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments/completed`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar relatórios');

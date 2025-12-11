@@ -12,7 +12,7 @@ export default function DashboardPage() {
     const { data: stats, isLoading } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
-            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/dashboard/stats', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/dashboard/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) return null;

@@ -13,7 +13,7 @@ export default function SettingsPage() {
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings-admin'],
         queryFn: async () => {
-            const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/site-settings/admin', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/site-settings/admin`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             return res.json();
@@ -23,7 +23,7 @@ export default function SettingsPage() {
     // Update settings mutation
     const saveMutation = useMutation({
         mutationFn: async (data: any) => {
-            const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/site-settings', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/site-settings`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export default function SettingsPage() {
     // Reset mutation
     const resetMutation = useMutation({
         mutationFn: async () => {
-            const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/site-settings/reset', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/site-settings/reset`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
