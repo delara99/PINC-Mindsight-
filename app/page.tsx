@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 // Icon mapping
 const iconMap: any = {
@@ -20,7 +21,7 @@ export default function Home() {
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
         queryFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/site-settings`);
+            const res = await fetch(`${API_URL}/api/v1/site-settings`);
             return res.json();
         }
     });

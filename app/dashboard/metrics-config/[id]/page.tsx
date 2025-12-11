@@ -4,6 +4,7 @@ import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter, useParams } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowLeft, Save, TrendingUp, Settings, FileText, Lightbulb, Palette, Check } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 // Tabs componentes
 import RangesEditor from './components/RangesEditor';
@@ -39,7 +40,7 @@ export default function MetricsConfigEditorPage() {
     const createMutation = useMutation({
         mutationFn: async (name: string) => {
             // 1. Criar configuração
-            const createResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/big-five-config`, {
+            const createResponse = await fetch(`${API_URL}/api/v1/big-five-config`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

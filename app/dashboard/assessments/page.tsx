@@ -6,6 +6,7 @@ import Router from 'next/router';
 import { useRouter } from 'next/navigation';
 import { Plus, Loader2, FileText, Calendar, Users, BrainCircuit, X, Copy, Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { API_URL } from '@/src/config/api';
 
 interface Assessment {
     id: string;
@@ -43,7 +44,7 @@ export default function AssessmentsListPage() {
         queryKey: ['assessments'],
         queryFn: async () => {
             console.log('🔍 Buscando avaliações (incluindo templates)...');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar avaliações');
@@ -105,7 +106,7 @@ export default function AssessmentsListPage() {
     const { data: clients } = useQuery<Client[]>({
         queryKey: ['clients'],
         queryFn: async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/users/clients`, {
+            const response = await fetch(`${API_URL}/api/v1/users/clients`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar clientes');

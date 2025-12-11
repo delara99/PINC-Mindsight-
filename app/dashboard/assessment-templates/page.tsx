@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useState } from 'react';
 import { Brain, Copy, Eye, Loader2, CheckCircle, Sparkles, FileText, AlertCircle } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 interface Template {
     id: string;
@@ -23,7 +24,7 @@ export default function AssessmentTemplatesPage() {
     const { data: templates, isLoading } = useQuery<Template[]>({
         queryKey: ['assessment-templates'],
         queryFn: async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments/templates`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/templates`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar templates');

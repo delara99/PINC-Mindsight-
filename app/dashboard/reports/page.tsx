@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { FileText, User, Calendar, Award } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 interface Report {
     id: string;
@@ -28,7 +29,7 @@ export default function ReportsPage() {
     const { data: reports, isLoading } = useQuery<Report[]>({
         queryKey: ['reports'],
         queryFn: async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments/completed`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/completed`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar relatórios');

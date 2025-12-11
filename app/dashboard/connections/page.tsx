@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { Loader2, UserPlus, Check, X, MessageSquare, Trash2, Settings, Link as LinkIcon, Copy, CheckCircle2, Shield, XCircle } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 export default function ConnectionsPage() {
     const token = useAuthStore((state) => state.token);
@@ -35,7 +36,7 @@ export default function ConnectionsPage() {
     const { data: connections, isLoading: loadingConnections } = useQuery({
         queryKey: ['connections'],
         queryFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/connections`, {
+            const res = await fetch(`${API_URL}/api/v1/connections`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Failed to fetch connections');
@@ -47,7 +48,7 @@ export default function ConnectionsPage() {
     const { data: requests, isLoading: loadingRequests } = useQuery({
         queryKey: ['connection-requests'],
         queryFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/connections/requests`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/requests`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Failed to fetch requests');
@@ -62,7 +63,7 @@ export default function ConnectionsPage() {
         retry: 2,
         queryFn: async () => {
             console.log('🔍 DEBUG: Fetching pending approvals...');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/connections/pending-approvals`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/pending-approvals`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) {
@@ -81,7 +82,7 @@ export default function ConnectionsPage() {
         queryKey: ['all-connections-admin'],
         enabled: !!isAdmin && !!token && activeTab === 'admin',
         queryFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/connections/admin/all`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/admin/all`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erro ao carregar todas as conexões');
@@ -112,7 +113,7 @@ export default function ConnectionsPage() {
     // Generate Invite Link
     const generateLinkMutation = useMutation({
         mutationFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/connections/generate-invite`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/generate-invite`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Check, User, Building2, CreditCard } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 const PLANS = [
     { id: 'starter', credits: 1, price: 'R$ 29,90', name: 'Starter' },
@@ -45,7 +46,7 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/auth/register`, {
+            const response = await fetch(`${API_URL}/api/v1/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { Settings, Plus, Check, Edit, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
+import { API_URL } from '@/src/config/api';
 
 interface BigFiveConfig {
     id: string;
@@ -26,7 +27,7 @@ export default function MetricsConfigPage() {
     const { data: configs, isLoading } = useQuery<BigFiveConfig[]>({
         queryKey: ['big-five-configs'],
         queryFn: async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/big-five-config`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar configurações');

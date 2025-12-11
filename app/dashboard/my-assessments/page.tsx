@@ -4,6 +4,7 @@ import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { PlayCircle, Loader2, Clock, CheckCircle2, BrainCircuit, Award, CreditCard, Wallet, ArrowRight, AlertCircle } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 interface Assessment {
     id: string;
@@ -23,7 +24,7 @@ export default function MyAssessmentsPage() {
     const { data: assessments, isLoading } = useQuery<Assessment[]>({
         queryKey: ['my-assessments'],
         queryFn: async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/assessments`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar avaliações');
@@ -37,7 +38,7 @@ export default function MyAssessmentsPage() {
     // Mock de adicionar créditos (para demo)
     const handleAddCredit = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/users/request-credit`, {
+            const response = await fetch(`${API_URL}/api/v1/users/request-credit`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

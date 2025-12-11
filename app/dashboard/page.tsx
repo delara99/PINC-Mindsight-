@@ -4,6 +4,7 @@ import { ArrowUpRight, UserPlus, FileCheck, AlertCircle, PlayCircle, Clock, User
 import { useAuthStore } from '@/src/store/auth-store';
 import ClientDashboard from '@/src/components/dashboard/client-overview';
 import { useQuery } from '@tanstack/react-query';
+import { API_URL } from '@/src/config/api';
 
 export default function DashboardPage() {
     const user = useAuthStore((state) => state.user);
@@ -12,7 +13,7 @@ export default function DashboardPage() {
     const { data: stats, isLoading } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/dashboard/stats`, {
+            const response = await fetch(`${API_URL}/api/v1/dashboard/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) return null;

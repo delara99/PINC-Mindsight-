@@ -9,6 +9,7 @@ import { BigFiveChart } from '@/src/components/dashboard/big-five-chart';
 import { TraitCard } from '@/src/components/dashboard/TraitCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { API_URL } from '@/src/config/api';
 
 export default function AssessmentDetailsPage() {
     const params = useParams();
@@ -22,7 +23,7 @@ export default function AssessmentDetailsPage() {
     const { data: assignment, isLoading, error } = useQuery({
         queryKey: ['assignment-details', params.id],
         queryFn: async () => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}`}/api/v1/assessments/assignments/${params.id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${API_URL}`}/api/v1/assessments/assignments/${params.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) {
@@ -36,7 +37,7 @@ export default function AssessmentDetailsPage() {
 
     const submitFeedbackMutation = useMutation({
         mutationFn: async (feedbackData: { feedback: string }) => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}`}/api/v1/assessments/assignments/${params.id}/feedback`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${API_URL}`}/api/v1/assessments/assignments/${params.id}/feedback`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -281,4 +282,3 @@ export default function AssessmentDetailsPage() {
         </div>
     );
 }
-

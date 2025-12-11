@@ -4,6 +4,7 @@ import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Lock, Mail } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ function LoginForm() {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/auth/login`, {
+            const response = await fetch(`${API_URL}/api/v1/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -33,7 +34,7 @@ function LoginForm() {
             const data = await response.json();
 
             // Buscar dados completos do usuário
-            const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/users/me`, {
+            const userResponse = await fetch(`${API_URL}/api/v1/users/me`, {
                 headers: { 'Authorization': `Bearer ${data.access_token}` }
             });
 
