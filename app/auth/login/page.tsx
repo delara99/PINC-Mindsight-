@@ -20,7 +20,7 @@ function LoginForm() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+            const response = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -33,7 +33,7 @@ function LoginForm() {
             const data = await response.json();
 
             // Buscar dados completos do usuário
-            const userResponse = await fetch('http://localhost:3000/api/v1/users/me', {
+            const userResponse = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/users/me', {
                 headers: { 'Authorization': `Bearer ${data.access_token}` }
             });
 

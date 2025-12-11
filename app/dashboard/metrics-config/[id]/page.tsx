@@ -39,7 +39,7 @@ export default function MetricsConfigEditorPage() {
     const createMutation = useMutation({
         mutationFn: async (name: string) => {
             // 1. Criar configuração
-            const createResponse = await fetch('http://localhost:3000/api/v1/big-five-config', {
+            const createResponse = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'/api/v1/big-five-config', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
