@@ -1,0 +1,344 @@
+'use client';
+import { useState, useRef } from 'react';
+import { ChevronDown, ChevronUp, Target, Brain, Heart, Users, Sparkles, TrendingUp, AlertCircle, Download, Share2 } from 'lucide-react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+interface FacetScore {
+    facet: string;
+    rawScore: number;
+    normalizedScore: number;
+}
+
+interface TraitScore {
+    trait: string;
+    rawScore: number;
+    normalizedScore: number;
+    interpretation: string;
+    description: string;
+    facets: FacetScore[];
+}
+
+interface BigFiveResultProps {
+    result: {
+        totalQuestions: number;
+        answeredQuestions: number;
+        completionPercentage: number;
+        traits: TraitScore[];
+        recommendations: string[];
+        timestamp: Date;
+    };
+}
+
+const traitIcons: Record<string, any> = {
+    'Abertura à Experiência': Sparkles,
+    'Conscienciosidade': Target,
+    'Extroversão': Users,
+    'Amabilidade': Heart,
+    'Estabilidade Emocional': Brain
+};
+
+const traitColors: Record<string, string> = {
+    'Abertura à Experiência': 'from-purple-500 to-pink-500',
+    'Conscienciosidade': 'from-blue-500 to-cyan-500',
+    'Extroversão': 'from-orange-500 to-yellow-500',
+    'Amabilidade': 'from-green-500 to-emerald-500',
+    'Estabilidade Emocional': 'from-indigo-500 to-purple-500'
+};
+
+const interpretationColors: Record<string, string> = {
+    'Muito Alto': 'bg-green-100 text-green-800 border-green-300',
+    'Alto': 'bg-blue-100 text-blue-800 border-blue-300',
+    'Médio': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    'Baixo': 'bg-orange-100 text-orange-800 border-orange-300',
+    'Muito Baixo': 'bg-red-100 text-red-800 border-red-300'
+};
+
+const traitShortNames: Record<string, string> = {
+    'Abertura à Experiência': 'Abertura',
+    'Conscienciosidade': 'Consciência',
+    'Extroversão': 'Extroversão',
+    'Amabilidade': 'Amabilidade',
+    'Estabilidade Emocional': 'Estabilidade'
+};
+
+export default function BigFiveResults({ result }: BigFiveResultProps) {
+    const [expandedTrait, setExpandedTrait] = useState<string | null>(null);
+    const [exporting, setExporting] = useState(false);
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    const toggleTrait = (trait: string) => {
+        setExpandedTrait(expandedTrait === trait ? null : trait);
+    };
+
+    // Preparar dados para radar chart
+    const radarData = result.traits.map(trait => ({
+        trait: traitShortNames[trait.trait] || trait.trait,
+        score: Math.round(trait.normalizedScore),
+        fullMark: 100
+    }));
+
+    // Exportar para PDF
+    const exportToPDF = async () => {
+        if (!contentRef.current) return;
+
+        try {
+            setExporting(true);
+
+            // Capturar conteúdo como imagem
+            const canvas = await html2canvas(contentRef.current, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            // Dimensões A4
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = pdfWidth - 20; // Margem de 10mm de cada lado
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = 10; // Margem superior
+
+            // Adicionar imagem (primeira página)
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight - 20;
+
+            // Se precisar de mais páginas
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight + 10;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight - 20;
+            }
+
+            // Download
+            const date = new Date().toISOString().split('T')[0];
+            pdf.save(`perfil-big-five-${date}.pdf`);
+
+        } catch (error) {
+            console.error('Erro ao exportar PDF:', error);
+            alert('Erro ao gerar PDF. Tente novamente.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    return (
+        <div ref={contentRef} className="space-y-8">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-primary to-pink-600 text-white rounded-2xl p-8">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-2">Seu Perfil de Personalidade</h1>
+                        <p className="text-white/90 text-lg">Baseado no modelo Big Five de personalidade</p>
+                        <div className="mt-4 flex items-center gap-6 text-sm">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle size={16} />
+                                <span>{result.answeredQuestions} de {result.totalQuestions} perguntas</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <TrendingUp size={16} />
+                                <span>{result.completionPercentage}% completo</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={exportToPDF}
+                            disabled={exporting}
+                            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {exporting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Gerando...
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={18} />
+                                    Exportar PDF
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Radar Chart */}
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+                <h2 className="text-xl font-bold text-gray-800 mb-6">Gráfico Radar - Visão Geral</h2>
+                <div className="h-96 flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart data={radarData}>
+                            <PolarGrid stroke="#e5e7eb" />
+                            <PolarAngleAxis
+                                dataKey="trait"
+                                tick={{ fill: '#374151', fontSize: 14, fontWeight: 600 }}
+                            />
+                            <PolarRadiusAxis
+                                angle={90}
+                                domain={[0, 100]}
+                                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                            />
+                            <Radar
+                                name="Score"
+                                dataKey="score"
+                                stroke="#EC1B8E"
+                                fill="#EC1B8E"
+                                fillOpacity={0.6}
+                                strokeWidth={3}
+                            />
+                        </RadarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Circular Progress Cards */}
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+                <h2 className="text-xl font-bold text-gray-800 mb-6">Scores por Traço</h2>
+                <div className="grid md:grid-cols-5 gap-4">
+                    {result.traits.map(trait => {
+                        const Icon = traitIcons[trait.trait] || Brain;
+
+                        return (
+                            <div key={trait.trait} className="text-center">
+                                <div className="relative w-24 h-24 mx-auto mb-3">
+                                    {/* Circular Progress */}
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="40"
+                                            stroke="#e5e7eb"
+                                            strokeWidth="8"
+                                            fill="none"
+                                        />
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="40"
+                                            stroke="#EC1B8E"
+                                            strokeWidth="8"
+                                            fill="none"
+                                            strokeDasharray={`${2 * Math.PI * 40}`}
+                                            strokeDashoffset={`${2 * Math.PI * 40 * (1 - trait.normalizedScore / 100)}`}
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="text-center">
+                                            <Icon className="mx-auto mb-1 text-primary" size={20} />
+                                            <span className="text-lg font-bold text-gray-800">{Math.round(trait.normalizedScore)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 className="text-xs font-semibold text-gray-700 leading-tight">{trait.trait}</h3>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Trait Details */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-800">Detalhamento por Traço</h2>
+
+                {result.traits.map(trait => {
+                    const Icon = traitIcons[trait.trait] || Brain;
+                    const isExpanded = expandedTrait === trait.trait;
+                    const interpretationColor = interpretationColors[trait.interpretation] || interpretationColors['Médio'];
+
+                    return (
+                        <div key={trait.trait} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            {/* Trait Header */}
+                            <button
+                                onClick={() => toggleTrait(trait.trait)}
+                                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-4 flex-1">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-primary to-pink-600 rounded-xl flex items-center justify-center">
+                                        <Icon className="text-white" size={24} />
+                                    </div>
+                                    <div className="text-left flex-1">
+                                        <h3 className="text-lg font-bold text-gray-800">{trait.trait}</h3>
+                                        <p className="text-sm text-gray-600 mt-1">{trait.description}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <div className="text-3xl font-bold text-gray-800">{Math.round(trait.normalizedScore)}</div>
+                                            <div className={`text-xs font-semibold px-3 py-1 rounded-full border mt-1 ${interpretationColor}`}>
+                                                {trait.interpretation}
+                                            </div>
+                                        </div>
+                                        {isExpanded ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                                    </div>
+                                </div>
+                            </button>
+
+                            {/* Facets (Expandable) */}
+                            {isExpanded && (
+                                <div className="border-t border-gray-200 bg-gray-50 p-6">
+                                    <h4 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Facetas Detalhadas</h4>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        {trait.facets.map(facet => (
+                                            <div key={facet.facet} className="bg-white rounded-lg p-4 border border-gray-200">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-sm font-semibold text-gray-700">{facet.facet}</span>
+                                                    <span className="text-lg font-bold text-primary">{Math.round(facet.normalizedScore)}</span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className="bg-gradient-to-r from-primary to-pink-600 h-2 rounded-full transition-all"
+                                                        style={{ width: `${facet.normalizedScore}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Recommendations */}
+            {result.recommendations && result.recommendations.length > 0 && (
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="text-white" size={20} />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800">Recomendações de Desenvolvimento</h2>
+                    </div>
+                    <p className="text-gray-600 mb-6">Baseado no seu perfil, sugerimos as seguintes ações:</p>
+                    <div className="space-y-3">
+                        {result.recommendations.map((rec, index) => (
+                            <div key={index} className="flex items-start gap-3 bg-white rounded-lg p-4 border border-blue-200">
+                                <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                                    {index + 1}
+                                </div>
+                                <p className="text-gray-700">{rec}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Disclaimer */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-sm text-gray-600">
+                <p className="font-semibold text-gray-700 mb-2">📋 Sobre este relatório:</p>
+                <p>Este perfil de personalidade é baseado no modelo científico Big Five e tem fins informativos e de desenvolvimento profissional.
+                    Os resultados refletem suas respostas neste momento específico e podem variar ao longo do tempo.
+                    Não devem ser usados como única base para decisões críticas de carreira ou seleção.</p>
+            </div>
+        </div>
+    );
+}
