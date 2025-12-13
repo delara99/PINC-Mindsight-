@@ -80,14 +80,15 @@ export function TrialResult() {
                             <button 
                                 onClick={() => {
                                     if (confirm('Tem certeza? Seus dados serão perdidos.')) {
+                                        const { resetTrial } = useTrialStore.getState();
+                                        resetTrial();
+                                        sessionStorage.removeItem('trial-storage'); // Force clear
                                         window.location.href = '/'; 
-                                        // Force reload to clear simple state if needed, or use router + store reset
-                                        // Using simple href for total reset as requested "avancar sessao finalizada"
                                     }
                                 }}
-                                className="text-gray-400 hover:text-gray-600 text-sm underline transition-colors"
+                                className="px-6 py-2 mt-2 text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-full text-sm font-bold transition-all flex items-center gap-2"
                             >
-                                Sair e encerrar
+                                Sair e encerrar sessão
                             </button>
                         </div>
                     </div>

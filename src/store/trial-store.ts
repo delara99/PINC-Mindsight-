@@ -47,7 +47,18 @@ export const useTrialStore = create<TrialState>()(
             })
         }),
         {
-            name: 'trial-storage'
+            name: 'trial-storage',
+            storage: {
+                getItem: (name) => {
+                    const str = sessionStorage.getItem(name);
+                    return str ? JSON.parse(str) : null;
+                },
+                setItem: (name, value) => {
+                    sessionStorage.setItem(name, JSON.stringify(value));
+                },
+                removeItem: (name) => sessionStorage.removeItem(name),
+            },
+            skipHydration: true, // Important for Next.js hydration mismatch avoidance locally, but mostly for cleanness
         }
     )
 );
