@@ -72,9 +72,24 @@ export function TrialResult() {
                         >
                             Ver Relatório Completo <ArrowRight className="w-5 h-5" />
                         </Link>
-                        <p className="text-xs text-gray-500 mt-4 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" /> Sem cartão de crédito necessário
-                        </p>
+                        
+                        <div className="flex flex-col items-center mt-6 gap-2">
+                             <p className="text-xs text-gray-500 flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" /> Sem cartão de crédito necessário
+                            </p>
+                            <button 
+                                onClick={() => {
+                                    if (confirm('Tem certeza? Seus dados serão perdidos.')) {
+                                        window.location.href = '/'; 
+                                        // Force reload to clear simple state if needed, or use router + store reset
+                                        // Using simple href for total reset as requested "avancar sessao finalizada"
+                                    }
+                                }}
+                                className="text-gray-400 hover:text-gray-600 text-sm underline transition-colors"
+                            >
+                                Sair e encerrar
+                            </button>
+                        </div>
                     </div>
 
                     {/* Fundo simulado 'borrado' */}
