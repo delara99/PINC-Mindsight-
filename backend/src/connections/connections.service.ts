@@ -308,7 +308,7 @@ export class ConnectionsService {
 
         return {
             token: link.token,
-            link: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/dashboard/connections/join/${link.token}`,
+            link: `${process.env.FRONTEND_URL || 'https://pinc-mindsight.vercel.app'}/dashboard/connections/join/${link.token}`,
             expiresAt: link.expiresAt
         };
     }
