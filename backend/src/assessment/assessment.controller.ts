@@ -144,6 +144,50 @@ export class AssessmentController {
     }
 
 
+    @Post('init-big-five')
+    async initBigFive(@Request() req) {
+        const user = req.user;
+        
+        // Find Big Five Model
+        const assessmentModel = await this.prisma.assessmentModel.findFirst({
+            where: { type: 'BIG_FIVE' }
+        });
+
+        if (!assessmentModel) {
+            throw new BadRequestException('Configuração de avaliação não encontrada no sistema.');
+        }
+
+        // Check if already exists pending
+        const existing = await this.prisma.assessmentAssignment.findFirst({
+            where: { 
+                userId: user.userId, 
+                assessmentId: assessmentModel.id, 
+                status: { not: 'COMPLETED' } 
+            }
+        });
+
+        if (existing) {
+            return existing;
+        }
+
+        // Create new assignment
+        // Buscar questões para garantir integridade? O create aceita só ID.
+        // A persistência de respostas do trial é feita no registro. Aqui é "Start Fresh" ou "Rescue".
+        // Se quisermos recuperar o trialData do frontend, teríamos que passar no body.
+        // Mas por simplicidade, vamos apenas criar o Assignment vazio (o usuario começa do zero, melhor que travar).
+        
+        const assignment = await this.prisma.assessmentAssignment.create({
+            data: {
+                userId: user.userId,
+                assessmentId: assessmentModel.id,
+                status: 'IN_PROGRESS',
+                assignedAt: new Date(),
+            }
+        });
+
+        return assignment;
+    }
+
     // Listar avaliações completadas (para relatórios)
     @Get('completed')
     async getCompletedAssessments(@Request() req) {
