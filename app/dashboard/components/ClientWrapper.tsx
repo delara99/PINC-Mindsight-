@@ -13,6 +13,8 @@ export default function ClientLayoutWrapper() {
     const user = useAuthStore((state) => state.user);
     const { answers, userInfo, resetTrial } = useTrialStore();
     const [mounted, setMounted] = useState(false);
+    const [initiating, setInitiating] = useState(false); // Movido para cá
+    const router = useRouter(); // Movido para cá
     const hasTrialData = Object.keys(answers).length > 0;
 
     // Fetch assessments to check for pending ones
@@ -44,9 +46,7 @@ export default function ClientLayoutWrapper() {
     const pendingAssessment = assessments?.find((a: any) => a.assignmentStatus !== 'COMPLETED');
     const hasCredits = user && Number(user.credits) > 0;
 
-    // Estado para controle de inicialização do teste
-    const [initiating, setInitiating] = useState(false);
-    const router = useRouter(); // Necessário importar useRouter
+
 
     // Função para iniciar teste (casos onde persistência falhou ou compra foi avulsa)
     const handleInitAssessment = async () => {
