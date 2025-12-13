@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { API_URL } from '@/src/config/api';
 import { Check, CreditCard, Loader2 } from 'lucide-react';
