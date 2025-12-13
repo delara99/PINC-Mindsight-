@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -19,7 +20,7 @@ export default function ConnectionDetailPage() {
     const { data: detail, isLoading: loadingDetail } = useQuery({
         queryKey: ['connection-detail', id],
         queryFn: async () => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/${id}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erro ao carregar conexão');
@@ -32,7 +33,7 @@ export default function ConnectionDetailPage() {
         queryKey: ['shared-content', id],
         enabled: activeTab === 'overview' || activeTab === 'inventories',
         queryFn: async () => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/${id}/shared-content`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}/shared-content`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erro ao carregar dados');
@@ -44,7 +45,7 @@ export default function ConnectionDetailPage() {
     const { data: messagesResponse } = useQuery({
         queryKey: ['connection-messages', id],
         queryFn: async () => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/${id}/messages`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}/messages`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             return res.json();
@@ -65,7 +66,7 @@ export default function ConnectionDetailPage() {
     // Update Settings
     const updateSettingsMutation = useMutation({
         mutationFn: async (newSettings: any) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/${id}/settings`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}/settings`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify(newSettings)
@@ -81,7 +82,7 @@ export default function ConnectionDetailPage() {
     // Send Message
     const sendMessageMutation = useMutation({
         mutationFn: async (text: string) => {
-            await fetch(`http://localhost:3000/api/v1/connections/${id}/messages`, {
+            await fetch(`${API_URL}/api/v1/connections/${id}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ content: text })

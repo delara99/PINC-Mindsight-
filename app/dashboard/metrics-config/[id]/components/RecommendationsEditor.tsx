@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -18,7 +19,7 @@ export default function RecommendationsEditor({ config, configId }: Recommendati
     const { data: recommendations } = useQuery({
         queryKey: ['recommendations', configId],
         queryFn: async () => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/${configId}/recommendations`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/${configId}/recommendations`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar recomendações');
@@ -28,7 +29,7 @@ export default function RecommendationsEditor({ config, configId }: Recommendati
 
     const createMutation = useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/recommendations`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/recommendations`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -49,7 +50,7 @@ export default function RecommendationsEditor({ config, configId }: Recommendati
 
     const updateMutation = useMutation({
         mutationFn: async ({ id, data }: any) => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/recommendations/${id}`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/recommendations/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -69,7 +70,7 @@ export default function RecommendationsEditor({ config, configId }: Recommendati
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/recommendations/${id}`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/recommendations/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

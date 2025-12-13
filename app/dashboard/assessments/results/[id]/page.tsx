@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -24,7 +25,7 @@ export default function AssessmentResultPage() {
 
             try {
                 // Buscar assignment
-                const assignmentRes = await fetch(`http://localhost:3000/api/v1/assessments/assignments/${assessmentId}`, {
+                const assignmentRes = await fetch(`${API_URL}/api/v1/assessments/assignments/${assessmentId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -51,7 +52,7 @@ export default function AssessmentResultPage() {
                     throw new Error('Nenhuma resposta encontrada para esta avaliação');
                 }
 
-                const calcRes = await fetch(`http://localhost:3000/api/v1/assessments/${assignment.assessment?.id || assessmentId}/calculate-big-five`, {
+                const calcRes = await fetch(`${API_URL}/api/v1/assessments/${assignment.assessment?.id || assessmentId}/calculate-big-five`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

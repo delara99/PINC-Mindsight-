@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -17,7 +18,7 @@ export default function TraitsEditor({ config, configId }: TraitsEditorProps) {
 
     const updateTraitMutation = useMutation({
         mutationFn: async ({ traitId, data }: any) => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/traits/${traitId}`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/traits/${traitId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -37,7 +38,7 @@ export default function TraitsEditor({ config, configId }: TraitsEditorProps) {
 
     const populateMutation = useMutation({
         mutationFn: async () => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/${configId}/populate`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/${configId}/populate`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

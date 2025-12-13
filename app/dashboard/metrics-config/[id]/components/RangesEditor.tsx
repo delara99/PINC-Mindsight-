@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -33,7 +34,7 @@ export default function RangesEditor({ config, configId }: RangesEditorProps) {
 
     const updateMutation = useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/${configId}`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/${configId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,

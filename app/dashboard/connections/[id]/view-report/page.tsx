@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
@@ -14,7 +15,7 @@ export default function ViewReportPage() {
     const assignmentId = searchParams.get('assignmentId');
     const connectionId = params.id as string;
 
-    const pdfUrl = `http://localhost:3000/api/v1/reports/download/${assignmentId}?token=${token}`;
+    const pdfUrl = `${API_URL}/api/v1/reports/download/${assignmentId}?token=${token}`;
 
     const handleDownload = () => {
         const link = document.createElement('a');

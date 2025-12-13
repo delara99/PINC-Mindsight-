@@ -28,7 +28,7 @@ export default function MetricsConfigEditorPage() {
     const { data: config, isLoading } = useQuery({
         queryKey: ['big-five-config', configId],
         queryFn: async () => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/${configId}`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/${configId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar configuração');
@@ -56,7 +56,7 @@ export default function MetricsConfigEditorPage() {
             const newConfig = await createResponse.json();
 
             // 2. Automaticamente popular com traços da config ativa
-            const populateResponse = await fetch(`http://localhost:3000/api/v1/big-five-config/${newConfig.id}/populate`, {
+            const populateResponse = await fetch(`${API_URL}/api/v1/big-five-config/${newConfig.id}/populate`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

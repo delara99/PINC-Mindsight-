@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -33,7 +34,7 @@ export default function TakeAssessmentPage() {
     const { data: assessment, isLoading } = useQuery<Assessment>({
         queryKey: ['assessment', params.id],
         queryFn: async () => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/${params.id}`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/${params.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar avaliação');
@@ -44,7 +45,7 @@ export default function TakeAssessmentPage() {
     // Submeter respostas
     const submitMutation = useMutation({
         mutationFn: async (answers: { questionId: string; value: number }[]) => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/${id}/submit`, { // Use id here
+            const response = await fetch(`${API_URL}/api/v1/assessments/${id}/submit`, { // Use id here
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

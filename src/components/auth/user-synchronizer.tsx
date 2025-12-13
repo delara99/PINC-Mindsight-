@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -13,7 +14,7 @@ export function UserSynchronizer() {
         queryFn: async () => {
             if (!token) return null;
 
-            const response = await fetch('http://localhost:3000/api/v1/users/me', {
+            const response = await fetch(`${API_URL}/api/v1/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

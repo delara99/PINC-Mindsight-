@@ -93,7 +93,7 @@ export default function ConnectionsPage() {
     // Admin Cancel Connection Mutation
     const cancelConnectionMutation = useMutation({
         mutationFn: async ({ connectionId, reason }: { connectionId: string; reason?: string }) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/admin/${connectionId}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/admin/${connectionId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export default function ConnectionsPage() {
 
     const acceptRequestMutation = useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/requests/${id}/accept`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/requests/${id}/accept`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -142,7 +142,7 @@ export default function ConnectionsPage() {
 
     const rejectRequestMutation = useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/requests/${id}/reject`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/requests/${id}/reject`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -155,7 +155,7 @@ export default function ConnectionsPage() {
 
     const removeConnectionMutation = useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/${id}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -169,7 +169,7 @@ export default function ConnectionsPage() {
 
     const approveConnectionMutation = useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/approve/${id}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/approve/${id}`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -184,7 +184,7 @@ export default function ConnectionsPage() {
 
     const rejectConnectionMutation = useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/reject/${id}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/reject/${id}`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });

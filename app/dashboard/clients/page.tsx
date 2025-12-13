@@ -64,7 +64,7 @@ export default function ClientsPage() {
     // Adicionar/Remover Créditos
     const addCreditsMutation = useMutation({
         mutationFn: async ({ userId, amount }: { userId: string, amount: number }) => {
-            const response = await fetch(`http://localhost:3000/api/v1/users/${userId}/credits`, {
+            const response = await fetch(`${API_URL}/api/v1/users/${userId}/credits`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ export default function ClientsPage() {
     // Atualizar Cliente
     const updateClientMutation = useMutation({
         mutationFn: async ({ id, data }: { id: string, data: any }) => {
-            const response = await fetch(`http://localhost:3000/api/v1/users/${id}`, {
+            const response = await fetch(`${API_URL}/api/v1/users/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ export default function ClientsPage() {
         setIsReportsModalOpen(true);
         setLoadingReports(true);
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/user/${clientId}/completed`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/user/${clientId}/completed`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
@@ -219,7 +219,7 @@ export default function ClientsPage() {
 
     const handleDownloadReport = async (assignmentId: string, title: string) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/reports/download/${assignmentId}`, {
+            const response = await fetch(`${API_URL}/api/v1/reports/download/${assignmentId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

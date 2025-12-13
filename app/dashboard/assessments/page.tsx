@@ -58,7 +58,7 @@ export default function AssessmentsListPage() {
     // Mutation para clonar avaliação
     const cloneMutation = useMutation({
         mutationFn: async (assessmentId: string) => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/templates/${assessmentId}/clone`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/templates/${assessmentId}/clone`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export default function AssessmentsListPage() {
     // Mutation para deletar avaliação
     const deleteMutation = useMutation({
         mutationFn: async (assessmentId: string) => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/${assessmentId}`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/${assessmentId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -117,7 +117,7 @@ export default function AssessmentsListPage() {
 
     const applyAssessment = useMutation({
         mutationFn: async ({ assessmentId, userIds }: { assessmentId: string, userIds: string[] }) => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/${assessmentId}/assign`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/${assessmentId}/assign`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ export default function AssessmentsListPage() {
         queryKey: ['assigned-candidates', viewingAssessmentId],
         queryFn: async () => {
             if (!viewingAssessmentId) return [];
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/${viewingAssessmentId}/assignments`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/${viewingAssessmentId}/assignments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar candidatos');
@@ -156,7 +156,7 @@ export default function AssessmentsListPage() {
     // Mutation para remover atribuição
     const removeAssignment = useMutation({
         mutationFn: async ({ assessmentId, userId }: { assessmentId: string, userId: string }) => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/${assessmentId}/assignments/${userId}`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/${assessmentId}/assignments/${userId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

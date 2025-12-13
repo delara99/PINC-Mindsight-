@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -11,7 +12,7 @@ export default function ClientDashboard() {
     const { data: assessments, isLoading } = useQuery({
         queryKey: ['my-assessments-history'],
         queryFn: async () => {
-            const response = await fetch('http://localhost:3000/api/v1/assessments', {
+            const response = await fetch(`${API_URL}/api/v1/assessments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar histórico');

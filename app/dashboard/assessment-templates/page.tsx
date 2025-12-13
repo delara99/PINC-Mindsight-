@@ -35,7 +35,7 @@ export default function AssessmentTemplatesPage() {
     // Mutation para clonar template
     const cloneMutation = useMutation({
         mutationFn: async (data: { templateId: string; title?: string }) => {
-            const response = await fetch(`http://localhost:3000/api/v1/assessments/templates/${data.templateId}/clone`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/templates/${data.templateId}/clone`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

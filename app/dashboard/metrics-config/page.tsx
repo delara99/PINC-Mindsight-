@@ -37,7 +37,7 @@ export default function MetricsConfigPage() {
 
     const activateMutation = useMutation({
         mutationFn: async (configId: string) => {
-            const response = await fetch(`http://localhost:3000/api/v1/big-five-config/${configId}/activate`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/${configId}/activate`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,

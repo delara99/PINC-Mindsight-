@@ -1,4 +1,5 @@
 'use client';
+import { API_URL } from '@/src/config/api';
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
@@ -15,7 +16,7 @@ export default function AcceptInvitePage() {
     const { data: invite, isLoading, error } = useQuery({
         queryKey: ['validate-invite', token],
         queryFn: async () => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/validate-invite/${token}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/validate-invite/${token}`, {
                 headers: { Authorization: `Bearer ${authToken}` }
             });
             if (!res.ok) {
@@ -29,7 +30,7 @@ export default function AcceptInvitePage() {
 
     const acceptInviteMutation = useMutation({
         mutationFn: async () => {
-            const res = await fetch(`http://localhost:3000/api/v1/connections/join/${token}`, {
+            const res = await fetch(`${API_URL}/api/v1/connections/join/${token}`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${authToken}` }
             });
