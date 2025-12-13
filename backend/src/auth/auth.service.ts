@@ -77,7 +77,7 @@ export class AuthService {
                 cnpj: data.cnpj || null,
                 companyName: data.companyName || null,
                 role: 'TENANT_ADMIN', // Quem se cadastra é admin do próprio tenant
-                status: 'pending', // Aguardando aprovação
+                status: data.origin === 'trial' ? 'active' : 'pending', // Auto-aprova se vier do Trial
                 tenantId: tenant.id
             }
         });

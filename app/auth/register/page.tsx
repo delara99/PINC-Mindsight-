@@ -63,7 +63,9 @@ function RegisterContent() {
                     ...formData,
                     userType,
                     initialCredits: selectedPlan.credits,
-                    planId: selectedPlan.id
+                    initialCredits: selectedPlan.credits,
+                    planId: selectedPlan.id,
+                    origin: searchParams.get('name') ? 'trial' : 'website'
                 })
             });
 

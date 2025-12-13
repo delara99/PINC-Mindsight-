@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { ArrowUpRight, UserPlus, FileCheck, AlertCircle, PlayCircle, Clock, Users } from 'lucide-react';
 import { useAuthStore } from '@/src/store/auth-store';
+import { useTrialStore } from '@/src/store/trial-store';
 import ClientDashboard from '@/src/components/dashboard/client-overview';
 import { useQuery } from '@tanstack/react-query';
 import { API_URL } from '@/src/config/api';
@@ -22,10 +23,54 @@ export default function DashboardPage() {
         enabled: user?.role === 'TENANT_ADMIN' || user?.role === 'SUPER_ADMIN'
     });
 
+
     // Exibir Dashboard de Cliente se for MEMBRO ou PESSOA FÍSICA (Exceto Super Admin)
     const isClientView = user?.role === 'MEMBER' || (user?.userType === 'INDIVIDUAL' && user?.role !== 'SUPER_ADMIN');
 
+    // Trial Widget Logic
+    const { answers, userInfo, resetTrial } = useTrialStore();
+    const hasTrialData = Object.keys(answers).length > 0;
+
     if (isClientView) {
+        // Se tiver trial data e nenhum credit request, mostra o TrialResultWidget junto ou dentro
+        // Por simplicidade, vou injectar no topo do ClientDashboard via props se eu pudesse, mas como não posso editar o ClientDashboard agora facil,
+        // vou renderizar um wrapper aqui se tiver trial data.
+        if (hasTrialData) {
+            return (
+                <div className="space-y-8">
+                    {/* Trial Upsell Banner */}
+                    <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl">
+                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+                         <div className="relative z-10">
+                            <h2 className="text-2xl font-bold mb-2">Olá, {user?.name || userInfo.name}! 👋</h2>
+                            <p className="text-gray-300 mb-6 max-w-xl">
+                                Identificamos que você iniciou sua jornada de autoconhecimento. 
+                                Seu perfil preliminar indica alta compatibilidade com <strong>Liderança Inovadora</strong>.
+                            </p>
+                            
+                            <div className="flex flex-wrap gap-4">
+                                <Link href="/dashboard/assessments/new">
+                                    <button className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+                                        <ArrowUpRight className="w-5 h-5" />
+                                        Desbloquear Relatório Completo
+                                    </button>
+                                </Link>
+                                <button 
+                                    onClick={() => {
+                                        if(confirm('Isso irá remover seu resultado preliminar.')) resetTrial();
+                                    }}
+                                    className="px-6 py-3 rounded-full border border-white/20 hover:bg-white/10 transition-colors text-sm"
+                                >
+                                    Dispensar Resultado
+                                </button>
+                            </div>
+                         </div>
+                    </div>
+                    <ClientDashboard />
+                </div>
+            );
+        }
+
         return <ClientDashboard />;
     }
 
