@@ -5,6 +5,7 @@ import { useAuthStore } from '@/src/store/auth-store';
 import { useTrialStore } from '@/src/store/trial-store';
 import ClientDashboard from '@/src/components/dashboard/client-overview';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -43,6 +44,37 @@ export default function ClientLayoutWrapper() {
     const pendingAssessment = assessments?.find((a: any) => a.assignmentStatus !== 'COMPLETED');
     const hasCredits = user && Number(user.credits) > 0;
 
+    // Estado para controle de inicialização do teste
+    const [initiating, setInitiating] = useState(false);
+    const router = useRouter(); // Necessário importar useRouter
+
+    // Função para iniciar teste (casos onde persistência falhou ou compra foi avulsa)
+    const handleInitAssessment = async () => {
+        try {
+            setInitiating(true);
+            const token = useAuthStore.getState().token;
+            const response = await fetch(`${API_URL}/api/v1/assessments/init-big-five`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const assignment = await response.json();
+                router.push(`/dashboard/take-assessment/${assignment.id}`);
+            } else {
+                alert('Não foi possível iniciar o inventário. Contate o suporte.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Erro de conexão.');
+        } finally {
+            setInitiating(false);
+        }
+    };
+
     // Calculo Dinâmico do Perfil
     const scoreExtroversion = ((answers[1] || 3) + (answers[2] || 3)) / 2;
     const profileText = scoreExtroversion > 3.5 ? "Liderança Inovadora e Comunicativa" : "Estratégia e Análise Profunda";
@@ -61,13 +93,24 @@ export default function ClientLayoutWrapper() {
                         </p>
                         
                         <div className="flex flex-wrap gap-4">
-                            {hasCredits && pendingAssessment ? (
-                                <Link href={`/dashboard/take-assessment/${pendingAssessment.id}`}>
-                                    <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+                            {hasCredits ? (
+                                pendingAssessment ? (
+                                    <Link href={`/dashboard/take-assessment/${pendingAssessment.id}`}>
+                                        <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+                                            <ArrowUpRight className="w-5 h-5" />
+                                            Finalizar Inventário
+                                        </button>
+                                    </Link>
+                                ) : (
+                                    <button 
+                                        onClick={handleInitAssessment}
+                                        disabled={initiating}
+                                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+                                    >
                                         <ArrowUpRight className="w-5 h-5" />
-                                        Finalizar Inventário
+                                        {initiating ? 'Iniciando...' : 'Iniciar Inventário'}
                                     </button>
-                                </Link>
+                                )
                             ) : (
                                 <Link href="/dashboard/plans">
                                     <button className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
