@@ -7,6 +7,7 @@ import { ArrowLeft, Check, User, Building2 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 import { useTrialStore } from '@/src/store/trial-store';
+import { useQuery } from '@tanstack/react-query';
 
 // ...
 
