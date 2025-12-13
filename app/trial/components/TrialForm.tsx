@@ -1,7 +1,7 @@
 'use client';
 
 import { useTrialStore } from '@/src/store/trial-store';
-import { useForm } from 'react-hook-form'; // Assuming react-hook-form is installed? Usually standard. If not, simple state.
+
 // Checking package.json... No react-hook-form. Will use simple state.
 import { useState } from 'react';
 import { ArrowRight, User, Mail, Target } from 'lucide-react';
