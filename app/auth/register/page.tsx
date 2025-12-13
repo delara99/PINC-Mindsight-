@@ -6,18 +6,41 @@ import Link from 'next/link';
 import { ArrowLeft, Check, User, Building2 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
-const PLANS = [
+import { useQuery } from '@tanstack/react-query';
+
+// Fallback Planos (apenas se API falhar totalmente)
+const DEFAULT_PLANS = [
     { id: 'starter', credits: 1, price: 'R$ 29,90', name: 'Starter' },
     { id: 'pro', credits: 10, price: 'R$ 249,00', name: 'Pro' },
     { id: 'business', credits: 50, price: 'R$ 990,00', name: 'Business' },
 ];
 
 function RegisterContent() {
+    // Fetch Site Settings for Plans
+    const { data: settings, isLoading } = useQuery({
+        queryKey: ['site-settings'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/site-settings`);
+            if (!res.ok) throw new Error('Falha ao carregar configurações');
+            return res.json();
+        },
+        staleTime: 1000 * 60 * 5 // 5 minutes cache
+    });
+
+    const activePlans = settings?.pricingPlans || DEFAULT_PLANS;
+
     const router = useRouter();
     const searchParams = useSearchParams();
     const [step, setStep] = useState(1);
     const [userType, setUserType] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
-    const [selectedPlan, setSelectedPlan] = useState<any>(PLANS[0]);
+    const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
+    // Set default plan once loaded
+    useEffect(() => {
+        if (activePlans.length > 0 && !selectedPlan) {
+            setSelectedPlan(activePlans[0]);
+        }
+    }, [activePlans, selectedPlan]);
     
     const [formData, setFormData] = useState({
         name: searchParams.get('name') || '',
@@ -112,29 +135,36 @@ function RegisterContent() {
                     <div className="space-y-6">
                         <h3 className="text-lg font-medium text-gray-900 text-center">Quantos créditos você precisa agora?</h3>
                         <div className="grid md:grid-cols-3 gap-4">
-                            {PLANS.map((plan) => (
-                                <div
-                                    key={plan.id}
-                                    onClick={() => setSelectedPlan(plan)}
-                                    className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center transition-all hover:scale-105 ${selectedPlan.id === plan.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
-                                >
-                                    <div className="text-sm font-medium text-gray-500 mb-1">{plan.name}</div>
-                                    <div className="text-3xl font-bold text-gray-900 mb-2">{plan.credits}</div>
-                                    <div className="text-xs text-gray-500 mb-4">Créditos</div>
-                                    <div className="text-lg font-bold text-primary">{plan.price}</div>
-                                    {selectedPlan.id === plan.id && (
-                                        <div className="mt-2 bg-primary text-white rounded-full p-1">
-                                            <Check size={12} />
+                            {isLoading ? (
+                                <div className="col-span-3 text-center py-8 text-gray-500">Carregando planos...</div>
+                            ) : (
+                                activePlans.map((plan: any) => (
+                                    <div
+                                        key={plan.id}
+                                        onClick={() => setSelectedPlan(plan)}
+                                        className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center transition-all hover:scale-105 ${selectedPlan?.id === plan.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
+                                    >
+                                        <div className="text-sm font-medium text-gray-500 mb-1">{plan.name}</div>
+                                        <div className="text-3xl font-bold text-gray-900 mb-2">{plan.credits}</div>
+                                        <div className="text-xs text-gray-500 mb-4">Créditos</div>
+                                        <div className="text-lg font-bold text-primary">
+                                            {plan.currency || 'R$'} {plan.price}
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                        {selectedPlan?.id === plan.id && (
+                                            <div className="mt-2 bg-primary text-white rounded-full p-1">
+                                                <Check size={12} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
                         <button
                             onClick={() => setStep(2)}
-                            className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-lg mt-6 shadow-lg shadow-primary/30 transition-all"
+                            disabled={!selectedPlan}
+                            className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-lg mt-6 shadow-lg shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Continuar com {selectedPlan.name}
+                            Continuar com {selectedPlan?.name || 'Plano Selecionado'}
                         </button>
                     </div>
                 ) : (

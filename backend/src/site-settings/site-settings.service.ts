@@ -51,34 +51,37 @@ export class SiteSettingsService {
                     ],
                     pricingPlans: [
                         {
-                            id: '1',
+                            id: 'starter',
                             name: 'Starter',
-                            price: 99,
+                            price: '29,90',
                             currency: 'R$',
-                            period: 'mês',
-                            features: ['Até 10 avaliações/mês', 'Relatórios básicos', 'Suporte por email'],
+                            period: 'único',
+                            credits: 1,
+                            features: ['1 Avaliação completa', 'Relatório básico', 'Suporte por email'],
                             highlighted: false,
-                            buttonText: 'Começar Agora'
+                            buttonText: 'Comprar Agora'
                         },
                         {
-                            id: '2',
-                            name: 'Professional',
-                            price: 299,
+                            id: 'pro',
+                            name: 'Pro',
+                            price: '249,00',
                             currency: 'R$',
-                            period: 'mês',
-                            features: ['Avaliações ilimitadas', 'Relatórios avançados', 'Dashboard completo', 'Suporte prioritário'],
+                            period: 'único',
+                            credits: 10,
+                            features: ['10 Avaliações', 'Relatórios avançados', 'Dashboard completo', 'Suporte prioritário'],
                             highlighted: true,
                             buttonText: 'Mais Popular'
                         },
                         {
-                            id: '3',
-                            name: 'Enterprise',
-                            price: 999,
+                            id: 'business',
+                            name: 'Business',
+                            price: '990,00',
                             currency: 'R$',
-                            period: 'mês',
-                            features: ['Tudo do Professional', 'API dedicada', 'Integrações personalizadas', 'Gerente de conta dedicado'],
+                            period: 'único',
+                            credits: 50,
+                            features: ['50 Avaliações', 'Tudo do Pro', 'Gerente de conta dedicado', 'API de integração'],
                             highlighted: false,
-                            buttonText: 'Falar com Vendas'
+                            buttonText: 'Comprar Agora'
                         }
                     ]
                 }
