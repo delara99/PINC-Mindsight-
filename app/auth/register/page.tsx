@@ -31,8 +31,7 @@ function RegisterContent() {
         staleTime: 1000 * 60 * 5 // 5 minutes cache
     });
 
-    });
-    
+
     const activePlans = settings?.pricingPlans || DEFAULT_PLANS;
 
     const { answers } = useTrialStore();
