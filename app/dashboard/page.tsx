@@ -7,74 +7,38 @@ import ClientDashboard from '@/src/components/dashboard/client-overview';
 import { useQuery } from '@tanstack/react-query';
 import { API_URL } from '@/src/config/api';
 
+import ClientLayoutWrapper from './components/ClientWrapper';
+
+// ... (imports remain similar but remove ClientDashboard direct usage if possible or keep if needed distinct)
+
 export default function DashboardPage() {
     const user = useAuthStore((state) => state.user);
     const token = useAuthStore((state) => state.token);
 
+    // React Query para Admin Stats
     const { data: stats, isLoading } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
+            if (!token) return null;
             const response = await fetch(`${API_URL}/api/v1/dashboard/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) return null;
             return response.json();
         },
-        enabled: user?.role === 'TENANT_ADMIN' || user?.role === 'SUPER_ADMIN'
+        enabled: (user?.role === 'TENANT_ADMIN' || user?.role === 'SUPER_ADMIN') && !!token
     });
 
-
-    // Exibir Dashboard de Cliente se for MEMBRO ou PESSOA FÍSICA (Exceto Super Admin)
+    // Verificacao segura de tipo de usuario para renderizacao condicional
+    // Importante: useAuthStore persiste em localStorage, entao pode causar hydration mismatch se nao cuidado,
+    // mas o ClientWrapper ja cuida da parte dele.
     const isClientView = user?.role === 'MEMBER' || (user?.userType === 'INDIVIDUAL' && user?.role !== 'SUPER_ADMIN');
 
-    // Trial Widget Logic
-    const { answers, userInfo, resetTrial } = useTrialStore();
-    const hasTrialData = Object.keys(answers).length > 0;
-
-    // Calculo Dinâmico do Perfil (Mesma lógica do TrialResult)
-    const scoreExtroversion = ((answers[1] || 3) + (answers[2] || 3)) / 2;
-    const profileText = scoreExtroversion > 3.5 ? "Liderança Inovadora e Comunicativa" : "Estratégia e Análise Profunda";
-
     if (isClientView) {
-        // Se tiver trial data e nenhum credit request, mostra o TrialResultWidget junto ou dentro
-        if (hasTrialData) {
-            return (
-                <div className="space-y-8">
-                    {/* Trial Upsell Banner */}
-                    <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl">
-                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-                         <div className="relative z-10">
-                            <h2 className="text-2xl font-bold mb-2">Olá, {user?.name || userInfo.name}! 👋</h2>
-                            <p className="text-gray-300 mb-6 max-w-xl">
-                                Identificamos que você iniciou sua jornada de autoconhecimento. 
-                                Seu perfil preliminar indica alta compatibilidade com <strong>{profileText}</strong>.
-                            </p>
-                            
-                            <div className="flex flex-wrap gap-4">
-                                <Link href="/dashboard/plans">
-                                    <button className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
-                                        <ArrowUpRight className="w-5 h-5" />
-                                        Desbloquear Relatório Completo
-                                    </button>
-                                </Link>
-                                <button 
-                                    onClick={() => {
-                                        if(confirm('Isso irá remover seu resultado preliminar.')) resetTrial();
-                                    }}
-                                    className="px-6 py-3 rounded-full border border-white/20 hover:bg-white/10 transition-colors text-sm"
-                                >
-                                    Dispensar Resultado
-                                </button>
-                            </div>
-                         </div>
-                    </div>
-                    <ClientDashboard />
-                </div>
-            );
-        }
-
-        return <ClientDashboard />;
+        return <ClientLayoutWrapper />;
     }
+
+    // ... Admin View continua abaixo
 
     return (
         <div className="space-y-8">
