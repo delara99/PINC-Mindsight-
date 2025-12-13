@@ -11,6 +11,8 @@ import { useEffect, useState } from 'react';
 export default function ClientLayoutWrapper() {
     const user = useAuthStore((state) => state.user);
     const { answers, userInfo, resetTrial } = useTrialStore();
+    const [mounted, setMounted] = useState(false);
+
     // Fetch assessments to check for pending ones
     const { data: assessments } = useQuery({
         queryKey: ['my-assessments-status'],
