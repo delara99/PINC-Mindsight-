@@ -2,8 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { API_URL } from '@/src/config/api';
 import { Check, CreditCard, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function PlansPage() {
+export const dynamic = 'force-dynamic';
+
+function PlansContent() {
     // Fetch site settings for dynamic plans
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
@@ -16,7 +19,7 @@ export default function PlansPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
@@ -88,5 +91,13 @@ export default function PlansPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function PlansPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}>
+            <PlansContent />
+        </Suspense>
     );
 }
