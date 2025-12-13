@@ -66,21 +66,40 @@ export class AuthService {
         });
 
         // 3. Criar Usuário (como Tenant Admin, mas Pendente)
-        const user = await this.prisma.user.create({
-            data: {
-                email: data.email,
-                password: hashedPassword,
-                name: data.name,
-                phone: data.phone,
-                userType: data.userType || 'INDIVIDUAL',
-                cpf: data.cpf || null,
-                cnpj: data.cnpj || null,
-                companyName: data.companyName || null,
-                role: 'TENANT_ADMIN', // Quem se cadastra é admin do próprio tenant
-                status: data.origin === 'trial' ? 'active' : 'pending', // Auto-aprova se vier do Trial
-                tenantId: tenant.id
+        // 3. Criar Usuário (como Tenant Admin, mas Pendente)
+        let user;
+        try {
+            user = await this.prisma.user.create({
+                data: {
+                    email: data.email,
+                    password: hashedPassword,
+                    name: data.name,
+                    phone: data.phone,
+                    userType: data.userType || 'INDIVIDUAL',
+                    cpf: data.cpf || null,
+                    cnpj: data.cnpj || null,
+                    companyName: data.companyName || null,
+                    role: 'TENANT_ADMIN', // Quem se cadastra é admin do próprio tenant
+                    status: data.origin === 'trial' ? 'active' : 'pending', // Auto-aprova se vier do Trial
+                    tenantId: tenant.id
+                }
+            });
+        } catch (error: any) {
+            // Rollback: Deletar tenant criado se falhar usuario (opcional, mas boa pratica para nao deixar lixo)
+            await this.prisma.tenant.delete({ where: { id: tenant.id } });
+
+            if (error.code === 'P2002') {
+                const target = error.meta?.target;
+                if (target?.includes('cpf')) {
+                    throw new UnauthorizedException('CPF já cadastrado em outra conta.');
+                }
+                if (target?.includes('cnpj')) {
+                    throw new UnauthorizedException('CNPJ já cadastrado em outra conta.');
+                }
+                throw new UnauthorizedException('Dados já cadastrados (Email, CPF ou CNPJ).');
             }
-        });
+            throw error;
+        }
 
         // 4. Se houve solicitação inicial de créditos
         if (data.initialCredits && Number(data.initialCredits) > 0) {
