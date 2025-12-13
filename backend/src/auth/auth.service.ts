@@ -119,6 +119,58 @@ export class AuthService {
             // Por enquanto vou focar no registro e a venda se resolve depois no dashboard ou adiciono um campo de 'requestedAmount' depois.
         }
 
+        // 5. Se houver dados do Trial (Degustação), salvar progresso
+        if (data.trialData && Array.isArray(data.trialData) && data.trialData.length > 0) {
+            // Buscar modelo de avaliação padrão (BIG_FIVE)
+            // Tenta pegar do tenant se existir, senão pega qualquer um global (ou do primeiro tenant admin)
+            const assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE' }
+            });
+
+            if (assessmentModel) {
+                // Buscar as questões do banco para mapear
+                // O Trial hardcoded usa IDs 1-10, aqui vamos assumir a ordem de criação ou ordem alfabética
+                const questions = await this.prisma.question.findMany({
+                    where: { assessmentModelId: assessmentModel.id },
+                    orderBy: { createdAt: 'asc' }, // Assumindo ordem de inserção
+                    take: 10
+                });
+
+                if (questions.length > 0) {
+                    // Criar atribuição (Assignment) parcialmente preenchida
+                    const assignment = await this.prisma.assessmentAssignment.create({
+                        data: {
+                            userId: user.id,
+                            assessmentId: assessmentModel.id,
+                            status: 'IN_PROGRESS',
+                            assignedAt: new Date(),
+                        }
+                    });
+
+                    // Preparar respostas para inserção
+                    const responsesToCreate = [];
+                    
+                    data.trialData.forEach((item: any) => {
+                        // O item.questionId do trial é 1, 2, 3... (índice 0-based seria id-1)
+                        const index = item.questionId - 1;
+                        if (questions[index]) {
+                            responsesToCreate.push({
+                                assignmentId: assignment.id,
+                                questionId: questions[index].id,
+                                answer: Number(item.response)
+                            });
+                        }
+                    });
+
+                    if (responsesToCreate.length > 0) {
+                        await this.prisma.assessmentResponse.createMany({
+                            data: responsesToCreate
+                        });
+                    }
+                }
+            }
+        }
+
         return {
             message: 'Cadastro realizado com sucesso! Aguarde a aprovação do administrador.',
             user: { email: user.email, name: user.name }

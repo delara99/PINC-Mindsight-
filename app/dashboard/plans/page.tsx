@@ -4,11 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { API_URL } from '@/src/config/api';
 import { Check, CreditCard, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
+import { useAuthStore } from '@/src/store/auth-store';
+import { PaymentModal } from '../components/PaymentModal';
 
 export const dynamic = 'force-dynamic';
 
 function PlansContent() {
+    const { token } = useAuthStore();
+    const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
     // Fetch site settings for dynamic plans
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
@@ -77,7 +82,7 @@ function PlansContent() {
                         </ul>
 
                         <button 
-                            onClick={() => alert(`Plano ${plan.name} selecionado. Integração de pagamento em breve!`)}
+                            onClick={() => setSelectedPlan(plan)}
                             className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${plan.highlighted ? 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/30' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
                         >
                            <CreditCard size={20} /> {plan.buttonText || 'Comprar Agora'}
@@ -92,6 +97,13 @@ function PlansContent() {
                     <Link href="/dashboard/Help" className="underline ml-2 hover:text-blue-900">Fale com vendas</Link>
                 </p>
             </div>
+
+            <PaymentModal 
+                isOpen={!!selectedPlan}
+                onClose={() => setSelectedPlan(null)}
+                plan={selectedPlan}
+                token={token || ''}
+            />
         </div>
     );
 }

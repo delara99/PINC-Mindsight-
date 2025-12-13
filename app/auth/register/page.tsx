@@ -6,7 +6,11 @@ import Link from 'next/link';
 import { ArrowLeft, Check, User, Building2 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
-import { useQuery } from '@tanstack/react-query';
+import { useTrialStore } from '@/src/store/trial-store';
+
+// ...
+
+
 
 // Fallback Planos (apenas se API falhar totalmente)
 const DEFAULT_PLANS = [
@@ -27,8 +31,11 @@ function RegisterContent() {
         staleTime: 1000 * 60 * 5 // 5 minutes cache
     });
 
+    });
+    
     const activePlans = settings?.pricingPlans || DEFAULT_PLANS;
 
+    const { answers } = useTrialStore();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [step, setStep] = useState(1);
