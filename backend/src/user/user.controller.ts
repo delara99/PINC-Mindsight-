@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards, Request, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
 import * as bcrypt from 'bcryptjs';
@@ -169,6 +169,37 @@ export class UserController {
                 createdAt: true,
                 status: true
             }
+        });
+    }
+
+    // Excluir cliente
+    @Delete(':id')
+    async deleteClient(@Param('id') id: string, @Request() req) {
+        const user = req.user;
+        if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem excluir clientes.');
+        }
+
+        const whereCondition: any = { id };
+        if (user.role !== 'SUPER_ADMIN') {
+            whereCondition.tenantId = user.tenantId;
+        }
+
+        const clientToDelete = await this.prisma.user.findFirst({
+            where: whereCondition
+        });
+
+        if (!clientToDelete) {
+            throw new BadRequestException('Cliente não encontrado ou sem permissão.');
+        }
+
+        // Não permitir deletar a si mesmo
+        if (clientToDelete.id === user.userId) {
+            throw new BadRequestException('Você não pode se excluir.');
+        }
+
+        return this.prisma.user.delete({
+            where: { id }
         });
     }
 

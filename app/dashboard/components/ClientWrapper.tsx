@@ -13,6 +13,7 @@ export default function ClientLayoutWrapper() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        useTrialStore.persist.rehydrate();
         setMounted(true);
     }, []);
 
