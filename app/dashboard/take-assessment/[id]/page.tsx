@@ -61,10 +61,24 @@ export default function TakeAssessmentPage() {
 
             return response.json();
         },
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
             // Invalidar queries para atualizar dados
             queryClient.invalidateQueries({ queryKey: ['user-credits'] });
             queryClient.invalidateQueries({ queryKey: ['my-assessments'] });
+
+            // Forçar atualização do usuário no store global (créditos)
+            try {
+                const token = useAuthStore.getState().token;
+                const userRes = await fetch(`${API_URL}/api/v1/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+                    useAuthStore.getState().updateUser(userData);
+                }
+            } catch (e) {
+                console.error('Falha ao atualizar dados do usuário', e);
+            }
 
             alert('Avaliação submetida com sucesso! Seus resultados foram salvos.');
             router.push('/dashboard/my-assessments');

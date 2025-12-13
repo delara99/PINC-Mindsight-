@@ -115,7 +115,7 @@ export default function ClientLayoutWrapper() {
                                 <Link href="/dashboard/plans">
                                     <button className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
                                         <ArrowUpRight className="w-5 h-5" />
-                                        Desbloquear Relatório Completo
+                                        Comprar Novos Créditos
                                     </button>
                                 </Link>
                             )}
