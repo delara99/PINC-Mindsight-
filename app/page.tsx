@@ -89,7 +89,7 @@ export default function Home() {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
                             <Link
-                                href={settings?.primaryButtonLink || '/dashboard'}
+                                href={settings?.primaryButtonLink || '/trial'}
                                 className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full shadow-xl transition-all hover:translate-y-[-2px]"
                                 style={{
                                     backgroundColor: settings?.accentColor || '#FFC107',

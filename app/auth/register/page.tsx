@@ -12,14 +12,17 @@ const PLANS = [
     { id: 'business', credits: 50, price: 'R$ 990,00', name: 'Business' },
 ];
 
+import { useSearchParams } from 'next/navigation';
+
 export default function RegisterPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [step, setStep] = useState(1);
     const [userType, setUserType] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
     const [selectedPlan, setSelectedPlan] = useState<any>(PLANS[0]);
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        name: searchParams.get('name') || '',
+        email: searchParams.get('email') || '',
         password: '',
         confirmPassword: '',
         cpf: '',
@@ -27,6 +30,14 @@ export default function RegisterPage() {
         companyName: '',
         phone: ''
     });
+
+    // Auto-advance to step 2 if data is provided
+    useEffect(() => {
+        if (searchParams.get('name') || searchParams.get('email')) {
+            setStep(2);
+        }
+    }, [searchParams]);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
