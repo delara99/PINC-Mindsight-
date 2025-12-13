@@ -7,10 +7,37 @@ import Link from 'next/link';
 export function TrialResult() {
     const { userInfo, answers } = useTrialStore();
 
-    // Simulação de cálculo simples (média das quest ões 1 e 2 para Extroversão)
-    // Questões 1 e 2 são Extroversão no nosso Quiz
-    const scoreExtroversion = ((answers[1] || 3) + (answers[2] || 3)) / 2;
-    const percentage = (scoreExtroversion / 5) * 100;
+    // Mapeamento de Questões por Traço (Baseado no TrialQuiz)
+    const TRAITS_MAP = {
+        'Extroversão': [1, 2],
+        'Amabilidade': [3, 4],
+        'Conscienciosidade': [5, 6],
+        'Neuroticismo': [7, 8],
+        'Abertura': [9, 10]
+    };
+
+    // Função de Cálculo Real
+    const calculateScore = (questionIds: number[]) => {
+        let total = 0;
+        let max = questionIds.length * 5; // 5 é o score máximo por questão
+        
+        questionIds.forEach(id => {
+            total += answers[id] || 3; // Fallback para neutro se não respondido
+        });
+
+        return (total / max) * 100;
+    };
+
+    // Calcular todos os scores
+    const scores = {
+        extroversion: calculateScore(TRAITS_MAP['Extroversão']),
+        agreeableness: calculateScore(TRAITS_MAP['Amabilidade']),
+        conscientiousness: calculateScore(TRAITS_MAP['Conscienciosidade']),
+        neuroticism: calculateScore(TRAITS_MAP['Neuroticismo']),
+        openness: calculateScore(TRAITS_MAP['Abertura'])
+    };
+
+    const percentage = scores.extroversion;
 
     return (
         <div className="max-w-4xl mx-auto w-full animate-in fade-in duration-700">
@@ -49,14 +76,16 @@ export function TrialResult() {
 
                         <p className="text-gray-600 text-sm leading-relaxed">
                             {percentage > 60 
-                                ? "Você tende a ser comunicativo e energizado por interações sociais. Líderes com este perfil costumam ser excelentes em motivar equipes."
-                                : "Você possui uma abordagem mais reflexiva e observadora. Perfis como o seu são excelentes ouvintes e estrategistas profundos."
+                                ? "Você tende a ser comunicativo e energizado por interações sociais. Líderes com este perfil costumam ser excelentes em motivar equipes e criar redes de contato."
+                                : percentage > 40
+                                    ? "Você possui um equilíbrio saudável entre interação social e tempo reservado. Adapta-se bem a diferentes ambientes, ouvindo e falando na medida certa."
+                                    : "Você possui uma abordagem mais reflexiva e observadora. Perfis como o seu são excelentes ouvintes, analistas profundos e estrategistas focados."
                             }
                         </p>
                     </div>
                 </div>
 
-                {/* Cartão Bloqueado - Teaser dos outros 4 */}
+                {/* Cartão Bloqueado - Teaser dos outros 4 (COM DADOS REAIS REVELADOS NA INTUIÇÃO) */}
                 <div className="bg-gray-50 rounded-2xl border border-gray-200 relative overflow-hidden">
                     <div className="absolute inset-0 backdrop-blur-[2px] bg-white/40 z-10 flex flex-col items-center justify-center text-center p-8">
                         <div className="w-16 h-16 bg-gray-900 text-white rounded-full flex items-center justify-center mb-4 shadow-lg">
@@ -93,19 +122,18 @@ export function TrialResult() {
                         </div>
                     </div>
 
-                    {/* Fundo simulado 'borrado' */}
+                    {/* Fundo simulado 'borrado' - AGORA COM DADOS REAIS DO USUÁRIO PARA FIDELIDADE */}
                     <div className="p-6 opacity-30 space-y-6 filter blur-sm select-none pointer-events-none">
-                        {/* Fake Items */}
                         {[
-                            { name: 'Amabilidade', score: 78, color: 'bg-green-500' },
-                            { name: 'Conscienciosidade', score: 92, color: 'bg-blue-500' },
-                            { name: 'Neuroticismo', score: 45, color: 'bg-red-500' },
-                            { name: 'Abertura', score: 88, color: 'bg-yellow-500' }
+                            { name: 'Amabilidade', score: scores.agreeableness, color: 'bg-green-500' },
+                            { name: 'Conscienciosidade', score: scores.conscientiousness, color: 'bg-blue-500' },
+                            { name: 'Neuroticismo', score: scores.neuroticism, color: 'bg-red-500' },
+                            { name: 'Abertura', score: scores.openness, color: 'bg-yellow-500' }
                         ].map((trait, i) => (
                             <div key={i}>
                                 <div className="flex justify-between mb-1">
                                     <span className="font-bold text-gray-800">{trait.name}</span>
-                                    <span>{trait.score}%</span>
+                                    <span>{Math.round(trait.score)}%</span>
                                 </div>
                                 <div className="h-2 bg-gray-200 rounded-full">
                                     <div className={`h-full ${trait.color}`} style={{ width: `${trait.score}%` }}></div>
@@ -126,9 +154,12 @@ export function TrialResult() {
                             <Users className="w-5 h-5" />
                             <span>COMPARAÇÃO DE MERCADO</span>
                         </div>
-                        <h3 className="text-2xl font-bold mb-2">Você tem o perfil de Líderes Inovadores</h3>
+                        <h3 className="text-2xl font-bold mb-2">
+                            {percentage > 50 ? "Perfil de Liderança Dinâmica" : "Perfil de Especialista Estratégico"}
+                        </h3>
                         <p className="text-gray-300 max-w-lg">
-                            Cruzando seus dados preliminares com nossa base de +10.000 profissionais, identificamos alta compatibilidade com cargos de gestão estratégica.
+                            Cruzando seus dados preliminares com nossa base de profissionais, identificamos alta aderência a 
+                            {percentage > 50 ? " funções que exigem influência e comunicação." : " funções que exigem análise profunda e foco."}
                         </p>
                     </div>
                     <div className="flex -space-x-4">

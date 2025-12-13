@@ -31,10 +31,12 @@ export default function DashboardPage() {
     const { answers, userInfo, resetTrial } = useTrialStore();
     const hasTrialData = Object.keys(answers).length > 0;
 
+    // Calculo Dinâmico do Perfil (Mesma lógica do TrialResult)
+    const scoreExtroversion = ((answers[1] || 3) + (answers[2] || 3)) / 2;
+    const profileText = scoreExtroversion > 3.5 ? "Liderança Inovadora e Comunicativa" : "Estratégia e Análise Profunda";
+
     if (isClientView) {
         // Se tiver trial data e nenhum credit request, mostra o TrialResultWidget junto ou dentro
-        // Por simplicidade, vou injectar no topo do ClientDashboard via props se eu pudesse, mas como não posso editar o ClientDashboard agora facil,
-        // vou renderizar um wrapper aqui se tiver trial data.
         if (hasTrialData) {
             return (
                 <div className="space-y-8">
@@ -45,7 +47,7 @@ export default function DashboardPage() {
                             <h2 className="text-2xl font-bold mb-2">Olá, {user?.name || userInfo.name}! 👋</h2>
                             <p className="text-gray-300 mb-6 max-w-xl">
                                 Identificamos que você iniciou sua jornada de autoconhecimento. 
-                                Seu perfil preliminar indica alta compatibilidade com <strong>Liderança Inovadora</strong>.
+                                Seu perfil preliminar indica alta compatibilidade com <strong>{profileText}</strong>.
                             </p>
                             
                             <div className="flex flex-wrap gap-4">
