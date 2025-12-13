@@ -61,8 +61,6 @@ function RegisterContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
-                    userType,
-                    initialCredits: selectedPlan.credits,
                     initialCredits: selectedPlan.credits,
                     planId: selectedPlan.id,
                     origin: searchParams.get('name') ? 'trial' : 'website'
