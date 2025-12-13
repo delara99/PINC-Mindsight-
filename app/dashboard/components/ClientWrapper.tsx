@@ -1,5 +1,6 @@
 'use client';
-
+import { API_URL } from '@/src/config/api';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useTrialStore } from '@/src/store/trial-store';
 import ClientDashboard from '@/src/components/dashboard/client-overview';
@@ -21,7 +22,28 @@ export default function ClientLayoutWrapper() {
     if (!mounted) return null;
 
     const hasTrialData = Object.keys(answers).length > 0;
-    
+
+    // Fetch assessments to check for pending ones
+    const { data: assessments } = useQuery({
+        queryKey: ['my-assessments-status'],
+        queryFn: async () => {
+            // Se não tiver token, nem tenta (embora ClientWrapper exija user/token, bom garantir)
+            const token = useAuthStore.getState().token;
+            if (!token) return [];
+            
+            const response = await fetch(`${API_URL}/api/v1/assessments`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return [];
+            return response.json();
+        },
+        enabled: !!user
+    });
+
+    // Encontrar avaliação pendente (IN_PROGRESS e do tipo BIG_FIVE idealmente, mas assumindo a primeira pendente)
+    const pendingAssessment = assessments?.find((a: any) => a.assignmentStatus !== 'COMPLETED');
+    const hasCredits = user && Number(user.credits) > 0;
+
     // Calculo Dinâmico do Perfil
     const scoreExtroversion = ((answers[1] || 3) + (answers[2] || 3)) / 2;
     const profileText = scoreExtroversion > 3.5 ? "Liderança Inovadora e Comunicativa" : "Estratégia e Análise Profunda";
@@ -40,12 +62,22 @@ export default function ClientLayoutWrapper() {
                         </p>
                         
                         <div className="flex flex-wrap gap-4">
-                            <Link href="/dashboard/plans">
-                                <button className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
-                                    <ArrowUpRight className="w-5 h-5" />
-                                    Desbloquear Relatório Completo
-                                </button>
-                            </Link>
+                            {hasCredits && pendingAssessment ? (
+                                <Link href={`/dashboard/take-assessment/${pendingAssessment.id}`}>
+                                    <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+                                        <ArrowUpRight className="w-5 h-5" />
+                                        Finalizar Inventário
+                                    </button>
+                                </Link>
+                            ) : (
+                                <Link href="/dashboard/plans">
+                                    <button className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+                                        <ArrowUpRight className="w-5 h-5" />
+                                        Desbloquear Relatório Completo
+                                    </button>
+                                </Link>
+                            )}
+                            
                             <button 
                                 onClick={() => {
                                     if(confirm('Isso irá remover seu resultado preliminar.')) resetTrial();
