@@ -198,8 +198,40 @@ export class UserController {
             throw new BadRequestException('Você não pode se excluir.');
         }
 
-        return this.prisma.user.delete({
-            where: { id }
+        // Realizar exclusão em cascata manual via transação
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Remover Solicitações de Crédito
+            await tx.creditSolicitation.deleteMany({ where: { userId: id } });
+
+            // 2. Remover Configurações de Compartilhamento
+            await tx.connectionSharingSetting.deleteMany({ where: { userId: id } });
+
+            // 3. Remover Mensagens enviadas
+            await tx.connectionMessage.deleteMany({ where: { senderId: id } });
+
+            // 4. Remover Links de Convite (Criados ou Usados)
+            await tx.connectionInviteLink.deleteMany({
+                where: { OR: [{ creatorId: id }, { usedById: id }] }
+            });
+
+            // 5. Remover Requests de Conexão (Enviados ou Recebidos e aprovados por ele)
+            await tx.connectionRequest.deleteMany({
+                where: { OR: [{ senderId: id }, { receiverId: id }, { approvedByAdminId: id }] }
+            });
+
+            // 6. Remover Conexões (Ativas ou Canceladas)
+            await tx.connection.deleteMany({
+                where: { OR: [{ userAId: id }, { userBId: id }, { cancelledBy: id }] }
+            });
+
+            // 7. Remover Avaliações Atribuídas (Assignments)
+            // Nota: O schema já tem onDelete: Cascade, mas vamos garantir na transação se necessário.
+            // await tx.assessmentAssignment.deleteMany({ where: { userId: id } });
+
+            // 8. Enfim, remover o usuário
+            return tx.user.delete({
+                where: { id }
+            });
         });
     }
 
