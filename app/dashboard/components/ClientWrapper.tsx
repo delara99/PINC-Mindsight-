@@ -12,6 +12,7 @@ export default function ClientLayoutWrapper() {
     const user = useAuthStore((state) => state.user);
     const { answers, userInfo, resetTrial } = useTrialStore();
     const [mounted, setMounted] = useState(false);
+    const hasTrialData = Object.keys(answers).length > 0;
 
     // Fetch assessments to check for pending ones
     const { data: assessments } = useQuery({
