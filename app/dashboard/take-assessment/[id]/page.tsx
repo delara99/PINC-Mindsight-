@@ -222,20 +222,28 @@ export default function TakeAssessmentPage() {
                     Anterior
                 </button>
 
-                <div className="flex gap-2 flex-wrap justify-center">
-                    {assessment.questions.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => setCurrentQuestionIndex(index)}
-                            title={`Pergunta ${index + 1}${answers[assessment.questions[index].id] ? ' (respondida)' : ''}`}
-                            className={`w-3 h-3 rounded-full transition-all hover:scale-125 ${index === currentQuestionIndex
-                                ? 'bg-primary w-8'
-                                : answers[assessment.questions[index].id]
-                                    ? 'bg-green-500 cursor-pointer'
-                                    : 'bg-gray-300 cursor-pointer'
-                                }`}
-                        />
-                    ))}
+                <div className="flex gap-2 flex-wrap justify-center mb-6 px-4">
+                    {assessment.questions.map((_, index) => {
+                        const isCurrent = index === currentQuestionIndex;
+                        const isAnswered = !!answers[assessment.questions[index].id];
+                        
+                        return (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentQuestionIndex(index)}
+                                title={`Ir para questão ${index + 1} ${isAnswered ? '(Respondida)' : '(Pendente)'}`}
+                                className={`
+                                    w-4 h-4 rounded-full transition-all duration-300 transform
+                                    ${isCurrent 
+                                        ? 'scale-125 ring-2 ring-primary ring-offset-2 bg-primary' 
+                                        : isAnswered 
+                                            ? 'bg-emerald-500 hover:scale-110 hover:bg-emerald-600' 
+                                            : 'bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                                    }
+                                `}
+                            />
+                        );
+                    })}
                 </div>
 
                 {currentQuestionIndex === assessment.questions.length - 1 ? (
