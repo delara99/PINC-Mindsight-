@@ -22,6 +22,19 @@ export function TrialQuiz() {
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
     const question = QUESTIONS[currentQuestionIndex];
+
+    // Guard clause para evitar crash se índice inválido (persistência antiga)
+    if (!question) {
+        if (currentQuestionIndex >= QUESTIONS.length) {
+             // Se já passou do fim, vai para calculando
+             setStep('calculating');
+        } else {
+             // Se índice negativo ou louco, reseta
+             setStep('intro');
+        }
+        return null; 
+    }
+
     const progress = ((currentQuestionIndex) / QUESTIONS.length) * 100;
 
     const handleSelect = (score: number) => {
