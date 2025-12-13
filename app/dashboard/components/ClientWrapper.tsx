@@ -11,18 +11,6 @@ import { useEffect, useState } from 'react';
 export default function ClientLayoutWrapper() {
     const user = useAuthStore((state) => state.user);
     const { answers, userInfo, resetTrial } = useTrialStore();
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        useTrialStore.persist.rehydrate();
-        setMounted(true);
-    }, []);
-
-    // Prevent hydration mismatch for persistent store
-    if (!mounted) return null;
-
-    const hasTrialData = Object.keys(answers).length > 0;
-
     // Fetch assessments to check for pending ones
     const { data: assessments } = useQuery({
         queryKey: ['my-assessments-status'],
@@ -39,6 +27,14 @@ export default function ClientLayoutWrapper() {
         },
         enabled: !!user
     });
+
+    useEffect(() => {
+        useTrialStore.persist.rehydrate();
+        setMounted(true);
+    }, []);
+
+    // Prevent hydration mismatch for persistent store
+    if (!mounted) return null;
 
     // Encontrar avaliação pendente (IN_PROGRESS e do tipo BIG_FIVE idealmente, mas assumindo a primeira pendente)
     const pendingAssessment = assessments?.find((a: any) => a.assignmentStatus !== 'COMPLETED');
