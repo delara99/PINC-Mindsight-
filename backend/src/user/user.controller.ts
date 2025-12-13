@@ -224,9 +224,32 @@ export class UserController {
                 where: { OR: [{ userAId: id }, { userBId: id }, { cancelledBy: id }] }
             });
 
-            // 7. Remover Avaliações Atribuídas (Assignments)
-            // Nota: O schema já tem onDelete: Cascade, mas vamos garantir na transação se necessário.
-            // await tx.assessmentAssignment.deleteMany({ where: { userId: id } });
+            // 7. Remover Avaliações (Deep Clean)
+            // Primeiro buscamos os assignments para limpar os filhos manualmente, 
+            // caso o cascade do banco falhe.
+            const assignments = await tx.assessmentAssignment.findMany({
+                where: { userId: id },
+                select: { id: true }
+            });
+            
+            if (assignments.length > 0) {
+                const assignmentIds = assignments.map(a => a.id);
+                
+                // Limpar respostas
+                await tx.assessmentResponse.deleteMany({
+                    where: { assignmentId: { in: assignmentIds } }
+                });
+
+                // Limpar resultados
+                await tx.assessmentResult.deleteMany({
+                    where: { assignmentId: { in: assignmentIds } }
+                });
+
+                // Limpar assignments
+                await tx.assessmentAssignment.deleteMany({
+                    where: { id: { in: assignmentIds } }
+                });
+            }
 
             // 8. Enfim, remover o usuário
             return tx.user.delete({
