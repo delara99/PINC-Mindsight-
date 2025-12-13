@@ -6,29 +6,7 @@ import { Loader2, Plus, CreditCard, X, Edit, Check, Trash2 } from 'lucide-react'
 
 // ... (início do componente)
 
-    // Excluir Cliente
-    const deleteClientMutation = useMutation({
-        mutationFn: async (id: string) => {
-            const response = await fetch(`${API_URL}/api/v1/users/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Falha ao excluir cliente');
-            }
-            return response.json();
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['clients'] });
-            alert('Cliente excluído com sucesso!');
-        },
-        onError: (error: any) => {
-            alert(error.message || 'Erro ao excluir cliente.');
-        }
-    });
+// Mutation movida para dentro do componente para acessar token
 import { API_URL } from '@/src/config/api';
 
 interface Client {
@@ -177,6 +155,30 @@ export default function ClientsPage() {
         },
         onError: (error: any) => {
             alert(error.message || 'Erro ao atualizar cliente.');
+        }
+    });
+
+    // Excluir Cliente (Movido para dentro do componente)
+    const deleteClientMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const response = await fetch(`${API_URL}/api/v1/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Falha ao excluir cliente');
+            }
+            return response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            alert('Cliente excluído com sucesso!');
+        },
+        onError: (error: any) => {
+            alert(error.message || 'Erro ao excluir cliente.');
         }
     });
 
