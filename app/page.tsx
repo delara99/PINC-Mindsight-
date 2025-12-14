@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { MethodologySection } from '@/src/components/landing/methodology-section';
 
 // Icon mapping
 const iconMap: any = {
@@ -144,6 +144,9 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* METHODOLOGY SHOWCASE */}
+            <MethodologySection />
 
             {/* FEATURES SECTION - DYNAMIC */}
             {settings?.showFeatures && settings?.features?.length > 0 && (
