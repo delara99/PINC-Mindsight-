@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
 import { MethodologySection } from '@/src/components/landing/methodology-section';
+import { FeaturesGrid } from '@/src/components/landing/features-grid';
 import { API_URL } from '@/src/config/api';
 
 // Icon mapping
@@ -151,30 +152,7 @@ export default function Home() {
 
             {/* FEATURES SECTION - DYNAMIC */}
             {settings?.showFeatures && settings?.features?.length > 0 && (
-                <section id="features" className="py-20 bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="text-center mb-16">
-                            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Recursos Poderosos</h2>
-                            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                                Tudo que você precisa para transformar a gestão de pessoas na sua empresa
-                            </p>
-                        </div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {settings.features.map((feature: any) => {
-                                const IconComponent = iconMap[feature.icon] || Star;
-                                return (
-                                    <div key={feature.id} className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100">
-                                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                                            <IconComponent className="text-primary" size={28} />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                                        <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </section>
+                <FeaturesGrid features={settings.features} />
             )}
 
             {/* PRICING SECTION - DYNAMIC */}

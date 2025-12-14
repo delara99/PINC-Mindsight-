@@ -86,7 +86,7 @@ export default function SettingsPage() {
         setFormData({ ...formData, features: newFeatures });
     };
 
-    const updateFeature = (index: number, field: string, value: string) => {
+    const updateFeature = (index: number, field: string, value: any) => {
         const newFeatures = [...formData.features];
         newFeatures[index] = { ...newFeatures[index], [field]: value };
         setFormData({ ...formData, features: newFeatures });
@@ -317,9 +317,27 @@ export default function SettingsPage() {
                                 <div key={feat.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm font-medium text-gray-600">Feature #{index + 1}</span>
-                                        <button onClick={() => removeFeature(index)} className="text-red-600 hover:text-red-700">
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <label className="flex items-center gap-1 text-xs cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!feat.highlighted}
+                                                    onChange={(e) => updateFeature(index, 'highlighted', String(e.target.checked))} // O backend salva como JSON, o frontend casta na leitura se necessario, mas aqui o state é any.
+                                                    // Melhor: updateFeature espera value: string. O ideal seria value: any.
+                                                    // Checando updateFeature: const updateFeature = (index: number, field: string, value: string) => { ... }
+                                                    // OPA! O updateFeature original está tipado como string value. Preciso ajustar o updateFeature OU passar string 'true'/'false'.
+                                                    // Vou ajustar o updateFeature na próxima call se precisar, mas aqui vou assumir que posso passar any no JS ou ajustar a assinatura.
+                                                    // Espera, vi o codigo: updateFeature = (index: number, field: string, value: string) .
+                                                    // Vou MUDAR a assinatura do updateFeature para `value: any` primeiro, ou hackear aqui.
+                                                    // Melhor change: vou alterar o `updateFeature` signature na linha 89 para aceitar any.
+                                                />
+                                                <Star size={12} className={feat.highlighted ? "text-yellow-500 fill-yellow-500" : "text-gray-400"} />
+                                                Destaque
+                                            </label>
+                                            <button onClick={() => removeFeature(index)} className="text-red-600 hover:text-red-700 ml-2">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
