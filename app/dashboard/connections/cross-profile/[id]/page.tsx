@@ -35,19 +35,20 @@ export default function CrossProfileReportPage() {
 
     // Preparar dados para o Radar Chart
     // Assumindo que scoreGap tem a estrutura: { TRAIT: { scoreA, scoreB, ... } }
-    const traitsOrder = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
     const traitLabels = {
         OPENNESS: 'Abertura',
         CONSCIENTIOUSNESS: 'Conscienciosidade',
         EXTRAVERSION: 'Extroversão',
         AGREEABLENESS: 'Amabilidade',
-        NEUROTICISM: 'Estabilidade' // Invertido ou ajustado conforme metodologia, aqui mantendo simples
+        NEUROTICISM: 'Estabilidade' 
     };
+
+    const traitsOrder: (keyof typeof traitLabels)[] = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
 
     const chartData = traitsOrder.map(key => ({
         subject: traitLabels[key],
-        [author.name]: scoreGap[key].scoreA,
-        [target.name]: scoreGap[key].scoreB,
+        [author.name]: (scoreGap as any)[key]?.scoreA || 0,
+        [target.name]: (scoreGap as any)[key]?.scoreB || 0,
         fullMark: 100 // Assumindo score 0-100 ou ajustado
     }));
 
