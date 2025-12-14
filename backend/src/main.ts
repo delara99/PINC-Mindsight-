@@ -1,7 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { execSync } from 'child_process';
 
 async function bootstrap() {
+    // RUNTIME MIGRATION: Força a atualização do banco de dados ao iniciar
+    // Isso garante que tabelas novas (como CrossProfileReport) sejam criadas
+    // independentemente da configuração de deploy do Railway.
+    try {
+        console.log('🔄 STARTING RUNTIME MIGRATION...');
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        console.log('✅ MIGRATION SUCCESSFUL.');
+    } catch (error) {
+        console.error('❌ MIGRATION FAILED (Runtime):', error.message);
+        // Continuamos o boot, pois pode ser erro de conexão temporário e o banco já estar atualizado
+    }
+
     const app = await NestFactory.create(AppModule);
     // Enable CORS
     app.enableCors();
