@@ -80,8 +80,8 @@ export default function TakeAssessmentPage() {
                 console.error('Falha ao atualizar dados do usuário', e);
             }
 
-            alert('Avaliação submetida com sucesso! Seus resultados foram salvos.');
-            router.push('/dashboard/my-assessments');
+            // Redirecionamento suave para os resultados
+            router.push(`/dashboard/assessments/results/${data.result.assignmentId}`);
         },
         onError: (error: any) => {
             alert(error.message || 'Erro ao submeter avaliação');
