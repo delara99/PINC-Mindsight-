@@ -64,18 +64,19 @@ export class CrossProfileService {
     // --- Helpers ---
 
     private async getLatestBigFiveResult(userId: string) {
-        // Busca o assignment COMPLETED mais recente do tipo BIG_FIVE
-        const assignment = await this.prisma.assessmentAssignment.findFirst({
+        // Busca o resultado mais recente diretamente, validando apenas o tipo de teste
+        // Isso é mais robusto do que filtrar por status do assignment, pois se existe resultado, está completo.
+        const result = await this.prisma.assessmentResult.findFirst({
             where: {
-                userId,
-                status: 'COMPLETED',
-                assessment: { type: 'BIG_FIVE' }
+                assignment: {
+                    userId,
+                    assessment: { type: 'BIG_FIVE' }
+                }
             },
-            orderBy: { completedAt: 'desc' },
-            include: { result: true }
+            orderBy: { createdAt: 'desc' }
         });
 
-        return assignment?.result;
+        return result;
     }
 
     private calculateGaps(scoresA: any, scoresB: any) {
