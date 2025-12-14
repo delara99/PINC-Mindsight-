@@ -3,7 +3,7 @@ import { Controller, Post, Get, Body, Param, UseGuards, Request, Query } from '@
 import { AuthGuard } from '@nestjs/passport';
 import { CrossProfileService } from './cross-profile.service';
 
-@Controller('api/v1/cross-profile')
+@Controller('cross-profile')
 @UseGuards(AuthGuard('jwt'))
 export class CrossProfileController {
     constructor(private readonly service: CrossProfileService) {}
