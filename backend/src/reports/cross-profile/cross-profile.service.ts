@@ -1,13 +1,13 @@
-
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BigFiveCalculatorService } from '../../assessment/big-five-calculator.service';
 
 @Injectable()
 export class CrossProfileService {
-    constructor(private prisma: PrismaService) {}
-
-    // Método principal para gerar o relatório
-    async generateReport(connectionId: string, authorId: string) {
+    constructor(
+        private prisma: PrismaService,
+        private calculator: BigFiveCalculatorService
+    ) {}
         // 1. Validar Conexão
         const connection = await this.prisma.connection.findUnique({
             where: { id: connectionId },
@@ -91,34 +91,88 @@ export class CrossProfileService {
     // --- Helpers ---
 
     private async getLatestBigFiveResult(userId: string) {
-        // Busca o resultado mais recente diretamente, validando apenas o tipo de teste
-        // Isso é mais robusto do que filtrar por status do assignment, pois se existe resultado, está completo.
-        let result = await this.prisma.assessmentResult.findFirst({
+        // 1. Busca Assignment candidato (Big Five por Type ou Title)
+        const assignment = await this.prisma.assessmentAssignment.findFirst({
             where: {
-                assignment: {
-                    userId,
-                    assessment: { type: 'BIG_FIVE' }
+                userId,
+                assessment: {
+                    OR: [
+                        { type: 'BIG_FIVE' },
+                        { title: { contains: 'Big Five' } }
+                    ]
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { assignedAt: 'desc' },
+            include: { 
+                result: true, 
+                responses: true,
+                assessment: true 
+            }
         });
 
-        // FALLBACK: Se não achar pelo tipo estrito, tenta pelo título (para casos de dados legados/seed incorreto)
-        if (!result) {
-            result = await this.prisma.assessmentResult.findFirst({
-                where: {
-                    assignment: {
-                        userId,
-                        assessment: { 
-                            title: { contains: 'Big Five' } 
-                        }
+        if (!assignment) return null;
+
+        // 2. Se já tem resultado, retorna
+        if (assignment.result) return assignment.result;
+
+        // 3. AUTO-REPAIR: Se tem respostas mas não tem resultado, calcula agora.
+        if (assignment.responses && assignment.responses.length > 0) {
+            console.log(`[CrossProfile] Repairing missing result for assignment ${assignment.id}`);
+            
+            try {
+                // Formatar respostas
+                const formattedResponses = assignment.responses.map((r: any) => ({
+                    questionId: r.questionId,
+                    value: Number(r.answer)
+                }));
+
+                // Calcular
+                const calculated = await this.calculator.calculateBigFiveScores(
+                    assignment.assessmentId,
+                    formattedResponses
+                );
+
+                // Mapeamento PT -> EN
+                const traitMap: Record<string, string> = {
+                    'Abertura à Experiência': 'OPENNESS',
+                    'Conscienciosidade': 'CONSCIENTIOUSNESS',
+                    'Extroversão': 'EXTRAVERSION',
+                    'Amabilidade': 'AGREEABLENESS',
+                    'Estabilidade Emocional': 'NEUROTICISM'
+                };
+                
+                const finalScores: any = {};
+                calculated.traits.forEach(t => {
+                    const enKey = traitMap[t.trait];
+                    if (enKey) finalScores[enKey] = t.normalizedScore;
+                });
+
+                // Salvar resultado recuperado
+                const newResult = await this.prisma.assessmentResult.create({
+                    data: {
+                        assignmentId: assignment.id,
+                        scores: finalScores
                     }
-                },
-                orderBy: { createdAt: 'desc' }
-            });
+                });
+
+                // Garantir status COMPLETED
+                if (assignment.status !== 'COMPLETED') {
+                    await this.prisma.assessmentAssignment.update({
+                        where: { id: assignment.id },
+                        data: { status: 'COMPLETED', completedAt: new Date() }
+                    });
+                }
+
+                return newResult;
+
+            } catch (e) {
+                console.error('[CrossProfile] Repair failed', e);
+                // Se falhar o reparo, retorna null e deixa o erro original pro usuário
+                return null;
+            }
         }
 
-        return result;
+        return null;
     }
 
     private calculateGaps(scoresA: any, scoresB: any) {
