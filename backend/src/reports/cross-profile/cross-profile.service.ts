@@ -61,13 +61,13 @@ export class CrossProfileService {
                 where: { userId },
                 include: { assessment: true, result: true },
                 take: 5,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { assignedAt: 'desc' }
             });
 
             if (assignments.length === 0) return '0 assignments found';
 
-            return assignments.map(a => 
-                `[${a.assessment.title.substring(0,10)}..|Type:${a.assessment.type}|St:${a.status}|Res:${a.result ? 'YES' : 'NO'}]`
+            return assignments.map((a: any) => 
+                `[${a.assessment?.title?.substring(0,10)}..|Type:${a.assessment?.type}|St:${a.status}|Res:${a.result ? 'YES' : 'NO'}]`
             ).join(', ');
         } catch (e) {
             return 'Error details unavailable';
