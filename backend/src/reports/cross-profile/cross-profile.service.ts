@@ -27,11 +27,13 @@ export class CrossProfileService {
 
         if (!authorAssessment) {
             const authorName = authorId === connection.userAId ? connection.userA.name : connection.userB.name;
-            throw new BadRequestException(`Você (${authorName}) não possui um resultado de Big Five válido registrado no sistema.`);
+            const debug = await this.getUserDiagnostic(authorId);
+            throw new BadRequestException(`Você (${authorName}) não possui um resultado de Big Five válido. (Diag: ${debug})`);
         }
         if (!targetAssessment) {
             const targetName = targetId === connection.userAId ? connection.userA.name : connection.userB.name;
-            throw new BadRequestException(`O usuário ${targetName} não possui um resultado de Big Five válido registrado no sistema.`);
+            const debug = await this.getUserDiagnostic(targetId);
+            throw new BadRequestException(`O usuário ${targetName} não possui um resultado de Big Five válido. (Diag: ${debug})`);
         }
 
         // 3. ENGINE: Calcular Diferenças
@@ -50,6 +52,26 @@ export class CrossProfileService {
         });
 
         return report;
+    }
+
+    // Diagnóstico para entender por que o inventário não está sendo encontrado
+    private async getUserDiagnostic(userId: string) {
+        try {
+            const assignments = await this.prisma.assessmentAssignment.findMany({
+                where: { userId },
+                include: { assessment: true, result: true },
+                take: 5,
+                orderBy: { createdAt: 'desc' }
+            });
+
+            if (assignments.length === 0) return '0 assignments found';
+
+            return assignments.map(a => 
+                `[${a.assessment.title.substring(0,10)}..|Type:${a.assessment.type}|St:${a.status}|Res:${a.result ? 'YES' : 'NO'}]`
+            ).join(', ');
+        } catch (e) {
+            return 'Error details unavailable';
+        }
     }
 
     async getReport(reportId: string) {
