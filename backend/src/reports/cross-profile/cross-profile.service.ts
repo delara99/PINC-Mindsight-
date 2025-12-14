@@ -8,6 +8,9 @@ export class CrossProfileService {
         private prisma: PrismaService,
         private calculator: BigFiveCalculatorService
     ) {}
+
+    // Método principal para gerar o relatório
+    async generateReport(connectionId: string, authorId: string) {
         // 1. Validar Conexão
         const connection = await this.prisma.connection.findUnique({
             where: { id: connectionId },
