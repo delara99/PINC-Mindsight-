@@ -172,8 +172,6 @@ export class UserController {
                 phone: true,
                 credits: true,
                 createdAt: true,
-                credits: true,
-                createdAt: true,
                 status: true,
                 plan: true
             }
@@ -281,7 +279,6 @@ export class UserController {
                 userType: true,
                 cpf: true,
                 cnpj: true,
-                companyName: true,
                 companyName: true,
                 phone: true,
                 plan: true

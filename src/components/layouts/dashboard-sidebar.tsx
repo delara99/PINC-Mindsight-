@@ -14,7 +14,8 @@ import {
     PlayCircle,
     UserPlus,
     TrendingUp,
-    Lock
+    Lock,
+    Crown
 } from 'lucide-react';
 import clsx from 'clsx';
 import { UpgradeModal } from '@/src/components/common/upgrade-modal';
