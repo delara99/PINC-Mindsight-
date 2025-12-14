@@ -150,24 +150,50 @@ export default function CrossProfileReportPage() {
                         const classificationTranslations: Record<string, string> = {
                             'HIGH_SIMILARITY': 'Alta Similaridade',
                             'MODERATE_SIMILARITY': 'Similaridade Moderada',
-                            'LOW_SIMILARITY': 'Baixa Similaridade',
                             'COMPLEMENTARY': 'Complementar',
-                            'OPPOSITE': 'Oposto',
-                            'HIGH_GAP': 'Diferença Alta',
+                            'HIGH_DISSONANCE': 'Dissonância Alta',
                             'MODERATE_GAP': 'Diferença Moderada',
                             'LOW_GAP': 'Diferença Baixa'
                         };
                         const classificationPT = classificationTranslations[gapData.classification] || gapData.classification.replace('_', ' ');
 
-                        // Texto Dinâmico Simplificado (MVP) - Idealmente viria do Backend
-                        let insights = "";
-                        if (gapData.classification === 'HIGH_SIMILARITY') {
-                            insights = `${author.name} e ${target.name} possuem níveis quase idênticos de ${label}. Isso facilita a empatia e o entendimento mútuo, pois ambos tendem a reagir de forma similar a estímulos relacionados a este traço.`;
-                        } else if (gapData.classification === 'COMPLEMENTARY') {
-                            insights = `Existem diferenças notáveis na forma como vocês lidam com ${label}. Enquanto um pode ser mais intenso, o outro é mais moderado. Isso gera uma excelente oportunidade de complementaridade, onde um cobre os pontos cegos do outro.`;
-                        } else {
-                            insights = `A diferença em ${label} é significativa. Podem surgir atritos se não houver compreensão. É crucial que ${author.name} entenda que a abordagem de ${target.name} não é errada, apenas diferente.`;
-                        }
+                        // Lógica de Insights Psicológicos Específicos (Big Five Real)
+                        const getInsight = (tKey: string, cls: string, nameA: string, nameB: string) => {
+                             const isSimilar = cls.includes('SIMILAR');
+                             const isDissonant = cls.includes('DISSONANCE') || cls.includes('HIGH_GAP');
+                             
+                             switch(tKey) {
+                                case 'OPENNESS':
+                                    if (isSimilar) return `Ambos compartilham uma visão parecida sobre inovação e tradição. Isso facilita a tomada de decisões estratégicas pois tendem a concordar sobre o ritmo das mudanças.`;
+                                    if (isDissonant) return `Ponto de Atenção: Há uma divergência no apetite por novidades. Enquanto um busca inovação, o outro prefere métodos provados. É essencial validar as ideias inovadoras com a praticidade do conservador.`;
+                                    return `Vocês têm perspectivas complementares sobre criatividade. Um pode propor ideias novas enquanto o outro ajuda a aterrissá-las na realidade.`;
+                                
+                                case 'CONSCIENTIOUSNESS':
+                                    if (isSimilar) return `O nível de organização e autodisciplina é alinhado. Vocês têm expectativas semelhantes sobre prazos e qualidade, o que reduz conflitos operacionais.`;
+                                    if (isDissonant) return `Desafio Operacional: Diferença significativa na forma de trabalhar. É vital definir entregáveis claros, pois o estilo mais espontâneo pode gerar ansiedade no mais metódico.`;
+                                    return `Complementaridade: O perfil mais flexível pode ajudar a desenraizar processos rígidos, enquanto o mais organizado garante que nada seja esquecido.`;
+
+                                case 'EXTRAVERSION':
+                                    if (isSimilar) return `Energia social compatível. Vocês tendem a buscar (ou evitar) estímulos externos na mesma intensidade.`;
+                                    if (isDissonant) return `Dinâmica Falante-Ouvinte: Diferença marcante na comunicação. O mais extrovertido deve cuidar para não dominar as reuniões, dando espaço para o mais introvertido processar e falar.`;
+                                    return `Equilíbrio Social: O mais extrovertido pode atuar como ponta de lança em negociações, enquanto o mais introvertido foca em análises e escuta ativa.`;
+
+                                case 'AGREEABLENESS':
+                                    if (isSimilar) return `Valores parecidos sobre cooperação. Se for alta, o ambiente é harmonioso; se for baixa, ambos são diretos e focados em tarefas.`;
+                                    if (isDissonant) return `Risco de Atrito: Um prioriza a harmonia das pessoas, o outro o resultado direto. O perfil mais "duro" deve suavizar o feedback, e o mais "empático" deve focar nos fatos.`;
+                                    return `O perfil mais empático pode atuar como mediador de conflitos, enquanto o mais cético ajuda a proteger a equipe de acordos desvantajosos e manter o foco.`;
+
+                                case 'NEUROTICISM':
+                                    if (isSimilar) return `Reatividade emocional similar. Vocês entendem bem os gatilhos de estresse um do outro e tendem a reagir com a mesma intensidade.`;
+                                    if (isDissonant) return `Gestão de Crise: O perfil mais estável deve atuar como âncora em momentos de pressão, ajudando o mais reativo a manter a perspectiva e a calma.`;
+                                    return `Balanço Emocional: Enquanto um traz senso de urgência e alerta de riscos, o outro traz calma e racionalidade para resolver os problemas.`;
+                                
+                                default:
+                                    return `A diferença de pontuação indica dinâmicas interessantes. Conversem sobre como suas preferências individuais afetam o trabalho em equipe.`;
+                             }
+                        };
+
+                        const insights = getInsight(traitKey, gapData.classification, author.name, target.name);
 
                         return (
                             <div key={traitKey} className="bg-gray-50 rounded-xl p-6 border border-gray-100 break-inside-avoid">
