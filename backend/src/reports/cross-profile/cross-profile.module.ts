@@ -1,4 +1,3 @@
-```typescript
 import { Module } from '@nestjs/common';
 import { CrossProfileController } from './cross-profile.controller';
 import { CrossProfileService } from './cross-profile.service';
@@ -11,4 +10,3 @@ import { AssessmentModule } from '../../assessment/assessment.module';
     providers: [CrossProfileService],
 })
 export class CrossProfileModule {}
-```
