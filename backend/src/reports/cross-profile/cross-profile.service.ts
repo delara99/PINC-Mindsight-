@@ -71,7 +71,7 @@ export class CrossProfileService {
     private async getLatestBigFiveResult(userId: string) {
         // Busca o resultado mais recente diretamente, validando apenas o tipo de teste
         // Isso é mais robusto do que filtrar por status do assignment, pois se existe resultado, está completo.
-        const result = await this.prisma.assessmentResult.findFirst({
+        let result = await this.prisma.assessmentResult.findFirst({
             where: {
                 assignment: {
                     userId,
@@ -80,6 +80,21 @@ export class CrossProfileService {
             },
             orderBy: { createdAt: 'desc' }
         });
+
+        // FALLBACK: Se não achar pelo tipo estrito, tenta pelo título (para casos de dados legados/seed incorreto)
+        if (!result) {
+            result = await this.prisma.assessmentResult.findFirst({
+                where: {
+                    assignment: {
+                        userId,
+                        assessment: { 
+                            title: { contains: 'Big Five' } 
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+        }
 
         return result;
     }
