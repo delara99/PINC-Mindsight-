@@ -25,8 +25,13 @@ export class CrossProfileService {
         const authorAssessment = await this.getLatestBigFiveResult(authorId);
         const targetAssessment = await this.getLatestBigFiveResult(targetId);
 
-        if (!authorAssessment || !targetAssessment) {
-            throw new BadRequestException('Ambos os usuários precisam ter completado o inventário Big Five.');
+        if (!authorAssessment) {
+            const authorName = authorId === connection.userAId ? connection.userA.name : connection.userB.name;
+            throw new BadRequestException(`Você (${authorName}) não possui um resultado de Big Five válido registrado no sistema.`);
+        }
+        if (!targetAssessment) {
+            const targetName = targetId === connection.userAId ? connection.userA.name : connection.userB.name;
+            throw new BadRequestException(`O usuário ${targetName} não possui um resultado de Big Five válido registrado no sistema.`);
         }
 
         // 3. ENGINE: Calcular Diferenças
