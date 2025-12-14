@@ -1,0 +1,25 @@
+
+import { Controller, Post, Get, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CrossProfileService } from './cross-profile.service';
+
+@Controller('api/v1/cross-profile')
+@UseGuards(AuthGuard('jwt'))
+export class CrossProfileController {
+    constructor(private readonly service: CrossProfileService) {}
+
+    @Post('generate')
+    async generate(@Request() req, @Body('connectionId') connectionId: string) {
+        return this.service.generateReport(connectionId, req.user.userId);
+    }
+
+    @Get('connection/:connectionId')
+    async list(@Param('connectionId') connectionId: string) {
+        return this.service.listReports(connectionId);
+    }
+
+    @Get(':id')
+    async get(@Param('id') id: string) {
+        return this.service.getReport(id);
+    }
+}

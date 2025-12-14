@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter } from 'next/navigation';
-import { Loader2, UserPlus, Check, X, MessageSquare, Trash2, Settings, Link as LinkIcon, Copy, CheckCircle2, Shield, XCircle } from 'lucide-react';
+import { Loader2, UserPlus, Check, X, MessageSquare, Trash2, Settings, Link as LinkIcon, Copy, CheckCircle2, Shield, XCircle, GitCompare } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function ConnectionsPage() {
@@ -203,6 +203,36 @@ export default function ConnectionsPage() {
         }
     };
 
+    const generateReportMutation = useMutation({
+        mutationFn: async (connectionId: string) => {
+            const res = await fetch(`${API_URL}/api/v1/cross-profile/generate`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify({ connectionId })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Erro ao gerar relatório');
+            }
+            return res.json();
+        },
+        onSuccess: (data) => {
+            router.push(`/dashboard/connections/cross-profile/${data.id}`);
+        },
+        onError: (err) => {
+            alert(err.message);
+        }
+    });
+
+    const handleGenerateReport = (connectionId: string) => {
+        if (confirm('Deseja gerar uma Análise de Pareamento Comportamental com esta conexão?')) {
+            generateReportMutation.mutate(connectionId);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
@@ -302,6 +332,13 @@ export default function ConnectionsPage() {
                                             className="flex-1 bg-gray-100 text-gray-700 text-xs font-bold py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-1"
                                         >
                                             <Settings size={14} /> Perfil
+                                        </button>
+                                        <button
+                                            onClick={() => handleGenerateReport(conn.connectionId)}
+                                            className="flex-1 bg-violet-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-violet-700 flex items-center justify-center gap-1 transition-colors shadow-sm shadow-violet-200"
+                                            title="Análise de Pareamento Comportamental"
+                                        >
+                                            <GitCompare size={14} /> Relacional
                                         </button>
                                         <button
                                             onClick={() => {

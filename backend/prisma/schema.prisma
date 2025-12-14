@@ -72,6 +72,9 @@ model User {
   createdInviteLinks  ConnectionInviteLink[] @relation("InviteLinkCreator")
   usedInviteLinks     ConnectionInviteLink[] @relation("InviteLinkUsedBy")
 
+  reportsAsAuthor     CrossProfileReport[]   @relation("ReportAuthor")
+  reportsAsTarget     CrossProfileReport[]   @relation("ReportTarget")
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   lastActivityAt DateTime? @map("last_activity_at")
@@ -315,8 +318,30 @@ model Connection {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  crossProfileReports CrossProfileReport[]
+
   @@unique([userAId, userBId])
   @@map("connections")
+}
+
+model CrossProfileReport {
+  id            String   @id @default(uuid())
+  connectionId  String   // Vínculo com a conexão existente
+  authorId      String   // Quem solicitou/pagou (User A)
+  targetId      String   // Quem está sendo comparado (User B)
+  
+  // Armazenamos o snapshot dos dados calculados para não recalcular sempre
+  scoreGap      Json     // Diferenças numéricas por traço { "OPENNESS": {"gap": 15, "level": "MODERATE"}, ... }
+  matchLevel    String   // HIGH_SIMILARITY, MODERATE, COMPLEMENTARY, HIGH_DISSONANCE (Geral)
+  
+  createdAt     DateTime @default(now())
+  
+  connection    Connection @relation(fields: [connectionId], references: [id])
+  author        User       @relation("ReportAuthor", fields: [authorId], references: [id])
+  target        User       @relation("ReportTarget", fields: [targetId], references: [id])
+
+  @@map("cross_profile_reports")
+  @@index([connectionId])
 }
 
 model ConnectionRequest {
