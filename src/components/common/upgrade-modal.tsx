@@ -84,7 +84,14 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
                                     <button 
                                         className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-                                        onClick={() => window.open('https://checkout.stripe.com/c/pay/test_upgrade_pro', '_blank')} 
+                                        onClick={() => {
+                                            const link = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_URL;
+                                            if (link) {
+                                                window.open(link, '_blank');
+                                            } else {
+                                                alert('⚠️ Link de pagamento não configurado no (NEXT_PUBLIC_STRIPE_PAYMENT_URL).');
+                                            }
+                                        }} 
                                     >
                                         <Rocket size={20} />
                                         <span>Quero ser PRO Agora</span>
