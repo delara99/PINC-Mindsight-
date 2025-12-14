@@ -40,21 +40,34 @@ export class CrossProfileService {
         }
 
         // 3. ENGINE: Calcular Diferenças
-        const gaps = this.calculateGaps(authorAssessment.scores, targetAssessment.scores);
-        const matchLevel = this.determineOverallMatch(gaps);
+        try {
+            if (!authorAssessment.scores || !targetAssessment.scores) {
+                console.error('[CrossProfile] Scores missing:', { 
+                    authorScores: authorAssessment.scores, 
+                    targetScores: targetAssessment.scores 
+                });
+                throw new Error('Pontuações inválidas encontradas.');
+            }
 
-        // 4. Salvar no Banco
-        const report = await this.prisma.crossProfileReport.create({
-            data: {
-                connectionId,
-                authorId,
-                targetId,
-                scoreGap: gaps,
-                matchLevel,
-            },
-        });
+            const gaps = this.calculateGaps(authorAssessment.scores, targetAssessment.scores);
+            const matchLevel = this.determineOverallMatch(gaps);
 
-        return report;
+            // 4. Salvar no Banco
+            const report = await this.prisma.crossProfileReport.create({
+                data: {
+                    connectionId,
+                    authorId,
+                    targetId,
+                    scoreGap: gaps,
+                    matchLevel,
+                },
+            });
+
+            return report;
+        } catch (error) {
+            console.error('[CrossProfile] Critical Error:', error);
+            throw new BadRequestException(`Erro ao processar relatório: ${error.message}`);
+        }
     }
 
     // Diagnóstico para entender por que o inventário não está sendo encontrado
@@ -179,6 +192,11 @@ export class CrossProfileService {
     }
 
     private calculateGaps(scoresA: any, scoresB: any) {
+        if (!scoresA || !scoresB) {
+             // Redundancia pois verifiquei acima, mas seguro.
+             return {};
+        }
+
         const traits = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
         const result = {};
 
@@ -205,6 +223,8 @@ export class CrossProfileService {
     }
 
     private determineOverallMatch(gaps: any) {
+        if (!gaps || Object.keys(gaps).length === 0) return 'UNKNOWN';
+
         // Lógica simples: Média das diferenças
         const diffs = Object.values(gaps).map((g: any) => g.diff);
         const avgDiff = diffs.reduce((a: any, b: any) => a + b, 0) / diffs.length;
