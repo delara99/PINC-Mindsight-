@@ -47,10 +47,75 @@ export class AssessmentService {
             }
         }
 
-        return this.prisma.assessmentModel.update({
-            where: { id },
-            data,
-            include: { questions: true }
+        const { questions, ...assessmentData } = data;
+
+        // Se não tiver questions, atualiza só o básico
+        if (!questions) {
+             return this.prisma.assessmentModel.update({
+                where: { id },
+                data: assessmentData,
+                include: { questions: true }
+            });
+        }
+
+        // Se tiver questions, faz gestão inteligente (Diff) dentro de transação
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Atualizar dados básicos da avaliação
+            await tx.assessmentModel.update({
+                where: { id },
+                data: assessmentData,
+            });
+
+            // 2. Gerenciar Questões
+            const existingQuestions = await tx.question.findMany({ 
+                where: { assessmentModelId: id },
+                select: { id: true }
+            });
+            const existingIds = existingQuestions.map(q => q.id);
+            
+            // Identificar IDs que chegaram no payload (ignorando 'temp-')
+             const incomingIds = questions
+                .filter((q: any) => q.id && !q.id.toString().startsWith('temp-'))
+                .map((q: any) => q.id);
+
+            // Deletar questões que não estão mais na lista
+            const toDelete = existingIds.filter(eid => !incomingIds.includes(eid));
+            if (toDelete.length > 0) {
+                await tx.question.deleteMany({
+                    where: { id: { in: toDelete } }
+                });
+            }
+
+            // Inserir ou Atualizar questões
+            for (const q of questions) {
+                // Se for ID temporário ou não existir no banco, cria nova
+                if (!q.id || q.id.toString().startsWith('temp-') || !existingIds.includes(q.id)) {
+                    await tx.question.create({
+                        data: {
+                            text: q.text,
+                            traitKey: q.traitKey,
+                            weight: Number(q.weight) || 1,
+                            assessmentModelId: id
+                        }
+                    });
+                } else {
+                    // Se já existe, atualiza
+                    await tx.question.update({
+                        where: { id: q.id },
+                        data: {
+                            text: q.text,
+                            traitKey: q.traitKey,
+                            weight: Number(q.weight) || 1
+                        }
+                    });
+                }
+            }
+
+            // Retorna objeto completo atualizado
+            return tx.assessmentModel.findUnique({
+                where: { id },
+                include: { questions: true }
+            });
         });
     }
 
