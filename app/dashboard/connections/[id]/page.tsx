@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock } from 'lucide-react';
+import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar } from 'lucide-react';
 
 export default function ConnectionDetailPage() {
     const { id } = useParams(); // Connection ID
@@ -12,7 +12,7 @@ export default function ConnectionDetailPage() {
     const token = useAuthStore((state) => state.token);
     const user = useAuthStore((state) => state.user); // My User
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'overview' | 'inventories' | 'chat'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'inventories' | 'chat' | 'crossProfile'>('overview');
     const [messageInput, setMessageInput] = useState('');
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +92,42 @@ export default function ConnectionDetailPage() {
             setMessageInput('');
             queryClient.invalidateQueries({ queryKey: ['connection-messages', id] });
         }
+    });
+
+    // Fetch Cross Profile Reports
+    const { data: crossProfileReports, isLoading: loadingReports } = useQuery({
+        queryKey: ['cross-profile-list', id],
+        enabled: activeTab === 'crossProfile',
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/cross-profile/connection/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao carregar relatórios');
+            return res.json();
+        }
+    });
+
+    const generateReportMutation = useMutation({
+        mutationFn: async () => {
+             const res = await fetch(`${API_URL}/api/v1/cross-profile/generate`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify({ connectionId: id })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Erro ao gerar relatório');
+            }
+            return res.json();
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['cross-profile-list', id] });
+            router.push(`/dashboard/connections/cross-profile/${data.id}`);
+        },
+        onError: (err) => alert(err.message)
     });
 
     if (loadingDetail) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin" /></div>;
@@ -182,6 +218,12 @@ export default function ConnectionDetailPage() {
                     >
                         <MessageSquare size={16} /> Chat
                     </button>
+                    <button
+                        onClick={() => setActiveTab('crossProfile')}
+                        className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'crossProfile' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <GitCompare size={16} /> Relatórios Relacionais
+                    </button>
                 </div>
 
                 {/* Tab Content */}
@@ -265,6 +307,62 @@ export default function ConnectionDetailPage() {
                                     {sendMessageMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                                 </button>
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'crossProfile' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-lg text-gray-800">Histórico de Análises</h3>
+                                <button
+                                    onClick={() => generateReportMutation.mutate()}
+                                    disabled={generateReportMutation.isPending}
+                                    className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-lg shadow-violet-200"
+                                >
+                                    {generateReportMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                    Nova Análise
+                                </button>
+                            </div>
+
+                            {loadingReports ? (
+                                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-violet-600" /></div>
+                            ) : (!crossProfileReports || crossProfileReports.length === 0) ? (
+                                <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+                                    <GitCompare className="mx-auto text-gray-300 mb-3" size={48} />
+                                    <h3 className="text-lg font-medium text-gray-900">Nenhum relatório encontrado</h3>
+                                    <p className="text-gray-500 mt-1 max-w-sm mx-auto">Gere uma análise de pareamento comportamental para descobrir a sinergia entre vocês.</p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    {crossProfileReports.map((report: any) => (
+                                        <div key={report.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex justify-between items-center group">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-violet-50 text-violet-600 rounded-lg flex items-center justify-center">
+                                                    <GitCompare size={24} />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-bold text-gray-900">Análise de Compatibilidade</span>
+                                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full uppercase">
+                                                            {report.matchLevel?.replace('_', ' ') || 'Processado'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                        <Calendar size={12} />
+                                                        Gerado em {new Date(report.createdAt).toLocaleDateString('pt-BR')} às {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => router.push(`/dashboard/connections/cross-profile/${report.id}`)}
+                                                className="px-4 py-2 bg-gray-50 text-gray-700 font-bold text-xs rounded-lg group-hover:bg-violet-600 group-hover:text-white transition-colors"
+                                            >
+                                                Visualizar Relatório
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
