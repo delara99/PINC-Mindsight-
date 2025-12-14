@@ -8,9 +8,11 @@ export default function DashboardLayout({
 }) {
     return (
         <div className="flex min-h-screen bg-gray-50/50">
-            <DashboardSidebar />
-            <main className="flex-1 pl-72">
-                <div className="max-w-7xl mx-auto p-8">
+            <div className="print:hidden">
+                <DashboardSidebar />
+            </div>
+            <main className="flex-1 pl-72 print:pl-0">
+                <div className="max-w-7xl mx-auto p-8 print:p-0 print:max-w-none">
                     <UserSynchronizer />
                     {children}
                 </div>

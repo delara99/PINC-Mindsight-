@@ -146,6 +146,19 @@ export default function CrossProfileReportPage() {
                         const gapSize = gapData.diff.toFixed(1);
                         const label = traitLabels[traitKey];
 
+                        // Tradução de classification
+                        const classificationTranslations: Record<string, string> = {
+                            'HIGH_SIMILARITY': 'Alta Similaridade',
+                            'MODERATE_SIMILARITY': 'Similaridade Moderada',
+                            'LOW_SIMILARITY': 'Baixa Similaridade',
+                            'COMPLEMENTARY': 'Complementar',
+                            'OPPOSITE': 'Oposto',
+                            'HIGH_GAP': 'Diferença Alta',
+                            'MODERATE_GAP': 'Diferença Moderada',
+                            'LOW_GAP': 'Diferença Baixa'
+                        };
+                        const classificationPT = classificationTranslations[gapData.classification] || gapData.classification.replace('_', ' ');
+
                         // Texto Dinâmico Simplificado (MVP) - Idealmente viria do Backend
                         let insights = "";
                         if (gapData.classification === 'HIGH_SIMILARITY') {
@@ -166,7 +179,7 @@ export default function CrossProfileReportPage() {
                                           'bg-orange-100 text-orange-700'
                                         }`}
                                     >
-                                        {gapData.classification.replace('_', ' ')}
+                                        {classificationPT}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-4 mb-4 text-sm font-medium text-gray-500">
