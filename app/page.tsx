@@ -198,7 +198,9 @@ export default function Home() {
                                     )}
                                     <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                                     <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-extrabold text-gray-900">{plan.currency} {plan.price}</span>
+                                        <span className="text-4xl font-extrabold text-gray-900">
+                                            {plan.currency} {Number(String(plan.price).replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
                                         <span className="text-gray-500">/{plan.period}</span>
                                     </div>
                                     <ul className="space-y-3 mb-8">
