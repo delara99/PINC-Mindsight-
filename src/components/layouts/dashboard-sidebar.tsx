@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/src/store/auth-store';
 import { usePathname, useRouter } from 'next/navigation';
@@ -12,9 +13,11 @@ import {
     BrainCircuit,
     PlayCircle,
     UserPlus,
-    TrendingUp
+    TrendingUp,
+    Lock
 } from 'lucide-react';
 import clsx from 'clsx';
+import { UpgradeModal } from '@/src/components/common/upgrade-modal';
 
 const menuItems = [
     { label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
@@ -33,6 +36,7 @@ export function DashboardSidebar() {
     const user = useAuthStore((state) => state.user);
     const pathname = usePathname();
     const router = useRouter();
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
     // Debug
     console.log('DashboardSidebar - User:', user);
@@ -51,7 +55,15 @@ export function DashboardSidebar() {
                 </div>
                 <div>
                     <h1 className="font-bold text-gray-800 leading-tight">{user?.name || 'Usuário'}</h1>
-                    <span className="text-xs text-gray-500 font-medium">{user?.email || 'email@exemplo.com'}</span>
+                    <span className="text-xs text-gray-500 font-medium block">{user?.email || 'email@exemplo.com'}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${
+                        user?.plan === 'PRO' || user?.plan === 'BUSINESS' 
+                        ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                        : 'bg-gray-100 text-gray-600 border border-gray-200'
+                    }`}>
+                        {(user?.plan === 'PRO' || user?.plan === 'BUSINESS') && <Crown size={10} />}
+                        {user?.plan || 'START'}
+                    </span>
                 </div>
             </div>
 
@@ -69,23 +81,37 @@ export function DashboardSidebar() {
                 }).map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
+                    const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+                    // Lógica de Bloqueio para Plano Start: Super Admin nunca é bloqueado
+                    const isLocked = item.label === 'Minhas Conexões' && user?.plan === 'START' && !isSuperAdmin;
+                    
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
+                            onClick={(e) => {
+                                if (isLocked) {
+                                    e.preventDefault();
+                                    setIsUpgradeModalOpen(true);
+                                }
+                            }}
                             className={clsx(
                                 "flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-all duration-200 group",
                                 isActive
                                     ? "bg-primary/10 text-primary"
-                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                                isLocked && "opacity-75"
                             )}
                         >
                             <Icon size={20} className={clsx(isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600")} />
-                            {item.label}
+                            <span className="flex-1">{item.label}</span>
+                            {isLocked && <Lock size={16} className="text-gray-400" />}
                         </Link>
                     );
                 })}
             </nav>
+
+            <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
 
             <div className="p-4 border-t border-gray-100 bg-gray-50/30">
                 <button

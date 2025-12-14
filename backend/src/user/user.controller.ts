@@ -24,7 +24,7 @@ export class UserController {
                         { tenantId: req.user.tenantId, role: 'MEMBER' }
                     ]
                 },
-                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true }
+                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true }
             });
         }
 
@@ -35,7 +35,7 @@ export class UserController {
                     tenantId: req.user.tenantId,
                     role: 'MEMBER'
                 },
-                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true }
+                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true }
             });
         }
 
@@ -142,6 +142,11 @@ export class UserController {
             updateData.status = data.status;
         }
 
+        // Permitir atualização de Plano
+        if (data.plan) {
+            updateData.plan = data.plan;
+        }
+
         // Atualizar CPF ou CNPJ baseado no tipo
         if (data.userType === 'INDIVIDUAL') {
             updateData.cpf = data.cpf || null;
@@ -167,7 +172,10 @@ export class UserController {
                 phone: true,
                 credits: true,
                 createdAt: true,
-                status: true
+                credits: true,
+                createdAt: true,
+                status: true,
+                plan: true
             }
         });
     }
@@ -274,7 +282,9 @@ export class UserController {
                 cpf: true,
                 cnpj: true,
                 companyName: true,
-                phone: true
+                companyName: true,
+                phone: true,
+                plan: true
             }
         });
         return user;

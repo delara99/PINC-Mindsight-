@@ -15,7 +15,7 @@ model Tenant {
   id          String   @id @default(uuid())
   name        String
   slug        String   @unique
-  plan        PlanType @default(FREE)
+  plan        PlanType @default(START)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -32,9 +32,9 @@ model Tenant {
 }
 
 enum PlanType {
-  FREE
-  STARTER
-  ENTERPRISE
+  START
+  PRO
+  BUSINESS
 }
 
 model User {
@@ -44,6 +44,7 @@ model User {
   name        String?
   role        Role     @default(MEMBER)
   status      UserStatus @default(pending)
+  plan        PlanType   @default(START)
   
   // Diferenciação PF/PJ
   userType    UserType @default(INDIVIDUAL)

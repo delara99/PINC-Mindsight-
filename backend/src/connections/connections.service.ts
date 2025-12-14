@@ -20,6 +20,11 @@ export class ConnectionsService {
             throw new BadRequestException('Você não pode convidar a si mesmo.');
         }
 
+        const sender = await this.prisma.user.findUnique({ where: { id: senderId } });
+        if (sender?.plan === 'START') {
+            throw new ForbiddenException('Seu plano atual não permite enviar convites. Faça o upgrade para o PRO.');
+        }
+
         // Verificar se já existe conexão ou pedido
         const existingConnection = await this.prisma.connection.findFirst({
             where: {
@@ -105,6 +110,14 @@ export class ConnectionsService {
         if (!request) throw new NotFoundException('Convite não encontrado.');
         if (request.receiverId !== userId) throw new ForbiddenException('Este convite não é para você.');
         if (request.status !== 'PENDING') throw new BadRequestException('Convite já processado.');
+
+        // Verificar permissão de plano (Logica Viral: Start só conecta com Pro/Business)
+        const receiver = await this.prisma.user.findUnique({ where: { id: userId } });
+        const sender = await this.prisma.user.findUnique({ where: { id: request.senderId } });
+
+        if (receiver?.plan === 'START' && sender?.plan === 'START') {
+            throw new ForbiddenException('Usuários do plano Start não podem se conectar entre si. Faça um upgrade para conectar.');
+        }
 
         // Transação: Atualiza pedido e cria conexão
         return this.prisma.$transaction(async (tx) => {
@@ -335,6 +348,14 @@ export class ConnectionsService {
 
         if (invite.creatorId === userId) {
             throw new BadRequestException('Você não pode aceitar seu próprio convite.');
+        }
+
+        // Verificar planos (Logica Viral)
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const creator = await this.prisma.user.findUnique({ where: { id: invite.creatorId } });
+
+        if (user?.plan === 'START' && creator?.plan === 'START') {
+             throw new ForbiddenException('Usuários Starter não podem se conectar com outros Starters. Upgrade necessário.');
         }
 
         // Verificar se já existe conexão

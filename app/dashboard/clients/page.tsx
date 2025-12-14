@@ -18,6 +18,7 @@ interface Client {
     status?: 'active' | 'pending' | 'inactive';
     companyName?: string | null;
     userType?: 'INDIVIDUAL' | 'COMPANY';
+    plan?: 'START' | 'PRO' | 'BUSINESS';
 }
 
 export default function ClientsPage() {
@@ -50,7 +51,8 @@ export default function ClientsPage() {
         cpf: '',
         cnpj: '',
         companyName: '',
-        phone: ''
+        phone: '',
+        plan: 'START'
     });
 
     // Listar Clientes
@@ -194,7 +196,8 @@ export default function ClientsPage() {
             cpf: (client as any).cpf || '',
             cnpj: (client as any).cnpj || '',
             companyName: (client as any).companyName || '',
-            phone: (client as any).phone || ''
+            phone: (client as any).phone || '',
+            plan: client.plan || 'START'
         });
         setIsEditModalOpen(true);
     };
@@ -295,6 +298,7 @@ export default function ClientsPage() {
                             <tr>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Nome / Email</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Plano</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Data Cadastro</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Saldo de Créditos</th>
                                 <th className="text-right py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
@@ -320,6 +324,15 @@ export default function ClientsPage() {
                                                 : 'bg-red-100 text-red-700'
                                             }`}>
                                             {(client as any).status === 'active' ? 'Ativo' : (client as any).status === 'pending' ? 'Pendente' : 'Inativo'}
+                                        </span>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                                            client.plan === 'BUSINESS' ? 'bg-amber-100 text-amber-700' :
+                                            client.plan === 'PRO' ? 'bg-purple-100 text-purple-700' :
+                                            'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {client.plan || 'START'}
                                         </span>
                                     </td>
                                     <td className="py-4 px-6 text-sm text-gray-500">
@@ -710,6 +723,19 @@ export default function ClientsPage() {
                                     onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Plano de Acesso</label>
+                                <select
+                                    value={editData.plan}
+                                    onChange={(e) => setEditData({ ...editData, plan: e.target.value as any })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none bg-white"
+                                >
+                                    <option value="START">START (Básico)</option>
+                                    <option value="PRO">PRO (Networking)</option>
+                                    <option value="BUSINESS">BUSINESS (Completo)</option>
+                                </select>
                             </div>
                         </div>
 
