@@ -288,8 +288,9 @@ export class UserController {
     }
 
     // Solicitar compra de créditos (Cliente)
+    // Solicitar compra de créditos (Cliente)
     @Post('request-credit')
-    async requestCredit(@Request() req) {
+    async requestCredit(@Request() req, @Body() body: { planName?: string }) {
         const userId = req.user.userId;
         const tenantId = req.user.tenantId;
 
@@ -302,6 +303,14 @@ export class UserController {
         });
 
         if (existing) {
+            // Se já existe e o usuário está tentando comprar de novo, atualizamos o plano
+            if (body.planName) {
+                await this.prisma.creditSolicitation.update({
+                    where: { id: existing.id },
+                    data: { planName: body.planName }
+                });
+                return { message: 'Solicitação atualizada com o novo plano.' };
+            }
             return { message: 'Já existe uma solicitação pendente.' };
         }
 
@@ -309,7 +318,8 @@ export class UserController {
             data: {
                 userId,
                 tenantId,
-                status: 'PENDING'
+                status: 'PENDING',
+                planName: body.planName
             }
         });
     }

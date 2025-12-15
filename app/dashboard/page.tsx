@@ -97,6 +97,11 @@ export default function DashboardPage() {
                                     <div key={req.id} className="bg-orange-50 p-3 rounded-lg border border-orange-100 text-sm">
                                         <p className="font-bold text-gray-800">{req.user.name}</p>
                                         <p className="text-xs text-gray-500 mb-2">{req.user.email}</p>
+                                        {req.planName && (
+                                            <p className="text-xs font-bold text-purple-600 mb-1 bg-purple-50 inline-block px-2 py-0.5 rounded">
+                                                Plano Escolhido: {req.planName}
+                                            </p>
+                                        )}
                                         <p className="text-xs text-orange-700 font-medium">
                                             Solicitou compra em {new Date(req.createdAt).toLocaleDateString()}
                                         </p>

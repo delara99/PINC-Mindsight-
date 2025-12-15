@@ -224,6 +224,8 @@ model CreditSolicitation {
   user      User     @relation(fields: [userId], references: [id])
   status    SolicitationStatus @default(PENDING)
   
+  planName  String?  @map("plan_name")
+
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
 
