@@ -61,7 +61,7 @@ function PlansContent() {
                             <h3 className="text-lg font-medium text-gray-500 mb-2">{plan.name}</h3>
                             <div className="flex justify-center items-baseline gap-1">
                                 <span className="text-4xl font-extrabold text-gray-900">
-                                    {plan.currency || 'R$'} {plan.price}
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(plan.price))}
                                 </span>
                             </div>
                             <div className="mt-4 bg-gray-50 rounded-lg p-4">
