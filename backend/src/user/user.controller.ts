@@ -332,59 +332,65 @@ export class UserController {
     // Aprovar Solicitação de Crédito (Admin)
     @Post('approve-credit/:id')
     async approveCreditSolicitation(@Param('id') id: string, @Request() req) {
-        const user = req.user;
-        if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
-            throw new ForbiddenException('Apenas admins podem aprovar solicitações');
-        }
-
-        const solicitation = await this.prisma.creditSolicitation.findUnique({
-            where: { id },
-            include: { user: true }
-        });
-
-        if (!solicitation) {
-            throw new BadRequestException('Solicitação não encontrada');
-        }
-
-        if (solicitation.status !== 'PENDING') {
-            throw new BadRequestException('Esta solicitação já foi processada');
-        }
-
-        // Transação para garantir consistência
-        await this.prisma.$transaction(async (tx) => {
-            // 1. Atualizar Status da Solicitação
-            await tx.creditSolicitation.update({
-                where: { id },
-                data: { status: 'APPROVED' }
-            });
-
-            // 2. Adicionar Créditos ao Usuário
-            const updateData: any = {
-                credits: { increment: solicitation.credits || 0 }
-            };
-
-            // 3. Atualizar Plano do Usuário (se houver nome de plano e for válido)
-            if (solicitation.planName) {
-                // Tenta mapear para o Enum PlanType
-                let newPlanStr = solicitation.planName.toUpperCase().trim();
-                
-                // Mapa de correções comuns se o frontend enviar nomes diferentes
-                if (newPlanStr.includes('PRO')) newPlanStr = 'PRO';
-                else if (newPlanStr.includes('BUSINESS') || newPlanStr.includes('EMPRESA')) newPlanStr = 'BUSINESS';
-                else if (newPlanStr.includes('START') || newPlanStr.includes('INICIAL')) newPlanStr = 'START';
-                
-                // Verifica se é um valor válido do Enum (Isso evita o crash 500 se vier lixo)
-                if (['START', 'PRO', 'BUSINESS'].includes(newPlanStr)) {
-                     updateData.plan = newPlanStr;
-                }
+        try {
+            const user = req.user;
+            if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
+                throw new ForbiddenException('Apenas admins podem aprovar solicitações');
             }
 
-            await tx.user.update({
-                where: { id: solicitation.userId },
-                data: updateData
+            const solicitation = await this.prisma.creditSolicitation.findUnique({
+                where: { id },
+                include: { user: true }
             });
-        });
 
-        return { message: 'Solicitação aprovada e créditos adicionados com sucesso!' };
+            if (!solicitation) {
+                throw new BadRequestException('Solicitação não encontrada');
+            }
+
+            if (solicitation.status !== 'PENDING') {
+                throw new BadRequestException('Esta solicitação já foi processada');
+            }
+
+            // Transação para garantir consistência
+            await this.prisma.$transaction(async (tx) => {
+                // 1. Atualizar Status da Solicitação
+                await tx.creditSolicitation.update({
+                    where: { id },
+                    data: { status: 'APPROVED' }
+                });
+
+                // 2. Adicionar Créditos ao Usuário
+                const updateData: any = {
+                    credits: { increment: solicitation.credits || 0 }
+                };
+
+                // 3. Atualizar Plano do Usuário (se houver nome de plano e for válido)
+                if (solicitation.planName) {
+                    // Tenta mapear para o Enum PlanType
+                    let newPlanStr = solicitation.planName.toUpperCase().trim();
+                    
+                    // Mapa de correções comuns se o frontend enviar nomes diferentes
+                    if (newPlanStr.includes('PRO')) newPlanStr = 'PRO';
+                    else if (newPlanStr.includes('BUSINESS') || newPlanStr.includes('EMPRESA')) newPlanStr = 'BUSINESS';
+                    else if (newPlanStr.includes('START') || newPlanStr.includes('INICIAL')) newPlanStr = 'START';
+                    
+                    // Verifica se é um valor válido do Enum (Isso evita o crash 500 se vier lixo)
+                    if (['START', 'PRO', 'BUSINESS'].includes(newPlanStr)) {
+                         updateData.plan = newPlanStr;
+                    }
+                }
+
+                await tx.user.update({
+                    where: { id: solicitation.userId },
+                    data: updateData
+                });
+            });
+
+            return { message: 'Solicitação aprovada e créditos adicionados com sucesso!' };
+
+        } catch (error) {
+            console.error('Erro ao aprovar solicitação:', error);
+            throw new BadRequestException(`Erro ao processar aprovação: ${error.message}`);
+        }
     }
 }

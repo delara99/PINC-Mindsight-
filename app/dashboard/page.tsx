@@ -114,14 +114,17 @@ export default function DashboardPage() {
                                                             method: 'POST',
                                                             headers: { 'Authorization': `Bearer ${token}` }
                                                         });
+                                                        
+                                                        const data = await res.json();
+                                                        
                                                         if (res.ok) {
-                                                            alert('Solicitação aprovada com sucesso!');
+                                                            alert(data.message || 'Solicitação aprovada com sucesso!');
                                                             window.location.reload(); 
                                                         } else {
-                                                            alert('Erro ao aprovar.');
+                                                            alert(`Erro ao aprovar: ${data.message || 'Erro desconhecido'}`);
                                                         }
                                                     } catch (e) {
-                                                        alert('Erro de conexão.');
+                                                        alert('Erro de conexão ou erro interno.');
                                                     }
                                                 }}
                                                 className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
