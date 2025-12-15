@@ -78,13 +78,16 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
                     {/* Resumo */}
                     <div className="flex justify-between items-center border-b pb-4">
                         <div>
-                            <p className="text-sm text-gray-500">Plano Selecionado</p>
-                            <p className="font-bold text-gray-900 text-lg">{plan.name}</p>
+                            <p className="text-sm text-gray-500">Item</p>
+                            <p className="font-bold text-gray-900 text-lg">
+                                {plan.name}
+                                {plan.credits > 0 && <span className="text-sm font-normal text-gray-500 ml-2">({plan.credits} créditos extras)</span>}
+                            </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-sm text-gray-500">Valor</p>
+                            <p className="text-sm text-gray-500">Valor Total</p>
                             <p className="font-bold text-primary text-xl">
-                                {plan.currency || 'R$'} {plan.price}
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(plan.price))}
                             </p>
                         </div>
                     </div>
