@@ -59,7 +59,7 @@ function PlansContent() {
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex flex-wrap justify-center gap-8">
                 {plans.map((plan: any) => {
                     const quantity = quantities[plan.id] || 0;
                     const isUnlimited = plan.name.toLowerCase().includes('business'); 
@@ -75,7 +75,7 @@ function PlansContent() {
                     return (
                         <div 
                             key={plan.id}
-                            className={`relative bg-white rounded-2xl shadow-xl border-2 flex flex-col p-8 transition-transform hover:scale-[1.02] ${plan.highlighted ? 'border-primary ring-4 ring-primary/10' : 'border-gray-100'}`}
+                            className={`relative bg-white rounded-2xl shadow-xl border-2 flex flex-col p-8 transition-transform hover:scale-[1.02] w-full max-w-sm ${plan.highlighted ? 'border-primary ring-4 ring-primary/10' : 'border-gray-100'}`}
                         >
                             {plan.highlighted && (
                                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
