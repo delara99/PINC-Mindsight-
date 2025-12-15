@@ -119,39 +119,39 @@ export class AuthService {
             // Por enquanto vou focar no registro e a venda se resolve depois no dashboard ou adiciono um campo de 'requestedAmount' depois.
         }
 
-        // 5. Se houver dados do Trial (Degustação), salvar progresso
-        if (data.trialData && Array.isArray(data.trialData) && data.trialData.length > 0) {
-            // Buscar modelo de avaliação padrão (BIG_FIVE)
-            // Tenta pegar do tenant se existir, senão pega qualquer um global (ou do primeiro tenant admin)
-            const assessmentModel = await this.prisma.assessmentModel.findFirst({
-                where: { type: 'BIG_FIVE' }
+        // 5. Auto-Atribuição do Inventário (Big Five)
+        // Isso garante que o usuário já tenha o card "Em Andamento" no dashboard assim que se cadastra.
+        // Evita erros de ID mismatch e race conditions no frontend.
+        const assessmentModel = await this.prisma.assessmentModel.findFirst({
+            where: { type: 'BIG_FIVE' }
+        });
+
+        if (assessmentModel) {
+            // Criar atribuição (Assignment) IMEDIATAMENTE
+            const assignment = await this.prisma.assessmentAssignment.create({
+                data: {
+                    userId: user.id,
+                    assessmentId: assessmentModel.id,
+                    status: 'IN_PROGRESS',
+                    assignedAt: new Date(),
+                }
             });
 
-            if (assessmentModel) {
-                // Buscar as questões do banco para mapear
-                // O Trial hardcoded usa IDs 1-10, aqui vamos assumir a ordem de criação ou ordem alfabética
+            // Se houver dados do Trial (Degustação), salvar progresso recuperado
+            if (data.trialData && Array.isArray(data.trialData) && data.trialData.length > 0) {
+                // Buscar as questões do banco para mapear IDs corretos
                 const questions = await this.prisma.question.findMany({
                     where: { assessmentModelId: assessmentModel.id },
-                    orderBy: { createdAt: 'asc' }, // Assumindo ordem de inserção
-                    take: 10
+                    orderBy: { createdAt: 'asc' }, // Assumindo ordem estável
+                    take: 10 // Trial costuma ter poucas perguntas
                 });
 
                 if (questions.length > 0) {
-                    // Criar atribuição (Assignment) parcialmente preenchida
-                    const assignment = await this.prisma.assessmentAssignment.create({
-                        data: {
-                            userId: user.id,
-                            assessmentId: assessmentModel.id,
-                            status: 'IN_PROGRESS',
-                            assignedAt: new Date(),
-                        }
-                    });
-
-                    // Preparar respostas para inserção
                     const responsesToCreate = [];
                     
                     data.trialData.forEach((item: any) => {
                         // O item.questionId do trial é 1, 2, 3... (índice 0-based seria id-1)
+                        // Lógica de mapeamento baseada na ordem
                         const index = item.questionId - 1;
                         if (questions[index]) {
                             responsesToCreate.push({
