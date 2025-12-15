@@ -264,21 +264,21 @@ export class AssessmentController {
     @Get(':id')
     async getOne(@Param('id') id: string, @Request() req) {
         const user = req.user;
+        console.log(`[DEBUG] getOne request. ID: ${id}, User: ${user.userId}, Role: ${user.role}`);
 
-        // Se for cliente (MEMBER ou INDIVIDUAL), verificar se tem atribuição para esta avaliação
-        // Isso permite acessar avaliações de outros tenants (ex: criadas pelo Super Admin)
-        if (user.role === 'MEMBER' || (user.userType === 'INDIVIDUAL' && user.role !== 'SUPER_ADMIN')) {
-            const assignment = await this.prisma.assessmentAssignment.findFirst({
-                where: {
-                    assessmentId: id,
-                    userId: user.userId
-                }
-            });
-
-            if (assignment) {
-                // Se tiver atribuição, busca a avaliação ignorando o tenantId
-                return this.assessmentService.findOne(id);
+        // 1. Prioridade Máxima: Se o usuário tem um Assignment para esta avaliação, ele DEVE poder vê-la.
+        // Isso remove restrições de Role/UserType que estavam bloqueando TenantAdmins de verem suas próprias provas.
+        const assignment = await this.prisma.assessmentAssignment.findFirst({
+            where: {
+                assessmentId: id,
+                userId: user.userId
             }
+        });
+
+        if (assignment) {
+            console.log('[DEBUG] Assignment found via Universal Check. Granting access.');
+            // Se tiver atribuição, busca a avaliação ignorando o tenantId (Modo Leitura para Realização)
+            return this.assessmentService.findOne(id);
         }
 
         // Se não tiver atribuição, tenta buscar normalmente.
