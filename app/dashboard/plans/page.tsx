@@ -10,7 +10,7 @@ import { PaymentModal } from '../components/PaymentModal';
 
 export const dynamic = 'force-dynamic';
 
-const CREDIT_PRICE = 19.90;
+const CREDIT_PRICE = 29.90;
 
 function PlansContent() {
     const { token } = useAuthStore();
@@ -62,7 +62,14 @@ function PlansContent() {
             <div className="grid md:grid-cols-3 gap-8">
                 {plans.map((plan: any) => {
                     const quantity = quantities[plan.id] || 0;
-                    const isUnlimited = plan.name.toLowerCase().includes('business'); // Regra simples para diferenciar
+                    const isUnlimited = plan.name.toLowerCase().includes('business'); 
+                    
+                    // Logic: Base price is for 1 credit (Starter/Pro) usually.
+                    // If plan has 0 credits in DB, assume 1 based on user requirement.
+                    const dbCredits = plan.credits || 0;
+                    const baseCredits = (dbCredits === 0 && !isUnlimited) ? 1 : dbCredits;
+                    
+                    const totalCredits = isUnlimited ? 0 : (baseCredits + quantity);
                     const finalPrice = Number(plan.price) + (quantity * CREDIT_PRICE);
 
                     return (
@@ -85,7 +92,13 @@ function PlansContent() {
                                     {!isUnlimited && quantity > 0 && <span className="text-xs text-gray-400 font-medium">/total</span>}
                                 </div>
                                 <p className="text-xs text-gray-400 mt-1">
-                                    Plano Base: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(plan.price))}
+                                    {quantity > 0 ? (
+                                        <>
+                                            Plano Base ({baseCredits} crédito): {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(plan.price))}
+                                        </>
+                                    ) : (
+                                        <>Plano Base: {baseCredits} crédito(s)</>
+                                    )}
                                 </p>
 
                                 {/* Credit Selector */}
@@ -102,7 +115,7 @@ function PlansContent() {
                                             </button>
                                             <div className="flex flex-col items-center w-16">
                                                 <span className="text-2xl font-bold text-primary">{quantity}</span>
-                                                <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">créditos</span>
+                                                <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">adicionais</span>
                                             </div>
                                             <button 
                                                 onClick={() => handleQuantityChange(plan.id, 1)}
@@ -111,8 +124,9 @@ function PlansContent() {
                                                 <Plus size={18} />
                                             </button>
                                         </div>
-                                        <div className="mt-2 text-xs text-gray-400">
-                                            + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quantity * CREDIT_PRICE)}
+                                        <div className="mt-2 text-xs text-gray-400 flex flex-col items-center">
+                                            <span>+ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quantity * CREDIT_PRICE)}</span>
+                                            <span className="font-bold text-primary mt-1">Total: {totalCredits} Créditos</span>
                                         </div>
                                     </div>
                                 ) : (
@@ -136,8 +150,8 @@ function PlansContent() {
                             <button 
                                 onClick={() => setSelectedPlan({ 
                                     ...plan, 
-                                    price: finalPrice, // Override price with total
-                                    credits: quantity,
+                                    price: finalPrice, 
+                                    credits: totalCredits,
                                     originalPrice: plan.price
                                 })}
                                 className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${plan.highlighted ? 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/30' : 'bg-gray-900 text-white hover:bg-gray-800'}`}

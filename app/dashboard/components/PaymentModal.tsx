@@ -81,7 +81,7 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
                             <p className="text-sm text-gray-500">Item</p>
                             <p className="font-bold text-gray-900 text-lg">
                                 {plan.name}
-                                {plan.credits > 0 && <span className="text-sm font-normal text-gray-500 ml-2">({plan.credits} créditos extras)</span>}
+                                {plan.credits > 0 && <span className="text-sm font-normal text-gray-500 ml-2">(Total: {plan.credits} créditos)</span>}
                             </p>
                         </div>
                         <div className="text-right">
