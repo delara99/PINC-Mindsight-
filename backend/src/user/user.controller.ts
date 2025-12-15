@@ -359,13 +359,24 @@ export class UserController {
             });
 
             // 2. Adicionar Créditos ao Usuário
-            // 3. Atualizar Plano do Usuário (se houver nome de plano)
             const updateData: any = {
                 credits: { increment: solicitation.credits || 0 }
             };
 
+            // 3. Atualizar Plano do Usuário (se houver nome de plano e for válido)
             if (solicitation.planName) {
-                updateData.plan = solicitation.planName;
+                // Tenta mapear para o Enum PlanType
+                let newPlanStr = solicitation.planName.toUpperCase().trim();
+                
+                // Mapa de correções comuns se o frontend enviar nomes diferentes
+                if (newPlanStr.includes('PRO')) newPlanStr = 'PRO';
+                else if (newPlanStr.includes('BUSINESS') || newPlanStr.includes('EMPRESA')) newPlanStr = 'BUSINESS';
+                else if (newPlanStr.includes('START') || newPlanStr.includes('INICIAL')) newPlanStr = 'START';
+                
+                // Verifica se é um valor válido do Enum (Isso evita o crash 500 se vier lixo)
+                if (['START', 'PRO', 'BUSINESS'].includes(newPlanStr)) {
+                     updateData.plan = newPlanStr;
+                }
             }
 
             await tx.user.update({
