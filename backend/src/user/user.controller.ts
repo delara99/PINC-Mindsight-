@@ -289,8 +289,9 @@ export class UserController {
 
     // Solicitar compra de créditos (Cliente)
     // Solicitar compra de créditos (Cliente)
+    // Solicitar compra de créditos (Cliente)
     @Post('request-credit')
-    async requestCredit(@Request() req, @Body() body: { planName?: string }) {
+    async requestCredit(@Request() req, @Body() body: { planName?: string; credits?: number }) {
         const userId = req.user.userId;
         const tenantId = req.user.tenantId;
 
@@ -303,11 +304,14 @@ export class UserController {
         });
 
         if (existing) {
-            // Se já existe e o usuário está tentando comprar de novo, atualizamos o plano
-            if (body.planName) {
+            // Se já existe e o usuário está tentando comprar de novo, atualizamos o plano e créditos
+            if (body.planName || body.credits) {
                 await this.prisma.creditSolicitation.update({
                     where: { id: existing.id },
-                    data: { planName: body.planName }
+                    data: { 
+                        planName: body.planName,
+                        credits: body.credits || 0 
+                    }
                 });
                 return { message: 'Solicitação atualizada com o novo plano.' };
             }
@@ -319,8 +323,57 @@ export class UserController {
                 userId,
                 tenantId,
                 status: 'PENDING',
-                planName: body.planName
+                planName: body.planName,
+                credits: body.credits || 0
             }
         });
+    }
+
+    // Aprovar Solicitação de Crédito (Admin)
+    @Post('approve-credit/:id')
+    async approveCreditSolicitation(@Param('id') id: string, @Request() req) {
+        const user = req.user;
+        if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas admins podem aprovar solicitações');
+        }
+
+        const solicitation = await this.prisma.creditSolicitation.findUnique({
+            where: { id },
+            include: { user: true }
+        });
+
+        if (!solicitation) {
+            throw new BadRequestException('Solicitação não encontrada');
+        }
+
+        if (solicitation.status !== 'PENDING') {
+            throw new BadRequestException('Esta solicitação já foi processada');
+        }
+
+        // Transação para garantir consistência
+        await this.prisma.$transaction(async (tx) => {
+            // 1. Atualizar Status da Solicitação
+            await tx.creditSolicitation.update({
+                where: { id },
+                data: { status: 'APPROVED' }
+            });
+
+            // 2. Adicionar Créditos ao Usuário
+            // 3. Atualizar Plano do Usuário (se houver nome de plano)
+            const updateData: any = {
+                credits: { increment: solicitation.credits || 0 }
+            };
+
+            if (solicitation.planName) {
+                updateData.plan = solicitation.planName;
+            }
+
+            await tx.user.update({
+                where: { id: solicitation.userId },
+                data: updateData
+            });
+        });
+
+        return { message: 'Solicitação aprovada e créditos adicionados com sucesso!' };
     }
 }

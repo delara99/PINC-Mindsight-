@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { ArrowUpRight, UserPlus, FileCheck, AlertCircle, PlayCircle, Clock, Users } from 'lucide-react';
+import { ArrowUpRight, UserPlus, FileCheck, AlertCircle, PlayCircle, Clock, Users, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useTrialStore } from '@/src/store/trial-store';
 import ClientDashboard from '@/src/components/dashboard/client-overview';
@@ -95,19 +95,44 @@ export default function DashboardPage() {
                             <div className="space-y-3">
                                 {stats.creditRequests.map((req: any) => (
                                     <div key={req.id} className="bg-orange-50 p-3 rounded-lg border border-orange-100 text-sm">
-                                        <p className="font-bold text-gray-800">{req.user.name}</p>
-                                        <p className="text-xs text-gray-500 mb-2">{req.user.email}</p>
-                                        {req.planName && (
-                                            <p className="text-xs font-bold text-purple-600 mb-1 bg-purple-50 inline-block px-2 py-0.5 rounded">
-                                                Plano Escolhido: {req.planName}
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-orange-700 font-medium">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-gray-800">{req.user.name}</p>
+                                                <p className="text-xs text-gray-500 mb-2">{req.user.email}</p>
+                                                {req.planName && (
+                                                    <p className="text-xs font-bold text-purple-600 mb-1 bg-purple-50 inline-block px-2 py-0.5 rounded">
+                                                        Plano: {req.planName}
+                                                        {req.credits > 0 && ` (+${req.credits} créditos)`}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <button 
+                                                onClick={async () => {
+                                                    if (!confirm(`Aprovar solicitação de ${req.user.name}? Isso irá adicionar créditos e alterar o plano.`)) return;
+                                                    try {
+                                                        const res = await fetch(`${API_URL}/api/v1/users/approve-credit/${req.id}`, {
+                                                            method: 'POST',
+                                                            headers: { 'Authorization': `Bearer ${token}` }
+                                                        });
+                                                        if (res.ok) {
+                                                            alert('Solicitação aprovada com sucesso!');
+                                                            window.location.reload(); 
+                                                        } else {
+                                                            alert('Erro ao aprovar.');
+                                                        }
+                                                    } catch (e) {
+                                                        alert('Erro de conexão.');
+                                                    }
+                                                }}
+                                                className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                                                title="Aprovar e Liberar Créditos"
+                                            >
+                                                <CheckCircle2 size={18} />
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-orange-700 font-medium mt-2">
                                             Solicitou compra em {new Date(req.createdAt).toLocaleDateString()}
                                         </p>
-                                        <Link href="/dashboard/clients" className="block mt-2 text-center bg-white border border-gray-200 text-gray-600 text-xs font-bold py-1.5 rounded hover:bg-gray-50">
-                                            Gerenciar
-                                        </Link>
                                     </div>
                                 ))}
                             </div>

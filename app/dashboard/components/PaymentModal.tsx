@@ -36,7 +36,7 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ planName: plan?.name })
+                body: JSON.stringify({ planName: plan?.name, credits: plan?.credits })
             });
 
             if (response.ok) {
