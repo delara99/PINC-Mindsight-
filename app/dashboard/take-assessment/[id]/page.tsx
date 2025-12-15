@@ -55,7 +55,9 @@ export default function TakeAssessmentPage() {
             }
 
             return data;
-        }
+        },
+        enabled: !!token && !!params.id, // Evita requisição 401 antes do token carregar
+        retry: 1
     });
 
     // Submeter respostas
