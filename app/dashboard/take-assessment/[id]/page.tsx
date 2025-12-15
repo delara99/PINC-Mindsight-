@@ -30,7 +30,7 @@ export default function TakeAssessmentPage() {
     const [answers, setAnswers] = useState<Record<string, number>>({});
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-    // Carregar avaliação
+    // Carregar avaliação e Auto-Inicializar se necessário
     const { data: assessment, isLoading } = useQuery<Assessment>({
         queryKey: ['assessment', params.id],
         queryFn: async () => {
@@ -38,7 +38,23 @@ export default function TakeAssessmentPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar avaliação');
-            return response.json();
+            const data = await response.json();
+            
+            // CRITICAL FIX: Garantir que o Assignment existe antes de tentar submeter
+            // Se for avaliação do sistema (BIG_FIVE), chamamos o init para criar o registro 'IN_PROGRESS'
+            if (data.type === 'BIG_FIVE') {
+                try {
+                    console.log('🔄 Auto-inicializando Big Five...');
+                    await fetch(`${API_URL}/api/v1/assessments/${params.id}/start-session`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch (e) {
+                    console.error('⚠️ Erro ao auto-inicializar Big Five (pode já existir):', e);
+                }
+            }
+
+            return data;
         }
     });
 

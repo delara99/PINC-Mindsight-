@@ -281,7 +281,83 @@ export class AssessmentController {
             }
         }
 
-        return this.assessmentService.findOne(id, req.user.tenantId);
+        // Se não tiver atribuição, tenta buscar normalmente.
+        // Se for BIG_FIVE (Template Público), permitimos visualizar a estrutura mesmo sem assignment
+        // Wrap em try-catch pois o service pode lançar erro se não encontrar/permitir
+        let assessment = null;
+        console.log(`[DEBUG] getOne calling findOne for id: ${id}, tenant: ${req.user.tenantId}`);
+        try {
+            assessment = await this.assessmentService.findOne(id, req.user.tenantId);
+        } catch (error) {
+            console.log('[DEBUG] findOne failed:', error.message);
+        }
+        
+        if (!assessment) {
+             console.log('[DEBUG] Assessment not found via normal flow. Trying Public Template fallback.');
+             // Tenta buscar como Template Público (System Tenant)
+             const publicTemplate = await this.prisma.assessmentModel.findFirst({
+                 where: { id: id, type: 'BIG_FIVE' },
+                 include: { questions: true }
+             });
+             
+             if (publicTemplate) {
+                 console.log('[DEBUG] Public Template FOUND. ID:', publicTemplate.id);
+                 return publicTemplate;
+             }
+             
+             console.log('[DEBUG] Public Template NOT FOUND. ID:', id);
+             // Se não achou nem template, relança o erro ou retorna 404
+             throw new BadRequestException('Avaliação não encontrada.');
+        }
+
+        return assessment;
+    }
+
+    /**
+     * Inicializa uma sessão de avaliação específica (cria Assignment)
+     * Garante que o usuário tem um assignment linkado ao ID correto.
+     */
+    @Post(':id/start-session')
+    async startSession(@Param('id') id: string, @Request() req) {
+        const user = req.user;
+        console.log(`[DEBUG] Starting session for Assessment: ${id}, User: ${user.userId}`);
+
+        // 1. Verificar se a avaliação existe (mesma lógica permissiva do getOne)
+        let assessment = null;
+        try {
+            assessment = await this.assessmentService.findOne(id, user.tenantId);
+        } catch (e) {}
+        
+        if (!assessment) {
+             assessment = await this.prisma.assessmentModel.findFirst({
+                 where: { id: id, type: 'BIG_FIVE' }
+             });
+        }
+
+        if (!assessment) {
+            throw new BadRequestException('Avaliação não encontrada para iniciar sessão.');
+        }
+
+        // 2. Verificar/Criar Assignment
+        const existing = await this.prisma.assessmentAssignment.findFirst({
+            where: { userId: user.userId, assessmentId: id }
+        });
+
+        if (existing) {
+            console.log('[DEBUG] Session already exists:', existing.id);
+            return existing;
+        }
+
+        const newAssignment = await this.prisma.assessmentAssignment.create({
+            data: {
+                userId: user.userId,
+                assessmentId: id,
+                status: 'IN_PROGRESS',
+                assignedAt: new Date()
+            }
+        });
+        console.log('[DEBUG] New Session created:', newAssignment.id);
+        return newAssignment;
     }
 
     @Post()
@@ -430,6 +506,7 @@ export class AssessmentController {
         const assignments = await this.prisma.assessmentAssignment.findMany({
             where: { assessmentId: id },
             include: {
+            include: {
                 user: {
                     select: {
                         id: true,
@@ -438,13 +515,27 @@ export class AssessmentController {
                         userType: true,
                         cpf: true,
                         cnpj: true,
-                        companyName: true
+                        companyName: true,
+                        tenantId: true // Incluir para debug
                     }
                 }
             }
         });
 
-        return assignments;
+        // Filtrar candidatos que pertencem ao MESMO tenant do admin (Segurança + Correção de Visibilidade)
+        // Se o usuário for INDIVIDUAL (sem tenant), mostramos se o admin for SUPER_ADMIN ou se houver conexão.
+        // Para simplificar e corrigir o bug relatado:
+        // Se o Admin for SUPER_ADMIN, vê tudo.
+        // Se for TENANT_ADMIN, vê apenas usuários do seu tenant OU usuários sem tenant (Trial/Individual) que tomaram a avaliação.
+        
+        if (req.user.role === 'SUPER_ADMIN') {
+            return assignments;
+        }
+
+        return assignments.filter(a => 
+            a.user.tenantId === tenantId || // Usuário do mesmo tenant
+            !a.user.tenantId // Usuário Individual/Trial (sem tenant definido)
+        );
     }
 
     // Remover atribuição de um candidato

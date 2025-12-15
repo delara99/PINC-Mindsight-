@@ -58,6 +58,29 @@ export default function MyAssessmentsPage() {
         setIsPurchaseModalOpen(false);
     };
 
+
+    const handleStartAssessment = async (assessment: Assessment) => {
+        if ((user?.credits || 0) < 1) {
+            setIsPurchaseModalOpen(true);
+            return;
+        }
+
+        // Se for Big Five, inicializa antes de navegar para garantir que o assignment existe
+        if (assessment.type === 'BIG_FIVE') {
+            try {
+                // Tenta inicializar Sessão para ESTE ID específico
+                await fetch(`${API_URL}/api/v1/assessments/${assessment.id}/start-session`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (error) {
+                console.error('Erro pre-flight init:', error);
+            }
+        }
+
+        router.push(`/dashboard/take-assessment/${assessment.id}`);
+    };
+
     const getStatusBadge = (status?: string) => {
         if (!status) return null;
         switch (status) {
@@ -157,10 +180,7 @@ export default function MyAssessmentsPage() {
                                         <h3 className="text-lg font-bold text-gray-900 mb-2 truncate">{assessment.title}</h3>
                                         <p className="text-gray-500 text-sm mb-6 line-clamp-2">{assessment.description || 'Sem descrição.'}</p>
                                         <button
-                                            onClick={() => {
-                                                if ((user?.credits || 0) >= 1) router.push(`/dashboard/take-assessment/${assessment.id}`);
-                                                else setIsPurchaseModalOpen(true);
-                                            }}
+                                            onClick={() => handleStartAssessment(assessment)}
                                             className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${(user?.credits || 0) < 1
                                                 ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
                                                 : 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20 hover:scale-[1.02]'
