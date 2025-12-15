@@ -163,11 +163,11 @@ export default function Home() {
                             <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Planos e Preços</h2>
                             <p className="text-lg text-gray-600">Escolha o plano ideal para o tamanho da sua equipe</p>
                         </div>
-                        <div className="grid md:grid-cols-3 gap-8">
+                        <div className="flex flex-wrap justify-center gap-8">
                             {settings.pricingPlans.map((plan: any) => (
                                 <div
                                     key={plan.id}
-                                    className={`rounded-2xl p-8 border-2 ${plan.highlighted ? 'border-primary bg-primary/5 shadow-xl scale-105' : 'border-gray-200 bg-white'}`}
+                                    className={`rounded-2xl p-8 border-2 w-full max-w-sm ${plan.highlighted ? 'border-primary bg-primary/5 shadow-xl scale-105' : 'border-gray-200 bg-white'}`}
                                 >
                                     {plan.highlighted && (
                                         <div className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">
