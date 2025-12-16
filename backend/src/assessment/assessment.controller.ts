@@ -218,8 +218,9 @@ export class AssessmentController {
     async getCompletedAssessments(@Request() req) {
         const tenantId = req.user.tenantId;
         const userId = req.user.userId;
+        const userEmail = req.user.email;
 
-        // Buscar IDs de usuários conectados (Clientes/Conexões Ativas)
+        // 1. Conexões
         const connections = await this.prisma.connection.findMany({
             where: {
                 OR: [
@@ -228,36 +229,33 @@ export class AssessmentController {
                 ]
             }
         });
-        
         const connectedUserIds = connections.map(c => c.userAId === userId ? c.userBId : c.userAId);
 
+        // 2. Domínio Corporativo (Fallback para inconsistência de Tenant)
+        const domain = userEmail.split('@')[1];
+        const publicDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'uol.com.br', 'bol.com.br', 'terra.com.br'];
+        const isCorporateDomain = domain && !publicDomains.includes(domain.toLowerCase());
+
+        const whereCondition: any = {
+            status: 'COMPLETED',
+            OR: [
+                { user: { tenantId } },
+                { userId: { in: connectedUserIds } }
+            ]
+        };
+
+        if (isCorporateDomain) {
+            whereCondition.OR.push({ user: { email: { endsWith: `@${domain}` } } });
+        }
+
         const completedAssignments = await this.prisma.assessmentAssignment.findMany({
-            where: {
-                status: 'COMPLETED',
-                OR: [
-                    { user: { tenantId } },
-                    { userId: { in: connectedUserIds } }
-                ]
-            },
+            where: whereCondition,
             include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true
-                    }
-                },
-                assessment: {
-                    select: {
-                        id: true,
-                        title: true
-                    }
-                },
+                user: { select: { id: true, name: true, email: true } },
+                assessment: { select: { id: true, title: true } },
                 result: true
             },
-            orderBy: {
-                completedAt: 'desc'
-            }
+            orderBy: { completedAt: 'desc' }
         });
 
         return completedAssignments.map(assignment => ({
