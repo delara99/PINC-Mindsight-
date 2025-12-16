@@ -49,7 +49,7 @@ export default function Home() {
                     <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-600">
                         <Link href="#features" className="hover:text-primary transition-colors">Funcionalidades</Link>
                         <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
-                        <Link href="/about" className="hover:text-primary transition-colors">Sobre</Link>
+
                         <Link href="/empresas" className="flex items-center gap-1.5 hover:text-primary transition-colors font-bold text-gray-900 bg-gray-50 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
                             🏢 PARA EMPRESAS
                         </Link>
@@ -103,14 +103,7 @@ export default function Home() {
                             >
                                 {settings?.primaryButtonText || 'Ver Degustação'} <ArrowRight size={20} />
                             </Link>
-                            {settings?.secondaryButtonText && (
-                                <Link
-                                    href={settings?.secondaryButtonLink || '#features'}
-                                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur text-white text-lg font-semibold py-4 px-8 rounded-full border border-white/30 transition-all"
-                                >
-                                    {settings.secondaryButtonText}
-                                </Link>
-                            )}
+
                         </div>
                     </div>
 

@@ -57,8 +57,7 @@ export default function BusinessPage() {
                         PINC <span className="text-primary">Mindsight</span>
                     </Link>
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/#benefits" className="text-gray-600 hover:text-primary font-medium">Benefícios</Link>
-                        <Link href="/#methodology" className="text-gray-600 hover:text-primary font-medium">Metodologia</Link>
+
                         <button onClick={scrollToForm} className="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-primary/20">
                             Falar com Vendas
                         </button>
