@@ -196,7 +196,7 @@ export default function TakeAssessmentPage() {
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans text-slate-800">
             {/* Top Bar Minimalista */}
-            <header className="px-6 py-4 flex items-center justify-between bg-white z-10 sticky top-0">
+            <header className="px-6 py-4 flex items-center justify-between bg-white z-10 sticky top-[64px] md:top-0">
                  <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-700 transition-colors">
                     <ArrowLeft size={24} />
                 </button>

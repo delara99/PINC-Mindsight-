@@ -133,12 +133,12 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
     return (
         <div ref={contentRef} className="space-y-8">
             {/* Header */}
-            <div className="bg-gradient-to-r from-primary to-pink-600 text-white rounded-2xl p-8">
-                <div className="flex justify-between items-start">
+            <div className="bg-gradient-to-r from-primary to-pink-600 text-white rounded-2xl p-6 md:p-8">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Seu Perfil de Personalidade</h1>
-                        <p className="text-white/90 text-lg">Baseado no modelo Big Five de personalidade</p>
-                        <div className="mt-4 flex items-center gap-6 text-sm">
+                        <h1 className="text-2xl md:text-3xl font-bold mb-2">Seu Perfil de Personalidade</h1>
+                        <p className="text-white/90 text-base md:text-lg">Baseado no modelo Big Five de personalidade</p>
+                        <div className="mt-4 flex flex-wrap items-center gap-4 md:gap-6 text-sm">
                             <div className="flex items-center gap-2">
                                 <AlertCircle size={16} />
                                 <span>{result.answeredQuestions} de {result.totalQuestions} perguntas</span>
@@ -149,11 +149,11 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full md:w-auto">
                         <button
                             onClick={exportToPDF}
                             disabled={exporting}
-                            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
+                            className="w-full md:w-auto justify-center bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
                             {exporting ? (
                                 <>
@@ -172,20 +172,20 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
             </div>
 
             {/* Radar Chart */}
-            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-2xl p-4 md:p-8 border border-gray-200 shadow-sm">
                 <h2 className="text-xl font-bold text-gray-800 mb-6">Gráfico Radar - Visão Geral</h2>
-                <div className="h-96 flex items-center justify-center">
+                <div className="h-64 md:h-96 flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadarChart data={radarData}>
                             <PolarGrid stroke="#e5e7eb" />
                             <PolarAngleAxis
                                 dataKey="trait"
-                                tick={{ fill: '#374151', fontSize: 14, fontWeight: 600 }}
+                                tick={{ fill: '#374151', fontSize: 12, fontWeight: 600 }}
                             />
                             <PolarRadiusAxis
                                 angle={90}
                                 domain={[0, 100]}
-                                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                tick={{ fill: '#9ca3af', fontSize: 10 }}
                             />
                             <Radar
                                 name="Score"
@@ -201,41 +201,44 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
             </div>
 
             {/* Circular Progress Cards */}
-            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm">
                 <h2 className="text-xl font-bold text-gray-800 mb-6">Scores por Traço</h2>
-                <div className="grid md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {result.traits.map(trait => {
                         const Icon = traitIcons[trait.trait] || Brain;
 
                         return (
-                            <div key={trait.trait} className="text-center">
-                                <div className="relative w-24 h-24 mx-auto mb-3">
+                            <div key={trait.trait} className="text-center p-2">
+                                <div className="relative w-20 h-20 md:w-24 md:h-24 mx-auto mb-3">
                                     {/* Circular Progress */}
                                     <svg className="w-full h-full transform -rotate-90">
                                         <circle
-                                            cx="48"
-                                            cy="48"
-                                            r="40"
+                                            cx="50%"
+                                            cy="50%"
+                                            r="45%"
                                             stroke="#e5e7eb"
                                             strokeWidth="8"
                                             fill="none"
                                         />
                                         <circle
-                                            cx="48"
-                                            cy="48"
-                                            r="40"
+                                            cx="50%"
+                                            cy="50%"
+                                            r="45%"
                                             stroke="#EC1B8E"
                                             strokeWidth="8"
                                             fill="none"
-                                            strokeDasharray={`${2 * Math.PI * 40}`}
+                                            strokeDasharray={`${2 * Math.PI * 40}`} // Aproximado para r=45%
                                             strokeDashoffset={`${2 * Math.PI * 40 * (1 - trait.normalizedScore / 100)}`}
                                             strokeLinecap="round"
+                                            pathLength={100} // Simplificando cálculo SVG
+                                            strokeDasharray="100" // reset
+                                            strokeDashoffset={100 - trait.normalizedScore}
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="text-center">
-                                            <Icon className="mx-auto mb-1 text-primary" size={20} />
-                                            <span className="text-lg font-bold text-gray-800">{Math.round(trait.normalizedScore)}</span>
+                                            <Icon className="mx-auto mb-1 text-primary w-4 h-4 md:w-5 md:h-5" />
+                                            <span className="text-base md:text-lg font-bold text-gray-800">{Math.round(trait.normalizedScore)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -260,25 +263,26 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
                             {/* Trait Header */}
                             <button
                                 onClick={() => toggleTrait(trait.trait)}
-                                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                className="w-full p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-gray-50 transition-colors gap-4"
                             >
-                                <div className="flex items-center gap-4 flex-1">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-primary to-pink-600 rounded-xl flex items-center justify-center">
+                                <div className="flex items-center gap-4 flex-1 w-full">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-primary to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Icon className="text-white" size={24} />
                                     </div>
-                                    <div className="text-left flex-1">
-                                        <h3 className="text-lg font-bold text-gray-800">{trait.trait}</h3>
-                                        <p className="text-sm text-gray-600 mt-1">{trait.description}</p>
+                                    <div className="text-left flex-1 min-w-0">
+                                        <h3 className="text-lg font-bold text-gray-800 truncate">{trait.trait}</h3>
+                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{trait.description}</p>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right">
-                                            <div className="text-3xl font-bold text-gray-800">{Math.round(trait.normalizedScore)}</div>
-                                            <div className={`text-xs font-semibold px-3 py-1 rounded-full border mt-1 ${interpretationColor}`}>
-                                                {trait.interpretation}
-                                            </div>
+                                </div>
+                                
+                                <div className="flex items-center justify-between w-full md:w-auto md:justify-end gap-4 pl-[4rem] md:pl-0">
+                                    <div className="text-left md:text-right">
+                                        <div className="text-2xl md:text-3xl font-bold text-gray-800">{Math.round(trait.normalizedScore)}</div>
+                                        <div className={`text-xs font-semibold px-3 py-1 rounded-full border mt-1 inline-block ${interpretationColor}`}>
+                                            {trait.interpretation}
                                         </div>
-                                        {isExpanded ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
                                     </div>
+                                    {isExpanded ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
                                 </div>
                             </button>
 

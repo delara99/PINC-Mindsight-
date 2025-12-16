@@ -125,23 +125,23 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Configurações</h1>
                     <p className="text-gray-500">Gerencie as preferências da empresa e personalize a landing page</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full md:w-auto">
                     <button
                         onClick={handleReset}
                         disabled={resetMutation.isPending}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+                        className="flex-1 md:flex-none justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
                     >
                         <RotateCcw size={16} /> Restaurar Padrão
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saveMutation.isPending}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover flex items-center gap-2 disabled:opacity-50"
+                        className="flex-1 md:flex-none justify-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover flex items-center gap-2 disabled:opacity-50"
                     >
                         {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         Salvar Alterações
@@ -155,7 +155,7 @@ export default function SettingsPage() {
                     <h3 className="font-semibold text-gray-900">Perfil da Empresa</h3>
                 </div>
                 <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>
                             <input type="text" disabled value="Empresa Demo" className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
@@ -179,35 +179,21 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-gray-200">
-                    <button
-                        onClick={() => setActiveTab('hero')}
-                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition ${activeTab === 'hero' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
+                <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
+                    {['hero', 'features', 'pricing', 'theme'].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab as any)}
+                            className={`flex-1 min-w-[100px] py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition whitespace-nowrap ${
+                                activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
-                    >
-                        <Sparkles size={16} /> Hero Section
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('features')}
-                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition ${activeTab === 'features' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <FileText size={16} /> Features
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('pricing')}
-                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition ${activeTab === 'pricing' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <DollarSign size={16} /> Pricing
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('theme')}
-                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition ${activeTab === 'theme' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <Palette size={16} /> Tema
-                    </button>
+                        >
+                            {tab === 'hero' && <><Sparkles size={16} /> Hero Section</>}
+                            {tab === 'features' && <><FileText size={16} /> Features</>}
+                            {tab === 'pricing' && <><DollarSign size={16} /> Pricing</>}
+                            {tab === 'theme' && <><Palette size={16} /> Tema</>}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Tab Content */}
@@ -215,7 +201,7 @@ export default function SettingsPage() {
                     {/* Hero Tab */}
                     {activeTab === 'hero' && (
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Título Principal</label>
                                     <input
@@ -244,7 +230,7 @@ export default function SettingsPage() {
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
                                 />
                             </div>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Badge</label>
                                     <input
@@ -273,7 +259,7 @@ export default function SettingsPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Botão Primário (Texto)</label>
                                     <input
@@ -339,7 +325,7 @@ export default function SettingsPage() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Ícone</label>
                                             <select
@@ -356,7 +342,7 @@ export default function SettingsPage() {
                                                 <option value="check">Check</option>
                                             </select>
                                         </div>
-                                        <div className="col-span-2">
+                                        <div className="md:col-span-2">
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Título</label>
                                             <input
                                                 type="text"
@@ -416,7 +402,7 @@ export default function SettingsPage() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Nome</label>
                                             <input
@@ -481,7 +467,7 @@ export default function SettingsPage() {
                     {/* Theme Tab */}
                     {activeTab === 'theme' && (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="text-center">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Cor Primária</label>
                                     <input

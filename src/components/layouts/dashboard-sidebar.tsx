@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/src/store/auth-store';
 import { usePathname, useRouter } from 'next/navigation';
@@ -15,10 +15,13 @@ import {
     UserPlus,
     TrendingUp,
     Lock,
-    Crown
+    Crown,
+    Menu,
+    X
 } from 'lucide-react';
 import clsx from 'clsx';
 import { UpgradeModal } from '@/src/components/common/upgrade-modal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const menuItems = [
     { label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
@@ -32,60 +35,48 @@ const menuItems = [
     { label: 'Meus Resultados', href: '/dashboard/my-assessments', icon: FileText, roles: ['MEMBER'] },
 ];
 
-export function DashboardSidebar() {
-    const logout = useAuthStore((state) => state.logout);
-    const user = useAuthStore((state) => state.user);
-    const pathname = usePathname();
-    const router = useRouter();
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+interface SidebarContentProps {
+    user: any;
+    pathname: string;
+    onLogout: () => void;
+    onUpgradeOpen: () => void;
+}
 
-    // Debug
-    console.log('DashboardSidebar - User:', user);
-    console.log('DashboardSidebar - User Role:', user?.role);
-
-    const handleLogout = () => {
-        logout();
-        router.push('/auth/login');
-    };
-
+function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarContentProps) {
     return (
-        <aside className="w-72 bg-white border-r border-gray-100 flex flex-col h-screen fixed left-0 top-0 shadow-sm z-30">
+        <div className="flex flex-col h-full bg-white text-slate-800">
+            {/* Header / Logo */}
             <div className="p-6 flex items-center gap-3 border-b border-gray-50 bg-gray-50/50">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary to-pink-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
                     <Building2 size={24} />
                 </div>
                 <div>
-                    <h1 className="font-bold text-gray-800 leading-tight">{user?.name || 'Usuário'}</h1>
-                    <span className="text-xs text-gray-500 font-medium block">{user?.email || 'email@exemplo.com'}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${
-                        user?.plan === 'PRO' || user?.plan === 'BUSINESS' 
-                        ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                    <h1 className="font-bold text-gray-800 leading-tight truncate max-w-[140px]">{user?.name || 'Usuário'}</h1>
+                    <span className="text-xs text-gray-500 font-medium block truncate max-w-[140px]">{user?.email || 'email@exemplo.com'}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${user?.plan === 'PRO' || user?.plan === 'BUSINESS'
+                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
                         : 'bg-gray-100 text-gray-600 border border-gray-200'
-                    }`}>
+                        }`}>
                         {(user?.plan === 'PRO' || user?.plan === 'BUSINESS') && <Crown size={10} />}
                         {user?.plan || 'START'}
                     </span>
                 </div>
             </div>
 
+            {/* Navigation */}
             <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-2">Menu Principal</div>
                 {menuItems.filter(item => {
                     if (!user) return false;
-
-                    // Se for Pessoa Física (INDIVIDUAL) e NÃO for Super Admin, visualiza como MEMBRO (Perfil Simplificado)
                     const isSuperAdmin = user.role === 'SUPER_ADMIN';
                     const effectiveRole = (user.userType === 'INDIVIDUAL' && !isSuperAdmin) ? 'MEMBER' : user.role;
-
-                    // Verifica se a role do usuário (ou efetiva) está na lista de roles permitidas
                     return item.roles.includes(effectiveRole);
                 }).map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
                     const isSuperAdmin = user?.role === 'SUPER_ADMIN';
-                    // Lógica de Bloqueio para Plano Start: Super Admin nunca é bloqueado
                     const isLocked = item.label === 'Minhas Conexões' && user?.plan === 'START' && !isSuperAdmin;
-                    
+
                     return (
                         <Link
                             key={item.href}
@@ -93,7 +84,7 @@ export function DashboardSidebar() {
                             onClick={(e) => {
                                 if (isLocked) {
                                     e.preventDefault();
-                                    setIsUpgradeModalOpen(true);
+                                    onUpgradeOpen();
                                 }
                             }}
                             className={clsx(
@@ -112,17 +103,108 @@ export function DashboardSidebar() {
                 })}
             </nav>
 
-            <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
-
+            {/* Footer / Logout */}
             <div className="p-4 border-t border-gray-100 bg-gray-50/30">
                 <button
-                    onClick={handleLogout}
+                    onClick={onLogout}
                     className="flex items-center gap-3 w-full text-left p-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-sm font-medium"
                 >
                     <LogOut size={20} />
                     Encerrar Sessão
                 </button>
             </div>
-        </aside>
+        </div>
+    );
+}
+
+export function DashboardSidebar() {
+    const logout = useAuthStore((state) => state.logout);
+    const user = useAuthStore((state) => state.user);
+    const pathname = usePathname();
+    const router = useRouter();
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    // Fechar sidebar mobile ao navegar
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [pathname]);
+
+    const handleLogout = () => {
+        logout();
+        router.push('/auth/login');
+    };
+
+    return (
+        <>
+            {/* Mobile Header / Navbar */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-40 shadow-sm">
+                <div className="flex items-center gap-2">
+                     <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-bold">SA</span>
+                     <span className="font-bold text-gray-800">SaaS Avaliação</span>
+                </div>
+                <button 
+                    onClick={() => setIsMobileOpen(true)}
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                    <Menu size={24} />
+                </button>
+            </div>
+            
+            {/* Spacer para o Header Mobile evitar sobreposição */}
+            <div className="md:hidden h-16 mb-6" />
+
+            {/* Desktop Sidebar (Fixo, visível apenas em md+) */}
+            <aside className="hidden md:flex w-72 h-screen fixed left-0 top-0 border-r border-gray-100 shadow-sm z-30">
+                 <SidebarContent 
+                    user={user} 
+                    pathname={pathname} 
+                    onLogout={handleLogout} 
+                    onUpgradeOpen={() => setIsUpgradeModalOpen(true)} 
+                 />
+            </aside>
+
+            {/* Mobile Drawer (Overlay + Animation) */}
+            <AnimatePresence>
+                {isMobileOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsMobileOpen(false)}
+                            className="fixed inset-0 bg-black/50 z-50 md:hidden backdrop-blur-sm"
+                        />
+                        
+                        {/* Drawer */}
+                        <motion.aside
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 left-0 w-72 bg-white z-50 md:hidden shadow-2xl flex flex-col"
+                        >
+                            <div className="flex justify-end p-2 absolute top-2 right-2 z-10">
+                                <button 
+                                    onClick={() => setIsMobileOpen(false)}
+                                    className="p-2 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <SidebarContent 
+                                user={user} 
+                                pathname={pathname} 
+                                onLogout={handleLogout} 
+                                onUpgradeOpen={() => setIsUpgradeModalOpen(true)} 
+                            />
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
+
+            <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
+        </>
     );
 }

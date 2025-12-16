@@ -69,8 +69,8 @@ export default function ReportsPage() {
                             key={report.id}
                             className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                         >
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                                <div className="flex-1 w-full">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                                             <User size={20} className="text-primary" />
@@ -81,7 +81,7 @@ export default function ReportsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
                                         <div className="flex items-center gap-2">
                                             <FileText size={16} />
                                             <span>{report.assessmentTitle}</span>
@@ -109,7 +109,7 @@ export default function ReportsPage() {
 
                                 <button
                                     onClick={() => router.push(`/dashboard/reports/${report.id}`)}
-                                    className="text-white hover:text-white/90 bg-[#cc0058] hover:bg-[#a30046] px-4 py-2 text-sm font-medium rounded-md transition-colors w-full sm:w-auto text-center"
+                                    className="text-white hover:text-white/90 bg-[#cc0058] hover:bg-[#a30046] px-4 py-2 text-sm font-medium rounded-md transition-colors w-full md:w-auto text-center flex-shrink-0"
                                 >
                                     Ver Detalhes
                                 </button>
