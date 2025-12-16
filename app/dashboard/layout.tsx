@@ -1,5 +1,8 @@
+```javascript
 import { DashboardSidebar } from '@/src/components/layouts/dashboard-sidebar';
+import { OnboardingModal } from '@/src/components/dashboard/OnboardingModal';
 import { UserSynchronizer } from '@/src/components/auth/user-synchronizer';
+import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
     children,
@@ -14,6 +17,7 @@ export default function DashboardLayout({
             <main className="flex-1 pl-0 md:pl-72 print:pl-0 transition-all duration-200">
                 <div className="max-w-7xl mx-auto p-8 print:p-0 print:max-w-none">
                     <UserSynchronizer />
+                    <OnboardingModal />
                     {children}
                 </div>
             </main>

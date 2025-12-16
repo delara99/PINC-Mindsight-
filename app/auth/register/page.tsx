@@ -118,13 +118,7 @@ function RegisterContent() {
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/80 to-purple-900/80 z-10" />
                 
                 <div className="relative z-20 max-w-lg space-y-8">
-                    <div className="flex items-center gap-2 mb-8">
-                         <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                            <span className="text-primary font-bold text-xl">P</span>
-                         </div>
-                         <span className="text-2xl font-bold tracking-tight">PINC Mindsight</span>
-                    </div>
-
+                    
                     <h1 className="text-5xl font-extrabold leading-tight">
                         Descubra o potencial <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
@@ -226,7 +220,7 @@ function RegisterContent() {
                                                             {plan.name}
                                                         </h3>
                                                         <div className="flex items-baseline gap-1 mt-1">
-                                                            <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {plan.price}</span>
+                                                            <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {Number(plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                         </div>
                                                         <p className="text-sm text-gray-500 mt-1">{plan.credits} créditos de avaliação</p>
                                                     </div>

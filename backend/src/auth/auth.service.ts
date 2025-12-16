@@ -80,7 +80,7 @@ export class AuthService {
                     cnpj: data.cnpj || null,
                     companyName: data.companyName || null,
                     role: 'TENANT_ADMIN', // Quem se cadastra é admin do próprio tenant
-                    status: data.origin === 'trial' ? 'active' : 'pending', // Auto-aprova se vier do Trial
+                    status: 'active', // Todas as contas nascem aprovadas
                     tenantId: tenant.id
                 }
             });
@@ -172,7 +172,7 @@ export class AuthService {
         }
 
         return {
-            message: 'Cadastro realizado com sucesso! Aguarde a aprovação do administrador.',
+            message: 'Cadastro realizado com sucesso!',
             user: { email: user.email, name: user.name }
         };
     }
