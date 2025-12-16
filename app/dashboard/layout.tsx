@@ -1,4 +1,4 @@
-```javascript
+
 import { DashboardSidebar } from '@/src/components/layouts/dashboard-sidebar';
 import { OnboardingModal } from '@/src/components/dashboard/OnboardingModal';
 import { UserSynchronizer } from '@/src/components/auth/user-synchronizer';
