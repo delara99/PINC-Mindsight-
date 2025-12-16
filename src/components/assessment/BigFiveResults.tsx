@@ -227,8 +227,6 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
                                             stroke="#EC1B8E"
                                             strokeWidth="8"
                                             fill="none"
-                                            strokeDasharray={`${2 * Math.PI * 40}`} // Aproximado para r=45%
-                                            strokeDashoffset={`${2 * Math.PI * 40 * (1 - trait.normalizedScore / 100)}`}
                                             strokeLinecap="round"
                                             pathLength={100} // Simplificando cálculo SVG
                                             strokeDasharray="100" // reset
