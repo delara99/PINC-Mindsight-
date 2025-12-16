@@ -37,33 +37,15 @@ export default function MyAssessmentsPage() {
         enabled: !!token
     });
 
-    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
 
-    // Mock de adicionar créditos
-    const handleAddCredit = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/v1/users/request-credit`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                alert('Solicitação enviada! Aguarde a liberação dos créditos.');
-            } else {
-                const data = await response.json();
-                alert(data.message || 'Erro ao enviar solicitação.');
-            }
-        } catch (error) {
-            alert('Erro de conexão ao enviar solicitação.');
-        }
-
-        setIsPurchaseModalOpen(false);
-    };
 
 
     const handleStartAssessment = async (assessment: Assessment) => {
         if ((user?.credits || 0) < 1) {
-            setIsPurchaseModalOpen(true);
+        if ((user?.credits || 0) < 1) {
+            router.push('/dashboard/plans');
+            return;
+        }
             return;
         }
 
@@ -139,7 +121,7 @@ export default function MyAssessmentsPage() {
                         </span>
                     </div>
                     <button
-                        onClick={() => setIsPurchaseModalOpen(true)}
+                        onClick={() => router.push('/dashboard/plans')}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20"
                     >
                         <CreditCard size={16} />
@@ -169,7 +151,7 @@ export default function MyAssessmentsPage() {
                                                 <div className="bg-white p-4 rounded-xl shadow-xl border border-red-100 transform scale-100">
                                                     <Wallet className="mx-auto text-red-500 mb-2" size={24} />
                                                     <p className="font-bold text-gray-800 text-sm mb-1">Crédito Necessário</p>
-                                                    <button onClick={() => setIsPurchaseModalOpen(true)} className="text-primary text-xs font-bold hover:underline">Adicionar Saldo</button>
+                                                    <button onClick={() => router.push('/dashboard/plans')} className="text-primary text-xs font-bold hover:underline">Adicionar Saldo</button>
                                                 </div>
                                             </div>
                                         )}
@@ -334,41 +316,7 @@ export default function MyAssessmentsPage() {
                 )}
             </AnimatePresence>
 
-            {/* Modal de Compra (Mantido) */}
-            {isPurchaseModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scaleIn">
-                        <div className="bg-primary p-6 text-center">
-                            <h2 className="text-2xl font-bold text-white mb-2">Adicionar Créditos</h2>
-                            <p className="text-primary-foreground/80 text-sm">
-                                Invista no seu desenvolvimento profissional
-                            </p>
-                        </div>
-                        <div className="p-8 space-y-6">
-                            <div className="text-center">
-                                <p className="text-gray-600 mb-4">
-                                    Para adquirir novos créditos, realize o pagamento via <strong>PIX</strong> utilizando a chave abaixo:
-                                </p>
-                                <div className="bg-gray-100 p-4 rounded-xl border border-gray-200 flex items-center justify-between gap-3 group">
-                                    <code className="text-lg font-mono font-bold text-gray-800 select-all">00.000.000/0001-00</code>
-                                    <button onClick={() => navigator.clipboard.writeText('00.000.000/0001-00')} className="p-2 hover:bg-white rounded-lg text-gray-500 hover:text-primary transition-colors" title="Copiar chave">
-                                        <CheckCircle2 size={20} />
-                                    </button>
-                                </div>
-                                <p className="text-xs text-gray-400 mt-2">CNPJ: Empresa Demo LTDA</p>
-                            </div>
-                            <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 flex gap-3">
-                                <AlertCircle className="shrink-0" size={20} />
-                                <p>Após realizar o pagamento, envie o comprovante para o administrador para a liberação dos créditos.</p>
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button onClick={() => setIsPurchaseModalOpen(false)} className="flex-1 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">Cancelar</button>
-                                <button onClick={handleAddCredit} className="flex-1 py-3 rounded-xl font-bold bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20 transition-colors">Confirmar Pagamento</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 }
