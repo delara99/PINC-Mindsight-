@@ -53,8 +53,8 @@ export default function BusinessPage() {
             {/* Navbar (Custom or Reuse? Reuse Main but adding simple back) */}
             <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    <Link href="/" className="text-2xl font-bold tracking-tighter">
-                        PINC <span className="text-primary">Mindsight</span>
+                    <Link href="/" className="flex items-center">
+                        <img src="/logo-pinc.png" alt="PINC Logo" className="h-10 w-auto object-contain" />
                     </Link>
                     <div className="hidden md:flex items-center gap-8">
 

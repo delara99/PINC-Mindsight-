@@ -169,9 +169,12 @@ function RegisterContent() {
             <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-12 xl:px-24 bg-gray-50/50">
                 <div className="w-full max-w-md mx-auto">
                     <div className="mb-10">
-                        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors mb-6">
-                            <ArrowLeft size={16} /> Voltar para Home
-                        </Link>
+                        <div className="flex justify-between items-center mb-6">
+                            <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors">
+                                <ArrowLeft size={16} /> Voltar
+                            </Link>
+                            <img src="/logo-pinc.png" alt="PINC Logo" className="h-8 w-auto object-contain" />
+                        </div>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                             {step === 1 ? 'Escolha seu plano ideal' : 'Finalize seu cadastro'}
                         </h2>
