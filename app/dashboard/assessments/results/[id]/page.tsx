@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuthStore } from '@/src/store/auth-store';
 import BigFiveResults from '@/src/components/assessment/BigFiveResults';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Clock } from 'lucide-react';
 
 export default function AssessmentResultPage() {
     const params = useParams();
