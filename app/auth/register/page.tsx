@@ -223,9 +223,23 @@ function RegisterContent() {
                                                             {plan.name}
                                                         </h3>
                                                         <div className="flex items-baseline gap-1 mt-1">
-                                                            <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {Number(plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                            <span className="text-2xl font-bold text-gray-900">
+                                                                {plan.currency || 'R$'} {Number(String(plan.price).replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500">/{plan.period || 'único'}</span>
                                                         </div>
-                                                        <p className="text-sm text-gray-500 mt-1">{plan.credits} créditos de avaliação</p>
+                                                        <ul className="mt-3 space-y-1">
+                                                            <li className="flex items-center gap-2 text-xs text-gray-600">
+                                                                <Check size={14} className="text-primary" />
+                                                                <span>{plan.credits} avaliações inclusas</span>
+                                                            </li>
+                                                            {plan.features?.map((feat: string, idx: number) => (
+                                                                <li key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                                                                    <Check size={14} className="text-primary" />
+                                                                    <span>{feat}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
                                                     </div>
                                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                                                         selectedPlan?.id === plan.id ? 'border-primary bg-primary' : 'border-gray-300'
