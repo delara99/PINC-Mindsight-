@@ -3,25 +3,22 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Check, User, Building2 } from 'lucide-react';
+import { ArrowLeft, Check, User, Building2, Star, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
-
 import { useTrialStore } from '@/src/store/trial-store';
 import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ExitIntentModal } from '@/src/components/auth/ExitIntentModal';
 
-// ...
-
-
-
-// Fallback Planos (apenas se API falhar totalmente)
+// Fallback Planos
 const DEFAULT_PLANS = [
-    { id: 'starter', credits: 1, price: 'R$ 29,90', name: 'Starter' },
-    { id: 'pro', credits: 10, price: 'R$ 249,00', name: 'Pro' },
-    { id: 'business', credits: 50, price: 'R$ 990,00', name: 'Business' },
+    { id: 'starter', credits: 1, price: '29.90', currency: 'R$', name: 'Starter', features: ['1 Avaliação completa', 'Relatório básico'] },
+    { id: 'pro', credits: 10, price: '249.00', currency: 'R$', name: 'Pro', features: ['10 Avaliações', 'Relatórios avançados', 'Suporte prioritário'], highlighted: true },
+    { id: 'business', credits: 50, price: '990.00', currency: 'R$', name: 'Business', features: ['50 Avaliações', 'API de integração', 'Gerente de conta'] },
 ];
 
 function RegisterContent() {
-    // Fetch Site Settings for Plans
+    // Fetch Settings
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
         queryFn: async () => {
@@ -29,23 +26,24 @@ function RegisterContent() {
             if (!res.ok) throw new Error('Falha ao carregar configurações');
             return res.json();
         },
-        staleTime: 1000 * 60 * 5 // 5 minutes cache
+        staleTime: 1000 * 60 * 5 
     });
 
-
     const activePlans = settings?.pricingPlans || DEFAULT_PLANS;
-
     const { answers } = useTrialStore();
     const router = useRouter();
     const searchParams = useSearchParams();
+    
     const [step, setStep] = useState(1);
     const [userType, setUserType] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
-    // Set default plan once loaded
+    // Initial Plan Selection
     useEffect(() => {
         if (activePlans.length > 0 && !selectedPlan) {
-            setSelectedPlan(activePlans[0]);
+            // Default to highlighted plan or first one
+            const defaultPlan = activePlans.find((p: any) => p.highlighted) || activePlans[0];
+            setSelectedPlan(defaultPlan);
         }
     }, [activePlans, selectedPlan]);
     
@@ -60,7 +58,7 @@ function RegisterContent() {
         phone: ''
     });
 
-    // Auto-advance to step 2 if data is provided
+    // Auto-advance
     useEffect(() => {
         if (searchParams.get('name') || searchParams.get('email')) {
             setStep(2);
@@ -102,7 +100,6 @@ function RegisterContent() {
                 throw new Error(data.message || 'Erro ao realizar cadastro');
             }
 
-            // Sucesso
             router.push('/auth/login?registered=true');
         } catch (err: any) {
             setError(err.message);
@@ -112,200 +109,287 @@ function RegisterContent() {
     };
 
     return (
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl px-4">
-            <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="flex min-h-screen bg-white overflow-hidden">
+            <ExitIntentModal />
 
-                {/* Stepper (Simplificado) */}
-                <div className="flex justify-center mb-8 gap-4">
-                    <button
-                        onClick={() => setStep(1)}
-                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${step === 1 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'}`}
-                    >
-                        1. Escolha o Plano
-                    </button>
-                    <button
-                        onClick={() => step > 1 && setStep(2)}
-                        disabled={step === 1}
-                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${step === 2 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'}`}
-                    >
-                        2. Seus Dados
-                    </button>
-                </div>
-
-                {error && (
-                    <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                        {error}
+            {/* Left Side - Marketing & Value Prop (Desktop Only) */}
+            <div className="hidden lg:flex w-1/2 bg-gray-900 relative items-center justify-center p-12 text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1567&q=80')] bg-cover bg-center" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary/80 to-purple-900/80 z-10" />
+                
+                <div className="relative z-20 max-w-lg space-y-8">
+                    <div className="flex items-center gap-2 mb-8">
+                         <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                            <span className="text-primary font-bold text-xl">P</span>
+                         </div>
+                         <span className="text-2xl font-bold tracking-tight">PINC Mindsight</span>
                     </div>
-                )}
 
-                {step === 1 ? (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-medium text-gray-900 text-center">Quantos créditos você precisa agora?</h3>
-                        <div className="grid md:grid-cols-3 gap-4">
-                            {isLoading ? (
-                                <div className="col-span-3 text-center py-8 text-gray-500">Carregando planos...</div>
-                            ) : (
-                                activePlans.map((plan: any) => (
-                                    <div
-                                        key={plan.id}
-                                        onClick={() => setSelectedPlan(plan)}
-                                        className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center transition-all hover:scale-105 ${selectedPlan?.id === plan.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
-                                    >
-                                        <div className="text-sm font-medium text-gray-500 mb-1">{plan.name}</div>
-                                        <div className="text-3xl font-bold text-gray-900 mb-2">{plan.credits}</div>
-                                        <div className="text-xs text-gray-500 mb-4">Créditos</div>
-                                        <div className="text-lg font-bold text-primary">
-                                            {plan.currency || 'R$'} {plan.price}
-                                        </div>
-                                        {selectedPlan?.id === plan.id && (
-                                            <div className="mt-2 bg-primary text-white rounded-full p-1">
-                                                <Check size={12} />
-                                            </div>
-                                        )}
+                    <h1 className="text-5xl font-extrabold leading-tight">
+                        Descubra o potencial <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                            oculto da sua equipe
+                        </span>
+                    </h1>
+                    
+                    <p className="text-lg text-gray-300 leading-relaxed">
+                        Junte-se a mais de 10.000 líderes que usam nossa inteligência comportamental para tomar decisões melhores.
+                    </p>
+                    
+                    <div className="space-y-4 pt-4">
+                         {[
+                            "Mapeamento Big Five validado cientificamente",
+                            "Relatórios detalhados com insights de liderança",
+                            "Dashboard intuitivo para gestão de times"
+                         ].map((item, idx) => (
+                             <div key={idx} className="flex items-center gap-3">
+                                 <div className="bg-white/20 p-1.5 rounded-full">
+                                    <Check size={16} className="text-white" />
+                                 </div>
+                                 <span className="font-medium">{item}</span>
+                             </div>
+                         ))}
+                    </div>
+
+                    <div className="pt-8">
+                        <div className="flex items-center gap-4">
+                            <div className="flex -space-x-3">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-700 overflow-hidden">
+                                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
                                     </div>
-                                ))
-                            )}
-                        </div>
-                        <button
-                            onClick={() => setStep(2)}
-                            disabled={!selectedPlan}
-                            className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-lg mt-6 shadow-lg shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Continuar com {selectedPlan?.name || 'Plano Selecionado'}
-                        </button>
-                    </div>
-                ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6">
-
-                        {/* Type Toggle */}
-                        <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
-                            <button
-                                type="button"
-                                onClick={() => setUserType('INDIVIDUAL')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${userType === 'INDIVIDUAL' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}
-                            >
-                                <User size={16} /> Pessoa Física
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setUserType('COMPANY')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${userType === 'COMPANY' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}
-                            >
-                                <Building2 size={16} /> Pessoa Jurídica (Empresa)
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                            <div className="sm:col-span-6">
-                                <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    required
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                />
+                                ))}
                             </div>
-
-                            <div className="sm:col-span-6">
-                                <label className="block text-sm font-medium text-gray-700">Email Corporativo</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                />
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label className="block text-sm font-medium text-gray-700">Senha</label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    required
-                                    minLength={6}
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                />
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label className="block text-sm font-medium text-gray-700">Confirmar Senha</label>
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    required
-                                    minLength={6}
-                                    value={formData.confirmPassword}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                />
-                            </div>
-
-                            {userType === 'INDIVIDUAL' ? (
-                                <div className="sm:col-span-6">
-                                    <label className="block text-sm font-medium text-gray-700">CPF</label>
-                                    <input
-                                        type="text"
-                                        name="cpf"
-                                        value={formData.cpf}
-                                        onChange={handleInputChange}
-                                        placeholder="000.000.000-00"
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                    />
+                            <div className="text-sm">
+                                <div className="flex text-yellow-500">
+                                    {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="currentColor" />)}
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="sm:col-span-6">
-                                        <label className="block text-sm font-medium text-gray-700">Nome da Empresa</label>
-                                        <input
-                                            type="text"
-                                            name="companyName"
-                                            required
-                                            value={formData.companyName}
-                                            onChange={handleInputChange}
-                                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                        />
-                                    </div>
-                                    <div className="sm:col-span-6">
-                                        <label className="block text-sm font-medium text-gray-700">CNPJ</label>
-                                        <input
-                                            type="text"
-                                            name="cnpj"
-                                            value={formData.cnpj}
-                                            onChange={handleInputChange}
-                                            placeholder="00.000.000/0000-00"
-                                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            <div className="sm:col-span-6">
-                                <label className="block text-sm font-medium text-gray-700">Telefone / WhatsApp</label>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                                />
+                                <span className="text-gray-400">Avaliado por 500+ empresas</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-all"
-                        >
-                            {loading ? 'Criando conta...' : 'Finalizar Cadastro'}
-                        </button>
-                    </form>
-                )}
+            {/* Right Side - Form */}
+            <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-12 xl:px-24 bg-gray-50/50">
+                <div className="w-full max-w-md mx-auto">
+                    <div className="mb-10">
+                        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors mb-6">
+                            <ArrowLeft size={16} /> Voltar para Home
+                        </Link>
+                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+                            {step === 1 ? 'Escolha seu plano ideal' : 'Finalize seu cadastro'}
+                        </h2>
+                        <p className="mt-2 text-gray-600">
+                             {step === 1 ? 'Comece pequeno ou escale com sua empresa.' : 'Em poucos segundos seu painel estará pronto.'}
+                        </p>
+                    </div>
+
+                     {/* Progress Indicator */}
+                    <div className="flex items-center gap-2 mb-8">
+                         <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 1 ? 'bg-primary' : 'bg-gray-200'}`} />
+                         <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        {step === 1 ? (
+                            <motion.div
+                                key="step1"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="space-y-4"
+                            >
+                                <div className="grid gap-4">
+                                    {isLoading ? (
+                                        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
+                                    ) : (
+                                        activePlans.map((plan: any) => (
+                                            <div
+                                                key={plan.id}
+                                                onClick={() => setSelectedPlan(plan)}
+                                                className={`relative cursor-pointer border rounded-2xl p-5 transition-all duration-200 ${
+                                                    selectedPlan?.id === plan.id 
+                                                    ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary' 
+                                                    : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-sm'
+                                                }`}
+                                            >
+                                                {plan.highlighted && (
+                                                    <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-tr-xl rounded-bl-xl uppercase tracking-wider">
+                                                        Mais Popular
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <h3 className={`font-bold ${selectedPlan?.id === plan.id ? 'text-primary' : 'text-gray-900'}`}>
+                                                            {plan.name}
+                                                        </h3>
+                                                        <div className="flex items-baseline gap-1 mt-1">
+                                                            <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {plan.price}</span>
+                                                        </div>
+                                                        <p className="text-sm text-gray-500 mt-1">{plan.credits} créditos de avaliação</p>
+                                                    </div>
+                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                                        selectedPlan?.id === plan.id ? 'border-primary bg-primary' : 'border-gray-300'
+                                                    }`}>
+                                                        {selectedPlan?.id === plan.id && <Check size={14} className="text-white" />}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={() => setStep(2)}
+                                    disabled={!selectedPlan}
+                                    className="w-full mt-6 bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 group"
+                                >
+                                    Continuar <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                                
+                                <p className="text-center text-xs text-gray-400 mt-4">
+                                     Pagamento seguro e ativado instantaneamente.
+                                </p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="step2"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                            >
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    {error && (
+                                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-center gap-2">
+                                            <ShieldCheck size={16} /> {error}
+                                        </div>
+                                    )}
+
+                                     {/* User Type Selector */}
+                                    <div className="grid grid-cols-2 gap-3 mb-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setUserType('INDIVIDUAL')}
+                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
+                                                userType === 'INDIVIDUAL' 
+                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' 
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <User size={18} /> Pessoa Física
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setUserType('COMPANY')}
+                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
+                                                userType === 'COMPANY' 
+                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' 
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <Building2 size={18} /> Empresa
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {/* Inputs with floating-like refined style */}
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome Completo</label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                required
+                                                value={formData.name}
+                                                onChange={handleInputChange}
+                                                className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                placeholder="Seu nome"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Email Corporativo</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                required
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                placeholder="voce@empresa.com"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                             <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Senha</label>
+                                                <input
+                                                    type="password"
+                                                    name="password"
+                                                    required
+                                                    minLength={6}
+                                                    value={formData.password}
+                                                    onChange={handleInputChange}
+                                                    className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                    placeholder="******"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Confirmar</label>
+                                                <input
+                                                    type="password"
+                                                    name="confirmPassword"
+                                                    required
+                                                    minLength={6}
+                                                    value={formData.confirmPassword}
+                                                    onChange={handleInputChange}
+                                                    className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                    placeholder="******"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {userType === 'COMPANY' && (
+                                             <div className="grid grid-cols-2 gap-4">
+                                                 <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome da Empresa</label>
+                                                    <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
+                                                 </div>
+                                                 <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">CNPJ</label>
+                                                    <input type="text" name="cnpj" value={formData.cnpj} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
+                                                 </div>
+                                             </div>
+                                        )}
+                                         
+                                         <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Telefone</label>
+                                            <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="(00) 00000-0000" />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            {loading ? <Loader2 className="animate-spin" /> : 'Finalizar Cadastro'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(1)}
+                                            className="w-full mt-3 text-sm text-gray-500 hover:text-gray-800 font-medium py-2"
+                                        >
+                                            Voltar e Trocar de Plano
+                                        </button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
     );
@@ -313,22 +397,8 @@ function RegisterContent() {
 
 export default function RegisterPage() {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <Link href="/" className="flex items-center justify-center gap-2 text-primary mb-6">
-                    <ArrowLeft size={20} /> Voltar
-                </Link>
-                <h2 className="text-center text-3xl font-extrabold text-gray-900">
-                    Crie sua conta
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
-                    Comece a avaliar hoje mesmo
-                </p>
-            </div>
-            
-            <Suspense fallback={<div className="text-center p-8 text-gray-500">Carregando formulário...</div>}>
-                <RegisterContent />
-            </Suspense>
-        </div>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-primary" /></div>}>
+            <RegisterContent />
+        </Suspense>
     );
 }
