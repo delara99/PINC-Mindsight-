@@ -145,6 +145,28 @@ model Question {
   @@map("questions")
 }
 
+model BusinessLead {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  companyName String?
+  employees   String?
+  message     String?
+  status      LeadStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("business_leads")
+}
+
+enum LeadStatus {
+  PENDING
+  CONTACTED
+  CONVERTED
+  ARCHIVED
+}
+
 // =======================
 // Auxiliary
 // =======================

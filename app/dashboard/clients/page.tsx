@@ -29,6 +29,20 @@ export default function ClientsPage() {
     const [creditsAmount, setCreditsAmount] = useState<number>(0);
     const [creditAmount, setCreditAmount] = useState('');
     const [creditOperation, setCreditOperation] = useState<'add' | 'remove'>('add');
+    
+    // TAB MANAGEMENT
+    const [tab, setTab] = useState<'clients' | 'leads'>('clients');
+
+    // Fetch Leads
+    const { data: leads, isLoading: isLoadingLeads } = useQuery({
+        queryKey: ['leads'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/leads`, { headers: { Authorization: `Bearer ${token}` } });
+            if (!res.ok) throw new Error('Falha ao carregar leads');
+            return res.json();
+        },
+        enabled: tab === 'leads'
+    });
 
     // Estados para cadastro
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -275,8 +289,8 @@ export default function ClientsPage() {
         <div className="space-y-8 relative">
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Meus Clientes</h1>
-                    <p className="text-gray-500 mt-1">Gerencie usuários e atribua créditos para avaliações.</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
+                    <p className="text-gray-500 mt-1">Gerencie clientes ativos e novos interessados.</p>
                 </div>
                 <button
                     onClick={() => setIsRegisterModalOpen(true)}
@@ -287,13 +301,34 @@ export default function ClientsPage() {
                 </button>
             </div>
 
-            {isLoading ? (
-                <div className="flex justify-center py-20">
-                    <Loader2 size={40} className="animate-spin text-primary" />
-                </div>
-            ) : (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table className="w-full">
+            {/* Tabs */}
+            <div className="flex gap-6 border-b border-gray-200">
+                <button 
+                    onClick={() => setTab('clients')}
+                    className={`pb-3 px-2 font-bold text-sm transition-all relative ${tab === 'clients' ? 'text-primary' : 'text-gray-500 hover:text-gray-800'}`}
+                >
+                    Meus Clientes
+                    {tab === 'clients' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full" />}
+                </button>
+                <button 
+                    onClick={() => setTab('leads')}
+                    className={`pb-3 px-2 font-bold text-sm transition-all relative ${tab === 'leads' ? 'text-primary' : 'text-gray-500 hover:text-gray-800'}`}
+                >
+                    Leads Corporativos (B2B)
+                    {leads?.length > 0 && <span className="ml-2 bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded-full">{leads.length}</span>}
+                    {tab === 'leads' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full" />}
+                </button>
+            </div>
+
+            {tab === 'clients' ? (
+                isLoading ? (
+                    <div className="flex justify-center py-20">
+                        <Loader2 size={40} className="animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <table className="w-full">
+                            {/* ... Tabela de Clientes ... */}
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Nome / Email</th>
@@ -390,8 +425,72 @@ export default function ClientsPage() {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
-                </div>
+                        </table>
+                    </div>
+                )
+            ) : (
+                // VIEW DE LEADS
+                isLoadingLeads ? (
+                    <div className="flex justify-center py-20">
+                        <Loader2 size={40} className="animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa / Contato</th>
+                                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Contato</th>
+                                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Tamanho</th>
+                                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Data do Lead</th>
+                                    <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th className="text-right py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {leads?.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="py-8 text-center text-gray-500">Nenhum lead encontrado.</td>
+                                    </tr>
+                                )}
+                                {leads?.map((lead: any) => (
+                                    <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="py-4 px-6">
+                                            <div className="font-bold text-gray-900">{lead.companyName || 'Empresa não informada'}</div>
+                                            <div className="text-sm text-gray-500">{lead.name}</div>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="text-sm text-gray-900 flex items-center gap-1">📧 {lead.email}</div>
+                                            <div className="text-sm text-gray-500 flex items-center gap-1">📱 {lead.phone || '-'}</div>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">{lead.employees} func.</span>
+                                        </td>
+                                        <td className="py-4 px-6 text-sm text-gray-500">
+                                            {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                             <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                                                lead.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 
+                                                lead.status === 'CONTACTED' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                                {lead.status === 'PENDING' ? 'Novo' : 'Contatado'}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-right">
+                                            <button 
+                                                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+                                                onClick={() => window.open(`mailto:${lead.email}?subject=Contato PINC Mindsight&body=Olá ${lead.name}, recebemos seu interesse...`)}
+                                            >
+                                                Responder
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )
             )}
 
             {/* Modal de Relatórios */}

@@ -50,6 +50,9 @@ export default function Home() {
                         <Link href="#features" className="hover:text-primary transition-colors">Funcionalidades</Link>
                         <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
                         <Link href="/about" className="hover:text-primary transition-colors">Sobre</Link>
+                        <Link href="/empresas" className="flex items-center gap-1.5 hover:text-primary transition-colors font-bold text-gray-900 bg-gray-50 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
+                            🏢 PARA EMPRESAS
+                        </Link>
                     </nav>
                     <div className="flex items-center gap-4">
                         <Link href="/auth/login" className="text-sm font-semibold text-primary hover:text-primary-hover">
