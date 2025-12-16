@@ -60,7 +60,7 @@ function LoginForm() {
     return (
         <div className="min-h-screen flex">
             {/* Left Side - Image/Brand */}
-            <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-primary to-[#a00050] text-white p-12">
+            <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-primary to-[#5e055e] text-white p-12">
                 <div>
                     <Link href="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors">
                         <ArrowLeft size={20} /> Voltar para Home

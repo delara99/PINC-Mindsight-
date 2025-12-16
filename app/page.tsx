@@ -71,7 +71,7 @@ export default function Home() {
             <section
                 className="pt-32 pb-20 text-white overflow-hidden relative"
                 style={{
-                    background: `linear-gradient(to bottom right, ${settings?.heroBgColor || '#EC1B8E'}, ${settings?.heroBgColor || '#EC1B8E'}dd)`
+                    background: `linear-gradient(to bottom right, ${settings?.heroBgColor || '#8F088F'}, ${settings?.heroBgColor || '#8F088F'}dd)`
                 }}
             >
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-white/10 skew-x-12 transform origin-bottom translate-x-32" />
