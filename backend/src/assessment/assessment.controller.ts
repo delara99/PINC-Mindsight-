@@ -534,7 +534,6 @@ export class AssessmentController {
         const assignments = await this.prisma.assessmentAssignment.findMany({
             where: { assessmentId: id },
             include: {
-            include: {
                 user: {
                     select: {
                         id: true,
