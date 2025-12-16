@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, CheckCircle, Clock, AlertCircle, X, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, Clock, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Question {
@@ -20,17 +20,6 @@ interface Assessment {
     description: string;
     type: string;
     questions: Question[];
-}
-
-interface AssessmentAssignment {
-    id: string;
-    status: string;
-    timeSpent: number;
-    assessment: Assessment;
-    responses: {
-        questionId: string;
-        answer: number;
-    }[];
 }
 
 export default function TakeAssessmentPage() {
@@ -57,22 +46,19 @@ export default function TakeAssessmentPage() {
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Carregar Sessão (Assignment + Assessment + Responses)
+    // Carregar Sessão
     const { data: assignment, isLoading } = useQuery({
         queryKey: ['assessment-session', params.id],
         queryFn: async () => {
-            // 1. Tentar buscar assignment existente com progresso
             let res = await fetch(`${API_URL}/api/v1/assessments/${params.id}/my-assignment`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // 2. Se não existir (400/404), iniciar sessão
             if (!res.ok) {
                 await fetch(`${API_URL}/api/v1/assessments/${params.id}/start-session`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                // Buscar novamente
                 res = await fetch(`${API_URL}/api/v1/assessments/${params.id}/my-assignment`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -81,7 +67,6 @@ export default function TakeAssessmentPage() {
             if (!res.ok) throw new Error('Falha ao carregar sessão de avaliação');
             const data = await res.json();
 
-            // 3. Restaurar Estado (Resume)
             if (data.responses && Array.isArray(data.responses)) {
                 const initialAnswers: Record<string, number> = {};
                 data.responses.forEach((r: any) => {
@@ -94,7 +79,6 @@ export default function TakeAssessmentPage() {
                 setSeconds(data.timeSpent);
             }
 
-            // Pular para primeira não respondida
             if (data.assessment && data.assessment.questions) {
                 const firstUnanswered = data.assessment.questions.findIndex((q: any) => 
                     !data.responses?.some((r: any) => r.questionId === q.id)
@@ -112,7 +96,6 @@ export default function TakeAssessmentPage() {
 
     const assessment = assignment?.assessment as Assessment;
 
-    // Mutation: Salvar Resposta Individual (Background)
     const saveAnswerMutation = useMutation({
         mutationFn: async ({ qId, val, time }: { qId: string, val: number, time: number }) => {
              await fetch(`${API_URL}/api/v1/assessments/${assessment.id}/save-answer`, {
@@ -123,10 +106,8 @@ export default function TakeAssessmentPage() {
         }
     });
 
-    // Mutation: Finalizar Avaliação
     const submitMutation = useMutation({
         mutationFn: async () => {
-            // Converter answers state para array
             const formattedAnswers = Object.entries(answers).map(([questionId, value]) => ({
                 questionId,
                 value
@@ -151,7 +132,6 @@ export default function TakeAssessmentPage() {
             queryClient.invalidateQueries({ queryKey: ['user-credits'] });
             queryClient.invalidateQueries({ queryKey: ['my-assessments'] });
             
-            // Atualizar user store
             try {
                 const token = useAuthStore.getState().token;
                 const userRes = await fetch(`${API_URL}/api/v1/auth/me`, {
@@ -173,15 +153,9 @@ export default function TakeAssessmentPage() {
 
     const handleAnswer = (questionId: string, value: number) => {
         setAnswers(prev => ({ ...prev, [questionId]: value }));
-        
-        // Salvar em background (Optimistic UI)
         saveAnswerMutation.mutate({ qId: questionId, val: value, time: seconds });
-
-        // Auto-avançar
         if (currentQuestionIndex < (assessment?.questions.length || 0) - 1) {
-            setTimeout(() => {
-                goToNext();
-            }, 500);
+            setTimeout(() => goToNext(), 400);
         }
     };
 
@@ -197,7 +171,6 @@ export default function TakeAssessmentPage() {
         }
     };
 
-    // Abre Modal de Confirmação
     const handleSubmitClick = () => {
         if (assessment && Object.keys(answers).length === assessment.questions.length) {
             setIsConfirmOpen(true);
@@ -208,182 +181,183 @@ export default function TakeAssessmentPage() {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
+            <div className="flex justify-center items-center h-screen bg-white">
                 <Loader2 size={48} className="animate-spin text-primary" />
             </div>
         );
     }
 
-    if (!assessment) {
-        return (
-            <div className="text-center py-20">
-                <p className="text-gray-500">Avaliação não encontrada.</p>
-            </div>
-        );
-    }
+    if (!assessment) return null;
 
     const currentQuestion = assessment.questions[currentQuestionIndex];
     const progress = ((Object.keys(answers).length) / assessment.questions.length) * 100;
     const allAnswered = Object.keys(answers).length === assessment.questions.length;
 
     return (
-        <div className="max-w-3xl mx-auto relative">
-            {/* Header Sticky com Tempo */}
-            <div className="sticky top-0 bg-gray-50/95 backdrop-blur z-10 py-4 mb-6 border-b border-gray-200 flex justify-between items-center px-4 md:px-0">
-                 <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                >
-                    <ArrowLeft size={20} />
-                    <span className="hidden sm:inline">Voltar</span>
+        <div className="min-h-screen bg-white flex flex-col font-sans text-slate-800">
+            {/* Top Bar Minimalista */}
+            <header className="px-6 py-4 flex items-center justify-between bg-white z-10 sticky top-0">
+                 <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-700 transition-colors">
+                    <ArrowLeft size={24} />
                 </button>
-                
-                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-200">
-                    <Clock size={16} className="text-primary" />
-                    <span className="font-mono font-bold text-gray-700">{formatTime(seconds)}</span>
-                </div>
-            </div>
-
-            <div className="mb-8 px-4 md:px-0">
-                <h1 className="text-3xl font-bold text-gray-900">{assessment.title}</h1>
-                <p className="text-gray-500 mt-2">{assessment.description}</p>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-8 px-4 md:px-0">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-600">
-                        Questão {currentQuestionIndex + 1} de {assessment.questions.length}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                        Questão {currentQuestionIndex + 1} / {assessment.questions.length}
                     </span>
-                    <span className="text-sm font-medium text-primary">
-                        {Math.round(progress)}% respondido
-                    </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                        className="bg-primary h-2.5 rounded-full transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                    ></div>
-                </div>
-            </div>
-
-            {/* Question Card */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentQuestion.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 mb-6 mx-4 md:mx-0"
-                >
-                    <p className="text-lg font-semibold text-gray-900 mb-6">
-                        {currentQuestion.text}
-                    </p>
-
-                    <div className="space-y-3">
-                        {[
-                            { value: 1, label: 'Discordo totalmente' },
-                            { value: 2, label: 'Discordo' },
-                            { value: 3, label: 'Neutro' },
-                            { value: 4, label: 'Concordo' },
-                            { value: 5, label: 'Concordo totalmente' }
-                        ].map((option) => (
-                            <label
-                                key={option.value}
-                                className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${answers[currentQuestion.id] === option.value
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
-                                    }`}
-                            >
-                                <input
-                                    type="radio"
-                                    name={currentQuestion.id}
-                                    value={option.value}
-                                    checked={answers[currentQuestion.id] === option.value}
-                                    onChange={() => handleAnswer(currentQuestion.id, option.value)}
-                                    className="w-5 h-5 text-primary"
-                                />
-                                <span className="font-medium text-gray-900">{option.label}</span>
-                            </label>
-                        ))}
+                    <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
+                         <motion.div 
+                            className="h-full bg-primary"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 0.5 }}
+                         />
                     </div>
-                </motion.div>
-            </AnimatePresence>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full">
+                    <Clock size={16} />
+                    <span className="font-mono font-medium text-sm">{formatTime(seconds)}</span>
+                </div>
+            </header>
 
-            {/* Actions */}
-            <div className="flex justify-between items-center gap-4 mt-8 pb-8 px-4 md:px-0">
+            {/* Main Content Centrado */}
+            <main className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full px-6 py-8">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentQuestion.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                        {/* Pergunta */}
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-12 text-center">
+                            {currentQuestion.text}
+                        </h2>
+
+                        {/* Opções */}
+                        <div className="space-y-4">
+                            {[
+                                { value: 1, label: 'Discordo totalmente' },
+                                { value: 2, label: 'Discordo' },
+                                { value: 3, label: 'Neutro' },
+                                { value: 4, label: 'Concordo' },
+                                { value: 5, label: 'Concordo totalmente' }
+                            ].map((option) => {
+                                const isSelected = answers[currentQuestion.id] === option.value;
+                                return (
+                                    <motion.button
+                                        key={option.value}
+                                        whileHover={{ scale: 1.02, backgroundColor: isSelected ? undefined : "#f8fafc" }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => handleAnswer(currentQuestion.id, option.value)}
+                                        className={`w-full p-5 rounded-2xl border-2 text-left flex items-center justify-between transition-all duration-200 group
+                                            ${isSelected 
+                                                ? 'border-primary bg-primary/5 shadow-sm' 
+                                                : 'border-slate-100 hover:border-primary/30 bg-white'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                                                ${isSelected 
+                                                    ? 'border-primary bg-primary text-white' 
+                                                    : 'border-slate-300 group-hover:border-primary/50'
+                                                }`}>
+                                                {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                                            </div>
+                                            <span className={`text-lg font-medium ${isSelected ? 'text-primary' : 'text-slate-600'}`}>
+                                                {option.label}
+                                            </span>
+                                        </div>
+                                        {isSelected && (
+                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                                <CheckCircle className="text-primary" size={24} />
+                                            </motion.div>
+                                        )}
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
+            </main>
+
+            {/* Footer de Navegação */}
+            <footer className="px-6 py-8 flex justify-between items-center max-w-5xl mx-auto w-full">
                 <button
                     onClick={goToPrevious}
                     disabled={currentQuestionIndex === 0}
-                    className="px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
+                    <ChevronLeft size={20} />
                     Anterior
                 </button>
-
-                 <div className="text-sm text-gray-400 hidden sm:block">
-                    {saveAnswerMutation.isPending ? 'Salvando...' : 'Progresso Salvo'}
-                 </div>
 
                 {currentQuestionIndex === assessment.questions.length - 1 ? (
                     <button
                         onClick={handleSubmitClick}
                         disabled={!allAnswered}
-                        className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+                        className="flex items-center gap-2 px-8 py-4 bg-primary text-white text-lg font-bold rounded-full shadow-lg shadow-primary/30 hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                        Finalizar Avaliação
                         <CheckCircle size={20} />
-                        Finalizar
                     </button>
                 ) : (
                     <button
                         onClick={goToNext}
                         disabled={!answers[currentQuestion.id]}
-                        className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+                        className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:px-10"
                     >
                         Próxima
+                        <ChevronRight size={20} />
                     </button>
                 )}
-            </div>
+            </footer>
 
-            {/* Confirmation Modal */}
+            {/* Modal de Confirmação Moderno */}
             <AnimatePresence>
                 {isConfirmOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                            onClick={() => setIsConfirmOpen(false)}
+                        />
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative"
+                            initial={{ y: "100%", opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: "100%", opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-8 relative z-10 shadow-2xl"
                         >
                             <button 
                                 onClick={() => setIsConfirmOpen(false)}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                                className="absolute top-6 right-6 p-2 bg-slate-50 rounded-full text-slate-400 hover:text-slate-700 transition-colors"
                             >
                                 <X size={20} />
                             </button>
 
-                            <div className="flex flex-col items-center text-center">
-                                <div className="bg-green-100 p-3 rounded-full mb-4">
-                                    <CheckCircle className="text-green-600" size={32} />
+                            <div className="text-center">
+                                <div className="w-20 h-20 bg-green-100/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <CheckCircle className="text-green-600 w-10 h-10" />
                                 </div>
-                                <h2 className="text-xl font-bold text-gray-900 mb-2">Finalizar Avaliação?</h2>
-                                <p className="text-gray-500 mb-6">
-                                    Você respondeu todas as perguntas. Tem certeza que deseja enviar suas respostas? Essa ação não pode ser desfeita.
+                                <h2 className="text-2xl font-bold text-slate-900 mb-2">Tudo pronto!</h2>
+                                <p className="text-slate-500 mb-8 text-lg">
+                                    Você respondeu todas as {assessment.questions.length} perguntas. Deseja enviar seus resultados agora?
                                 </p>
                                 
-                                <div className="flex gap-3 w-full">
-                                    <button
-                                        onClick={() => setIsConfirmOpen(false)}
-                                        className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50"
-                                    >
-                                        Revisar
-                                    </button>
+                                <div className="space-y-3">
                                     <button
                                         onClick={() => submitMutation.mutate()}
                                         disabled={submitMutation.isPending}
-                                        className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover shadow-lg shadow-primary/20 flex justify-center items-center gap-2"
+                                        className="w-full py-4 bg-primary text-white text-lg font-bold rounded-xl hover:bg-primary-hover shadow-xl shadow-primary/20 transition-all active:scale-95 flex justify-center items-center gap-2"
                                     >
-                                        {submitMutation.isPending ? <Loader2 className="animate-spin" /> : 'Confirmar Envio'}
+                                        {submitMutation.isPending ? <Loader2 className="animate-spin" /> : 'Confirmar e Enviar'}
+                                    </button>
+                                    <button
+                                        onClick={() => setIsConfirmOpen(false)}
+                                        className="w-full py-4 text-slate-500 font-bold hover:text-slate-800 transition-colors"
+                                    >
+                                        Revisar respostas
                                     </button>
                                 </div>
                             </div>
