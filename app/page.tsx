@@ -40,7 +40,7 @@ export default function Home() {
         <main className="min-h-screen bg-white text-gray-800 font-sans">
 
             {/* HEADER */}
-            <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+            <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center">
                         <img src="/logo-pinc.png" alt="PINC Logo" className="h-10 w-auto object-contain" />
