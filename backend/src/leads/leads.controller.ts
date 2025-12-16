@@ -3,7 +3,7 @@ import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
 import { LeadsService } from './leads.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('api/v1/leads')
+@Controller('leads')
 export class LeadsController {
     constructor(private readonly leadsService: LeadsService) {}
 
