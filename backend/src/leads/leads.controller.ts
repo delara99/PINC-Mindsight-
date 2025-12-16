@@ -1,7 +1,7 @@
 
 import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
 import { LeadsService } from './leads.service';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('api/v1/leads')
 export class LeadsController {
@@ -13,7 +13,7 @@ export class LeadsController {
     }
 
     @Get()
-    @UseGuards(AuthGuard) // Protect this route
+    @UseGuards(AuthGuard('jwt')) // Protect this route
     async findAll() {
         return this.leadsService.findAll();
     }
