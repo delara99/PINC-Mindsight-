@@ -98,7 +98,7 @@ export function OnboardingModal() {
                             </div>
                         </div>
 
-                        <Link href="/dashboard/settings?tab=pricing" onClick={handleDismiss} className="block w-full">
+                        <Link href="/dashboard/plans" onClick={handleDismiss} className="block w-full">
                             <button className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-all">
                                 Comprar Créditos Agora <ArrowRight size={20} />
                             </button>
