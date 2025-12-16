@@ -217,11 +217,27 @@ export class AssessmentController {
     @Get('completed')
     async getCompletedAssessments(@Request() req) {
         const tenantId = req.user.tenantId;
+        const userId = req.user.userId;
+
+        // Buscar IDs de usuários conectados (Clientes/Conexões Ativas)
+        const connections = await this.prisma.connection.findMany({
+            where: {
+                OR: [
+                    { userAId: userId, status: 'ACTIVE' },
+                    { userBId: userId, status: 'ACTIVE' }
+                ]
+            }
+        });
+        
+        const connectedUserIds = connections.map(c => c.userAId === userId ? c.userBId : c.userAId);
 
         const completedAssignments = await this.prisma.assessmentAssignment.findMany({
             where: {
                 status: 'COMPLETED',
-                user: { tenantId }
+                OR: [
+                    { user: { tenantId } },
+                    { userId: { in: connectedUserIds } }
+                ]
             },
             include: {
                 user: {
