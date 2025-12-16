@@ -482,6 +482,11 @@ model SiteSettings {
   // Visibility Flags
   showFeatures Boolean @default(true) @map("show_features")
   showPricing  Boolean @default(true) @map("show_pricing")
+  showAbout    Boolean @default(true) @map("show_about")
+
+  // About Section
+  aboutTitle     String?  @default("Sobre Nossa Empresa") @map("about_title") @db.VarChar(200)
+  aboutContent   String?  @map("about_content") @db.Text
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
-import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star } from 'lucide-react';
+import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function SettingsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme'>('hero');
+    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme' | 'about'>('hero');
 
     // Fetch settings
     const { data: settings, isLoading } = useQuery({
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
-                    {['hero', 'features', 'pricing', 'theme'].map((tab) => (
+                    {['hero', 'features', 'pricing', 'about', 'theme'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
@@ -192,6 +192,7 @@ export default function SettingsPage() {
                             {tab === 'features' && <><FileText size={16} /> Features</>}
                             {tab === 'pricing' && <><DollarSign size={16} /> Pricing</>}
                             {tab === 'theme' && <><Palette size={16} /> Tema</>}
+                            {tab === 'about' && <><Info size={16} /> Sobre</>}
                         </button>
                     ))}
                 </div>
@@ -461,6 +462,40 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* About Tab */}
+                    {activeTab === 'about' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.showAbout !== false}
+                                    onChange={(e) => setFormData({ ...formData, showAbout: e.target.checked })}
+                                    className="rounded text-primary"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Exibir página Sobre</span>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Título da Página</label>
+                                <input
+                                    type="text"
+                                    value={formData.aboutTitle || ''}
+                                    onChange={(e) => setFormData({ ...formData, aboutTitle: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo (HTML/Texto)</label>
+                                <textarea
+                                    value={formData.aboutContent || ''}
+                                    onChange={(e) => setFormData({ ...formData, aboutContent: e.target.value })}
+                                    rows={10}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Dica: Você pode usar quebras de linha para separar parágrafos.</p>
+                            </div>
                         </div>
                     )}
 

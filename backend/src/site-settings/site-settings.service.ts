@@ -17,6 +17,9 @@ export class SiteSettingsService {
                 data: {
                     tenantId: tenantId || null,
                     heroDescription: 'A ferramenta definitiva baseada no Big Five para mapeamento de perfil comportamental e inteligência organizacional.',
+                    aboutTitle: 'Sobre Nossa Empresa',
+                    aboutContent: 'Escreva aqui a história da sua empresa, missão e valores.',
+                    showAbout: true,
                     features: [
                         {
                             id: '1',
