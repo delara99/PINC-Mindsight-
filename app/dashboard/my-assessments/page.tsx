@@ -24,15 +24,17 @@ export default function MyAssessmentsPage() {
     const router = useRouter();
     const [isNudgeOpen, setIsNudgeOpen] = useState(false);
 
+    // Carregar avaliações atribuídas ao usuário (Endpoint dedicado)
     const { data: assessments, isLoading } = useQuery<Assessment[]>({
         queryKey: ['my-assessments'],
         queryFn: async () => {
-            const response = await fetch(`${API_URL}/api/v1/assessments`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/my-assignments-list`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!response.ok) throw new Error('Falha ao carregar avaliações');
+            if (!response.ok) throw new Error('Falha ao carregar suas avaliações');
             return response.json();
-        }
+        },
+        enabled: !!token
     });
 
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);

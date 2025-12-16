@@ -392,6 +392,34 @@ export class AssessmentController {
     }
 
 
+
+    // Endpoint específico para "Minhas Avaliações" (Jornada do Usuário)
+    // Retorna tudo que foi atribuído ao usuário, independentemente do role
+    @Get('my-assignments-list')
+    async getMyAssignmentsList(@Request() req) {
+        const user = req.user;
+        const assignments = await this.prisma.assessmentAssignment.findMany({
+            where: { userId: user.userId },
+            include: {
+                assessment: {
+                    include: {
+                        questions: true,
+                        _count: { select: { assignments: true } }
+                    }
+                }
+            },
+            orderBy: { assignedAt: 'desc' }
+        });
+
+        return assignments.map(assignment => ({
+            ...assignment.assessment,
+            assignmentId: assignment.id,
+            assignmentStatus: assignment.status,
+            assignedAt: assignment.assignedAt,
+            feedback: assignment.feedback
+        }));
+    }
+
     @Get()
     async findAll(@Request() req) {
         const user = req.user;
