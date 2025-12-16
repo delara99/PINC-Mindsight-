@@ -221,7 +221,7 @@ export class AssessmentController {
         const completedAssignments = await this.prisma.assessmentAssignment.findMany({
             where: {
                 status: 'COMPLETED',
-                assessment: { tenantId }
+                user: { tenantId }
             },
             include: {
                 user: {
