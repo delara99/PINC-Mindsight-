@@ -590,6 +590,41 @@ export class AssessmentController {
         return { message: 'Atribuição removida com sucesso' };
     }
 
+    // Salvar resposta individual (Progresso Parcial) + Tempo
+    @Post(':id/save-answer')
+    async saveAnswer(@Param('id') id: string, @Body() body: { questionId: string, value: number, timeSpent: number }, @Request() req) {
+        const userId = req.user.userId;
+
+        const assignment = await this.prisma.assessmentAssignment.findFirst({
+            where: { assessmentId: id, userId: userId }
+        });
+
+        if (!assignment) throw new BadRequestException('Atribuição não encontrada');
+        if (assignment.status === 'COMPLETED') return { message: 'Already completed' };
+
+        const existingResponse = await this.prisma.assessmentResponse.findFirst({
+            where: { assignmentId: assignment.id, questionId: body.questionId }
+        });
+
+        if (existingResponse) {
+             await this.prisma.assessmentResponse.update({
+                 where: { id: existingResponse.id },
+                 data: { answer: Number(body.value) }
+             });
+        } else {
+             await this.prisma.assessmentResponse.create({
+                 data: { assignmentId: assignment.id, questionId: body.questionId, answer: Number(body.value) }
+             });
+        }
+
+        await this.prisma.assessmentAssignment.update({
+            where: { id: assignment.id },
+            data: { timeSpent: body.timeSpent, status: 'IN_PROGRESS' }
+        });
+
+        return { success: true };
+    }
+
     // Submeter respostas da avaliação
     @Post(':id/submit')
     async submitAssessment(@Param('id') id: string, @Body() body: { answers: any[] }, @Request() req) {

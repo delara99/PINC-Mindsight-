@@ -171,6 +171,7 @@ model AssessmentAssignment {
   status       String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
   assignedAt   DateTime @default(now())
   completedAt  DateTime?
+  timeSpent    Int      @default(0) // Tempo em segundos
   
   feedback     String?  @db.Text
   feedbackAt   DateTime?

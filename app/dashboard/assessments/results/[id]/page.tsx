@@ -37,7 +37,7 @@ export default function AssessmentResultPage() {
 
                 // Verificar se já tem resultado calculado
                 if (assignment.result && assignment.result.data) {
-                    setResult(assignment.result.data);
+                    setResult({ ...assignment.result.data, timeSpent: assignment.timeSpent });
                     setLoading(false);
                     return;
                 }
@@ -67,7 +67,7 @@ export default function AssessmentResultPage() {
                 }
 
                 const calculatedResult = await calcRes.json();
-                setResult(calculatedResult);
+                setResult({ ...calculatedResult, timeSpent: assignment.timeSpent });
 
             } catch (err: any) {
                 console.error('Erro:', err);
@@ -121,6 +121,14 @@ export default function AssessmentResultPage() {
 
     return (
         <div className="max-w-6xl mx-auto">
+             {result.timeSpent > 0 && (
+                <div className="mb-6 flex justify-end">
+                    <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100 shadow-sm">
+                        <Clock size={16} />
+                        Tempo de Realização: {Math.floor(result.timeSpent / 60)}m {result.timeSpent % 60}s
+                    </div>
+                </div>
+            )}
             <BigFiveResults result={result} />
         </div>
     );
