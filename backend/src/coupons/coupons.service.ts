@@ -81,20 +81,46 @@ export class CouponsService {
         await this.prisma.coupon.update({ where: { id: coupon.id }, data: { usageCount: { increment: 1 } } });
 
         if (coupon.discountPercent === 100) {
-            const planEnum = selectedPlanEnum as any;
+            const requestedPlan = selectedPlanEnum as any;
+            const currentUserPlan = user.plan || 'START';
+            const currentTenantPlan = user.tenant.plan || 'START';
+
+            // Hierarquia de planos: START < PRO < BUSINESS
+            const planHierarchy: Record<string, number> = {
+                'START': 1,
+                'PRO': 2,
+                'BUSINESS': 3
+            };
+
+            // Determinar o plano final (nunca fazer downgrade)
+            const currentLevel = planHierarchy[currentUserPlan] || 1;
+            const requestedLevel = planHierarchy[requestedPlan] || 1;
+            const finalPlan = requestedLevel > currentLevel ? requestedPlan : currentUserPlan;
 
             // Sempre adicionar 1 crédito independente do plano
             const creditsToAdd = 1;
 
-            await this.prisma.tenant.update({ where: { id: user.tenant.id }, data: { plan: planEnum } });
+            // Atualizar apenas se for upgrade ou primeiro uso
+            if (finalPlan !== currentUserPlan || finalPlan !== currentTenantPlan) {
+                await this.prisma.tenant.update({
+                    where: { id: user.tenant.id },
+                    data: { plan: finalPlan }
+                });
+            }
+
             await this.prisma.user.update({
                 where: { id: user.id },
                 data: {
-                    plan: planEnum,
+                    plan: finalPlan,
                     credits: { increment: creditsToAdd }
                 }
             });
-            return { success: true, message: `Plano ${planEnum} ativado com sucesso! Você recebeu ${creditsToAdd} crédito.` };
+
+            const message = finalPlan === requestedPlan
+                ? `Plano ${finalPlan} ativado com sucesso! Você recebeu ${creditsToAdd} crédito.`
+                : `${creditsToAdd} crédito adicionado! Você mantém seu plano ${finalPlan}.`;
+
+            return { success: true, message };
         }
 
         return { success: true, message: 'Cupom aplicado.' };
