@@ -11,7 +11,6 @@ import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { BigFiveConfigModule } from './big-five-config/big-five-config.module';
 import { ActivityTrackerMiddleware } from './middleware/activity-tracker.middleware';
 import { CrossProfileModule } from './reports/cross-profile/cross-profile.module';
-import { LeadsModule } from './leads/leads.module';
 
 @Module({
     imports: [
@@ -24,7 +23,6 @@ import { LeadsModule } from './leads/leads.module';
         ConnectionsModule,
         SiteSettingsModule,
         BigFiveConfigModule,
-        LeadsModule,
         CrossProfileModule
     ],
     controllers: [],

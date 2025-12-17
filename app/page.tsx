@@ -1,8 +1,22 @@
 'use client';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Users, CheckCircle, ArrowRight, Target, FileText, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
+import { MethodologySection } from '@/src/components/landing/methodology-section';
+import { FeaturesGrid } from '@/src/components/landing/features-grid';
 import { API_URL } from '@/src/config/api';
+
+// Icon mapping
+const iconMap: any = {
+    'target': Target,
+    'grid': Grid3x3,
+    'users': Users,
+    'shield': Shield,
+    'file-text': FileText,
+    'star': Star,
+    'check': CheckCircle,
+    'brain': BrainCircuit
+};
 
 export default function Home() {
     // Fetch site settings
@@ -26,175 +40,161 @@ export default function Home() {
         <main className="min-h-screen bg-white text-gray-800 font-sans">
 
             {/* HEADER */}
-            <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
+            <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <img src={settings?.logoUrl || "/logo-pinc.png"} alt="Logo" className="h-8 w-auto object-contain transition-transform group-hover:scale-105" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold bg-primary text-white p-1 rounded">SaaS</span>
+                        <span className="text-xl font-bold text-gray-800">Avaliação</span>
+                    </div>
                     <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-600">
-                        {settings?.menuItems?.map((item: any, idx: number) => (
-                            <Link key={idx} href={item.href} className="hover:text-primary transition-colors">{item.label}</Link>
-                        ))}
+                        <Link href="#features" className="hover:text-primary transition-colors">Funcionalidades</Link>
+                        <Link href="/business" className="hover:text-primary transition-colors font-semibold text-primary">Para Empresas</Link>
+                        <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
+                        <Link href="/about" className="hover:text-primary transition-colors">Sobre</Link>
                     </nav>
                     <div className="flex items-center gap-4">
-                        <Link href="/auth/login" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">
-                            Entrar
+                        <Link href="/auth/login" className="text-sm font-semibold text-primary hover:text-primary-hover">
+                            Área do Cliente
                         </Link>
                         <Link
                             href="/auth/register"
-                            className="bg-primary hover:bg-primary-hover text-white font-bold py-2.5 px-6 rounded-full text-sm transition-all hover:scale-105 shadow-lg shadow-primary/20"
+                            className="bg-secondary hover:bg-secondary-hover text-black font-bold py-2.5 px-6 rounded-full text-sm transition-transform hover:scale-105 shadow-lg shadow-secondary/30"
                         >
-                            Começar Agora
+                            COMEÇAR AGORA
                         </Link>
                     </div>
                 </div>
             </header>
 
-            {/* HERO SECTION */}
-            <section className="pt-32 pb-24 relative overflow-hidden bg-gradient-to-br from-[#8F088F] to-[#5e055e] text-white">
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 skew-x-12 transform origin-bottom translate-x-32" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/20 blur-3xl rounded-full mix-blend-overlay" />
+            {/* HERO SECTION - DYNAMIC */}
+            <section
+                className="pt-32 pb-20 text-white overflow-hidden relative"
+                style={{
+                    background: `linear-gradient(to bottom right, ${settings?.heroBgColor || '#EC1B8E'}, ${settings?.heroBgColor || '#EC1B8E'}dd)`
+                }}
+            >
+                <div className="absolute top-0 right-0 w-1/3 h-full bg-white/10 skew-x-12 transform origin-bottom translate-x-32" />
 
-                <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col items-center text-center">
-                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium mb-8 animate-fade-in-up">
-                        <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
-                        {settings?.heroBadge || 'Tecnologia Big Five'}
-                    </div>
-
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-8 max-w-4xl tracking-tight">
-                        {settings?.heroTitle ? (
-                            <span dangerouslySetInnerHTML={{ __html: settings.heroTitle.replace(/\n/g, '<br/>') }} />
-                        ) : (
-                            <>
-                                Muito mais que um teste: <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
-                                    uma análise completa de quem você é.
-                                </span>
-                            </>
+                <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
+                    <div className="space-y-6">
+                        {settings?.heroBadge && (
+                            <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+                                <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
+                                {settings.heroBadge}
+                            </div>
                         )}
-                    </h1>
-
-                    <p className="text-lg md:text-xl text-indigo-100 leading-relaxed max-w-2xl mb-10">
-                        {settings?.heroDescription || 'Entenda seu perfil comportamental, melhore seus relacionamentos e descubra seus pontos fortes com nossa tecnologia baseada em dados.'}
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                        <Link
-                            href={settings?.primaryButtonLink || "/trial"}
-                            className="flex items-center justify-center gap-2 bg-secondary text-gray-900 text-lg font-bold py-4 px-10 rounded-full shadow-xl shadow-secondary/20 transition-all hover:scale-105 hover:bg-white"
-                        >
-                            {settings?.primaryButtonText || "Fazer Análise Gratuita"} <ArrowRight size={20} />
-                        </Link>
-                        <Link
-                            href="#relatorios"
-                            className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-lg font-bold py-4 px-10 rounded-full transition-all hover:bg-white/20"
-                        >
-                            Ver Funcionalidades
-                        </Link>
+                        <h1 className="text-5xl md:text-6xl font-extrabold leading-tight" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                            {settings?.heroTitle || 'Descubra os Talentos'} <br />
+                            <span style={{ color: settings?.accentColor || '#FFC107' }}>{settings?.heroSubtitle || 'Ocultos na Sua Equipe'}</span>
+                        </h1>
+                        <p className="text-lg opacity-90 leading-relaxed max-w-lg" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                            {settings?.heroDescription || 'A ferramenta definitiva baseada no Big Five para mapeamento de perfil comportamental e inteligência organizacional.'}
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                            <Link
+                                href="/trial"
+                                className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full shadow-xl transition-all hover:translate-y-[-2px]"
+                                style={{
+                                    backgroundColor: settings?.accentColor || '#FFC107',
+                                    color: '#000'
+                                }}
+                            >
+                                {settings?.primaryButtonText || 'Ver Degustação'} <ArrowRight size={20} />
+                            </Link>
+                            {settings?.secondaryButtonText && (
+                                <Link
+                                    href={settings?.secondaryButtonLink || '#features'}
+                                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur text-white text-lg font-semibold py-4 px-8 rounded-full border border-white/30 transition-all"
+                                >
+                                    {settings.secondaryButtonText}
+                                </Link>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Dashboard Preview (Floating) */}
-                    <div className="mt-20 -mb-40 relative max-w-5xl w-full mx-auto">
-                        <div className="absolute inset-0 bg-secondary/20 blur-3xl rounded-full transform scale-75" />
-                        <img 
-                            src="/feature-dashboard.png" 
-                            alt="Dashboard Preview" 
-                            className="relative rounded-2xl shadow-2xl border-4 border-white/10 w-full hover:scale-[1.01] transition-transform duration-700" 
-                        />
+                    <div className="relative">
+                        {/* Abstract Card Visual */}
+                        <div className="bg-white rounded-2xl p-6 shadow-2xl transform rotate-3 hover:rotate-0 transition-all duration-500">
+                            <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center font-bold text-white">HD</div>
+                                <div>
+                                    <h4 className="font-bold text-gray-800">Henrique De Lara</h4>
+                                    <p className="text-xs text-gray-500">CEO da Sued.in</p>
+                                </div>
+                                <div className="ml-auto text-green-600 font-bold text-sm">98% Compatível</div>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">Extroversão</div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-blue-500 w-[85%]" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">Amabilidade</div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-green-500 w-[92%]" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">Conscienciosidade</div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-purple-500 w-[78%]" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* SPACER FOR FLOATING IMAGE */}
-            <div className="h-32 bg-white" />
+            {/* METHODOLOGY SHOWCASE */}
+            <MethodologySection />
 
-            {/* DYNAMIC FEATURE SECTIONS */}
-            {settings?.featuresSection?.map((block: any, idx: number) => (
-                <section key={block.id || idx} id={block.id} className={`py-24 overflow-hidden ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="grid lg:grid-cols-2 gap-16 items-center">
-                            {/* Text Column */}
-                            <div className={`${block.orientation === 'right' ? 'lg:order-2' : 'lg:order-1'} space-y-8`}>
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-primary ${idx % 2 === 0 ? 'bg-indigo-100' : 'bg-purple-100'}`}>
-                                    {idx % 3 === 0 ? <FileText size={24} className="stroke-[3]" /> : 
-                                     idx % 3 === 1 ? <Users size={24} className="stroke-[3]" /> : 
-                                     <Target size={24} className="stroke-[3]" />}
-                                </div>
-                                <h2 className="text-4xl font-bold text-gray-900 leading-tight">
-                                    {block.title}
-                                </h2>
-                                <p className="text-lg text-gray-600 leading-relaxed">
-                                    {block.description}
-                                </p>
-                                {block.items && block.items.length > 0 && (
-                                    <ul className="space-y-4">
-                                        {block.items.map((item: string, i: number) => (
-                                            <li key={i} className="flex items-center gap-3 text-gray-700 font-medium">
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${idx % 2 === 0 ? 'bg-green-100 text-green-600' : 'bg-purple-100 text-purple-600'}`}>
-                                                    <CheckCircle size={14} strokeWidth={3} />
-                                                </div>
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-                            
-                            {/* Image Column */}
-                            <div className={`${block.orientation === 'right' ? 'lg:order-1' : 'lg:order-2'} relative`}>
-                                <div className={`absolute -inset-4 bg-gradient-to-tr rounded-full blur-3xl opacity-70 ${idx % 2 === 0 ? 'from-indigo-50 to-pink-50' : 'from-purple-100 to-indigo-100'}`} />
-                                <img 
-                                    src={block.image} 
-                                    alt={block.title} 
-                                    className="relative rounded-2xl shadow-2xl border border-gray-100 transition-transform duration-500 hover:scale-[1.01]" 
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            ))}
+            {/* FEATURES SECTION - DYNAMIC */}
+            {settings?.showFeatures && settings?.features?.length > 0 && (
+                <FeaturesGrid features={settings.features} />
+            )}
 
-            {/* PRICING SECTION */}
+            {/* PRICING SECTION - DYNAMIC */}
             {settings?.showPricing && settings?.pricingPlans?.length > 0 && (
-                <section id="plans" className="py-24 bg-gray-900 text-white">
+                <section id="plans" className="py-20 bg-white">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center mb-16">
-                            <h2 className="text-4xl font-extrabold mb-4">Escolha sua Jornada</h2>
-                            <p className="text-lg text-gray-400">Planos flexíveis para você ou sua empresa.</p>
+                            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Planos e Preços</h2>
+                            <p className="text-lg text-gray-600">Escolha o plano ideal para o tamanho da sua equipe</p>
                         </div>
                         <div className="flex flex-wrap justify-center gap-8">
                             {settings.pricingPlans.map((plan: any) => (
                                 <div
                                     key={plan.id}
-                                    className={`rounded-2xl p-8 border-2 w-full max-w-sm transition-all duration-300 ${plan.highlighted 
-                                        ? 'border-secondary bg-white/10 backdrop-blur-sm shadow-2xl scale-105' 
-                                        : 'border-gray-800 bg-white/5'}`}
+                                    className={`rounded-2xl p-8 border-2 w-full max-w-sm ${plan.highlighted ? 'border-primary bg-primary/5 shadow-xl scale-105' : 'border-gray-200 bg-white'}`}
                                 >
                                     {plan.highlighted && (
-                                        <div className="bg-secondary text-gray-900 text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">
-                                            RECOMENDADO
+                                        <div className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">
+                                            MAIS POPULAR
                                         </div>
                                     )}
-                                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                                     <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-extrabold">
+                                        <span className="text-4xl font-extrabold text-gray-900">
                                             {plan.currency} {Number(String(plan.price).replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </span>
-                                        <span className="text-gray-400">/{plan.period}</span>
+                                        <span className="text-gray-500">/{plan.period}</span>
                                     </div>
-                                    <ul className="space-y-4 mb-8">
+                                    <ul className="space-y-3 mb-8">
                                         {plan.features?.map((feat: string, idx: number) => (
-                                            <li key={idx} className="flex items-start gap-3">
-                                                <CheckCircle className="text-secondary flex-shrink-0 mt-0.5" size={18} />
-                                                <span className="text-gray-300">{feat}</span>
+                                            <li key={idx} className="flex items-start gap-2">
+                                                <CheckCircle className="text-primary flex-shrink-0 mt-0.5" size={18} />
+                                                <span className="text-gray-700">{feat}</span>
                                             </li>
                                         ))}
                                     </ul>
                                     <Link
                                         href="/auth/register"
-                                        className={`block w-full text-center py-4 px-6 rounded-full font-bold transition-all hover:scale-[1.02] ${plan.highlighted
-                                            ? 'bg-secondary text-gray-900 hover:bg-white'
-                                            : 'bg-white/10 text-white hover:bg-white/20'
+                                        className={`block w-full text-center py-3 px-6 rounded-full font-bold transition-all ${plan.highlighted
+                                            ? 'bg-primary text-white hover:bg-primary-hover shadow-lg'
+                                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                                             }`}
                                     >
                                         {plan.buttonText}
@@ -207,17 +207,9 @@ export default function Home() {
             )}
 
             {/* FOOTER */}
-            <footer className="bg-black text-white py-12 border-t border-gray-800">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <img src={settings?.logoUrl || "/logo-pinc.png"} alt="Logo" className="h-8 opacity-80 grayscale hover:grayscale-0 transition-all" />
-                        <span className="text-gray-500 text-sm">{settings?.footerText || '© 2024 PINC Mindsight'}</span>
-                    </div>
-                    <div className="flex gap-6 text-sm text-gray-400">
-                        <Link href="/privacy" className="hover:text-white transition-colors">Privacidade</Link>
-                        <Link href="/terms" className="hover:text-white transition-colors">Termos de Uso</Link>
-                        <Link href="/contact" className="hover:text-white transition-colors">Contato</Link>
-                    </div>
+            <footer className="bg-gray-900 text-white py-12">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <p className="text-gray-400">© 2024 SaaS Avaliação. Todos os direitos reservados.</p>
                 </div>
             </footer>
 

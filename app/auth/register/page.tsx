@@ -169,12 +169,9 @@ function RegisterContent() {
             <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-12 xl:px-24 bg-gray-50/50">
                 <div className="w-full max-w-md mx-auto">
                     <div className="mb-10">
-                        <div className="flex justify-between items-center mb-6">
-                            <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors">
-                                <ArrowLeft size={16} /> Voltar
-                            </Link>
-                            <img src={settings?.logoUrl || "/logo-pinc.png"} alt="Logo" className="h-8 w-auto object-contain" />
-                        </div>
+                        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors mb-6">
+                            <ArrowLeft size={16} /> Voltar para Home
+                        </Link>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                             {step === 1 ? 'Escolha seu plano ideal' : 'Finalize seu cadastro'}
                         </h2>
@@ -223,23 +220,9 @@ function RegisterContent() {
                                                             {plan.name}
                                                         </h3>
                                                         <div className="flex items-baseline gap-1 mt-1">
-                                                            <span className="text-2xl font-bold text-gray-900">
-                                                                {plan.currency || 'R$'} {Number(String(plan.price).replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500">/{plan.period || 'único'}</span>
+                                                            <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {Number(plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                         </div>
-                                                        <ul className="mt-3 space-y-1">
-                                                            <li className="flex items-center gap-2 text-xs text-gray-600">
-                                                                <Check size={14} className="text-primary" />
-                                                                <span>{plan.credits} avaliações inclusas</span>
-                                                            </li>
-                                                            {plan.features?.map((feat: string, idx: number) => (
-                                                                <li key={idx} className="flex items-center gap-2 text-xs text-gray-600">
-                                                                    <Check size={14} className="text-primary" />
-                                                                    <span>{feat}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
+                                                        <p className="text-sm text-gray-500 mt-1">{plan.credits} créditos de avaliação</p>
                                                     </div>
                                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                                                         selectedPlan?.id === plan.id ? 'border-primary bg-primary' : 'border-gray-300'

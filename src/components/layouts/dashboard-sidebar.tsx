@@ -46,11 +46,6 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
     return (
         <div className="flex flex-col h-full bg-white text-slate-800">
             {/* Header / Logo */}
-            <div className="p-6 pb-2 flex justify-center border-b border-gray-50 bg-white">
-                 <img src="/logo-pinc.png" alt="PINC Logo" className="h-12 w-auto object-contain" />
-            </div>
-            
-            {/* User Info */}
             <div className="p-6 flex items-center gap-3 border-b border-gray-50 bg-gray-50/50">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary to-pink-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
                     <Building2 size={24} />
@@ -145,7 +140,8 @@ export function DashboardSidebar() {
             {/* Mobile Header / Navbar */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-40 shadow-sm">
                 <div className="flex items-center gap-2">
-                     <img src="/logo-pinc.png" alt="PINC Logo" className="h-8 w-auto object-contain" />
+                     <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-bold">SA</span>
+                     <span className="font-bold text-gray-800">SaaS Avaliação</span>
                 </div>
                 <button 
                     onClick={() => setIsMobileOpen(true)}

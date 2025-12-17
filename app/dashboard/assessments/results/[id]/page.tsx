@@ -12,7 +12,6 @@ export default function AssessmentResultPage() {
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [feedback, setFeedback] = useState<string | null>(null);
 
     const assessmentId = params.id as string;
 
@@ -39,7 +38,6 @@ export default function AssessmentResultPage() {
                 // Verificar se já tem resultado calculado
                 if (assignment.result && assignment.result.data) {
                     setResult({ ...assignment.result.data, timeSpent: assignment.timeSpent });
-                    setFeedback(assignment.feedback);
                     setLoading(false);
                     return;
                 }
@@ -70,7 +68,6 @@ export default function AssessmentResultPage() {
 
                 const calculatedResult = await calcRes.json();
                 setResult({ ...calculatedResult, timeSpent: assignment.timeSpent });
-                setFeedback(assignment.feedback);
 
             } catch (err: any) {
                 console.error('Erro:', err);
@@ -132,25 +129,6 @@ export default function AssessmentResultPage() {
                     </div>
                 </div>
             )}
-            
-            {feedback && (
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8 animate-in slide-in-from-bottom-5 fade-in duration-500">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-purple-100 rounded-full">
-                            <AlertCircle className="text-purple-600 w-6 h-6" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Feedback do Consultor</h3>
-                            <div className="prose prose-purple max-w-none text-gray-600 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                {feedback.split('\n').map((line, i) => (
-                                    <p key={i} className="mb-2 last:mb-0">{line}</p>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <BigFiveResults result={result} />
         </div>
     );
