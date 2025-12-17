@@ -49,19 +49,18 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
             <div className="p-6 flex items-center justify-center border-b border-gray-50 bg-gray-50/50">
                 <img src="/logo.png" alt="PINC" className="h-12 w-auto object-contain" />
             </div>
-                    <Building2 size={24} />
-                </div>
-                <div>
-                    <h1 className="font-bold text-gray-800 leading-tight truncate max-w-[140px]">{user?.name || 'Usuário'}</h1>
-                    <span className="text-xs text-gray-500 font-medium block truncate max-w-[140px]">{user?.email || 'email@exemplo.com'}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${user?.plan === 'PRO' || user?.plan === 'BUSINESS'
-                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                        : 'bg-gray-100 text-gray-600 border border-gray-200'
-                        }`}>
-                        {(user?.plan === 'PRO' || user?.plan === 'BUSINESS') && <Crown size={10} />}
-                        {user?.plan || 'START'}
-                    </span>
-                </div>
+            {/* User Info */}
+            <div className="px-6 pb-6 pt-2 border-b border-gray-50 bg-gray-50/50">
+                <h1 className="font-bold text-gray-800 leading-tight truncate">{user?.name || 'Usuário'}</h1>
+                <span className="text-xs text-gray-500 font-medium block truncate">{user?.email || 'email@exemplo.com'}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${
+                    user?.plan === 'PRO' || user?.plan === 'BUSINESS'
+                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200'
+                }`}>
+                    {(user?.plan === 'PRO' || user?.plan === 'BUSINESS') && <Crown size={10} />}
+                    {user?.plan || 'START'}
+                </span>
             </div>
 
             {/* Navigation */}
