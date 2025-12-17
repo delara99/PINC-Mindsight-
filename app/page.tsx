@@ -100,14 +100,7 @@ export default function Home() {
                             >
                                 {settings?.primaryButtonText || 'Ver Degustação'} <ArrowRight size={20} />
                             </Link>
-                            {settings?.secondaryButtonText && (
-                                <Link
-                                    href={settings?.secondaryButtonLink || '#features'}
-                                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur text-white text-lg font-semibold py-4 px-8 rounded-full border border-white/30 transition-all"
-                                >
-                                    {settings.secondaryButtonText}
-                                </Link>
-                            )}
+                            {/* Button removed as per user request */}
                         </div>
                     </div>
 

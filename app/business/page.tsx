@@ -32,12 +32,12 @@ export default function BusinessPage() {
             {/* We will assume it's wrapped in the main RootLayout which has the Navbar. 
                 We might need to adjust the Navbar to be 'sticky' or transparent if desired, 
                 but for now we stick to the content. */}
-            
+
             <LeadFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
 
             {/* Hero Section */}
-            <section 
-                className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden"
+            <section
+                className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden"
                 style={{ background: `linear-gradient(to bottom, ${settings?.businessHeroBgColor || '#f0f9ff'} 0%, #ffffff 100%)` }}
             >
                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
@@ -46,17 +46,19 @@ export default function BusinessPage() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                         <div className="flex-1 text-center lg:text-left">
-                            
+
                             <motion.div
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="mb-8 flex justify-center lg:justify-start"
                             >
-                                <img src={settings?.businessLogo || '/logo.png'} alt="Logo Empresa" className="h-16 object-contain" />
+                                <Link href="/">
+                                    <img src={settings?.businessLogo || '/logo.png'} alt="Logo Empresa" className="h-16 object-contain cursor-pointer hover:opacity-80 transition-opacity" />
+                                </Link>
                             </motion.div>
 
                             {settings?.businessHeroBadge && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5 }}
@@ -66,37 +68,37 @@ export default function BusinessPage() {
                                     {settings.businessHeroBadge}
                                 </motion.div>
                             )}
-                            
-                            <motion.h1 
+
+                            <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.1 }}
                                 className="text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6"
                                 style={{ color: settings?.businessHeroTextColor || '#111827' }}
                             >
-                                {settings?.businessHeroTitle || 'Impulsione o seu'} <br/>
+                                {settings?.businessHeroTitle || 'Impulsione o seu'} <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
                                     {settings?.businessHeroSubtitle || 'Capital Humano'}
                                 </span>
                             </motion.h1>
-                            
-                            <motion.p 
+
+                            <motion.p
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.2 }}
                                 className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
                             >
-                                {settings?.businessHeroDescription || 
-                                'A plataforma definitiva de inteligência comportamental para empresas que buscam contratar melhor, desenvolver líderes e reduzir o turnover com dados científicos.'}
+                                {settings?.businessHeroDescription ||
+                                    'A plataforma definitiva de inteligência comportamental para empresas que buscam contratar melhor, desenvolver líderes e reduzir o turnover com dados científicos.'}
                             </motion.p>
-                            
-                            <motion.div 
+
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.3 }}
                                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                             >
-                                <button 
+                                <button
                                     onClick={openForm}
                                     className="bg-primary hover:bg-primary-hover text-white text-lg font-bold px-8 py-4 rounded-xl shadow-xl shadow-primary/25 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
                                 >
@@ -107,9 +109,9 @@ export default function BusinessPage() {
                                 </Link>
                             </motion.div>
                         </div>
-                        
+
                         <div className="flex-1 relative">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.7 }}
@@ -215,13 +217,13 @@ export default function BusinessPage() {
                                 description: "Ferramentas para líderes desenvolverem suas equipes e melhorarem a comunicação interna."
                             }
                         ].map((feature, idx) => (
-                             <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 group">
-                                 <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                     {feature.icon}
-                                 </div>
-                                 <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                             </div>
+                            <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 group">
+                                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    {feature.icon}
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -235,7 +237,7 @@ export default function BusinessPage() {
                     <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
                         Fale com nossos consultores e descubra como nossa plataforma pode economizar horas do seu time e milhões para sua empresa.
                     </p>
-                    <button 
+                    <button
                         onClick={openForm}
                         className="bg-white text-primary hover:bg-gray-100 text-lg font-bold px-10 py-5 rounded-full shadow-lg transition-all transform hover:scale-105"
                     >
@@ -247,7 +249,7 @@ export default function BusinessPage() {
                 </div>
             </section>
 
-             {/* Footer Simple (Assuming Main Layout has footer, but if we want this page standalone, we might keep it minimal) */}
+            {/* Footer Simple (Assuming Main Layout has footer, but if we want this page standalone, we might keep it minimal) */}
         </div>
     );
 }

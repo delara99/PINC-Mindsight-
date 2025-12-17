@@ -26,13 +26,18 @@ export default function ClientsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
     const [selectedClient, setSelectedClient] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
+    const [activeTab, setActiveTab] = useState<'INDIVIDUAL' | 'COMPANY' | 'COUPONS'>('INDIVIDUAL');
+
+    // Estados para Cupons
+    const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+    const [newCoupon, setNewCoupon] = useState({ code: '', discountPercent: 10, usageLimit: '' });
+
+    // Restored States
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [creditsAmount, setCreditsAmount] = useState<number>(0);
     const [creditAmount, setCreditAmount] = useState('');
     const [creditOperation, setCreditOperation] = useState<'add' | 'remove'>('add');
 
-    // Estados para cadastro
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const [clientType, setClientType] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
     const [registerData, setRegisterData] = useState({
@@ -45,9 +50,72 @@ export default function ClientsPage() {
         phone: ''
     });
 
-    // Estados para edição
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
+
+    // Queries
+    const { data: clients, isLoading } = useQuery<Client[]>({
+        queryKey: ['clients'],
+        queryFn: async () => {
+            if (activeTab === 'COUPONS') return [];
+            const response = await fetch(`${API_URL}/api/v1/users/clients`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Falha ao carregar clientes');
+            return response.json();
+        },
+        enabled: !!token && activeTab !== 'COUPONS'
+    });
+
+    const { data: coupons, refetch: refetchCoupons } = useQuery({
+        queryKey: ['coupons'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/coupons`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return res.json();
+        },
+        enabled: !!token && activeTab === 'COUPONS'
+    });
+
+    // Mutations
+    const createCouponMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const res = await fetch(`${API_URL}/api/v1/coupons`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error('Erro ao criar cupom');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['coupons'] });
+            setIsCouponModalOpen(false);
+            setNewCoupon({ code: '', discountPercent: 10, usageLimit: '' });
+            alert('Cupom criado com sucesso!');
+        }
+    });
+
+    const deleteCouponMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await fetch(`${API_URL}/api/v1/coupons/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['coupons'] });
+        }
+    });
+
+    const handleCreateCoupon = (e: React.FormEvent) => {
+        e.preventDefault();
+        createCouponMutation.mutate({
+            ...newCoupon,
+            usageLimit: newCoupon.usageLimit ? Number(newCoupon.usageLimit) : undefined
+        });
+    };
     const [editData, setEditData] = useState({
         name: '',
         cpf: '',
@@ -57,17 +125,7 @@ export default function ClientsPage() {
         plan: 'START'
     });
 
-    // Listar Clientes
-    const { data: clients, isLoading } = useQuery<Client[]>({
-        queryKey: ['clients'],
-        queryFn: async () => {
-            const response = await fetch(`${API_URL}/api/v1/users/clients`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Falha ao carregar clientes');
-            return response.json();
-        }
-    });
+
 
     // Adicionar/Remover Créditos
     const addCreditsMutation = useMutation({
@@ -290,38 +348,98 @@ export default function ClientsPage() {
             </div>
 
             {/* Client Type Tabs */}
+            {/* TABS */}
             <div className="flex gap-6 border-b border-gray-200 mb-6">
-                <button 
-                    onClick={() => setActiveTab('INDIVIDUAL')} 
-                    className={`pb-4 px-2 text-sm font-bold transition-all relative ${
-                        activeTab === 'INDIVIDUAL' 
-                        ? 'text-primary' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                <button
+                    onClick={() => setActiveTab('INDIVIDUAL')}
+                    className={`pb-4 px-2 text-sm font-bold transition-all relative ${activeTab === 'INDIVIDUAL' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     B2C (Pessoas)
-                    {activeTab === 'INDIVIDUAL' && (
-                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                    )}
+                    {activeTab === 'INDIVIDUAL' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
                 </button>
-                <button 
-                    onClick={() => setActiveTab('COMPANY')} 
-                    className={`pb-4 px-2 text-sm font-bold transition-all relative ${
-                        activeTab === 'COMPANY' 
-                        ? 'text-primary' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                <button
+                    onClick={() => setActiveTab('COMPANY')}
+                    className={`pb-4 px-2 text-sm font-bold transition-all relative ${activeTab === 'COMPANY' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     B2B (Empresas)
-                    {activeTab === 'COMPANY' && (
-                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                    )}
+                    {activeTab === 'COMPANY' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+                </button>
+                <button
+                    onClick={() => setActiveTab('COUPONS')}
+                    className={`pb-4 px-2 text-sm font-bold transition-all relative ${activeTab === 'COUPONS' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Cupons de Desconto
+                    {activeTab === 'COUPONS' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
                 </button>
             </div>
 
             {isLoading ? (
                 <div className="flex justify-center py-20">
                     <Loader2 size={40} className="animate-spin text-primary" />
+                </div>
+            ) : activeTab === 'COUPONS' ? (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <div>
+                            <h3 className="font-bold text-gray-700">Gerenciar Cupons</h3>
+                            <p className="text-xs text-gray-500">Crie códigos promocionais para seus clientes.</p>
+                        </div>
+                        <button
+                            onClick={() => setIsCouponModalOpen(true)}
+                            className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-all flex items-center gap-2"
+                        >
+                            <Plus size={16} /> Novo Cupom
+                        </button>
+                    </div>
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Código</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Desconto</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Usos / Limite</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="text-right py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {coupons?.map((coupon: any) => (
+                                <tr key={coupon.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="py-4 px-6 font-bold text-gray-900 font-mono text-lg">{coupon.code}</td>
+                                    <td className="py-4 px-6 text-green-600 font-bold">{coupon.discountPercent}% OFF</td>
+                                    <td className="py-4 px-6 text-gray-600 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium">{coupon.usageCount}</span>
+                                            <span className="text-gray-400">/</span>
+                                            <span className="text-gray-500">{coupon.usageLimit || '∞'}</span>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${coupon.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {coupon.isActive ? 'Ativo' : 'Inativo'}
+                                        </span>
+                                    </td>
+                                    <td className="py-4 px-6 text-right">
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('Excluir este cupom?')) deleteCouponMutation.mutate(coupon.id);
+                                            }}
+                                            className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                            title="Excluir Cupom"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!coupons || coupons.length === 0) && (
+                                <tr>
+                                    <td colSpan={5} className="py-12 text-center text-gray-500">
+                                        Nenhum cupom criado ainda.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -364,11 +482,10 @@ export default function ClientsPage() {
                                         </span>
                                     </td>
                                     <td className="py-4 px-6">
-                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${
-                                            client.plan === 'BUSINESS' ? 'bg-amber-100 text-amber-700' :
+                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${client.plan === 'BUSINESS' ? 'bg-amber-100 text-amber-700' :
                                             client.plan === 'PRO' ? 'bg-purple-100 text-purple-700' :
-                                            'bg-gray-100 text-gray-600'
-                                        }`}>
+                                                'bg-gray-100 text-gray-600'
+                                            }`}>
                                             {client.plan || 'START'}
                                         </span>
                                     </td>
@@ -792,6 +909,77 @@ export default function ClientsPage() {
                                 Salvar Alterações
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Criação de Cupom */}
+            {isCouponModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-900">Novo Cupom</h3>
+                                <p className="text-gray-500 mt-1">Crie um código de desconto.</p>
+                            </div>
+                            <button onClick={() => setIsCouponModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreateCoupon} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Código do Cupom *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newCoupon.code}
+                                    onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none uppercase font-mono"
+                                    placeholder="EX: PROMO10"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Desconto (%) *</label>
+                                <input
+                                    type="number"
+                                    required
+                                    min="1"
+                                    max="100"
+                                    value={newCoupon.discountPercent}
+                                    onChange={(e) => setNewCoupon({ ...newCoupon, discountPercent: Number(e.target.value) })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Limite de Usos (Opcional)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={newCoupon.usageLimit}
+                                    onChange={(e) => setNewCoupon({ ...newCoupon, usageLimit: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                                    placeholder="Ilimitado se vazio"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6 pt-6 border-t font-bold">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCouponModalOpen(false)}
+                                    className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={createCouponMutation.isPending}
+                                    className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors shadow-lg disabled:opacity-70"
+                                >
+                                    {createCouponMutation.isPending ? 'Criando...' : 'Criar Cupom'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

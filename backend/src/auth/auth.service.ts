@@ -148,7 +148,7 @@ export class AuthService {
 
                 if (questions.length > 0) {
                     const responsesToCreate = [];
-                    
+
                     data.trialData.forEach((item: any) => {
                         // O item.questionId do trial é 1, 2, 3... (índice 0-based seria id-1)
                         // Lógica de mapeamento baseada na ordem
@@ -171,6 +171,28 @@ export class AuthService {
             }
         }
 
+        // 6. Process Coupon Usage
+        if (data.couponCode) {
+            try {
+                const coupon = await this.prisma.coupon.findUnique({
+                    where: { code: data.couponCode }
+                });
+
+                if (coupon && coupon.isActive) {
+                    // Check limits again just in case (race condition mostly)
+                    if (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) {
+                        await this.prisma.coupon.update({
+                            where: { id: coupon.id },
+                            data: { usageCount: { increment: 1 } }
+                        });
+                    }
+                }
+            } catch (ignored) {
+                // Ignore coupon errors to not block registration, but log if possible
+                console.error('Error processing coupon:', ignored);
+            }
+        }
+
         return {
             message: 'Cadastro realizado com sucesso!',
             user: { email: user.email, name: user.name }
@@ -181,7 +203,7 @@ export class AuthService {
         const user = await this.prisma.user.findUnique({
             where: { id: userId }
         });
-        
+
         if (!user) {
             throw new UnauthorizedException('Usuário não encontrado');
         }

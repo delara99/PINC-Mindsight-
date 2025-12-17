@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Check, User, Building2, Star, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, User, Building2, Star, ShieldCheck, ArrowRight, Loader2, Ticket, Percent } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 import { useTrialStore } from '@/src/store/trial-store';
 import { useQuery } from '@tanstack/react-query';
@@ -68,6 +68,34 @@ function RegisterContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [validatedCoupon, setValidatedCoupon] = useState<any>(null);
+    const [validatingCoupon, setValidatingCoupon] = useState(false);
+    const [couponMessage, setCouponMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const handleValidateCoupon = async () => {
+        if (!couponCode) return;
+        setValidatingCoupon(true);
+        setCouponMessage(null);
+        try {
+            const res = await fetch(`${API_URL}/api/v1/coupons/validate?code=${couponCode}`);
+            const data = await res.json();
+            if (res.ok) {
+                setValidatedCoupon(data);
+                setCouponMessage({ type: 'success', text: `Cupom ${data.code} aplicado: ${data.discountPercent}% de desconto!` });
+            } else {
+                setValidatedCoupon(null);
+                setCouponMessage({ type: 'error', text: data.message || 'Cupom inválido.' });
+            }
+        } catch (error) {
+            setValidatedCoupon(null);
+            setCouponMessage({ type: 'error', text: 'Erro ao validar cupom.' });
+        } finally {
+            setValidatingCoupon(false);
+        }
+    };
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -91,7 +119,8 @@ function RegisterContent() {
                     ...formData,
                     initialCredits: selectedPlan.credits,
                     planId: selectedPlan.id,
-                    origin: searchParams.get('name') ? 'trial' : 'website'
+                    origin: searchParams.get('name') ? 'trial' : 'website',
+                    couponCode: validatedCoupon?.code
                 })
             });
 
@@ -207,8 +236,8 @@ function RegisterContent() {
                                                 key={plan.id}
                                                 onClick={() => setSelectedPlan(plan)}
                                                 className={`relative cursor-pointer border rounded-2xl p-5 transition-all duration-200 ${selectedPlan?.id === plan.id
-                                                        ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary'
-                                                        : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-sm'
+                                                    ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary'
+                                                    : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-sm'
                                                     }`}
                                             >
                                                 {plan.highlighted && (
@@ -277,8 +306,8 @@ function RegisterContent() {
                                             type="button"
                                             onClick={() => setUserType('INDIVIDUAL')}
                                             className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'INDIVIDUAL'
-                                                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                                                 }`}
                                         >
                                             <User size={18} /> Pessoa Física
@@ -287,8 +316,8 @@ function RegisterContent() {
                                             type="button"
                                             onClick={() => setUserType('COMPANY')}
                                             className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'COMPANY'
-                                                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                                                 }`}
                                         >
                                             <Building2 size={18} /> Empresa
@@ -368,6 +397,71 @@ function RegisterContent() {
                                         <div>
                                             <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Telefone</label>
                                             <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="(00) 00000-0000" />
+                                        </div>
+
+                                        {/* Coupon Section */}
+                                        <div className="pt-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide flex items-center gap-1">
+                                                <Ticket size={14} className="text-primary" />
+                                                Cupom de Desconto
+                                            </label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={couponCode}
+                                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                    className={`block w-full px-4 py-3 rounded-lg border bg-white focus:ring-2 outline-none transition-all uppercase font-mono ${validatedCoupon ? 'border-green-500 focus:ring-green-200 text-green-700 font-bold' : 'border-gray-300 focus:ring-primary/20 focus:border-primary'}`}
+                                                    placeholder="Possui um código?"
+                                                    disabled={!!validatedCoupon}
+                                                />
+                                                {validatedCoupon ? (
+                                                    <button type="button" onClick={() => { setValidatedCoupon(null); setCouponCode(''); setCouponMessage(null); }} className="bg-red-50 border border-red-100 text-red-600 px-4 rounded-lg font-bold hover:bg-red-100 text-xs uppercase tracking-wide transition-colors">
+                                                        Remover
+                                                    </button>
+                                                ) : (
+                                                    <button type="button" onClick={handleValidateCoupon} disabled={!couponCode || validatingCoupon} className="bg-gray-900 text-white px-6 rounded-lg font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors">
+                                                        {validatingCoupon ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {couponMessage && (
+                                                <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className={`text-xs mt-2 font-bold flex items-center gap-1.5 ${couponMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                                    {couponMessage.type === 'success' ? <Percent size={12} /> : <ShieldCheck size={12} />}
+                                                    {couponMessage.text}
+                                                </motion.p>
+                                            )}
+                                        </div>
+
+                                        {/* Order Summary */}
+                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 bg-gray-200/50 w-16 h-16 rounded-bl-full -mr-8 -mt-8" />
+
+                                            <div className="relative z-10">
+                                                <h3 className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                                                    <Ticket size={16} className="text-primary" /> Resumo do Pedido
+                                                </h3>
+
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-600">Plano {selectedPlan?.name}</span>
+                                                        <span className="font-medium text-gray-900">{selectedPlan?.currency} {Number(selectedPlan?.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+
+                                                    {validatedCoupon && (
+                                                        <div className="flex justify-between items-center text-green-600 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
+                                                            <span className="flex items-center gap-1"><Percent size={12} /> Desconto ({validatedCoupon.discountPercent}%)</span>
+                                                            <span>- {selectedPlan?.currency} {(Number(selectedPlan?.price) * (validatedCoupon.discountPercent / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between items-center">
+                                                    <span className="font-bold text-gray-700">Total a Pagar</span>
+                                                    <span className="text-xl font-extrabold text-primary">
+                                                        {selectedPlan?.currency} {(Number(selectedPlan?.price) * (validatedCoupon ? (1 - validatedCoupon.discountPercent / 100) : 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

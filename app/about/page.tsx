@@ -38,31 +38,30 @@ export default function AboutPage() {
             <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
-                        <span className="text-2xl font-bold bg-primary text-white p-1 rounded">SaaS</span>
-                        <span className="text-xl font-bold text-gray-800">Avaliação</span>
+                        <img src={settings?.businessLogo || '/logo.png'} alt="Logo" className="h-10 w-auto object-contain" />
                     </Link>
                     <Link href="/" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors flex items-center gap-2">
-                         <ArrowLeft size={16} /> Voltar
+                        <ArrowLeft size={16} /> Voltar
                     </Link>
                 </div>
             </header>
 
             {/* Content */}
             <div className="pt-32 pb-20 max-w-4xl mx-auto px-6">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-8 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-8 tracking-tight">
                     {settings?.aboutTitle || 'Sobre Nós'}
                 </h1>
-                
-                <div className="prose prose-lg prose-headings:text-gray-900 prose-p:text-gray-600 max-w-none">
+
+                <div className="prose prose-lg prose-headings:text-black prose-p:text-black max-w-none">
                     {/* Render content handling basic line breaks */}
                     {settings?.aboutContent?.split('\n').map((paragraph: string, idx: number) => (
                         paragraph.trim() ? <p key={idx}>{paragraph}</p> : <br key={idx} />
                     ))}
                 </div>
             </div>
-            
-             {/* Footer */}
-             <footer className="bg-gray-900 text-white py-12">
+
+            {/* Footer */}
+            <footer className="bg-gray-900 text-white py-12">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <p className="text-gray-400">© 2024 SaaS Avaliação. Todos os direitos reservados.</p>
                 </div>
