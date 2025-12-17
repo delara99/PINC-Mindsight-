@@ -92,7 +92,11 @@ export default function ClientsPage() {
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify(data)
             });
-            if (!res.ok) throw new Error('Erro ao criar cupom');
+            if (!res.ok) {
+                const errorData = await res.json();
+                console.error('API Error:', errorData);
+                throw new Error(errorData.message || 'Erro ao criar cupom');
+            }
             return res.json();
         },
         onSuccess: () => {
