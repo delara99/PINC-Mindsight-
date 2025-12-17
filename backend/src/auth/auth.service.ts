@@ -229,8 +229,11 @@ export class AuthService {
                         }
                     }
                 }
-            } catch (ignored) {
-                console.error('Error processing coupon:', ignored);
+            } catch (error) {
+                if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+                    throw error;
+                }
+                console.error('Error processing coupon:', error);
             }
         }
 
