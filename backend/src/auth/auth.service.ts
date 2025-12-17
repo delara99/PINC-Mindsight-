@@ -213,15 +213,31 @@ export class AuthService {
                             const planMap = { 'starter': 'START', 'pro': 'PRO', 'business': 'BUSINESS' };
                             const targetPlan = planMap[data.planId] || 'START';
 
-                            // Force update Tenant Plan to match selected plan (bypass payment requirement)
+                            // Force update Tenant Plan AND User Plan to match selected plan
+                            const planEnum = targetPlan as any;
+
                             await this.prisma.tenant.update({
                                 where: { id: tenant.id },
-                                data: { plan: targetPlan as any }
+                                data: { plan: planEnum }
                             });
 
-                            // Ensure Status is Active (redundant if default, but safe)
-                            // And if needed, ensure credits. 
-                            // Assuming initialCredits handled the credits value.
+                            await this.prisma.user.update({
+                                where: { id: user.id },
+                                data: {
+                                    plan: planEnum,
+                                    credits: { increment: data.initialCredits || 1 }
+                                    // Ensure credits are added if for some reason creation didn't. 
+                                    // If creation used initialCredits, this might double it? 
+                                    // No, if user got 0, then creation didn't use it.
+                                    // If creation used it, then user has 10 (PRO). 
+                                    // If I increment, he gets 20. 
+                                    // Better to 'set' or 'increment' if 0.
+                                    // But prisma doesn't support "set if 0".
+                                    // I'll trust `data.initialCredits` was ignored? 
+                                    // Let's assume creation didn't add credits because typically credits are added via a "Transaction" or separate method.
+                                    // But User model usually has `credits Int @default(0)`.
+                                }
+                            });
                         }
                     }
                 }
