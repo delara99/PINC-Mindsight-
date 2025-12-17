@@ -26,6 +26,13 @@ export default function SettingsPage() {
         }
     });
 
+    const [formData, setFormData] = useState<any>(settings || {});
+
+    // Update formData when settings loads
+    if (settings && !formData.id) {
+        setFormData(settings);
+    }
+
     const saveMutation = useMutation({
         mutationFn: async (data: any) => {
             const res = await fetch(`${API_URL}/api/v1/site-settings`, {
