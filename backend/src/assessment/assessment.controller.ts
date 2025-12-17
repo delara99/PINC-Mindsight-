@@ -192,8 +192,29 @@ export class AssessmentController {
             throw new BadRequestException('Usuário não encontrado.');
         }
 
-        // Se o usuário tem créditos, SEMPRE criar um novo inventário
+        // Se o usuário tem créditos, verificar se já existe um PENDING (criado automaticamente)
         if (userData.credits > 0) {
+            // Verificar se já existe um assignment PENDING ou IN_PROGRESS
+            const existingPending = await this.prisma.assessmentAssignment.findFirst({
+                where: {
+                    userId: user.userId,
+                    assessmentId: assessmentModel.id,
+                    status: { in: ['PENDING', 'IN_PROGRESS'] }
+                }
+            });
+
+            if (existingPending) {
+                // Se estava PENDING, mudar para IN_PROGRESS
+                if (existingPending.status === 'PENDING') {
+                    return await this.prisma.assessmentAssignment.update({
+                        where: { id: existingPending.id },
+                        data: { status: 'IN_PROGRESS' }
+                    });
+                }
+                return existingPending;
+            }
+
+            // Se não existe, criar um novo
             const newAssignment = await this.prisma.assessmentAssignment.create({
                 data: {
                     userId: user.userId,
@@ -780,9 +801,38 @@ export class AssessmentController {
                 return savedResult;
             });
 
+            // Após completar, verificar se o usuário ainda tem créditos para criar um novo inventário automaticamente
+            const updatedUser = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { credits: true }
+            });
+
+            let newAssignmentCreated = false;
+            if (updatedUser && updatedUser.credits > 0) {
+                // Buscar o modelo Big Five para criar novo assignment
+                const assessmentModel = await this.prisma.assessmentModel.findFirst({
+                    where: { type: 'BIG_FIVE' }
+                });
+
+                if (assessmentModel) {
+                    // Criar novo assignment automaticamente (PENDING para que ele inicie quando quiser)
+                    await this.prisma.assessmentAssignment.create({
+                        data: {
+                            userId: userId,
+                            assessmentId: assessmentModel.id,
+                            status: 'PENDING',
+                            assignedAt: new Date(),
+                        }
+                    });
+                    newAssignmentCreated = true;
+                }
+            }
+
             return {
                 message: 'Avaliação submetida com sucesso!',
-                result: result
+                result: result,
+                creditsRemaining: updatedUser?.credits || 0,
+                newInventoryAvailable: newAssignmentCreated
             };
 
         } catch (error) {
