@@ -4,7 +4,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('coupons')
 export class CouponsController {
-    constructor(private readonly couponsService: CouponsService) { }
+    constructor(private readonly couponsService: CouponsService) {
+        console.log('🎟️ CouponsController Initialized');
+    }
 
     @UseGuards(JwtAuthGuard)
     @Post()

@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { execSync } from 'child_process';
 
 async function bootstrap() {
+    console.log('🚀 SERVER DEPLOYED - VERSION: COUPONS_FIX_V2');
     // RUNTIME MIGRATION: Força a atualização do banco de dados ao iniciar
     // Isso garante que tabelas novas (como CrossProfileReport) sejam criadas
     // independentemente da configuração de deploy do Railway.
