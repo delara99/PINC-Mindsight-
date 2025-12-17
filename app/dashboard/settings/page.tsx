@@ -142,7 +142,33 @@ export default function SettingsPage() {
         setFormData({ ...formData, featuresSection: newBlocks });
     };
 
-    // ... (keep pricing helpers) ...
+    // Pricing Helpers
+    const addPlan = () => {
+        setFormData({
+            ...formData,
+            pricingPlans: [...(formData.pricingPlans || []), { 
+                id: Date.now().toString(), 
+                name: 'Novo Plano', 
+                price: 99, 
+                currency: 'R$', 
+                period: '/mês',
+                features: ['Recurso 1', 'Recurso 2'],
+                highlighted: false
+            }]
+        });
+    };
+
+    const removePlan = (index: number) => {
+        const newPlans = [...(formData.pricingPlans || [])];
+        newPlans.splice(index, 1);
+        setFormData({ ...formData, pricingPlans: newPlans });
+    };
+
+    const updatePlan = (index: number, field: string, value: any) => {
+        const newPlans = [...(formData.pricingPlans || [])];
+        newPlans[index] = { ...newPlans[index], [field]: value };
+        setFormData({ ...formData, pricingPlans: newPlans });
+    };
 
     if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
 
