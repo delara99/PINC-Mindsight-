@@ -11,6 +11,7 @@ export class CouponsController {
     @UseGuards(AuthGuard('jwt'))
     @Post()
     create(@Body() body: any) {
+        console.log('Received Coupon Body:', JSON.stringify(body));
         return this.couponsService.create(body);
     }
 
