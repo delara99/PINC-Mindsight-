@@ -34,18 +34,10 @@ function RegisterContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const [step, setStep] = useState(1);
     const [userType, setUserType] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
-    const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
-    // Initial Plan Selection
-    useEffect(() => {
-        if (activePlans.length > 0 && !selectedPlan) {
-            // Default to highlighted plan or first one
-            const defaultPlan = activePlans.find((p: any) => p.highlighted) || activePlans[0];
-            setSelectedPlan(defaultPlan);
-        }
-    }, [activePlans, selectedPlan]);
+    // Always use default plan (first one or START plan)
+    const [selectedPlan] = useState<any>(DEFAULT_PLANS[0]);
 
     const [formData, setFormData] = useState({
         name: searchParams.get('name') || '',
@@ -57,13 +49,6 @@ function RegisterContent() {
         companyName: '',
         phone: ''
     });
-
-    // Auto-advance
-    useEffect(() => {
-        if (searchParams.get('name') || searchParams.get('email')) {
-            setStep(2);
-        }
-    }, [searchParams]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -218,221 +203,135 @@ function RegisterContent() {
                             <ArrowLeft size={16} /> Voltar para Home
                         </Link>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-                            {step === 1 ? 'Escolha seu plano ideal' : 'Finalize seu cadastro'}
+                            Crie sua conta
                         </h2>
                         <p className="mt-2 text-gray-600">
-                            {step === 1 ? 'Comece pequeno ou escale com sua empresa.' : 'Em poucos segundos seu painel estará pronto.'}
+                            Em poucos segundos seu painel estará pronto.
                         </p>
                     </div>
 
-                    {/* Progress Indicator */}
-                    <div className="flex items-center gap-2 mb-8">
-                        <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 1 ? 'bg-primary' : 'bg-gray-200'}`} />
-                        <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {error && (
+                                <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-center gap-2">
+                                    <ShieldCheck size={16} /> {error}
+                                </div>
+                            )}
 
-                    <AnimatePresence mode="wait">
-                        {step === 1 ? (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
-                                className="space-y-4"
-                            >
-                                <div className="grid gap-4">
-                                    {isLoading ? (
-                                        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
-                                    ) : (
-                                        activePlans.map((plan: any) => (
-                                            <div
-                                                key={plan.id}
-                                                onClick={() => setSelectedPlan(plan)}
-                                                className={`relative cursor-pointer border rounded-2xl p-5 transition-all duration-200 ${selectedPlan?.id === plan.id
-                                                    ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary'
-                                                    : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-sm'
-                                                    }`}
-                                            >
-                                                {plan.highlighted && (
-                                                    <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-tr-xl rounded-bl-xl uppercase tracking-wider">
-                                                        Mais Popular
-                                                    </div>
-                                                )}
-                                                <div className="flex justify-between items-start gap-4">
-                                                    <div className="flex-1">
-                                                        <h3 className={`font-bold ${selectedPlan?.id === plan.id ? 'text-primary' : 'text-gray-900'}`}>
-                                                            {plan.name}
-                                                        </h3>
-                                                        <div className="flex items-baseline gap-1 mt-1">
-                                                            <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {Number(plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                                        </div>
-                                                        <p className="text-sm text-gray-500 mt-1 mb-2">{plan.credits} créditos de avaliação</p>
+                            {/* User Type Selector */}
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setUserType('INDIVIDUAL')}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'INDIVIDUAL'
+                                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <User size={18} /> Pessoa Física
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setUserType('COMPANY')}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'COMPANY'
+                                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <Building2 size={18} /> Empresa
+                                </button>
+                            </div>
 
-                                                        <ul className="space-y-1.5 mt-2 border-t border-gray-100 pt-2">
-                                                            {plan.features?.map((feat: string, idx: number) => (
-                                                                <li key={idx} className="flex items-start gap-2 text-xs text-gray-600">
-                                                                    <Check size={12} className="text-primary mt-0.5 flex-shrink-0" />
-                                                                    <span className="leading-tight">{feat}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                    <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors mt-1 ${selectedPlan?.id === plan.id ? 'border-primary bg-primary' : 'border-gray-300'
-                                                        }`}>
-                                                        {selectedPlan?.id === plan.id && <Check size={14} className="text-white" />}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
+                            <div className="space-y-4">
+                                {/* Inputs with floating-like refined style */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome Completo</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        required
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Seu nome"
+                                    />
                                 </div>
 
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Email Corporativo</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        required
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="voce@empresa.com"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Senha</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            required
+                                            minLength={6}
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            placeholder="******"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Confirmar</label>
+                                        <input
+                                            type="password"
+                                            name="confirmPassword"
+                                            required
+                                            minLength={6}
+                                            value={formData.confirmPassword}
+                                            onChange={handleInputChange}
+                                            className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            placeholder="******"
+                                        />
+                                    </div>
+                                </div>
+
+                                {userType === 'COMPANY' && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome da Empresa</label>
+                                            <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">CNPJ</label>
+                                            <input type="text" name="cnpj" value={formData.cnpj} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Telefone</label>
+                                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="(00) 00000-0000" />
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
                                 <button
-                                    onClick={() => setStep(2)}
-                                    disabled={!selectedPlan}
-                                    className="w-full mt-6 bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 group"
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Continuar <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                    {loading ? <Loader2 className="animate-spin" /> : 'Criar Conta'}
                                 </button>
-
-                                <p className="text-center text-xs text-gray-400 mt-4">
-                                    Pagamento seguro e ativado instantaneamente.
-                                </p>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                            >
-                                <form onSubmit={handleSubmit} className="space-y-5">
-                                    {error && (
-                                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-center gap-2">
-                                            <ShieldCheck size={16} /> {error}
-                                        </div>
-                                    )}
-
-                                    {/* User Type Selector */}
-                                    <div className="grid grid-cols-2 gap-3 mb-6">
-                                        <button
-                                            type="button"
-                                            onClick={() => setUserType('INDIVIDUAL')}
-                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'INDIVIDUAL'
-                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            <User size={18} /> Pessoa Física
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setUserType('COMPANY')}
-                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'COMPANY'
-                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            <Building2 size={18} /> Empresa
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {/* Inputs with floating-like refined style */}
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome Completo</label>
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                required
-                                                value={formData.name}
-                                                onChange={handleInputChange}
-                                                className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                                placeholder="Seu nome"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Email Corporativo</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                required
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                                placeholder="voce@empresa.com"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Senha</label>
-                                                <input
-                                                    type="password"
-                                                    name="password"
-                                                    required
-                                                    minLength={6}
-                                                    value={formData.password}
-                                                    onChange={handleInputChange}
-                                                    className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                                    placeholder="******"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Confirmar</label>
-                                                <input
-                                                    type="password"
-                                                    name="confirmPassword"
-                                                    required
-                                                    minLength={6}
-                                                    value={formData.confirmPassword}
-                                                    onChange={handleInputChange}
-                                                    className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                                    placeholder="******"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {userType === 'COMPANY' && (
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome da Empresa</label>
-                                                    <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">CNPJ</label>
-                                                    <input type="text" name="cnpj" value={formData.cnpj} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Telefone</label>
-                                            <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="(00) 00000-0000" />
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-2">
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            {loading ? <Loader2 className="animate-spin" /> : 'Finalizar Cadastro'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setStep(1)}
-                                            className="w-full mt-3 text-sm text-gray-500 hover:text-gray-800 font-medium py-2"
-                                        >
-                                            Voltar e Trocar de Plano
-                                        </button>
-                                    </div>
-                                </form>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            </div>
+                        </form>
+                    </motion.div>
                 </div>
             </div>
         </div>
