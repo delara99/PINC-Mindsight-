@@ -459,7 +459,7 @@ model SiteSettings {
   heroSubtitle    String  @default("na Sua Equipe") @map("hero_subtitle") @db.VarChar(200)
   heroDescription String? @map("hero_description") @db.Text
   heroBadge       String? @default("NOVA VERSÃO 2.0") @map("hero_badge") @db.VarChar(100)
-  heroBgColor     String  @default("#EC1B8E") @map("hero_bg_color") @db.VarChar(20)
+  heroBgColor     String  @default("#8F088F") @map("hero_bg_color") @db.VarChar(20)
   heroTextColor   String  @default("#FFFFFF") @map("hero_text_color") @db.VarChar(20)
   
   // CTA Buttons
@@ -469,7 +469,7 @@ model SiteSettings {
   secondaryButtonLink String? @default("/features") @map("secondary_button_link") @db.VarChar(200)
   
   // Theme
-  primaryColor   String @default("#EC1B8E") @map("primary_color") @db.VarChar(20)
+  primaryColor   String @default("#8F088F") @map("primary_color") @db.VarChar(20)
   secondaryColor String @default("#F7F7F7") @map("secondary_color") @db.VarChar(20)
   accentColor    String @default("#FFC107") @map("accent_color") @db.VarChar(20)
   

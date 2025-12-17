@@ -168,7 +168,10 @@ function RegisterContent() {
             {/* Right Side - Form */}
             <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-12 xl:px-24 bg-gray-50/50">
                 <div className="w-full max-w-md mx-auto">
-                    <div className="mb-10">
+                    <div className="mb-10 text-center lg:text-left">
+                        <div className="flex lg:justify-start justify-center mb-6">
+                            <img src="/logo.png" alt="PINC" className="h-12 w-auto object-contain" />
+                        </div>
                         <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors mb-6">
                             <ArrowLeft size={16} /> Voltar para Home
                         </Link>

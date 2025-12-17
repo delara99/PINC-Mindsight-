@@ -43,8 +43,7 @@ export default function Home() {
             <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold bg-primary text-white p-1 rounded">SaaS</span>
-                        <span className="text-xl font-bold text-gray-800">Avaliação</span>
+                        <img src="/logo.png" alt="PINC Logo" className="h-12 w-auto object-contain" />
                     </div>
                     <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-600">
                         <Link href="#features" className="hover:text-primary transition-colors">Funcionalidades</Link>

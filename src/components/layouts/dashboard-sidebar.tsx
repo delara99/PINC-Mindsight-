@@ -46,8 +46,9 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
     return (
         <div className="flex flex-col h-full bg-white text-slate-800">
             {/* Header / Logo */}
-            <div className="p-6 flex items-center gap-3 border-b border-gray-50 bg-gray-50/50">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-pink-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <div className="p-6 flex items-center justify-center border-b border-gray-50 bg-gray-50/50">
+                <img src="/logo.png" alt="PINC" className="h-12 w-auto object-contain" />
+            </div>
                     <Building2 size={24} />
                 </div>
                 <div>

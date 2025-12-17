@@ -9,8 +9,8 @@ const config: Config = {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: "#D6006D", // Pink da referência
-                    hover: "#A80055",
+                    DEFAULT: "#8F088F", // Roxo da marca
+                    hover: "#700670",
                 },
                 secondary: {
                     DEFAULT: "#FFC82C", // Yellow da referência

@@ -81,6 +81,9 @@ function LoginForm() {
             <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
                 <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl">
                     <div className="text-center mb-8">
+                        <div className="flex justify-center mb-6">
+                            <img src="/logo.png" alt="PINC" className="h-12 w-auto object-contain" />
+                        </div>
                         <h2 className="text-2xl font-bold text-gray-800">Login</h2>
                         <p className="text-gray-500 mt-2">Entre com suas credenciais para continuar.</p>
                     </div>
