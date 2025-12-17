@@ -594,3 +594,17 @@ model BigFiveRecommendation {
   
   @@map("bigfive_recommendations")
 }
+
+model Coupon {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  discountPercent Int       @map("discount_percent")
+  isActive       Boolean   @default(true) @map("is_active")
+  usageLimit     Int?      @map("usage_limit")
+  usageCount     Int       @default(0) @map("usage_count")
+  expiresAt      DateTime? @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("coupons")
+}
