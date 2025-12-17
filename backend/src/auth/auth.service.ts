@@ -51,6 +51,39 @@ export class AuthService {
             throw new UnauthorizedException('Email já cadastrado');
         }
 
+        // 1.1. Validate Coupon (Pre-Check) to prevent partial registration
+        if (data.couponCode) {
+            const coupon = await this.prisma.coupon.findUnique({ where: { code: data.couponCode } });
+            if (!coupon) throw new BadRequestException('Cupom inválido.');
+            if (!coupon.isActive) throw new BadRequestException('Cupom inativo.');
+            if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) throw new BadRequestException('Limite de uso do cupom atingido.');
+            if (coupon.expiresAt && new Date() > coupon.expiresAt) throw new BadRequestException('Cupom expirado.');
+
+            // Plan Validation
+            const allowedPlans = coupon.allowedPlans as any;
+            const planMap: Record<string, string> = {
+                'starter': 'START', 'start': 'START',
+                'pro': 'PRO',
+                'business': 'BUSINESS'
+            };
+            const inputPlanId = (data.planId || 'starter').toLowerCase();
+            let selectedPlanEnum = planMap[inputPlanId];
+
+            if (!selectedPlanEnum && data.planName) {
+                const name = data.planName.toLowerCase();
+                if (name.includes('business')) selectedPlanEnum = 'BUSINESS';
+                else if (name.includes('pro')) selectedPlanEnum = 'PRO';
+                else selectedPlanEnum = 'START';
+            }
+            if (!selectedPlanEnum) selectedPlanEnum = 'START';
+
+            if (Array.isArray(allowedPlans) && allowedPlans.length > 0) {
+                if (!allowedPlans.includes(selectedPlanEnum)) {
+                    throw new BadRequestException(`Este cupom é válido apenas para o plano: ${allowedPlans.join(', ')}`);
+                }
+            }
+        }
+
         const hashedPassword = await bcrypt.hash(data.password, 10);
 
         // 2. Criar Tenant (Um novo tenant para cada pré-cadastro)

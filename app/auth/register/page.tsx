@@ -82,6 +82,18 @@ function RegisterContent() {
             const res = await fetch(`${API_URL}/api/v1/coupons/validate?code=${couponCode}`);
             const data = await res.json();
             if (res.ok) {
+                // Client-side Plan Validation
+                const planMap: any = { starter: 'START', pro: 'PRO', business: 'BUSINESS' };
+                const currentPlanEnum = planMap[selectedPlan?.id] || 'START';
+
+                if (data.allowedPlans && Array.isArray(data.allowedPlans) && data.allowedPlans.length > 0) {
+                    if (!data.allowedPlans.includes(currentPlanEnum)) {
+                        setValidatedCoupon(null);
+                        setCouponMessage({ type: 'error', text: `Cupom válido apenas para o plano: ${data.allowedPlans.join(', ')}` });
+                        return;
+                    }
+                }
+
                 setValidatedCoupon(data);
                 setCouponMessage({ type: 'success', text: `Cupom ${data.code} aplicado: ${data.discountPercent}% de desconto!` });
             } else {
