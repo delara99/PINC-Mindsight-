@@ -2,13 +2,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
-import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Grid3x3 } from 'lucide-react';
+import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Grid3x3, Building2 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function SettingsPage() {
     const token = useAuthStore((state) => state.token);
+    const user = useAuthStore((state) => state.user);
+    const updateUser = useAuthStore((state) => state.updateUser);
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'branding' | 'menu' | 'hero' | 'content' | 'pricing' | 'theme' | 'about'>('branding');
+    const [activeTab, setActiveTab] = useState<'company' | 'branding' | 'menu' | 'hero' | 'content' | 'pricing' | 'theme' | 'about'>('company');
 
     // ... (keep query/mutation logic) ...
 
@@ -26,11 +28,34 @@ export default function SettingsPage() {
         }
     });
 
-    const [formData, setFormData] = useState<any>(settings || {});
+    // Fetch User Data (Company Profile)
+    const { data: userData } = useQuery({
+        queryKey: ['me'],
+        queryFn: async () => {
+             const res = await fetch(`${API_URL}/api/v1/users/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return res.json();
+        }
+    });
 
-    // Update formData when settings loads
+    const [formData, setFormData] = useState<any>(settings || {});
+    const [companyForm, setCompanyForm] = useState<any>({});
+
+    // Sync formData
     if (settings && !formData.id) {
         setFormData(settings);
+    }
+    
+    // Sync companyForm
+    if (userData && !companyForm.id) {
+        setCompanyForm({
+            id: userData.id,
+            companyName: userData.companyName,
+            email: userData.email,
+            phone: userData.phone,
+            cnpj: userData.cnpj
+        });
     }
 
     const saveMutation = useMutation({
@@ -79,8 +104,43 @@ export default function SettingsPage() {
         }
     });
 
+    const saveCompanyMutation = useMutation({
+        mutationFn: async (data: any) => {
+            if (!user?.id) throw new Error('Usuário não identificado');
+            
+            const res = await fetch(`${API_URL}/api/v1/users/${user.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    companyName: data.companyName,
+                    phone: data.phone,
+                    cnpj: data.cnpj, // Only if PJ
+                    userType: user.userType // Keep existing type
+                })
+            });
+            
+            if (!res.ok) throw new Error('Falha ao atualizar perfil da empresa');
+            return res.json();
+        },
+        onSuccess: (updatedUser) => {
+            queryClient.invalidateQueries({ queryKey: ['me'] });
+            updateUser({ companyName: updatedUser.companyName }); // Update local store
+            alert('Dados da empresa atualizados!');
+        },
+        onError: () => {
+            alert('Erro ao atualizar dados da empresa.');
+        }
+    });
+
     const handleSave = () => {
-        saveMutation.mutate(formData);
+        if (activeTab === 'company') {
+            saveCompanyMutation.mutate(companyForm);
+        } else {
+            saveMutation.mutate(formData);
+        }
     };
 
     const handleReset = () => {
@@ -206,6 +266,7 @@ export default function SettingsPage() {
                 <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
                     <div className="flex min-w-max">
                         {[
+                            { id: 'company', icon: Building2, label: 'Empresa' },
                             { id: 'branding', icon: Star, label: 'Marca & Logo' },
                             { id: 'menu', icon: Grid3x3, label: 'Menu' },
                             { id: 'hero', icon: Sparkles, label: 'Topo (Hero)' },
@@ -233,6 +294,56 @@ export default function SettingsPage() {
                 {/* Tab Content Area */}
                 <div className="p-8">
                     
+                    {/* COMPANY TAB */}
+                    {activeTab === 'company' && (
+                        <div className="space-y-8 max-w-2xl">
+                             <div>
+                                <h3 className="text-lg font-semibold mb-4">Perfil da Empresa</h3>
+                                <div className="space-y-4">
+                                     <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>
+                                        <input
+                                            type="text"
+                                            value={companyForm.companyName || ''}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, companyName: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Corporativo</label>
+                                        <input
+                                            type="email"
+                                            value={companyForm.email || ''}
+                                            disabled
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        />
+                                        <p className="text-xs text-gray-400 mt-1">O email não pode ser alterado.</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
+                                            <input
+                                                type="text"
+                                                value={companyForm.cnpj || ''}
+                                                onChange={(e) => setCompanyForm({ ...companyForm, cnpj: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                                            />
+                                        </div>
+                                         <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                                            <input
+                                                type="text"
+                                                value={companyForm.phone || ''}
+                                                onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* BRANDING TAB */}
                     {activeTab === 'branding' && (
                         <div className="space-y-8 max-w-2xl">
