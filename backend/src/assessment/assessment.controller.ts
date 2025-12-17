@@ -228,8 +228,33 @@ export class AssessmentController {
         const tenantId = req.user.tenantId;
         const userId = req.user.userId;
         const userEmail = req.user.email;
+        const userRole = req.user.role;
 
-        // 1. Conexões
+        // Se for ADMIN, mostrar TODOS os inventários completados do sistema
+        if (userRole === 'TENANT_ADMIN' || userRole === 'SUPER_ADMIN') {
+            const completedAssignments = await this.prisma.assessmentAssignment.findMany({
+                where: {
+                    status: 'COMPLETED'
+                },
+                include: {
+                    user: { select: { id: true, name: true, email: true } },
+                    assessment: { select: { id: true, title: true } },
+                    result: true
+                },
+                orderBy: { completedAt: 'desc' }
+            });
+
+            return completedAssignments.map(assignment => ({
+                id: assignment.id,
+                userName: assignment.user.name || assignment.user.email,
+                userEmail: assignment.user.email,
+                assessmentTitle: assignment.assessment.title,
+                completedAt: assignment.completedAt,
+                scores: assignment.result?.scores || {}
+            }));
+        }
+
+        // Lógica para usuários comuns (conexões + domínio)
         const connections = await this.prisma.connection.findMany({
             where: {
                 OR: [
@@ -240,7 +265,6 @@ export class AssessmentController {
         });
         const connectedUserIds = connections.map(c => c.userAId === userId ? c.userBId : c.userAId);
 
-        // 2. Domínio Corporativo (Fallback para inconsistência de Tenant)
         const domain = userEmail.split('@')[1];
         const publicDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'uol.com.br', 'bol.com.br', 'terra.com.br'];
         const isCorporateDomain = domain && !publicDomains.includes(domain.toLowerCase());
