@@ -184,13 +184,17 @@ export class AuthService {
                     if (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) {
 
                         // Validate Allowed Plans (New Logic)
-                        const allowedPlans = coupon.allowedPlans as any; // Cast Json to any or specific types
-                        // data.planId is roughly 'start', 'pro', 'business'. coupon.allowedPlans might be ["START", "PRO"]
-                        // Need normalization of plan names.
-                        // Assuming frontend sends 'starter', 'pro', 'business'.
-                        // And coupon allowedPlans storage is "START", "PRO".
-                        const planMap = { 'starter': 'START', 'pro': 'PRO', 'business': 'BUSINESS' };
-                        const selectedPlanEnum = planMap[data.planId] || 'START';
+                        const allowedPlans = coupon.allowedPlans as any;
+
+                        console.log(`🎟️ Validating Coupon ${coupon.code}. User Plan ID: ${data.planId}. Allowed: ${JSON.stringify(allowedPlans)}`);
+
+                        const planMap: Record<string, string> = {
+                            'starter': 'START', 'start': 'START',
+                            'pro': 'PRO',
+                            'business': 'BUSINESS'
+                        };
+                        const inputPlanId = (data.planId || 'starter').toLowerCase();
+                        const selectedPlanEnum = planMap[inputPlanId] || 'START';
 
                         if (Array.isArray(allowedPlans) && allowedPlans.length > 0) {
                             if (!allowedPlans.includes(selectedPlanEnum)) {
@@ -206,10 +210,8 @@ export class AuthService {
 
                         // Special Rule: 100% Discount
                         if (coupon.discountPercent === 100) {
-                            const planMap = { 'starter': 'START', 'pro': 'PRO', 'business': 'BUSINESS' };
-                            const targetPlan = planMap[data.planId] || 'START';
-
-                            // Force update Tenant Plan AND User Plan to match selected plan
+                            // Re-use determined planEnum
+                            const targetPlan = selectedPlanEnum;
                             const planEnum = targetPlan as any;
 
                             console.log(`🎟️ Applying 100% Discount logic for ${user.email}. Plan: ${targetPlan}, Credits: ${data.initialCredits}`);
