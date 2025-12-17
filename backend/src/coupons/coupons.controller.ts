@@ -2,7 +2,7 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards, Query } from '@n
 import { CouponsService } from './coupons.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('api/v1/coupons')
+@Controller('coupons')
 export class CouponsController {
     constructor(private readonly couponsService: CouponsService) { }
 
