@@ -73,6 +73,7 @@ export default function ClientsPage() {
             const res = await fetch(`${API_URL}/api/v1/coupons`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            if (!res.ok) return []; // Fallback to empty array on error (or throw)
             return res.json();
         },
         enabled: !!token && activeTab === 'COUPONS'
@@ -402,7 +403,7 @@ export default function ClientsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {coupons?.map((coupon: any) => (
+                            {Array.isArray(coupons) && coupons.map((coupon: any) => (
                                 <tr key={coupon.id} className="hover:bg-gray-50/50 transition-colors">
                                     <td className="py-4 px-6 font-bold text-gray-900 font-mono text-lg">{coupon.code}</td>
                                     <td className="py-4 px-6 text-green-600 font-bold">{coupon.discountPercent}% OFF</td>
