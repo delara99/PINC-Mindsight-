@@ -488,6 +488,20 @@ model SiteSettings {
   aboutTitle     String?  @default("Sobre Nossa Empresa") @map("about_title") @db.VarChar(200)
   aboutContent   String?  @map("about_content") @db.Text
   
+  // Business Page (B2B)
+  businessHeroTitle       String  @default("Impulsione o seu Capital Humano") @map("business_hero_title") @db.VarChar(200)
+  businessHeroSubtitle    String  @default("com Inteligência Comportamental") @map("business_hero_subtitle") @db.VarChar(200)
+  businessHeroDescription String? @map("business_hero_description") @db.Text
+  businessHeroBadge       String? @default("Solução Corporativa") @map("business_hero_badge") @db.VarChar(100)
+  businessLogo            String? @map("business_logo") @db.LongText
+  
+  // Business Page Styling
+  businessHeroBgColor     String  @default("#F0F9FF") @map("business_hero_bg_color") @db.VarChar(20)
+  businessHeroTextColor   String  @default("#111827") @map("business_hero_text_color") @db.VarChar(20)
+
+  // Business Page Content
+  businessFeatures        Json    @default("[]") @map("business_features")
+  
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   

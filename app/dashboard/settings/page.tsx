@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
-import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info } from 'lucide-react';
+import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Building, Upload } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function SettingsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme' | 'about'>('hero');
+    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme' | 'about' | 'business'>('hero');
 
     // Fetch settings
     const { data: settings, isLoading } = useQuery({
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
-                    {['hero', 'features', 'pricing', 'about', 'theme'].map((tab) => (
+                    {['hero', 'features', 'pricing', 'about', 'theme', 'business'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
@@ -193,6 +193,7 @@ export default function SettingsPage() {
                             {tab === 'pricing' && <><DollarSign size={16} /> Pricing</>}
                             {tab === 'theme' && <><Palette size={16} /> Tema</>}
                             {tab === 'about' && <><Info size={16} /> Sobre</>}
+                            {tab === 'business' && <><Building size={16} /> Empresas (B2B)</>}
                         </button>
                     ))}
                 </div>
@@ -495,6 +496,123 @@ export default function SettingsPage() {
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Dica: Você pode usar quebras de linha para separar parágrafos.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Business B2B Tab */}
+                    {activeTab === 'business' && (
+                        <div className="space-y-8">
+                            {/* Logo Upload */}
+                            <div className="space-y-4 border-b border-gray-100 pb-6">
+                                <h4 className="font-semibold text-gray-800">Identidade Visual da Página</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Logo para Página de Empresas</label>
+                                        <div className="flex gap-4 items-center">
+                                            {formData.businessLogo && (
+                                                <div className="h-16 w-16 relative border rounded-lg p-2 bg-gray-50 flex items-center justify-center">
+                                                    <img src={formData.businessLogo} alt="Logo B2B" className="max-h-full max-w-full object-contain" />
+                                                    <button 
+                                                        onClick={() => setFormData({ ...formData, businessLogo: null })}
+                                                        className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow border border-gray-200 hover:bg-gray-50"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <label className="flex items-center gap-2 cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                                                <Upload size={16} />
+                                                Upload Logo
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    className="hidden" 
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setFormData({ ...formData, businessLogo: reader.result as string });
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-2">Recomendado: PNG transparente, max 2MB.</p>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                         <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Cor de Fundo (Hero)</label>
+                                            <input
+                                                type="color"
+                                                value={formData.businessHeroBgColor || '#F0F9FF'}
+                                                onChange={(e) => setFormData({ ...formData, businessHeroBgColor: e.target.value })}
+                                                className="w-full h-10 border border-gray-200 rounded-lg cursor-pointer"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Cor do Texto (Hero)</label>
+                                            <input
+                                                type="color"
+                                                value={formData.businessHeroTextColor || '#111827'}
+                                                onChange={(e) => setFormData({ ...formData, businessHeroTextColor: e.target.value })}
+                                                className="w-full h-10 border border-gray-200 rounded-lg cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Hero Texts */}
+                            <div className="space-y-4">
+                                <h4 className="font-semibold text-gray-800">Conteúdo do Hero</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Badge / Tag</label>
+                                        <input
+                                            type="text"
+                                            value={formData.businessHeroBadge || ''}
+                                            onChange={(e) => setFormData({ ...formData, businessHeroBadge: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                            placeholder="Ex: Solução Corporativa"
+                                        />
+                                    </div>
+                                    <div></div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Título Principal</label>
+                                        <input
+                                            type="text"
+                                            value={formData.businessHeroTitle || ''}
+                                            onChange={(e) => setFormData({ ...formData, businessHeroTitle: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                            placeholder="Ex: Impulsione seu Capital Humano"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Subtítulo (Gradiente)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.businessHeroSubtitle || ''}
+                                            onChange={(e) => setFormData({ ...formData, businessHeroSubtitle: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                            placeholder="Ex: com Inteligência Comportamental"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <textarea
+                                        value={formData.businessHeroDescription || ''}
+                                        onChange={(e) => setFormData({ ...formData, businessHeroDescription: e.target.value })}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                        placeholder="A plataforma definitiva para..."
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}

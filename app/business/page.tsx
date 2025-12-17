@@ -3,13 +3,28 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { LeadFormModal } from '@/src/components/business/LeadFormModal';
-import { ArrowRight, Check, BarChart, Users, Brain, Target, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Check, BarChart, Users, Brain, Target, Shield, Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { API_URL } from '@/src/config/api';
 
 export default function BusinessPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     const openForm = () => setIsFormOpen(true);
+
+    const { data: settings, isLoading } = useQuery({
+        queryKey: ['site-settings'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/site-settings`);
+            if (!res.ok) return null;
+            return res.json();
+        }
+    });
+
+    if (isLoading) {
+        return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>;
+    }
 
     return (
         <div className="min-h-screen bg-white">
@@ -21,32 +36,49 @@ export default function BusinessPage() {
             <LeadFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
 
             {/* Hero Section */}
-            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-gradient-to-b from-blue-50 to-white">
+            <section 
+                className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden"
+                style={{ background: `linear-gradient(to bottom, ${settings?.businessHeroBgColor || '#f0f9ff'} 0%, #ffffff 100%)` }}
+            >
                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
                 <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-200/20 rounded-full blur-3xl" />
 
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                         <div className="flex-1 text-center lg:text-left">
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="inline-flex items-center gap-2 bg-white border border-blue-100 rounded-full px-4 py-1.5 shadow-sm text-sm font-bold text-primary mb-6"
-                            >
-                                <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
-                                Solução Corporativa Premium
-                            </motion.div>
+                            
+                            {settings?.businessLogo && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-8 flex justify-center lg:justify-start"
+                                >
+                                    <img src={settings.businessLogo} alt="Logo Empresa" className="h-16 object-contain" />
+                                </motion.div>
+                            )}
+
+                            {settings?.businessHeroBadge && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="inline-flex items-center gap-2 bg-white border border-blue-100 rounded-full px-4 py-1.5 shadow-sm text-sm font-bold text-primary mb-6"
+                                >
+                                    <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                                    {settings.businessHeroBadge}
+                                </motion.div>
+                            )}
                             
                             <motion.h1 
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.1 }}
-                                className="text-5xl lg:text-7xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-6"
+                                className="text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6"
+                                style={{ color: settings?.businessHeroTextColor || '#111827' }}
                             >
-                                Impulsione o seu <br/>
+                                {settings?.businessHeroTitle || 'Impulsione o seu'} <br/>
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-                                    Capital Humano
+                                    {settings?.businessHeroSubtitle || 'Capital Humano'}
                                 </span>
                             </motion.h1>
                             
@@ -56,8 +88,8 @@ export default function BusinessPage() {
                                 transition={{ duration: 0.5, delay: 0.2 }}
                                 className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
                             >
-                                A plataforma definitiva de inteligência comportamental para empresas que buscam 
-                                contratar melhor, desenvolver líderes e reduzir o turnover com dados científicos.
+                                {settings?.businessHeroDescription || 
+                                'A plataforma definitiva de inteligência comportamental para empresas que buscam contratar melhor, desenvolver líderes e reduzir o turnover com dados científicos.'}
                             </motion.p>
                             
                             <motion.div 
