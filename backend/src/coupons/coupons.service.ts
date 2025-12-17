@@ -47,4 +47,59 @@ export class CouponsService {
 
         return coupon;
     }
+    async applyCoupon(userId: string, code: string, planId: string, planName: string) {
+        const coupon = await this.validate(code);
+
+        // Check User/Tenant exist
+        const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { tenant: true } });
+        if (!user || !user.tenant) throw new BadRequestException('Usuário inválido.');
+
+        // Plan Validation
+        const allowedPlans = coupon.allowedPlans as any;
+        const planMap: Record<string, string> = {
+            'starter': 'START', 'start': 'START',
+            'pro': 'PRO',
+            'business': 'BUSINESS'
+        };
+        const inputPlanId = (planId || 'starter').toLowerCase();
+        let selectedPlanEnum = planMap[inputPlanId];
+
+        if (!selectedPlanEnum && planName) {
+            const name = planName.toLowerCase();
+            if (name.includes('business')) selectedPlanEnum = 'BUSINESS';
+            else if (name.includes('pro')) selectedPlanEnum = 'PRO';
+            else selectedPlanEnum = 'START';
+        }
+        if (!selectedPlanEnum) selectedPlanEnum = 'START';
+
+        if (Array.isArray(allowedPlans) && allowedPlans.length > 0) {
+            if (!allowedPlans.includes(selectedPlanEnum)) {
+                throw new BadRequestException(`Este cupom é válido apenas para o plano: ${allowedPlans.join(', ')}`);
+            }
+        }
+
+        await this.prisma.coupon.update({ where: { id: coupon.id }, data: { usageCount: { increment: 1 } } });
+
+        if (coupon.discountPercent === 100) {
+            const planEnum = selectedPlanEnum as any;
+
+            // Determine credits based on Plan (Hardcoded or logic based on PlanEnum)
+            // Ideally should fetch from Settings... but hardcode is safer for now based on known plans
+            let creditsToAdd = 1;
+            if (planEnum === 'PRO') creditsToAdd = 10;
+            if (planEnum === 'BUSINESS') creditsToAdd = 50;
+
+            await this.prisma.tenant.update({ where: { id: user.tenant.id }, data: { plan: planEnum } });
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    plan: planEnum,
+                    credits: { increment: creditsToAdd }
+                }
+            });
+            return { success: true, message: `Plano ${planEnum} ativado com sucesso! Você recebeu ${creditsToAdd} créditos.` };
+        }
+
+        return { success: true, message: 'Cupom aplicado.' };
+    }
 }

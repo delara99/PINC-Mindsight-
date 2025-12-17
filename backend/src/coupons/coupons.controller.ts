@@ -33,4 +33,10 @@ export class CouponsController {
         if (!code) return { valid: false };
         return this.couponsService.validate(code);
     }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('apply')
+    apply(@Body() body: any, @Request() req) {
+        return this.couponsService.applyCoupon(req.user.userId, body.code, body.planId, body.planName);
+    }
 }
