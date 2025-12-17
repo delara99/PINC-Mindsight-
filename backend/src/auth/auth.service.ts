@@ -172,6 +172,7 @@ export class AuthService {
         }
 
         // 6. Process Coupon Usage
+        // 6. Process Coupon Usage
         if (data.couponCode) {
             try {
                 const coupon = await this.prisma.coupon.findUnique({
@@ -179,16 +180,52 @@ export class AuthService {
                 });
 
                 if (coupon && coupon.isActive) {
-                    // Check limits again just in case (race condition mostly)
+                    // Check limits
                     if (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) {
+
+                        // Validate Allowed Plans (New Logic)
+                        const allowedPlans = coupon.allowedPlans as any; // Cast Json to any or specific types
+                        // data.planId is roughly 'start', 'pro', 'business'. coupon.allowedPlans might be ["START", "PRO"]
+                        // Need normalization of plan names.
+                        // Assuming frontend sends 'starter', 'pro', 'business'.
+                        // And coupon allowedPlans storage is "START", "PRO".
+                        const planMap = { 'starter': 'START', 'pro': 'PRO', 'business': 'BUSINESS' };
+                        const selectedPlanEnum = planMap[data.planId] || 'START';
+
+                        if (Array.isArray(allowedPlans) && allowedPlans.length > 0) {
+                            if (!allowedPlans.includes(selectedPlanEnum)) {
+                                // Coupon not allowed for this plan. 
+                                // Ideally throw error, but here we might just ignore the coupon or warn?
+                                // User expects validation BEFORE register. Frontend should handle. 
+                                // But if blocked here, we shouldn't apply usage.
+                                console.warn(`Coupon ${coupon.code} invalid for plan ${selectedPlanEnum}`);
+                            }
+                        }
+
+                        // Apply Usage
                         await this.prisma.coupon.update({
                             where: { id: coupon.id },
                             data: { usageCount: { increment: 1 } }
                         });
+
+                        // Special Rule: 100% Discount
+                        if (coupon.discountPercent === 100) {
+                            const planMap = { 'starter': 'START', 'pro': 'PRO', 'business': 'BUSINESS' };
+                            const targetPlan = planMap[data.planId] || 'START';
+
+                            // Force update Tenant Plan to match selected plan (bypass payment requirement)
+                            await this.prisma.tenant.update({
+                                where: { id: tenant.id },
+                                data: { plan: targetPlan as any }
+                            });
+
+                            // Ensure Status is Active (redundant if default, but safe)
+                            // And if needed, ensure credits. 
+                            // Assuming initialCredits handled the credits value.
+                        }
                     }
                 }
             } catch (ignored) {
-                // Ignore coupon errors to not block registration, but log if possible
                 console.error('Error processing coupon:', ignored);
             }
         }

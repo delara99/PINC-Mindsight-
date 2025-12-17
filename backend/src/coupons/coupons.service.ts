@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class CouponsService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: { code: string; discountPercent: number; usageLimit?: number; expiresAt?: Date }) {
+    async create(data: { code: string; discountPercent: number; usageLimit?: number; expiresAt?: Date; allowedPlans?: string[] }) {
         // Check if code exists
         const existing = await this.prisma.coupon.findUnique({ where: { code: data.code } });
         if (existing) throw new BadRequestException('Código de cupom já existe.');
@@ -16,6 +16,7 @@ export class CouponsService {
                 discountPercent: data.discountPercent,
                 usageLimit: data.usageLimit,
                 expiresAt: data.expiresAt,
+                allowedPlans: data.allowedPlans || [],
             },
         });
     }

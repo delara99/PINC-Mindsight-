@@ -603,6 +603,7 @@ model Coupon {
   usageLimit     Int?      @map("usage_limit")
   usageCount     Int       @default(0) @map("usage_count")
   expiresAt      DateTime? @map("expires_at")
+  allowedPlans   Json      @default("[]") @map("allowed_plans")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 

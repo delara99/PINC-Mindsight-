@@ -30,7 +30,12 @@ export default function ClientsPage() {
 
     // Estados para Cupons
     const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
-    const [newCoupon, setNewCoupon] = useState({ code: '', discountPercent: 10, usageLimit: '' });
+    const [newCoupon, setNewCoupon] = useState<{ code: string; discountPercent: number; usageLimit: string; allowedPlans: string[] }>({
+        code: '',
+        discountPercent: 10,
+        usageLimit: '',
+        allowedPlans: []
+    });
 
     // Restored States
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,7 +98,7 @@ export default function ClientsPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['coupons'] });
             setIsCouponModalOpen(false);
-            setNewCoupon({ code: '', discountPercent: 10, usageLimit: '' });
+            setNewCoupon({ code: '', discountPercent: 10, usageLimit: '', allowedPlans: [] });
             alert('Cupom criado com sucesso!');
         }
     });
@@ -962,6 +967,30 @@ export default function ClientsPage() {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
                                     placeholder="Ilimitado se vazio"
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Planos Permitidos</label>
+                                <div className="flex gap-4">
+                                    {['START', 'PRO', 'BUSINESS'].map((plan) => (
+                                        <label key={plan} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={newCoupon.allowedPlans?.includes(plan)}
+                                                onChange={(e) => {
+                                                    const current = newCoupon.allowedPlans || [];
+                                                    const updated = e.target.checked
+                                                        ? [...current, plan]
+                                                        : current.filter(p => p !== plan);
+                                                    setNewCoupon({ ...newCoupon, allowedPlans: updated });
+                                                }}
+                                                className="rounded text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">{plan}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Se nenhum selecionado, vale para todos.</p>
                             </div>
 
                             <div className="flex justify-end gap-3 mt-6 pt-6 border-t font-bold">
