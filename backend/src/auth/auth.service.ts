@@ -216,6 +216,8 @@ export class AuthService {
                             // Force update Tenant Plan AND User Plan to match selected plan
                             const planEnum = targetPlan as any;
 
+                            console.log(`🎟️ Applying 100% Discount logic for ${user.email}. Plan: ${targetPlan}, Credits: ${data.initialCredits}`);
+
                             await this.prisma.tenant.update({
                                 where: { id: tenant.id },
                                 data: { plan: planEnum }
@@ -225,17 +227,7 @@ export class AuthService {
                                 where: { id: user.id },
                                 data: {
                                     plan: planEnum,
-                                    credits: { increment: data.initialCredits || 1 }
-                                    // Ensure credits are added if for some reason creation didn't. 
-                                    // If creation used initialCredits, this might double it? 
-                                    // No, if user got 0, then creation didn't use it.
-                                    // If creation used it, then user has 10 (PRO). 
-                                    // If I increment, he gets 20. 
-                                    // Better to 'set' or 'increment' if 0.
-                                    // But prisma doesn't support "set if 0".
-                                    // I'll trust `data.initialCredits` was ignored? 
-                                    // Let's assume creation didn't add credits because typically credits are added via a "Transaction" or separate method.
-                                    // But User model usually has `credits Int @default(0)`.
+                                    credits: { increment: Number(data.initialCredits) || 1 }
                                 }
                             });
                         }
