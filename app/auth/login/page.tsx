@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Lock, Mail } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
+import { useQuery } from '@tanstack/react-query';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
@@ -14,6 +15,15 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const { data: settings } = useQuery({
+        queryKey: ['site-settings'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/site-settings`);
+            return res.json();
+        },
+        staleTime: 1000 * 60 * 5
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -82,7 +92,7 @@ function LoginForm() {
                 <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl">
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-6">
-                            <img src="/logo-pinc.png" alt="PINC Logo" className="h-12 w-auto object-contain" />
+                            <img src={settings?.logoUrl || "/logo-pinc.png"} alt="PINC Logo" className="h-12 w-auto object-contain" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-800">Login</h2>
                         <p className="text-gray-500 mt-2">Entre com suas credenciais para continuar.</p>

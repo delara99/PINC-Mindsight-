@@ -8,10 +8,21 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { BrainCircuit } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { API_URL } from '@/src/config/api';
 
 export default function TrialPage() {
     const { step, setStep } = useTrialStore();
     const [isMounted, setIsMounted] = useState(false);
+
+    const { data: settings } = useQuery({
+        queryKey: ['site-settings'],
+        queryFn: async () => {
+             const res = await fetch(`${API_URL}/api/v1/site-settings`);
+             return res.json();
+        },
+        staleTime: 1000 * 60 * 5
+    });
 
     // Prevent hydration mismatch for zustand persist
     useEffect(() => {
@@ -36,7 +47,7 @@ export default function TrialPage() {
              <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 py-4 mb-8 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
                     <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-                        <img src="/logo-pinc.png" alt="PINC Logo" className="h-8 w-auto object-contain" />
+                        <img src={settings?.logoUrl || "/logo-pinc.png"} alt="PINC Logo" className="h-8 w-auto object-contain" />
                     </Link>
                     {step !== 'result' && (
                         <div className="text-sm font-medium text-gray-500">

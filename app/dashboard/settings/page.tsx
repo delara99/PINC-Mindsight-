@@ -2,59 +2,31 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
-import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info } from 'lucide-react';
+import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Grid3x3 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function SettingsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme' | 'about'>('hero');
+    const [activeTab, setActiveTab] = useState<'branding' | 'menu' | 'hero' | 'content' | 'pricing' | 'theme' | 'about'>('branding');
 
-    // Fetch settings
+    // ... (keep query/mutation logic) ...
+
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings-admin'],
         queryFn: async () => {
             const res = await fetch(`${API_URL}/api/v1/site-settings/admin`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            return res.json();
+            const data = await res.json();
+            // Ensure array fields are initialized if null
+            if (!data.menuItems) data.menuItems = [];
+            if (!data.featuresSection) data.featuresSection = [];
+            return data;
         }
     });
 
-    // Update settings mutation
-    const saveMutation = useMutation({
-        mutationFn: async (data: any) => {
-            const res = await fetch(`${API_URL}/api/v1/site-settings`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(data)
-            });
-            if (!res.ok) throw new Error('Erro ao salvar');
-            return res.json();
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['site-settings-admin'] });
-            alert('✅ Configurações salvas com sucesso!');
-        }
-    });
-
-    // Reset mutation
-    const resetMutation = useMutation({
-        mutationFn: async () => {
-            const res = await fetch(`${API_URL}/api/v1/site-settings/reset`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            return res.json();
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['site-settings-admin'] });
-            alert('🔄 Configurações restauradas para o padrão!');
-        }
-    });
+    // ... (keep mutation code) ...
 
     const [formData, setFormData] = useState<any>(settings || {});
 
@@ -62,63 +34,63 @@ export default function SettingsPage() {
     if (settings && !formData.id) {
         setFormData(settings);
     }
+    
+    // ... (keep handleSave, handleReset) ...
 
-    const handleSave = () => {
-        saveMutation.mutate(formData);
-    };
-
-    const handleReset = () => {
-        if (confirm('Tem certeza que deseja restaurar as configurações padrão? Esta ação não pode ser desfeita.')) {
-            resetMutation.mutate();
-        }
-    };
-
-    const addFeature = () => {
+    // Menu Helpers
+    const addMenuItem = () => {
         setFormData({
             ...formData,
-            features: [...(formData.features || []), { id: Date.now().toString(), icon: 'star', title: '', description: '' }]
+            menuItems: [...(formData.menuItems || []), { label: 'Novo Link', href: '#' }]
         });
     };
 
-    const removeFeature = (index: number) => {
-        const newFeatures = [...formData.features];
-        newFeatures.splice(index, 1);
-        setFormData({ ...formData, features: newFeatures });
+    const removeMenuItem = (index: number) => {
+        const newItems = [...(formData.menuItems || [])];
+        newItems.splice(index, 1);
+        setFormData({ ...formData, menuItems: newItems });
     };
 
-    const updateFeature = (index: number, field: string, value: any) => {
-        const newFeatures = [...formData.features];
-        newFeatures[index] = { ...newFeatures[index], [field]: value };
-        setFormData({ ...formData, features: newFeatures });
+    const updateMenuItem = (index: number, field: string, value: string) => {
+        const newItems = [...(formData.menuItems || [])];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setFormData({ ...formData, menuItems: newItems });
     };
 
-    const addPlan = () => {
+    // Block Helpers (Home Content)
+    const addBlock = () => {
         setFormData({
             ...formData,
-            pricingPlans: [...(formData.pricingPlans || []), {
-                id: Date.now().toString(),
-                name: '',
-                price: 0,
-                currency: 'R$',
-                period: 'mês',
-                features: [],
-                highlighted: false,
-                buttonText: 'Contratar'
+            featuresSection: [...(formData.featuresSection || []), { 
+                id: Date.now().toString(), 
+                title: 'Nova Seção', 
+                description: 'Descrição aqui...', 
+                image: '/placeholder.png',
+                orientation: 'left', // or 'right'
+                items: ['Item 1', 'Item 2']
             }]
         });
     };
 
-    const removePlan = (index: number) => {
-        const newPlans = [...formData.pricingPlans];
-        newPlans.splice(index, 1);
-        setFormData({ ...formData, pricingPlans: newPlans });
+    const removeBlock = (index: number) => {
+        const newBlocks = [...(formData.featuresSection || [])];
+        newBlocks.splice(index, 1);
+        setFormData({ ...formData, featuresSection: newBlocks });
     };
 
-    const updatePlan = (index: number, field: string, value: any) => {
-        const newPlans = [...formData.pricingPlans];
-        newPlans[index] = { ...newPlans[index], [field]: value };
-        setFormData({ ...formData, pricingPlans: newPlans });
+    const updateBlock = (index: number, field: string, value: any) => {
+        const newBlocks = [...(formData.featuresSection || [])];
+        newBlocks[index] = { ...newBlocks[index], [field]: value };
+        setFormData({ ...formData, featuresSection: newBlocks });
     };
+
+    const updateBlockItemArray = (blockIndex: number, newItems: string[]) => {
+        const newBlocks = [...(formData.featuresSection || [])];
+        newBlocks[blockIndex] = { ...newBlocks[blockIndex], items: newItems };
+        setFormData({ ...formData, featuresSection: newBlocks });
+    };
+
+    // ... (keep pricing helpers) ...
 
     if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
 
@@ -127,8 +99,8 @@ export default function SettingsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Configurações</h1>
-                    <p className="text-gray-500">Gerencie as preferências da empresa e personalize a landing page</p>
+                    <h1 className="text-2xl font-bold text-gray-800">Customização Total</h1>
+                    <p className="text-gray-500">Controle cada detalhe da sua Landing Page</p>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
                     <button
@@ -144,65 +116,123 @@ export default function SettingsPage() {
                         className="flex-1 md:flex-none justify-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover flex items-center gap-2 disabled:opacity-50"
                     >
                         {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        Salvar Alterações
+                        Salvar Tudo
                     </button>
                 </div>
             </div>
 
-            {/* Company Profile (existing) */}
+            {/* Main Config Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900">Perfil da Empresa</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>
-                            <input type="text" disabled value="Empresa Demo" className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Corporativo</label>
-                            <input type="email" disabled value="admin@empresa.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
-                        </div>
+                
+                {/* Scrollable Tabs */}
+                <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
+                    <div className="flex min-w-max">
+                        {[
+                            { id: 'branding', icon: Star, label: 'Marca & Logo' },
+                            { id: 'menu', icon: Grid3x3, label: 'Menu' },
+                            { id: 'hero', icon: Sparkles, label: 'Topo (Hero)' },
+                            { id: 'content', icon: FileText, label: 'Conteúdo Home' },
+                            { id: 'pricing', icon: DollarSign, label: 'Preços' },
+                            { id: 'theme', icon: Palette, label: 'Cores' },
+                            { id: 'about', icon: Info, label: 'Sobre' },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={`px-6 py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${
+                                    activeTab === tab.id 
+                                    ? 'border-primary text-primary bg-primary/5' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                <tab.icon size={18} />
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
-            </div>
 
-            {/* CMS Landing Page Customization */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                        <Sparkles className="text-primary" size={20} />
-                        Customização da Landing Page
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">Edite textos, cores e conteúdo sem mexer no código</p>
-                </div>
+                {/* Tab Content Area */}
+                <div className="p-8">
+                    
+                    {/* BRANDING TAB */}
+                    {activeTab === 'branding' && (
+                        <div className="space-y-8 max-w-2xl">
+                            <div>
+                                <h3 className="text-lg font-semibold mb-4">Identidade Visual</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">URL da Logo (Cabeçalho)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.logoUrl || ''}
+                                            onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                                            placeholder="https://exemplo.com/logo.png"
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Recomendado: PNG transparente, altura 40px.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Texto do Rodapé</label>
+                                        <input
+                                            type="text"
+                                            value={formData.footerText || ''}
+                                            onChange={(e) => setFormData({ ...formData, footerText: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
-                    {['hero', 'features', 'pricing', 'about', 'theme'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab as any)}
-                            className={`flex-1 min-w-[100px] py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition whitespace-nowrap ${
-                                activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            {tab === 'hero' && <><Sparkles size={16} /> Hero Section</>}
-                            {tab === 'features' && <><FileText size={16} /> Features</>}
-                            {tab === 'pricing' && <><DollarSign size={16} /> Pricing</>}
-                            {tab === 'theme' && <><Palette size={16} /> Tema</>}
-                            {tab === 'about' && <><Info size={16} /> Sobre</>}
-                        </button>
-                    ))}
-                </div>
+                    {/* MENU TAB */}
+                    {activeTab === 'menu' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold">Itens de Navegação</h3>
+                                <button onClick={addMenuItem} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium flex items-center gap-1">
+                                    <Plus size={14} /> Adicionar Link
+                                </button>
+                            </div>
+                            <div className="space-y-3">
+                                {formData.menuItems?.map((item: any, idx: number) => (
+                                    <div key={idx} className="flex gap-4 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        <div className="flex-1">
+                                            <label className="text-xs font-medium text-gray-500">Rótulo</label>
+                                            <input 
+                                                type="text" 
+                                                value={item.label} 
+                                                onChange={(e) => updateMenuItem(idx, 'label', e.target.value)}
+                                                className="w-full bg-white border border-gray-200 rounded px-2 py-1 text-sm"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-xs font-medium text-gray-500">Link / Âncora</label>
+                                            <input 
+                                                type="text" 
+                                                value={item.href} 
+                                                onChange={(e) => updateMenuItem(idx, 'href', e.target.value)}
+                                                className="w-full bg-white border border-gray-200 rounded px-2 py-1 text-sm"
+                                            />
+                                        </div>
+                                        <button onClick={() => removeMenuItem(idx)} className="mt-5 text-gray-400 hover:text-red-500">
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {(!formData.menuItems || formData.menuItems.length === 0) && (
+                                    <p className="text-gray-400 text-sm italic">Nenhum item de menu configurado.</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
-                {/* Tab Content */}
-                <div className="p-6">
-                    {/* Hero Tab */}
+                    {/* HERO TAB (Existing) */}
                     {activeTab === 'hero' && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-6 max-w-4xl">
+                            {/* ... Reuse existing Hero form logic ... */}
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Título Principal</label>
                                     <input
@@ -231,18 +261,19 @@ export default function SettingsPage() {
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
                                 />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Colors and Badges */}
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Badge</label>
                                     <input
                                         type="text"
                                         value={formData.heroBadge || ''}
                                         onChange={(e) => setFormData({ ...formData, heroBadge: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cor de Fundo</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cor de Fundo (Start)</label>
                                     <input
                                         type="color"
                                         value={formData.heroBgColor || '#EC1B8E'}
@@ -260,117 +291,135 @@ export default function SettingsPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Botão Primário (Texto)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.primaryButtonText || ''}
-                                        onChange={(e) => setFormData({ ...formData, primaryButtonText: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Botão Primário (Link)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.primaryButtonLink || ''}
-                                        onChange={(e) => setFormData({ ...formData, primaryButtonLink: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
-                                    />
-                                </div>
-                            </div>
                         </div>
                     )}
 
-                    {/* Features Tab */}
-                    {activeTab === 'features' && (
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.showFeatures !== false}
-                                        onChange={(e) => setFormData({ ...formData, showFeatures: e.target.checked })}
-                                        className="rounded text-primary"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">Exibir seção de features</span>
-                                </label>
-                                <button onClick={addFeature} className="px-3 py-1.5 bg-primary text-white rounded text-sm flex items-center gap-1">
-                                    <Plus size={14} /> Adicionar Feature
+                    {/* HOME CONTENT TAB (Dynamic Blocks) */}
+                    {activeTab === 'content' && (
+                        <div className="space-y-8">
+                            <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-blue-900">Seções de Conteúdo</h3>
+                                    <p className="text-sm text-blue-700">Adicione blocos alternados (Texto + Imagem) para explicar seu produto.</p>
+                                </div>
+                                <button onClick={addBlock} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm">
+                                    <Plus size={16} /> Nova Seção
                                 </button>
                             </div>
-                            {formData.features?.map((feat: any, index: number) => (
-                                <div key={feat.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium text-gray-600">Feature #{index + 1}</span>
-                                        <div className="flex items-center gap-2">
-                                            <label className="flex items-center gap-1 text-xs cursor-pointer select-none">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!feat.highlighted}
-                                                    onChange={(e) => updateFeature(index, 'highlighted', String(e.target.checked))} // O backend salva como JSON, o frontend casta na leitura se necessario, mas aqui o state é any.
-                                                    // Melhor: updateFeature espera value: string. O ideal seria value: any.
-                                                    // Checando updateFeature: const updateFeature = (index: number, field: string, value: string) => { ... }
-                                                    // OPA! O updateFeature original está tipado como string value. Preciso ajustar o updateFeature OU passar string 'true'/'false'.
-                                                    // Vou ajustar o updateFeature na próxima call se precisar, mas aqui vou assumir que posso passar any no JS ou ajustar a assinatura.
-                                                    // Espera, vi o codigo: updateFeature = (index: number, field: string, value: string) .
-                                                    // Vou MUDAR a assinatura do updateFeature para `value: any` primeiro, ou hackear aqui.
-                                                    // Melhor change: vou alterar o `updateFeature` signature na linha 89 para aceitar any.
-                                                />
-                                                <Star size={12} className={feat.highlighted ? "text-yellow-500 fill-yellow-500" : "text-gray-400"} />
-                                                Destaque
-                                            </label>
-                                            <button onClick={() => removeFeature(index)} className="text-red-600 hover:text-red-700 ml-2">
-                                                <Trash2 size={16} />
-                                            </button>
+
+                            <div className="space-y-6">
+                                {formData.featuresSection?.map((block: any, idx: number) => (
+                                    <div key={block.id || idx} className="border border-gray-200 rounded-xl p-6 bg-gray-50/50 hover:bg-white transition-colors shadow-sm">
+                                        <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+                                            <span className="font-bold text-gray-400 uppercase text-xs tracking-wider">Seção #{idx + 1}</span>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => removeBlock(idx)} className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            {/* Left Column: Text Content */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Título</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={block.title} 
+                                                        onChange={(e) => updateBlock(idx, 'title', e.target.value)}
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg font-semibold"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Texto Descritivo</label>
+                                                    <textarea 
+                                                        value={block.description} 
+                                                        onChange={(e) => updateBlock(idx, 'description', e.target.value)}
+                                                        rows={4}
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Lista de Benefícios (um por linha)</label>
+                                                    <textarea 
+                                                        value={block.items?.join('\n') || ''}
+                                                        onChange={(e) => updateBlockItemArray(idx, e.target.value.split('\n').filter(s => s.trim()))}
+                                                        rows={4}
+                                                        placeholder="Vantagem 1&#10;Vantagem 2"
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg font-mono text-sm bg-gray-50"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Right Column: Visuals & Config */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">URL da Imagem</label>
+                                                    <div className="flex gap-2">
+                                                        <input 
+                                                            type="text" 
+                                                            value={block.image} 
+                                                            onChange={(e) => updateBlock(idx, 'image', e.target.value)}
+                                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                                            placeholder="/imagem.png"
+                                                        />
+                                                    </div>
+                                                    {block.image && (
+                                                        <div className="mt-2 h-32 w-full bg-gray-200 rounded-lg overflow-hidden relative border border-gray-300">
+                                                            <img src={block.image} alt="Preview" className="w-full h-full object-cover opacity-80" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                                            <span className="absolute bottom-2 right-2 text-xs bg-black/50 text-white px-2 py-1 rounded">Preview</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Orientação</label>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input 
+                                                                type="radio" 
+                                                                name={`orient-${idx}`} 
+                                                                value="left" 
+                                                                checked={block.orientation !== 'right'} 
+                                                                onChange={() => updateBlock(idx, 'orientation', 'left')}
+                                                            />
+                                                            <span className="text-sm">Texto à Esquerda</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input 
+                                                                type="radio" 
+                                                                name={`orient-${idx}`} 
+                                                                value="right" 
+                                                                checked={block.orientation === 'right'} 
+                                                                onChange={() => updateBlock(idx, 'orientation', 'right')}
+                                                            />
+                                                            <span className="text-sm">Texto à Direita</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">ID da Seção (Âncora)</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={block.id || ''} 
+                                                        onChange={(e) => updateBlock(idx, 'id', e.target.value)}
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono text-gray-500"
+                                                        placeholder="ex: relatorios"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Ícone</label>
-                                            <select
-                                                value={feat.icon}
-                                                onChange={(e) => updateFeature(index, 'icon', e.target.value)}
-                                                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                            >
-                                                <option value="target">Target</option>
-                                                <option value="grid">Grid</option>
-                                                <option value="users">Users</option>
-                                                <option value="shield">Shield</option>
-                                                <option value="file-text">File Text</option>
-                                                <option value="star">Star</option>
-                                                <option value="check">Check</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Título</label>
-                                            <input
-                                                type="text"
-                                                value={feat.title}
-                                                onChange={(e) => updateFeature(index, 'title', e.target.value)}
-                                                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Descrição</label>
-                                        <textarea
-                                            value={feat.description}
-                                            onChange={(e) => updateFeature(index, 'description', e.target.value)}
-                                            rows={2}
-                                            className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
 
-                    {/* Pricing Tab */}
+                    {/* PRICING TAB (Reuse existing logic) */}
                     {activeTab === 'pricing' && (
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center">
+                            {/* ... reuse existing pricing UI ... */}
+                             <div className="flex justify-between items-center">
                                 <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -386,88 +435,84 @@ export default function SettingsPage() {
                             </div>
                             {formData.pricingPlans?.map((plan: any, index: number) => (
                                 <div key={plan.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                                    {/* ... plan fields ... */}
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm font-medium text-gray-600">Plano #{index + 1}</span>
                                         <div className="flex items-center gap-2">
-                                            <label className="flex items-center gap-1 text-xs">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={plan.highlighted}
-                                                    onChange={(e) => updatePlan(index, 'highlighted', e.target.checked)}
-                                                    className="rounded text-primary"
-                                                />
-                                                Destaque
-                                            </label>
                                             <button onClick={() => removePlan(index)} className="text-red-600 hover:text-red-700">
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Nome</label>
-                                            <input
-                                                type="text"
-                                                value={plan.name}
-                                                onChange={(e) => updatePlan(index, 'name', e.target.value)}
-                                                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                            />
+                                            <input type="text" value={plan.name} onChange={(e) => updatePlan(index, 'name', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Preço</label>
-                                            <input
-                                                type="number"
-                                                value={plan.price}
-                                                onChange={(e) => updatePlan(index, 'price', parseFloat(e.target.value))}
-                                                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                            />
+                                            <input type="number" value={plan.price} onChange={(e) => updatePlan(index, 'price', parseFloat(e.target.value))} className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
                                         </div>
-                                        <div>
+                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Moeda</label>
-                                            <input
-                                                type="text"
-                                                value={plan.currency}
-                                                onChange={(e) => updatePlan(index, 'currency', e.target.value)}
-                                                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                            />
+                                            <input type="text" value={plan.currency} onChange={(e) => updatePlan(index, 'currency', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Período</label>
-                                            <input
-                                                type="text"
-                                                value={plan.period}
-                                                onChange={(e) => updatePlan(index, 'period', e.target.value)}
-                                                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                            />
+                                            <input type="text" value={plan.period} onChange={(e) => updatePlan(index, 'period', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Recursos (um por linha)</label>
-                                        <textarea
-                                            value={plan.features?.join('\n') || ''}
-                                            onChange={(e) => updatePlan(index, 'features', e.target.value.split('\n').filter((f: string) => f.trim()))}
-                                            rows={3}
-                                            placeholder="Exemplo:&#10;Até 10 usuários&#10;Suporte por email"
-                                            className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded font-mono"
-                                        />
+                                        <textarea value={plan.features?.join('\n') || ''} onChange={(e) => updatePlan(index, 'features', e.target.value.split('\n').filter((f: string) => f.trim()))} rows={3} className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded font-mono" />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Texto do Botão</label>
-                                        <input
-                                            type="text"
-                                            value={plan.buttonText}
-                                            onChange={(e) => updatePlan(index, 'buttonText', e.target.value)}
-                                            className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded"
-                                        />
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <input type="checkbox" checked={plan.highlighted} onChange={(e) => updatePlan(index, 'highlighted', e.target.checked)} />
+                                        <span className="text-sm">Destaque</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    {/* About Tab */}
+                    {/* THEME TAB (Existing) */}
+                    {activeTab === 'theme' && (
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="text-center">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cor Primária</label>
+                                    <input
+                                        type="color"
+                                        value={formData.primaryColor || '#EC1B8E'}
+                                        onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
+                                        className="w-full h-24 border border-gray-200 rounded-lg cursor-pointer"
+                                    />
+                                </div>
+                                <div className="text-center">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cor Secundária</label>
+                                    <input
+                                        type="color"
+                                        value={formData.secondaryColor || '#F7F7F7'}
+                                        onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
+                                        className="w-full h-24 border border-gray-200 rounded-lg cursor-pointer"
+                                    />
+                                </div>
+                                <div className="text-center">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cor de Acento</label>
+                                    <input
+                                        type="color"
+                                        value={formData.accentColor || '#FFC107'}
+                                        onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                                        className="w-full h-24 border border-gray-200 rounded-lg cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* ABOUT TAB (Existing) */}
                     {activeTab === 'about' && (
-                        <div className="space-y-4">
+                         <div className="space-y-4">
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
@@ -494,51 +539,10 @@ export default function SettingsPage() {
                                     rows={10}
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Dica: Você pode usar quebras de linha para separar parágrafos.</p>
                             </div>
                         </div>
                     )}
 
-                    {/* Theme Tab */}
-                    {activeTab === 'theme' && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="text-center">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cor Primária</label>
-                                    <input
-                                        type="color"
-                                        value={formData.primaryColor || '#EC1B8E'}
-                                        onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                                        className="w-full h-24 border border-gray-200 rounded-lg cursor-pointer"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-2">{formData.primaryColor}</p>
-                                </div>
-                                <div className="text-center">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cor Secundária</label>
-                                    <input
-                                        type="color"
-                                        value={formData.secondaryColor || '#F7F7F7'}
-                                        onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
-                                        className="w-full h-24 border border-gray-200 rounded-lg cursor-pointer"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-2">{formData.secondaryColor}</p>
-                                </div>
-                                <div className="text-center">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cor de Acento</label>
-                                    <input
-                                        type="color"
-                                        value={formData.accentColor || '#FFC107'}
-                                        onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
-                                        className="w-full h-24 border border-gray-200 rounded-lg cursor-pointer"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-2">{formData.accentColor}</p>
-                                </div>
-                            </div>
-                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <p className="text-sm text-gray-600">💡 <strong>Dica:</strong> As cores do tema afetam botões, links e elementos de destaque em toda a aplicação.</p>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

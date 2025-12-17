@@ -495,8 +495,16 @@ model SiteSettings {
   secondaryColor String @default("#F7F7F7") @map("secondary_color") @db.VarChar(20)
   accentColor    String @default("#FFC107") @map("accent_color") @db.VarChar(20)
   
+  // Branding
+  logoUrl        String?  @map("logo_url") @db.Text
+  footerText     String?  @default("© 2024 SaaS Avaliação. Todos os direitos reservados.") @map("footer_text") @db.VarChar(200)
+
+  // Navigation (JSON Array)
+  menuItems      Json     @default("[]") @map("menu_items")
+
   // Features (JSON Array)
-  features Json @default("[]")
+  features       Json     @default("[]")
+  featuresSection Json    @default("[]") @map("features_section")
   
   // Pricing Plans (JSON Array)
   pricingPlans Json @default("[]") @map("pricing_plans")

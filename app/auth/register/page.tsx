@@ -173,7 +173,7 @@ function RegisterContent() {
                             <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors">
                                 <ArrowLeft size={16} /> Voltar
                             </Link>
-                            <img src="/logo-pinc.png" alt="PINC Logo" className="h-8 w-auto object-contain" />
+                            <img src={settings?.logoUrl || "/logo-pinc.png"} alt="Logo" className="h-8 w-auto object-contain" />
                         </div>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                             {step === 1 ? 'Escolha seu plano ideal' : 'Finalize seu cadastro'}

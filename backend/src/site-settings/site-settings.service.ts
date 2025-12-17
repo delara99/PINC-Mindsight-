@@ -86,6 +86,41 @@ export class SiteSettingsService {
                             highlighted: false,
                             buttonText: 'Comprar Agora'
                         }
+                    ],
+                    // Defaults for new fields
+                    logoUrl: '/logo-pinc.png',
+                    footerText: '© 2024 SaaS Avaliação. Todos os direitos reservados.',
+                    menuItems: [
+                        { label: 'Recursos', href: '#features' },
+                        { label: 'Relatórios', href: '#reports' },
+                        { label: 'Preços', href: '#pricing' },
+                        { label: 'Sobre', href: '#about' }
+                    ],
+                    featuresSection: [
+                        {
+                            id: 'reports',
+                            title: 'Seu Manual de Instruções Pessoal',
+                            description: 'Receba uma análise detalhada baseada nos 5 Grandes Fatores da personalidade. Entenda seus pontos fortes, áreas de desenvolvimento e como você interage com o mundo.',
+                            image: '/feature-report-bars.png', 
+                            orientation: 'left',
+                            items: ['Análise profunda de personalidade', 'Gráficos interativos', 'Feedback personalizado']
+                        },
+                        {
+                            id: 'connections',
+                            title: 'Conecte-se de verdade',
+                            description: 'Descubra como sua personalidade se alinha com a de colegas e parceiros. Nossa ferramenta de compatibilidade ajuda a melhorar a comunicação e reduzir conflitos.',
+                            image: '/feature-connections.png',
+                            orientation: 'right',
+                            items: ['Comparação de perfis', 'Dicas de comunicação', 'Previsão de sinergia']
+                        },
+                        {
+                            id: 'comparison',
+                            title: 'Entenda a dinâmica dos seus relacionamentos',
+                            description: 'Compare seu perfil com o de outras pessoas para identificar pontos de convergência e divergência. Ideal para formação de equipes e terapia de casais.',
+                            image: '/feature-report-radar.png',
+                            orientation: 'left',
+                            items: ['Radar comparativo', 'Análise de gaps', 'Insights relacionais']
+                        }
                     ]
                 }
             });

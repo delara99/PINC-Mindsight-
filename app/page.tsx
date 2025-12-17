@@ -29,13 +29,12 @@ export default function Home() {
             <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2 group">
-                        <img src="/logo-pinc.png" alt="PINC Logo" className="h-8 w-auto object-contain transition-transform group-hover:scale-105" />
+                        <img src={settings?.logoUrl || "/logo-pinc.png"} alt="Logo" className="h-8 w-auto object-contain transition-transform group-hover:scale-105" />
                     </Link>
                     <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-600">
-                        <Link href="#relatorios" className="hover:text-primary transition-colors">Relatórios</Link>
-                        <Link href="#conexoes" className="hover:text-primary transition-colors">Conexões</Link>
-                        <Link href="#comparacao" className="hover:text-primary transition-colors">Comparação</Link>
-                        <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
+                        {settings?.menuItems?.map((item: any, idx: number) => (
+                            <Link key={idx} href={item.href} className="hover:text-primary transition-colors">{item.label}</Link>
+                        ))}
                     </nav>
                     <div className="flex items-center gap-4">
                         <Link href="/auth/login" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">
@@ -59,26 +58,32 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col items-center text-center">
                     <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium mb-8 animate-fade-in-up">
                         <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
-                        Tecnologia Big Five
+                        {settings?.heroBadge || 'Tecnologia Big Five'}
                     </div>
 
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-8 max-w-4xl tracking-tight">
-                        Muito mais que um teste: <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
-                            uma análise completa de quem você é.
-                        </span>
+                        {settings?.heroTitle ? (
+                            <span dangerouslySetInnerHTML={{ __html: settings.heroTitle.replace(/\n/g, '<br/>') }} />
+                        ) : (
+                            <>
+                                Muito mais que um teste: <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
+                                    uma análise completa de quem você é.
+                                </span>
+                            </>
+                        )}
                     </h1>
 
                     <p className="text-lg md:text-xl text-indigo-100 leading-relaxed max-w-2xl mb-10">
-                        Entenda seu perfil comportamental, melhore seus relacionamentos e descubra seus pontos fortes com nossa tecnologia baseada em dados.
+                        {settings?.heroDescription || 'Entenda seu perfil comportamental, melhore seus relacionamentos e descubra seus pontos fortes com nossa tecnologia baseada em dados.'}
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                         <Link
-                            href="/trial"
+                            href={settings?.primaryButtonLink || "/trial"}
                             className="flex items-center justify-center gap-2 bg-secondary text-gray-900 text-lg font-bold py-4 px-10 rounded-full shadow-xl shadow-secondary/20 transition-all hover:scale-105 hover:bg-white"
                         >
-                            Fazer Análise Gratuita <ArrowRight size={20} />
+                            {settings?.primaryButtonText || "Fazer Análise Gratuita"} <ArrowRight size={20} />
                         </Link>
                         <Link
                             href="#relatorios"
@@ -103,120 +108,51 @@ export default function Home() {
             {/* SPACER FOR FLOATING IMAGE */}
             <div className="h-32 bg-white" />
 
-            {/* FEATURE 1: RELATÓRIOS (Text Left, Image Right) */}
-            <section id="relatorios" className="py-24 bg-white overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <div className="order-2 lg:order-1 space-y-8">
-                            <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-primary">
-                                <FileText size={24} className="stroke-[3]" />
-                            </div>
-                            <h2 className="text-4xl font-bold text-gray-900 leading-tight">
-                                Seu Manual de <br /> Instruções Pessoal
-                            </h2>
-                            <p className="text-lg text-gray-600 leading-relaxed">
-                                Chega de gráficos complexos sem explicação. Receba uma análise detalhada sobre como você funciona, seus drivers motivacionais e onde você pode evoluir.
-                            </p>
-                            <ul className="space-y-4">
-                                {[
-                                    'Análise detalhada por competência',
-                                    'Pontos fortes e de atenção',
-                                    'Dicas práticas de desenvolvimento'
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-gray-700 font-medium">
-                                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
-                                            <CheckCircle size={14} strokeWidth={3} />
-                                        </div>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div className="order-1 lg:order-2 relative">
-                            <div className="absolute -inset-4 bg-gradient-to-tr from-indigo-50 to-pink-50 rounded-full blur-3xl opacity-70" />
-                            <img 
-                                src="/feature-report-bars.png" 
-                                alt="Relatório de Barras" 
-                                className="relative rounded-2xl shadow-2xl border border-gray-100 rotate-2 hover:rotate-0 transition-transform duration-500" 
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* FEATURE 2: CONEXÕES (Image Left, Text Right) */}
-            <section id="conexoes" className="py-24 bg-gray-50 overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <div className="relative">
-                            <div className="absolute -inset-4 bg-gradient-to-bl from-purple-100 to-indigo-100 rounded-full blur-3xl opacity-70" />
-                            <img 
-                                src="/feature-connections.png" 
-                                alt="Minhas Conexões" 
-                                className="relative rounded-2xl shadow-2xl border border-gray-200 -rotate-2 hover:rotate-0 transition-transform duration-500" 
-                            />
-                        </div>
-                        <div className="space-y-8">
-                            <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600">
-                                <Users size={24} className="stroke-[3]" />
-                            </div>
-                            <h2 className="text-4xl font-bold text-gray-900 leading-tight">
-                                Conecte-se de <br /> verdade
-                            </h2>
-                            <p className="text-lg text-gray-600 leading-relaxed">
-                                Convide amigos, parceiros ou colegas de trabalho. Crie um espaço seguro para compartilhar resultados, trocar percepções e crescerem juntos.
-                            </p>
-                            <ul className="space-y-4">
-                                {[
-                                    'Convide ilimitadas pessoas',
-                                    'Controle total de privacidade',
-                                    'Feed de atualizações de perfil'
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-gray-700 font-medium">
-                                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
-                                            <CheckCircle size={14} strokeWidth={3} />
-                                        </div>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* FEATURE 3: COMPARAÇÃO (Text Left, Image Right) */}
-            <section id="comparacao" className="py-24 bg-white overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <div className="order-2 lg:order-1 space-y-8">
-                            <div className="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600">
-                                <Target size={24} className="stroke-[3]" />
-                            </div>
-                            <h2 className="text-4xl font-bold text-gray-900 leading-tight">
-                                Entenda a dinâmica <br /> dos seus relacionamentos
-                            </h2>
-                            <p className="text-lg text-gray-600 leading-relaxed">
-                                Descubra por que você tem afinidade com alguns e atritos com outros. Nossa ferramenta cruza perfis para revelar a sintonia e como melhorar a convivência.
-                            </p>
-                            <div className="bg-orange-50 p-6 rounded-xl border border-orange-100">
-                                <p className="text-orange-800 font-medium italic">
-                                    "A funcionalidade de comparação salvou nossa comunicação no time."
+            {/* DYNAMIC FEATURE SECTIONS */}
+            {settings?.featuresSection?.map((block: any, idx: number) => (
+                <section key={block.id || idx} id={block.id} className={`py-24 overflow-hidden ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                            {/* Text Column */}
+                            <div className={`${block.orientation === 'right' ? 'lg:order-2' : 'lg:order-1'} space-y-8`}>
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-primary ${idx % 2 === 0 ? 'bg-indigo-100' : 'bg-purple-100'}`}>
+                                    {idx % 3 === 0 ? <FileText size={24} className="stroke-[3]" /> : 
+                                     idx % 3 === 1 ? <Users size={24} className="stroke-[3]" /> : 
+                                     <Target size={24} className="stroke-[3]" />}
+                                </div>
+                                <h2 className="text-4xl font-bold text-gray-900 leading-tight">
+                                    {block.title}
+                                </h2>
+                                <p className="text-lg text-gray-600 leading-relaxed">
+                                    {block.description}
                                 </p>
-                                <p className="text-orange-600 text-sm mt-2 font-bold">- Usuário Beta</p>
+                                {block.items && block.items.length > 0 && (
+                                    <ul className="space-y-4">
+                                        {block.items.map((item: string, i: number) => (
+                                            <li key={i} className="flex items-center gap-3 text-gray-700 font-medium">
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${idx % 2 === 0 ? 'bg-green-100 text-green-600' : 'bg-purple-100 text-purple-600'}`}>
+                                                    <CheckCircle size={14} strokeWidth={3} />
+                                                </div>
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                            
+                            {/* Image Column */}
+                            <div className={`${block.orientation === 'right' ? 'lg:order-1' : 'lg:order-2'} relative`}>
+                                <div className={`absolute -inset-4 bg-gradient-to-tr rounded-full blur-3xl opacity-70 ${idx % 2 === 0 ? 'from-indigo-50 to-pink-50' : 'from-purple-100 to-indigo-100'}`} />
+                                <img 
+                                    src={block.image} 
+                                    alt={block.title} 
+                                    className="relative rounded-2xl shadow-2xl border border-gray-100 transition-transform duration-500 hover:scale-[1.01]" 
+                                />
                             </div>
                         </div>
-                        <div className="order-1 lg:order-2 relative">
-                            <div className="absolute -inset-4 bg-gradient-to-tr from-pink-50 to-orange-50 rounded-full blur-3xl opacity-70" />
-                            <img 
-                                src="/feature-report-radar.png" 
-                                alt="Comparação de Perfis" 
-                                className="relative rounded-2xl shadow-2xl border border-gray-100 rotate-1 hover:rotate-0 transition-transform duration-500 bg-white" 
-                            />
-                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            ))}
 
             {/* PRICING SECTION */}
             {settings?.showPricing && settings?.pricingPlans?.length > 0 && (
@@ -274,8 +210,8 @@ export default function Home() {
             <footer className="bg-black text-white py-12 border-t border-gray-800">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2">
-                        <img src="/logo-pinc.png" alt="Logo" className="h-8 opacity-80 grayscale hover:grayscale-0 transition-all" />
-                        <span className="text-gray-500 text-sm">© 2024 PINC Mindsight</span>
+                        <img src={settings?.logoUrl || "/logo-pinc.png"} alt="Logo" className="h-8 opacity-80 grayscale hover:grayscale-0 transition-all" />
+                        <span className="text-gray-500 text-sm">{settings?.footerText || '© 2024 PINC Mindsight'}</span>
                     </div>
                     <div className="flex gap-6 text-sm text-gray-400">
                         <Link href="/privacy" className="hover:text-white transition-colors">Privacidade</Link>
