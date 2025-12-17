@@ -32,29 +32,28 @@ export default function TrialPage() {
 
     return (
         <main className="min-h-screen bg-white font-sans">
-             {/* Simple Header */}
-             <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 py-4 mb-8 sticky top-0 z-50">
+            {/* Simple Header */}
+            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 py-4 mb-8 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
                     <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        <BrainCircuit className="text-secondary w-8 h-8" />
-                        <span className="text-xl font-bold text-gray-900">SaaS <span className="text-primary">Avaliação</span></span>
+                        <img src="/logo.png" alt="PINC" className="h-10 w-auto object-contain" />
                     </Link>
                     {step !== 'result' && (
                         <div className="text-sm font-medium text-gray-500">
-                             Modo Degustação
+                            Modo Degustação
                         </div>
                     )}
                 </div>
             </header>
 
             <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[80vh]">
-                
+
                 {step === 'intro' && <TrialForm />}
-                
+
                 {step === 'form' && <TrialForm />} {/* Fallback if needed, but intro moves to form/quiz */}
-                
+
                 {step === 'quiz' && <TrialQuiz />}
-                
+
                 {step === 'calculating' && (
                     <div className="text-center animate-in fade-in zoom-in duration-500">
                         <div className="relative w-32 h-32 mx-auto mb-8">
@@ -66,9 +65,9 @@ export default function TrialPage() {
                         <p className="text-gray-500">Cruzando dados com métricas de liderança.</p>
                     </div>
                 )}
-                
+
                 {step === 'result' && <TrialResult />}
-                
+
             </div>
         </main>
     );
