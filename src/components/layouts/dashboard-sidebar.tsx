@@ -17,7 +17,9 @@ import {
     Lock,
     Crown,
     Menu,
-    X
+    X,
+    Sparkles,
+    MessageSquare
 } from 'lucide-react';
 import clsx from 'clsx';
 import { UpgradeModal } from '@/src/components/common/upgrade-modal';
@@ -28,11 +30,13 @@ const menuItems = [
     { label: 'Relatórios', href: '/dashboard/reports', icon: FileText, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Avaliações', href: '/dashboard/assessments', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Clientes', href: '/dashboard/clients', icon: Users, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
+    { label: 'Devolutivas', href: '/dashboard/devolutivas', icon: MessageSquare, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], premium: true },
     { label: 'Minhas Conexões', href: '/dashboard/connections', icon: UserPlus, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
     { label: 'Métricas de Avaliação', href: '/dashboard/metrics-config', icon: TrendingUp, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Responder', href: '/dashboard/my-assessments', icon: PlayCircle, roles: ['MEMBER'] },
     { label: 'Meus Resultados', href: '/dashboard/my-assessments', icon: FileText, roles: ['MEMBER'] },
+    { label: 'Fale com um Especialista', href: '/dashboard/devolutiva', icon: Sparkles, roles: ['MEMBER'], premium: true },
 ];
 
 interface SidebarContentProps {
@@ -53,11 +57,10 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
             <div className="px-6 pb-6 pt-2 border-b border-gray-50 bg-gray-50/50">
                 <h1 className="font-bold text-gray-800 leading-tight truncate">{user?.name || 'Usuário'}</h1>
                 <span className="text-xs text-gray-500 font-medium block truncate">{user?.email || 'email@exemplo.com'}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${
-                    user?.plan === 'PRO' || user?.plan === 'BUSINESS'
-                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                    : 'bg-gray-100 text-gray-600 border border-gray-200'
-                }`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${user?.plan === 'PRO' || user?.plan === 'BUSINESS'
+                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                        : 'bg-gray-100 text-gray-600 border border-gray-200'
+                    }`}>
                     {(user?.plan === 'PRO' || user?.plan === 'BUSINESS') && <Crown size={10} />}
                     {user?.plan || 'START'}
                 </span>
@@ -140,28 +143,28 @@ export function DashboardSidebar() {
             {/* Mobile Header / Navbar */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-40 shadow-sm">
                 <div className="flex items-center gap-2">
-                     <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-bold">SA</span>
-                     <span className="font-bold text-gray-800">SaaS Avaliação</span>
+                    <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-bold">SA</span>
+                    <span className="font-bold text-gray-800">SaaS Avaliação</span>
                 </div>
-                <button 
+                <button
                     onClick={() => setIsMobileOpen(true)}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
                     <Menu size={24} />
                 </button>
             </div>
-            
+
             {/* Spacer para o Header Mobile evitar sobreposição */}
             <div className="md:hidden h-16 mb-6" />
 
             {/* Desktop Sidebar (Fixo, visível apenas em md+) */}
             <aside className="hidden md:flex w-72 h-screen fixed left-0 top-0 border-r border-gray-100 shadow-sm z-30">
-                 <SidebarContent 
-                    user={user} 
-                    pathname={pathname} 
-                    onLogout={handleLogout} 
-                    onUpgradeOpen={() => setIsUpgradeModalOpen(true)} 
-                 />
+                <SidebarContent
+                    user={user}
+                    pathname={pathname}
+                    onLogout={handleLogout}
+                    onUpgradeOpen={() => setIsUpgradeModalOpen(true)}
+                />
             </aside>
 
             {/* Mobile Drawer (Overlay + Animation) */}
@@ -176,7 +179,7 @@ export function DashboardSidebar() {
                             onClick={() => setIsMobileOpen(false)}
                             className="fixed inset-0 bg-black/50 z-50 md:hidden backdrop-blur-sm"
                         />
-                        
+
                         {/* Drawer */}
                         <motion.aside
                             initial={{ x: "-100%" }}
@@ -186,18 +189,18 @@ export function DashboardSidebar() {
                             className="fixed inset-y-0 left-0 w-72 bg-white z-50 md:hidden shadow-2xl flex flex-col"
                         >
                             <div className="flex justify-end p-2 absolute top-2 right-2 z-10">
-                                <button 
+                                <button
                                     onClick={() => setIsMobileOpen(false)}
                                     className="p-2 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200"
                                 >
                                     <X size={20} />
                                 </button>
                             </div>
-                            <SidebarContent 
-                                user={user} 
-                                pathname={pathname} 
-                                onLogout={handleLogout} 
-                                onUpgradeOpen={() => setIsUpgradeModalOpen(true)} 
+                            <SidebarContent
+                                user={user}
+                                pathname={pathname}
+                                onLogout={handleLogout}
+                                onUpgradeOpen={() => setIsUpgradeModalOpen(true)}
                             />
                         </motion.aside>
                     </>
