@@ -26,14 +26,14 @@ function RegisterContent() {
             if (!res.ok) throw new Error('Falha ao carregar configurações');
             return res.json();
         },
-        staleTime: 1000 * 60 * 5 
+        staleTime: 1000 * 60 * 5
     });
 
     const activePlans = settings?.pricingPlans || DEFAULT_PLANS;
     const { answers } = useTrialStore();
     const router = useRouter();
     const searchParams = useSearchParams();
-    
+
     const [step, setStep] = useState(1);
     const [userType, setUserType] = useState<'INDIVIDUAL' | 'COMPANY'>('INDIVIDUAL');
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
@@ -46,7 +46,7 @@ function RegisterContent() {
             setSelectedPlan(defaultPlan);
         }
     }, [activePlans, selectedPlan]);
-    
+
     const [formData, setFormData] = useState({
         name: searchParams.get('name') || '',
         email: searchParams.get('email') || '',
@@ -116,33 +116,33 @@ function RegisterContent() {
             <div className="hidden lg:flex w-1/2 bg-gray-900 relative items-center justify-center p-12 text-white overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1567&q=80')] bg-cover bg-center" />
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/80 to-purple-900/80 z-10" />
-                
+
                 <div className="relative z-20 max-w-lg space-y-8">
-                    
+
                     <h1 className="text-5xl font-extrabold leading-tight">
                         Descubra o potencial <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
                             oculto da sua equipe
                         </span>
                     </h1>
-                    
+
                     <p className="text-lg text-gray-300 leading-relaxed">
                         Junte-se a mais de 10.000 líderes que usam nossa inteligência comportamental para tomar decisões melhores.
                     </p>
-                    
+
                     <div className="space-y-4 pt-4">
-                         {[
+                        {[
                             "Mapeamento Big Five validado cientificamente",
                             "Relatórios detalhados com insights de liderança",
                             "Dashboard intuitivo para gestão de times"
-                         ].map((item, idx) => (
-                             <div key={idx} className="flex items-center gap-3">
-                                 <div className="bg-white/20 p-1.5 rounded-full">
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                                <div className="bg-white/20 p-1.5 rounded-full">
                                     <Check size={16} className="text-white" />
-                                 </div>
-                                 <span className="font-medium">{item}</span>
-                             </div>
-                         ))}
+                                </div>
+                                <span className="font-medium">{item}</span>
+                            </div>
+                        ))}
                     </div>
 
                     <div className="pt-8">
@@ -150,13 +150,13 @@ function RegisterContent() {
                             <div className="flex -space-x-3">
                                 {[1, 2, 3, 4].map((i) => (
                                     <div key={i} className="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-700 overflow-hidden">
-                                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                                        <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
                                     </div>
                                 ))}
                             </div>
                             <div className="text-sm">
                                 <div className="flex text-yellow-500">
-                                    {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="currentColor" />)}
+                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="currentColor" />)}
                                 </div>
                                 <span className="text-gray-400">Avaliado por 500+ empresas</span>
                             </div>
@@ -179,14 +179,14 @@ function RegisterContent() {
                             {step === 1 ? 'Escolha seu plano ideal' : 'Finalize seu cadastro'}
                         </h2>
                         <p className="mt-2 text-gray-600">
-                             {step === 1 ? 'Comece pequeno ou escale com sua empresa.' : 'Em poucos segundos seu painel estará pronto.'}
+                            {step === 1 ? 'Comece pequeno ou escale com sua empresa.' : 'Em poucos segundos seu painel estará pronto.'}
                         </p>
                     </div>
 
-                     {/* Progress Indicator */}
+                    {/* Progress Indicator */}
                     <div className="flex items-center gap-2 mb-8">
-                         <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 1 ? 'bg-primary' : 'bg-gray-200'}`} />
-                         <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
+                        <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 1 ? 'bg-primary' : 'bg-gray-200'}`} />
+                        <div className={`h-2 flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -206,30 +206,37 @@ function RegisterContent() {
                                             <div
                                                 key={plan.id}
                                                 onClick={() => setSelectedPlan(plan)}
-                                                className={`relative cursor-pointer border rounded-2xl p-5 transition-all duration-200 ${
-                                                    selectedPlan?.id === plan.id 
-                                                    ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary' 
-                                                    : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-sm'
-                                                }`}
+                                                className={`relative cursor-pointer border rounded-2xl p-5 transition-all duration-200 ${selectedPlan?.id === plan.id
+                                                        ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary'
+                                                        : 'border-gray-200 hover:border-primary/50 bg-white hover:shadow-sm'
+                                                    }`}
                                             >
                                                 {plan.highlighted && (
                                                     <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-tr-xl rounded-bl-xl uppercase tracking-wider">
                                                         Mais Popular
                                                     </div>
                                                 )}
-                                                <div className="flex justify-between items-center">
-                                                    <div>
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div className="flex-1">
                                                         <h3 className={`font-bold ${selectedPlan?.id === plan.id ? 'text-primary' : 'text-gray-900'}`}>
                                                             {plan.name}
                                                         </h3>
                                                         <div className="flex items-baseline gap-1 mt-1">
                                                             <span className="text-2xl font-bold text-gray-900">{plan.currency || 'R$'} {Number(plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                         </div>
-                                                        <p className="text-sm text-gray-500 mt-1">{plan.credits} créditos de avaliação</p>
+                                                        <p className="text-sm text-gray-500 mt-1 mb-2">{plan.credits} créditos de avaliação</p>
+
+                                                        <ul className="space-y-1.5 mt-2 border-t border-gray-100 pt-2">
+                                                            {plan.features?.map((feat: string, idx: number) => (
+                                                                <li key={idx} className="flex items-start gap-2 text-xs text-gray-600">
+                                                                    <Check size={12} className="text-primary mt-0.5 flex-shrink-0" />
+                                                                    <span className="leading-tight">{feat}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
                                                     </div>
-                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                                        selectedPlan?.id === plan.id ? 'border-primary bg-primary' : 'border-gray-300'
-                                                    }`}>
+                                                    <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors mt-1 ${selectedPlan?.id === plan.id ? 'border-primary bg-primary' : 'border-gray-300'
+                                                        }`}>
                                                         {selectedPlan?.id === plan.id && <Check size={14} className="text-white" />}
                                                     </div>
                                                 </div>
@@ -245,9 +252,9 @@ function RegisterContent() {
                                 >
                                     Continuar <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </button>
-                                
+
                                 <p className="text-center text-xs text-gray-400 mt-4">
-                                     Pagamento seguro e ativado instantaneamente.
+                                    Pagamento seguro e ativado instantaneamente.
                                 </p>
                             </motion.div>
                         ) : (
@@ -264,27 +271,25 @@ function RegisterContent() {
                                         </div>
                                     )}
 
-                                     {/* User Type Selector */}
+                                    {/* User Type Selector */}
                                     <div className="grid grid-cols-2 gap-3 mb-6">
                                         <button
                                             type="button"
                                             onClick={() => setUserType('INDIVIDUAL')}
-                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
-                                                userType === 'INDIVIDUAL' 
-                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' 
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                            }`}
+                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'INDIVIDUAL'
+                                                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                }`}
                                         >
                                             <User size={18} /> Pessoa Física
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setUserType('COMPANY')}
-                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
-                                                userType === 'COMPANY' 
-                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' 
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                            }`}
+                                            className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${userType === 'COMPANY'
+                                                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                }`}
                                         >
                                             <Building2 size={18} /> Empresa
                                         </button>
@@ -319,7 +324,7 @@ function RegisterContent() {
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
-                                             <div>
+                                            <div>
                                                 <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Senha</label>
                                                 <input
                                                     type="password"
@@ -348,19 +353,19 @@ function RegisterContent() {
                                         </div>
 
                                         {userType === 'COMPANY' && (
-                                             <div className="grid grid-cols-2 gap-4">
-                                                 <div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
                                                     <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Nome da Empresa</label>
                                                     <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
-                                                 </div>
-                                                 <div>
+                                                </div>
+                                                <div>
                                                     <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">CNPJ</label>
                                                     <input type="text" name="cnpj" value={formData.cnpj} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
-                                                 </div>
-                                             </div>
+                                                </div>
+                                            </div>
                                         )}
-                                         
-                                         <div>
+
+                                        <div>
                                             <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Telefone</label>
                                             <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="(00) 00000-0000" />
                                         </div>
