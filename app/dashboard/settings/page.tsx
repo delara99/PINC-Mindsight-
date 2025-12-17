@@ -26,16 +26,61 @@ export default function SettingsPage() {
         }
     });
 
-    // ... (keep mutation code) ...
+    const saveMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const res = await fetch(`${API_URL}/api/v1/site-settings`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error('Falha ao salvar');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+            queryClient.invalidateQueries({ queryKey: ['site-settings-admin'] });
+            // Show toast or alert (using simple alert for now to avoid extra deps)
+            alert('Configurações salvas com sucesso!');
+        },
+        onError: () => {
+            alert('Erro ao salvar configurações. Tente novamente.');
+        }
+    });
 
-    const [formData, setFormData] = useState<any>(settings || {});
+    const resetMutation = useMutation({
+        mutationFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/site-settings/reset`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            if (!res.ok) throw new Error('Falha ao resetar');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+            queryClient.invalidateQueries({ queryKey: ['site-settings-admin'] });
+            setFormData({}); // Will be refilled by query
+            alert('Configurações restauradas para o padrão!');
+        },
+        onError: () => {
+            alert('Erro ao resetar configurações.');
+        }
+    });
 
-    // Update formData when settings loads
-    if (settings && !formData.id) {
-        setFormData(settings);
-    }
-    
-    // ... (keep handleSave, handleReset) ...
+    const handleSave = () => {
+        saveMutation.mutate(formData);
+    };
+
+    const handleReset = () => {
+        if (confirm('Tem certeza? Isso apagará todas as customizações.')) {
+            resetMutation.mutate();
+        }
+    };
 
     // Menu Helpers
     const addMenuItem = () => {
