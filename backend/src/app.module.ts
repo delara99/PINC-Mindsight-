@@ -12,6 +12,7 @@ import { BigFiveConfigModule } from './big-five-config/big-five-config.module';
 import { ActivityTrackerMiddleware } from './middleware/activity-tracker.middleware';
 import { CrossProfileModule } from './reports/cross-profile/cross-profile.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
     imports: [
@@ -25,7 +26,8 @@ import { CouponsModule } from './coupons/coupons.module';
         SiteSettingsModule,
         BigFiveConfigModule,
         CrossProfileModule,
-        CouponsModule
+        CouponsModule,
+        FeedbackModule
     ],
     controllers: [],
     providers: [],

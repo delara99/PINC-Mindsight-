@@ -76,6 +76,9 @@ model User {
   reportsAsAuthor     CrossProfileReport[]   @relation("ReportAuthor")
   reportsAsTarget     CrossProfileReport[]   @relation("ReportTarget")
 
+  professionalFeedbacks ProfessionalFeedback[]
+
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   lastActivityAt DateTime? @map("last_activity_at")
@@ -180,6 +183,8 @@ model AssessmentAssignment {
   user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   responses  AssessmentResponse[]
   result     AssessmentResult?
+  professionalFeedback ProfessionalFeedback[]
+
 
   @@map("assessment_assignments")
   @@index([assessmentId])
@@ -608,4 +613,28 @@ model Coupon {
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@map("coupons")
+}
+
+model ProfessionalFeedback {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  assignmentId    String    @map("assignment_id")
+  assignment      AssessmentAssignment @relation(fields: [assignmentId], references: [id])
+  status          FeedbackStatus @default(PENDING)
+  phone           String?
+  scheduledAt     DateTime? @map("scheduled_at")
+  completedAt     DateTime? @map("completed_at")
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("professional_feedbacks")
+}
+
+enum FeedbackStatus {
+  PENDING
+  SCHEDULED
+  COMPLETED
+  CANCELLED
 }
