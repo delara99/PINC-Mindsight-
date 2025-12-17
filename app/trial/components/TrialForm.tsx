@@ -27,7 +27,9 @@ export function TrialForm() {
     return (
         <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-gray-100 animate-in fade-in zoom-in duration-500">
             <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚀</div>
+                <div className="flex justify-center mb-6">
+                    <img src="/logo.png" alt="PINC" className="h-16 w-auto object-contain" />
+                </div>
                 <h2 className="text-2xl font-bold text-gray-900">Comece sua Jornada</h2>
                 <p className="text-gray-500 mt-2">Descubra seus pontos fortes em menos de 2 minutos.</p>
             </div>

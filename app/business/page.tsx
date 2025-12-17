@@ -47,15 +47,13 @@ export default function BusinessPage() {
                     <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                         <div className="flex-1 text-center lg:text-left">
                             
-                            {settings?.businessLogo && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="mb-8 flex justify-center lg:justify-start"
-                                >
-                                    <img src={settings.businessLogo} alt="Logo Empresa" className="h-16 object-contain" />
-                                </motion.div>
-                            )}
+                            <motion.div
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-8 flex justify-center lg:justify-start"
+                            >
+                                <img src={settings?.businessLogo || '/logo.png'} alt="Logo Empresa" className="h-16 object-contain" />
+                            </motion.div>
 
                             {settings?.businessHeroBadge && (
                                 <motion.div 
