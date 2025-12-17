@@ -172,7 +172,7 @@ export class AssessmentController {
     @Post('init-big-five')
     async initBigFive(@Request() req) {
         const user = req.user;
-        
+
         // Find Big Five Model
         const assessmentModel = await this.prisma.assessmentModel.findFirst({
             where: { type: 'BIG_FIVE' }
@@ -182,12 +182,35 @@ export class AssessmentController {
             throw new BadRequestException('Configuração de avaliação não encontrada no sistema.');
         }
 
-        // Check if already exists pending
+        // Buscar dados do usuário para verificar créditos
+        const userData = await this.prisma.user.findUnique({
+            where: { id: user.userId },
+            select: { credits: true }
+        });
+
+        if (!userData) {
+            throw new BadRequestException('Usuário não encontrado.');
+        }
+
+        // Se o usuário tem créditos, SEMPRE criar um novo inventário
+        if (userData.credits > 0) {
+            const newAssignment = await this.prisma.assessmentAssignment.create({
+                data: {
+                    userId: user.userId,
+                    assessmentId: assessmentModel.id,
+                    status: 'IN_PROGRESS',
+                    assignedAt: new Date(),
+                }
+            });
+            return newAssignment;
+        }
+
+        // Se não tem créditos, verificar se existe algum pendente para retomar
         const existing = await this.prisma.assessmentAssignment.findFirst({
-            where: { 
-                userId: user.userId, 
-                assessmentId: assessmentModel.id, 
-                status: { not: 'COMPLETED' } 
+            where: {
+                userId: user.userId,
+                assessmentId: assessmentModel.id,
+                status: { not: 'COMPLETED' }
             }
         });
 
@@ -195,22 +218,8 @@ export class AssessmentController {
             return existing;
         }
 
-        // Create new assignment
-        // Buscar questões para garantir integridade? O create aceita só ID.
-        // A persistência de respostas do trial é feita no registro. Aqui é "Start Fresh" ou "Rescue".
-        // Se quisermos recuperar o trialData do frontend, teríamos que passar no body.
-        // Mas por simplicidade, vamos apenas criar o Assignment vazio (o usuario começa do zero, melhor que travar).
-        
-        const assignment = await this.prisma.assessmentAssignment.create({
-            data: {
-                userId: user.userId,
-                assessmentId: assessmentModel.id,
-                status: 'IN_PROGRESS',
-                assignedAt: new Date(),
-            }
-        });
-
-        return assignment;
+        // Sem créditos e sem inventário pendente
+        throw new BadRequestException('Você não possui créditos disponíveis. Adquira créditos para realizar uma nova avaliação.');
     }
 
     // Listar avaliações completadas (para relatórios)
@@ -330,23 +339,23 @@ export class AssessmentController {
         } catch (error) {
             console.log('[DEBUG] findOne failed:', error.message);
         }
-        
+
         if (!assessment) {
-             console.log('[DEBUG] Assessment not found via normal flow. Trying Public Template fallback.');
-             // Tenta buscar como Template Público (System Tenant)
-             const publicTemplate = await this.prisma.assessmentModel.findFirst({
-                 where: { id: id, type: 'BIG_FIVE' },
-                 include: { questions: true }
-             });
-             
-             if (publicTemplate) {
-                 console.log('[DEBUG] Public Template FOUND. ID:', publicTemplate.id);
-                 return publicTemplate;
-             }
-             
-             console.log('[DEBUG] Public Template NOT FOUND. ID:', id);
-             // Se não achou nem template, relança o erro ou retorna 404
-             throw new BadRequestException('Avaliação não encontrada.');
+            console.log('[DEBUG] Assessment not found via normal flow. Trying Public Template fallback.');
+            // Tenta buscar como Template Público (System Tenant)
+            const publicTemplate = await this.prisma.assessmentModel.findFirst({
+                where: { id: id, type: 'BIG_FIVE' },
+                include: { questions: true }
+            });
+
+            if (publicTemplate) {
+                console.log('[DEBUG] Public Template FOUND. ID:', publicTemplate.id);
+                return publicTemplate;
+            }
+
+            console.log('[DEBUG] Public Template NOT FOUND. ID:', id);
+            // Se não achou nem template, relança o erro ou retorna 404
+            throw new BadRequestException('Avaliação não encontrada.');
         }
 
         return assessment;
@@ -365,12 +374,12 @@ export class AssessmentController {
         let assessment = null;
         try {
             assessment = await this.assessmentService.findOne(id, user.tenantId);
-        } catch (e) {}
-        
+        } catch (e) { }
+
         if (!assessment) {
-             assessment = await this.prisma.assessmentModel.findFirst({
-                 where: { id: id, type: 'BIG_FIVE' }
-             });
+            assessment = await this.prisma.assessmentModel.findFirst({
+                where: { id: id, type: 'BIG_FIVE' }
+            });
         }
 
         if (!assessment) {
@@ -568,12 +577,12 @@ export class AssessmentController {
         // Para simplificar e corrigir o bug relatado:
         // Se o Admin for SUPER_ADMIN, vê tudo.
         // Se for TENANT_ADMIN, vê apenas usuários do seu tenant OU usuários sem tenant (Trial/Individual) que tomaram a avaliação.
-        
+
         if (req.user.role === 'SUPER_ADMIN') {
             return assignments;
         }
 
-        return assignments.filter(a => 
+        return assignments.filter(a =>
             a.user.tenantId === tenantId || // Usuário do mesmo tenant
             !a.user.tenantId // Usuário Individual/Trial (sem tenant definido)
         );
@@ -621,14 +630,14 @@ export class AssessmentController {
         });
 
         if (existingResponse) {
-             await this.prisma.assessmentResponse.update({
-                 where: { id: existingResponse.id },
-                 data: { answer: Number(body.value) }
-             });
+            await this.prisma.assessmentResponse.update({
+                where: { id: existingResponse.id },
+                data: { answer: Number(body.value) }
+            });
         } else {
-             await this.prisma.assessmentResponse.create({
-                 data: { assignmentId: assignment.id, questionId: body.questionId, answer: Number(body.value) }
-             });
+            await this.prisma.assessmentResponse.create({
+                data: { assignmentId: assignment.id, questionId: body.questionId, answer: Number(body.value) }
+            });
         }
 
         await this.prisma.assessmentAssignment.update({

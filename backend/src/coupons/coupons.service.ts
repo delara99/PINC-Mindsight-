@@ -83,11 +83,8 @@ export class CouponsService {
         if (coupon.discountPercent === 100) {
             const planEnum = selectedPlanEnum as any;
 
-            // Determine credits based on Plan (Hardcoded or logic based on PlanEnum)
-            // Ideally should fetch from Settings... but hardcode is safer for now based on known plans
-            let creditsToAdd = 1;
-            if (planEnum === 'PRO') creditsToAdd = 10;
-            if (planEnum === 'BUSINESS') creditsToAdd = 50;
+            // Sempre adicionar 1 crédito independente do plano
+            const creditsToAdd = 1;
 
             await this.prisma.tenant.update({ where: { id: user.tenant.id }, data: { plan: planEnum } });
             await this.prisma.user.update({
@@ -97,7 +94,7 @@ export class CouponsService {
                     credits: { increment: creditsToAdd }
                 }
             });
-            return { success: true, message: `Plano ${planEnum} ativado com sucesso! Você recebeu ${creditsToAdd} créditos.` };
+            return { success: true, message: `Plano ${planEnum} ativado com sucesso! Você recebeu ${creditsToAdd} crédito.` };
         }
 
         return { success: true, message: 'Cupom aplicado.' };
