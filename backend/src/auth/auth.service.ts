@@ -194,11 +194,7 @@ export class AuthService {
 
                         if (Array.isArray(allowedPlans) && allowedPlans.length > 0) {
                             if (!allowedPlans.includes(selectedPlanEnum)) {
-                                // Coupon not allowed for this plan. 
-                                // Ideally throw error, but here we might just ignore the coupon or warn?
-                                // User expects validation BEFORE register. Frontend should handle. 
-                                // But if blocked here, we shouldn't apply usage.
-                                console.warn(`Coupon ${coupon.code} invalid for plan ${selectedPlanEnum}`);
+                                throw new BadRequestException(`Este cupom é válido apenas para o plano: ${allowedPlans.join(', ')}`);
                             }
                         }
 
