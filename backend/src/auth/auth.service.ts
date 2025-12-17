@@ -194,7 +194,20 @@ export class AuthService {
                             'business': 'BUSINESS'
                         };
                         const inputPlanId = (data.planId || 'starter').toLowerCase();
-                        const selectedPlanEnum = planMap[inputPlanId] || 'START';
+                        let selectedPlanEnum = planMap[inputPlanId];
+
+                        // Fallback to Plan Name matching if ID mapping failed
+                        if (!selectedPlanEnum && data.planName) {
+                            const name = data.planName.toLowerCase();
+                            if (name.includes('business')) selectedPlanEnum = 'BUSINESS';
+                            else if (name.includes('pro')) selectedPlanEnum = 'PRO';
+                            else selectedPlanEnum = 'START';
+                        }
+
+                        // Default to START if still undefined
+                        if (!selectedPlanEnum) selectedPlanEnum = 'START';
+
+                        console.log(`🎟️ Resolved Plan Enum: ${selectedPlanEnum} (from ID: ${inputPlanId}, Name: ${data.planName})`);
 
                         if (Array.isArray(allowedPlans) && allowedPlans.length > 0) {
                             if (!allowedPlans.includes(selectedPlanEnum)) {

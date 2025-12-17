@@ -119,6 +119,7 @@ function RegisterContent() {
                     ...formData,
                     initialCredits: selectedPlan.credits,
                     planId: selectedPlan.id,
+                    planName: selectedPlan.name, // Send Name for robust fallback
                     origin: searchParams.get('name') ? 'trial' : 'website',
                     couponCode: validatedCoupon?.code
                 })
