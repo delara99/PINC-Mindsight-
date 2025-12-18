@@ -47,7 +47,8 @@ export default function Home() {
                     </div>
                     <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-600">
                         <Link href="#features" className="hover:text-primary transition-colors">Funcionalidades</Link>
-                        <Link href="/business" className="hover:text-primary transition-colors font-semibold text-primary">Para Empresas</Link>
+                        <Link href="/company" className="hover:text-primary transition-colors font-semibold text-primary">Empresa</Link>
+                        <Link href="/business" className="hover:text-primary transition-colors">Para Empresas</Link>
                         <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
                         <Link href="/about" className="hover:text-primary transition-colors">Sobre</Link>
                     </nav>
