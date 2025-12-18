@@ -475,6 +475,10 @@ export default function ClientsPage() {
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     {activeTab === 'COMPANY' ? 'Empresa / Responsável' : 'Nome / Email'}
                                 </th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Telefone</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    {activeTab === 'COMPANY' ? 'CNPJ' : 'CPF'}
+                                </th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Plano</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Data Cadastro</th>
@@ -496,6 +500,15 @@ export default function ClientsPage() {
                                         {activeTab === 'INDIVIDUAL' && client.companyName && (
                                             <div className="text-xs text-gray-400">{client.companyName}</div>
                                         )}
+                                    </td>
+                                    <td className="py-4 px-6 text-sm text-gray-700">
+                                        {(client as any).phone || '-'}
+                                    </td>
+                                    <td className="py-4 px-6 text-sm text-gray-700">
+                                        {activeTab === 'COMPANY'
+                                            ? ((client as any).cnpj || '-')
+                                            : ((client as any).cpf || '-')
+                                        }
                                     </td>
                                     <td className="py-4 px-6">
                                         <span className={`px-2 py-1 text-xs font-bold rounded-full ${(client as any).status === 'active'

@@ -75,7 +75,7 @@ export default function ResetPasswordPage() {
                 <div className="max-w-md">
                     <h1 className="text-4xl font-bold mb-6">Recuperação de Senha</h1>
                     <p className="text-lg text-white/90">
-                        Sistema inteligente de validação de identidade. Nada de emails! Confirme seus dados e redefina sua senha instantly.
+                        Sistema inteligente de validação de identidade. Nada de emails! Confirme seus dados e redefina sua senha de forma rápida e prática.
                     </p>
                 </div>
                 <div className="text-sm opacity-50">
@@ -188,8 +188,8 @@ export default function ResetPasswordPage() {
                                                             type="button"
                                                             onClick={() => setVerificationType('phone')}
                                                             className={`p-3 rounded-lg border-2 transition-all ${verificationType === 'phone'
-                                                                    ? 'border-primary bg-primary/5 text-primary'
-                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                ? 'border-primary bg-primary/5 text-primary'
+                                                                : 'border-gray-200 hover:border-gray-300'
                                                                 }`}
                                                         >
                                                             <Phone size={20} className="mx-auto mb-1" />
@@ -199,8 +199,8 @@ export default function ResetPasswordPage() {
                                                             type="button"
                                                             onClick={() => setVerificationType('cnpj')}
                                                             className={`p-3 rounded-lg border-2 transition-all ${verificationType === 'cnpj'
-                                                                    ? 'border-primary bg-primary/5 text-primary'
-                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                ? 'border-primary bg-primary/5 text-primary'
+                                                                : 'border-gray-200 hover:border-gray-300'
                                                                 }`}
                                                         >
                                                             <Building size={20} className="mx-auto mb-1" />
@@ -228,7 +228,7 @@ export default function ResetPasswordPage() {
                                                                 value={cnpj}
                                                                 onChange={(e) => setCnpj(e.target.value)}
                                                                 required
-                                                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-gray-900"
                                                                 placeholder="00.000.000/0000-00"
                                                             />
                                                         </div>
