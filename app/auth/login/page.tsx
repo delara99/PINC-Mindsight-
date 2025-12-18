@@ -69,7 +69,7 @@ function LoginForm() {
                 <div className="max-w-md">
                     <h1 className="text-4xl font-bold mb-6">Bem-vindo de volta!</h1>
                     <p className="text-lg text-white/90">
-                        Acesse sua conta para gerenciar avaliações, visualizar relatórios e acompanhar o desenvolvimento do seu time.
+                        Acesse sua conta para gerenciar avaliações, visualizar relatórios e acompanhar o desenvolvimento.
                     </p>
                 </div>
                 <div className="text-sm opacity-50">
