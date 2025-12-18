@@ -2,8 +2,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useState } from 'react';
-import { Loader2, Plus, CreditCard, X, Edit, Check, Trash2 } from 'lucide-react';
+import { Loader2, Plus, CreditCard, X, Edit, Check, Trash2, FileText, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // ... (início do componente)
 
@@ -23,6 +25,7 @@ interface Client {
 }
 
 export default function ClientsPage() {
+    const router = useRouter();
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
     const [selectedClient, setSelectedClient] = useState<string | null>(null);
@@ -547,11 +550,35 @@ export default function ClientsPage() {
                                         <td className="py-5 px-6 text-right">
                                             <div className="flex gap-2 justify-end flex-wrap">
                                                 <button
-                                                    onClick={() => fetchClientReports(client.id, client.name || (client as any).companyName || 'Cliente')}
-                                                    className="flex items-center gap-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
-                                                    title="Ver Relatórios"
+                                                    onClick={async () => {
+                                                        // Buscar relatório mais recente do cliente
+                                                        try {
+                                                            const response = await fetch(`${API_URL}/api/v1/assessments/user/${client.id}/completed`, {
+                                                                headers: { 'Authorization': `Bearer ${token}` }
+                                                            });
+                                                            if (response.ok) {
+                                                                const reports = await response.json();
+                                                                if (reports.length > 0) {
+                                                                    // Pegar o relatório mais recente
+                                                                    const latestReport = reports[0];
+                                                                    router.push(`/dashboard/reports/${latestReport.id}`);
+                                                                } else {
+                                                                    alert('Este cliente ainda não possui relatórios completos.');
+                                                                }
+                                                            } else {
+                                                                alert('Erro ao buscar relatórios do cliente.');
+                                                            }
+                                                        } catch (error) {
+                                                            console.error(error);
+                                                            alert('Erro ao buscar relatórios.');
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-indigo-50 hover:from-indigo-200 hover:to-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-lg transition-all shadow-sm border border-indigo-200 hover:shadow-md text-sm"
+                                                    title="Ver Relatório do Cliente"
                                                 >
-                                                    📄 Report
+                                                    <FileText size={16} />
+                                                    Relatório
+                                                    <ExternalLink size={14} />
                                                 </button>
                                                 {!(client as any).viewedByAdmin && (
                                                     <button
