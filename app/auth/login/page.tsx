@@ -107,7 +107,9 @@ function LoginForm() {
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-medium text-gray-700">Senha</label>
-                                <a href="#" className="text-xs font-semibold text-primary hover:text-primary-hover">Esqueceu?</a>
+                                <Link href="/auth/reset-password" className="text-xs font-semibold text-primary hover:text-primary-hover">
+                                    Esqueceu?
+                                </Link>
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-3 text-gray-400" size={18} />

@@ -303,4 +303,53 @@ export class AuthService {
         const { password, ...result } = user;
         return result;
     }
+
+    // Reset de senha com validação de dados cadastrais
+    async resetPassword(data: {
+        email: string;
+        name: string;
+        phone?: string;
+        cnpj?: string;
+        newPassword: string;
+    }) {
+        // 1. Buscar usuário pelo email
+        const user = await this.prisma.user.findUnique({
+            where: { email: data.email.toLowerCase() }
+        });
+
+        if (!user) {
+            throw new BadRequestException('❌ Email não encontrado em nosso sistema');
+        }
+
+        // 2. Validar nome completo (case insensitive, ignora espaços extras)
+        const userNameNormalized = user.name?.toLowerCase().trim().replace(/\s+/g, ' ');
+        const providedNameNormalized = data.name.toLowerCase().trim().replace(/\s+/g, ' ');
+
+        if (userNameNormalized !== providedNameNormalized) {
+            throw new BadRequestException('❌ Nome completo incorreto');
+        }
+
+        // 3. Validar telefone OU CNPJ (precisa acertar pelo menos um)
+        const phoneMatch = data.phone && user.phone &&
+            user.phone.replace(/\D/g, '') === data.phone.replace(/\D/g, '');
+
+        const cnpjMatch = data.cnpj && user.cnpj &&
+            user.cnpj.replace(/\D/g, '') === data.cnpj.replace(/\D/g, '');
+
+        if (!phoneMatch && !cnpjMatch) {
+            throw new BadRequestException('❌ Telefone ou CNPJ incorreto');
+        }
+
+        // 4. Tudo OK! Atualizar senha
+        const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { password: hashedPassword }
+        });
+
+        return {
+            success: true,
+            message: '🎉 Senha redefinida com sucesso! Você já pode fazer login.'
+        };
+    }
 }

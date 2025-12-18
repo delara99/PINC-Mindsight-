@@ -25,4 +25,16 @@ export class AuthController {
     async getMe(@Request() req) {
         return this.authService.getMe(req.user.userId);
     }
+
+    // Reset de senha sem email - validação por dados cadastrais
+    @Post('reset-password')
+    async resetPassword(@Body() body: {
+        email: string;
+        name: string;
+        phone?: string;
+        cnpj?: string;
+        newPassword: string;
+    }) {
+        return this.authService.resetPassword(body);
+    }
 }
