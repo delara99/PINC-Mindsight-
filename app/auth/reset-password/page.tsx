@@ -189,7 +189,7 @@ export default function ResetPasswordPage() {
                                                             onClick={() => setVerificationType('phone')}
                                                             className={`p-3 rounded-lg border-2 transition-all ${verificationType === 'phone'
                                                                 ? 'border-primary bg-primary/5 text-primary'
-                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                : 'border-gray-200 hover:border-gray-300 text-gray-900'
                                                                 }`}
                                                         >
                                                             <Phone size={20} className="mx-auto mb-1" />
@@ -200,7 +200,7 @@ export default function ResetPasswordPage() {
                                                             onClick={() => setVerificationType('cnpj')}
                                                             className={`p-3 rounded-lg border-2 transition-all ${verificationType === 'cnpj'
                                                                 ? 'border-primary bg-primary/5 text-primary'
-                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                : 'border-gray-200 hover:border-gray-300 text-gray-900'
                                                                 }`}
                                                         >
                                                             <Building size={20} className="mx-auto mb-1" />
