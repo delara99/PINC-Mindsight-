@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "SaaS Avaliação de Competências",
-    description: "Plataforma avançada de gestão de RH e competências",
+    title: "PINC By Sued.Inc - Mapeamento de Perfil Comportamental",
+    description: "Ferramenta definitiva baseada no Big Five para mapeamento de perfil comportamental e inteligência organizacional",
 };
 
 import QueryProvider from "@/src/providers/query-provider";

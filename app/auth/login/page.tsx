@@ -73,7 +73,7 @@ function LoginForm() {
                     </p>
                 </div>
                 <div className="text-sm opacity-50">
-                    © 2024 SaaS Avaliação. Todos os direitos reservados.
+                    PINC By Sued.Inc - 2025 - CNPJ: 57.810.083/0001-00
                 </div>
             </div>
 

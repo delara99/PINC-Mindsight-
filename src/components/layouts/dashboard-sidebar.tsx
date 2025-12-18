@@ -168,8 +168,8 @@ export function DashboardSidebar() {
             {/* Mobile Header / Navbar */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-40 shadow-sm">
                 <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-bold">SA</span>
-                    <span className="font-bold text-gray-800">SaaS Avaliação</span>
+                    <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-bold">P</span>
+                    <span className="font-bold text-gray-800">PINC</span>
                 </div>
                 <button
                     onClick={() => setIsMobileOpen(true)}
