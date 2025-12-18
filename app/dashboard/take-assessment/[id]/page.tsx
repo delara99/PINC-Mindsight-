@@ -28,7 +28,7 @@ export default function TakeAssessmentPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
     const id = params.id as string;
-    
+
     const [answers, setAnswers] = useState<Record<string, number>>({});
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [seconds, setSeconds] = useState(0);
@@ -74,13 +74,13 @@ export default function TakeAssessmentPage() {
                 });
                 setAnswers(initialAnswers);
             }
-            
+
             if (typeof data.timeSpent === 'number') {
                 setSeconds(data.timeSpent);
             }
 
             if (data.assessment && data.assessment.questions) {
-                const firstUnanswered = data.assessment.questions.findIndex((q: any) => 
+                const firstUnanswered = data.assessment.questions.findIndex((q: any) =>
                     !data.responses?.some((r: any) => r.questionId === q.id)
                 );
                 if (firstUnanswered !== -1) {
@@ -98,11 +98,11 @@ export default function TakeAssessmentPage() {
 
     const saveAnswerMutation = useMutation({
         mutationFn: async ({ qId, val, time }: { qId: string, val: number, time: number }) => {
-             await fetch(`${API_URL}/api/v1/assessments/${assessment.id}/save-answer`, {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                 body: JSON.stringify({ questionId: qId, value: val, timeSpent: time })
-             });
+            await fetch(`${API_URL}/api/v1/assessments/${assessment.id}/save-answer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ questionId: qId, value: val, timeSpent: time })
+            });
         }
     });
 
@@ -131,17 +131,17 @@ export default function TakeAssessmentPage() {
         onSuccess: async (data) => {
             queryClient.invalidateQueries({ queryKey: ['user-credits'] });
             queryClient.invalidateQueries({ queryKey: ['my-assessments'] });
-            
+
             try {
                 const token = useAuthStore.getState().token;
                 const userRes = await fetch(`${API_URL}/api/v1/auth/me`, {
-                   headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (userRes.ok) {
                     const userData = await userRes.json();
                     useAuthStore.getState().updateUser(userData);
                 }
-            } catch (e) {}
+            } catch (e) { }
 
             router.push(`/dashboard/assessments/results/${data.result.assignmentId}`);
         },
@@ -175,7 +175,7 @@ export default function TakeAssessmentPage() {
         if (assessment && Object.keys(answers).length === assessment.questions.length) {
             setIsConfirmOpen(true);
         } else {
-             alert('Por favor, responda todas as perguntas.');
+            alert('Por favor, responda todas as perguntas.');
         }
     };
 
@@ -197,7 +197,7 @@ export default function TakeAssessmentPage() {
         <div className="min-h-screen bg-white flex flex-col font-sans text-slate-800">
             {/* Top Bar Minimalista */}
             <header className="px-6 py-4 flex items-center justify-between bg-white z-10 sticky top-[64px] md:top-0">
-                 <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-700 transition-colors">
+                <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-700 transition-colors">
                     <ArrowLeft size={24} />
                 </button>
                 <div className="flex flex-col items-center">
@@ -205,12 +205,12 @@ export default function TakeAssessmentPage() {
                         Questão {currentQuestionIndex + 1} / {assessment.questions.length}
                     </span>
                     <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
-                         <motion.div 
+                        <motion.div
                             className="h-full bg-primary"
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
                             transition={{ duration: 0.5 }}
-                         />
+                        />
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full">
@@ -251,15 +251,15 @@ export default function TakeAssessmentPage() {
                                         whileTap={{ scale: 0.98 }}
                                         onClick={() => handleAnswer(currentQuestion.id, option.value)}
                                         className={`w-full p-5 rounded-2xl border-2 text-left flex items-center justify-between transition-all duration-200 group
-                                            ${isSelected 
-                                                ? 'border-primary bg-primary/5 shadow-sm' 
+                                            ${isSelected
+                                                ? 'border-primary bg-primary/5 shadow-sm'
                                                 : 'border-slate-100 hover:border-primary/30 bg-white'
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
-                                                ${isSelected 
-                                                    ? 'border-primary bg-primary text-white' 
+                                                ${isSelected
+                                                    ? 'border-primary bg-primary text-white'
                                                     : 'border-slate-300 group-hover:border-primary/50'
                                                 }`}>
                                                 {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
@@ -282,42 +282,72 @@ export default function TakeAssessmentPage() {
             </main>
 
             {/* Footer de Navegação */}
-            <footer className="px-6 py-8 flex justify-between items-center max-w-5xl mx-auto w-full">
-                <button
-                    onClick={goToPrevious}
-                    disabled={currentQuestionIndex === 0}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                    <ChevronLeft size={20} />
-                    Anterior
-                </button>
+            <footer className="px-6 py-8 max-w-5xl mx-auto w-full">
+                {/* Indicador de Progresso - Bolinhas das Perguntas */}
+                <div className="mb-6 flex justify-center items-center gap-1.5 flex-wrap max-w-3xl mx-auto">
+                    {assessment.questions.map((q, index) => {
+                        const isAnswered = !!answers[q.id];
+                        const isCurrent = index === currentQuestionIndex;
 
-                {currentQuestionIndex === assessment.questions.length - 1 ? (
+                        return (
+                            <button
+                                key={q.id}
+                                onClick={() => setCurrentQuestionIndex(index)}
+                                title={`Pergunta ${index + 1}${isAnswered ? ' (respondida)' : ' (não respondida)'}`}
+                                className={`
+                                    w-8 h-8 rounded-full font-semibold text-xs transition-all
+                                    ${isCurrent
+                                        ? 'bg-primary text-white scale-110 ring-4 ring-primary/30'
+                                        : isAnswered
+                                            ? 'bg-green-500 text-white hover:scale-110'
+                                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300 hover:scale-105'
+                                    }
+                                `}
+                            >
+                                {index + 1}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Botões de Navegação */}
+                <div className="flex justify-between items-center">
                     <button
-                        onClick={handleSubmitClick}
-                        disabled={!allAnswered}
-                        className="flex items-center gap-2 px-8 py-4 bg-primary text-white text-lg font-bold rounded-full shadow-lg shadow-primary/30 hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={goToPrevious}
+                        disabled={currentQuestionIndex === 0}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
-                        Finalizar Avaliação
-                        <CheckCircle size={20} />
+                        <ChevronLeft size={20} />
+                        Anterior
                     </button>
-                ) : (
-                    <button
-                        onClick={goToNext}
-                        disabled={!answers[currentQuestion.id]}
-                        className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:px-10"
-                    >
-                        Próxima
-                        <ChevronRight size={20} />
-                    </button>
-                )}
+
+                    {currentQuestionIndex === assessment.questions.length - 1 ? (
+                        <button
+                            onClick={handleSubmitClick}
+                            disabled={!allAnswered}
+                            className="flex items-center gap-2 px-8 py-4 bg-primary text-white text-lg font-bold rounded-full shadow-lg shadow-primary/30 hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Finalizar Avaliação
+                            <CheckCircle size={20} />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={goToNext}
+                            disabled={!answers[currentQuestion.id]}
+                            className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:px-10"
+                        >
+                            Próxima
+                            <ChevronRight size={20} />
+                        </button>
+                    )}
+                </div>
             </footer>
 
             {/* Modal de Confirmação Moderno */}
             <AnimatePresence>
                 {isConfirmOpen && (
                     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
                             onClick={() => setIsConfirmOpen(false)}
@@ -329,7 +359,7 @@ export default function TakeAssessmentPage() {
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-8 relative z-10 shadow-2xl"
                         >
-                            <button 
+                            <button
                                 onClick={() => setIsConfirmOpen(false)}
                                 className="absolute top-6 right-6 p-2 bg-slate-50 rounded-full text-slate-400 hover:text-slate-700 transition-colors"
                             >
@@ -344,7 +374,7 @@ export default function TakeAssessmentPage() {
                                 <p className="text-slate-500 mb-8 text-lg">
                                     Você respondeu todas as {assessment.questions.length} perguntas. Deseja enviar seus resultados agora?
                                 </p>
-                                
+
                                 <div className="space-y-3">
                                     <button
                                         onClick={() => submitMutation.mutate()}
