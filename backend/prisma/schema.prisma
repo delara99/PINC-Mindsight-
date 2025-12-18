@@ -78,6 +78,7 @@ model User {
 
   professionalFeedbacks ProfessionalFeedback[]
 
+  viewedByAdmin Boolean @default(false) @map("viewed_by_admin")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -185,6 +186,7 @@ model AssessmentAssignment {
   result     AssessmentResult?
   professionalFeedback ProfessionalFeedback[]
 
+  viewedByAdmin Boolean @default(false) @map("viewed_by_admin")
 
   @@map("assessment_assignments")
   @@index([assessmentId])

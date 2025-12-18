@@ -1,12 +1,16 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, ForbiddenException, BadRequestException, Patch } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
+import { UserService } from './user.service';
 import * as bcrypt from 'bcryptjs';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'))
 export class UserController {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private userService: UserService
+    ) { }
 
     // ... (outros métodos)
 
@@ -24,7 +28,7 @@ export class UserController {
                         { tenantId: req.user.tenantId, role: 'MEMBER' }
                     ]
                 },
-                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true }
+                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true }
             });
         }
 
@@ -35,11 +39,29 @@ export class UserController {
                     tenantId: req.user.tenantId,
                     role: 'MEMBER'
                 },
-                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true }
+                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true }
             });
         }
 
         throw new ForbiddenException('Apenas administradores podem listar clientes.');
+    }
+
+    // Marcar cliente como visualizado
+    @Patch(':id/mark-viewed')
+    async markClientAsViewed(@Param('id') id: string, @Request() req) {
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas admins podem marcar como visualizado');
+        }
+        return this.userService.markAsViewed(id);
+    }
+
+    // Marcar relatório como visualizado
+    @Patch('reports/:id/mark-viewed')
+    async markReportAsViewed(@Param('id') id: string, @Request() req) {
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas admins podem marcar como visualizado');
+        }
+        return this.userService.markReportAsViewed(id);
     }
 
     // Adicionar créditos (apenas para Admin)
@@ -237,10 +259,10 @@ export class UserController {
                 where: { userId: id },
                 select: { id: true }
             });
-            
+
             if (assignments.length > 0) {
                 const assignmentIds = assignments.map(a => a.id);
-                
+
                 // Limpar respostas
                 await tx.assessmentResponse.deleteMany({
                     where: { assignmentId: { in: assignmentIds } }
@@ -308,9 +330,9 @@ export class UserController {
             if (body.planName || body.credits) {
                 await this.prisma.creditSolicitation.update({
                     where: { id: existing.id },
-                    data: { 
+                    data: {
                         planName: body.planName,
-                        credits: body.credits || 0 
+                        credits: body.credits || 0
                     }
                 });
                 return { message: 'Solicitação atualizada com o novo plano.' };
@@ -368,15 +390,15 @@ export class UserController {
                 if (solicitation.planName) {
                     // Tenta mapear para o Enum PlanType
                     let newPlanStr = solicitation.planName.toUpperCase().trim();
-                    
+
                     // Mapa de correções comuns se o frontend enviar nomes diferentes
                     if (newPlanStr.includes('PRO')) newPlanStr = 'PRO';
                     else if (newPlanStr.includes('BUSINESS') || newPlanStr.includes('EMPRESA')) newPlanStr = 'BUSINESS';
                     else if (newPlanStr.includes('START') || newPlanStr.includes('INICIAL')) newPlanStr = 'START';
-                    
+
                     // Verifica se é um valor válido do Enum (Isso evita o crash 500 se vier lixo)
                     if (['START', 'PRO', 'BUSINESS'].includes(newPlanStr)) {
-                         updateData.plan = newPlanStr;
+                        updateData.plan = newPlanStr;
                     }
                 }
 
