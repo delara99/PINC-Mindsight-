@@ -322,6 +322,31 @@ export class AssessmentController {
         }));
     }
 
+    // Inventários completados do próprio usuário (para devolutiva)
+    @Get('my-completed')
+    async getMyCompletedAssessments(@Request() req) {
+        const userId = req.user.userId;
+
+        const completedAssignments = await this.prisma.assessmentAssignment.findMany({
+            where: {
+                userId: userId,
+                status: 'COMPLETED'
+            },
+            include: {
+                assessment: { select: { id: true, title: true } },
+                result: true
+            },
+            orderBy: { completedAt: 'desc' }
+        });
+
+        return completedAssignments.map(assignment => ({
+            id: assignment.id,
+            assessmentTitle: assignment.assessment.title,
+            completedAt: assignment.completedAt,
+            scores: assignment.result?.scores || {}
+        }));
+    }
+
     // Listar avaliações completadas de um usuário especifico (para Admin)
     @Get('user/:userId/completed')
     async getUserCompletedAssessments(@Param('userId') userId: string, @Request() req) {

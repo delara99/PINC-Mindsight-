@@ -31,7 +31,23 @@ export class FeedbackService {
         });
 
         if (existing) {
-            return existing; // Retornar existente
+            // Se já existe, atualizar o telefone se fornecido
+            if (phone) {
+                return this.prisma.professionalFeedback.update({
+                    where: { id: existing.id },
+                    data: { phone },
+                    include: {
+                        user: { select: { name: true, email: true } },
+                        assignment: {
+                            include: {
+                                assessment: { select: { title: true } },
+                                result: true
+                            }
+                        }
+                    }
+                });
+            }
+            return existing;
         }
 
         // Criar solicitação

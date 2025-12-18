@@ -60,8 +60,8 @@ export default function DevolutivasAdminPage() {
                         <div
                             key={req.id}
                             className={`bg-white p-6 rounded-xl shadow-sm border-2 ${req.status === 'COMPLETED' ? 'border-green-200 bg-green-50/50' :
-                                    req.status === 'CANCELLED' ? 'border-red-200 bg-red-50/50' :
-                                        'border-gray-200'
+                                req.status === 'CANCELLED' ? 'border-red-200 bg-red-50/50' :
+                                    'border-gray-200'
                                 }`}
                         >
                             <div className="flex items-start justify-between gap-6">
@@ -77,25 +77,25 @@ export default function DevolutivasAdminPage() {
                                     </div>
                                     <div className="grid md:grid-cols-3 gap-4 text-sm">
                                         <div>
-                                            <p className="text-gray-500">Telefone</p>
-                                            <p className="font-medium">{req.phone || req.user.phone || 'Não informado'}</p>
+                                            <p className="text-gray-700">Telefone</p>
+                                            <p className="font-medium text-gray-900">{req.phone || req.user.phone || 'Não informado'}</p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-500">Inventário</p>
-                                            <p className="font-medium">{req.assignment.assessment.title}</p>
+                                            <p className="text-gray-700">Inventário</p>
+                                            <p className="font-medium text-gray-900">{req.assignment.assessment.title}</p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-500">Solicitado em</p>
-                                            <p className="font-medium">{new Date(req.createdAt).toLocaleDateString('pt-BR')}</p>
+                                            <p className="text-gray-700">Solicitado em</p>
+                                            <p className="font-medium text-gray-900">{new Date(req.createdAt).toLocaleDateString('pt-BR')}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col gap-2">
                                     <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${req.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                            req.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-                                                req.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' :
-                                                    'bg-yellow-100 text-yellow-700'
+                                        req.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                                            req.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-yellow-100 text-yellow-700'
                                         }`}>
                                         {req.status === 'COMPLETED' && <CheckCircle2 size={14} />}
                                         {req.status === 'CANCELLED' && <XCircle size={14} />}
