@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { API_URL } from '@/src/config/api';
-import { Lock, Sparkles, Phone, CheckCircle2, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { Lock, Sparkles, Phone, CheckCircle2, Calendar, Clock, MessageSquare, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DevolutivaPage() {
@@ -57,7 +57,11 @@ export default function DevolutivaPage() {
             return res.json();
         },
         onSuccess: () => {
+            alert('✅ Solicitação enviada com sucesso! Um especialista entrará em contato pelo número informado para combinar os detalhes da reunião.');
             refetch();
+        },
+        onError: (error: any) => {
+            alert('❌ Erro ao enviar solicitação: ' + error.message);
         }
     });
 
@@ -166,36 +170,58 @@ export default function DevolutivaPage() {
                 </div>
             )}
 
-            {/* Preview do Relatório com Blur */}
+            {/* Preview do Relatório ou Acesso Liberado */}
             {selectedAssignments.length > 0 && (
                 <div className="relative bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                    <div className={`p-8 ${!isUnlocked ? 'filter blur-md select-none' : ''}`}>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-6">Relatório Profissional Big Five</h3>
-                        {/* Simulação de conteúdo */}
-                        <div className="space-y-4">
-                            <div className="h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg"></div>
-                            <div className="h-32 bg-gradient-to-r from-green-100 to-yellow-100 rounded-lg"></div>
-                            <div className="h-20 bg-gray-100 rounded-lg"></div>
-                            <p className="text-gray-700 leading-relaxed">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit...
-                            </p>
-                        </div>
-                    </div>
-
-                    {!isUnlocked && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm">
-                            <div className="text-center bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-4">
-                                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Lock size={32} />
+                    {isUnlocked ? (
+                        // Relatório Liberado - Mostrar card com link
+                        <div className="p-8 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-500">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                                    <CheckCircle2 size={32} className="text-white" />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                    Relatório Completo Bloqueado
-                                </h3>
-                                <p className="text-gray-600 text-sm">
-                                    Este relatório detalhado é liberado apenas com a Devolutiva Profissional
-                                </p>
+                                <div className="flex-1">
+                                    <h3 className="text-2xl font-bold text-gray-900">✅ Relatório Completo Liberado!</h3>
+                                    <p className="text-gray-700 mt-1">Sua devolutiva foi atendida. O relatório profissional está disponível.</p>
+                                </div>
                             </div>
+                            <Link href={`/dashboard/reports/${selectedAssignments[0].id}`}>
+                                <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                                    <FileText size={20} />
+                                    Ver Relatório Completo Profissional
+                                </button>
+                            </Link>
                         </div>
+                    ) : (
+                        // Relatório Bloqueado - Preview com Blur
+                        <>
+                            <div className="p-8 filter blur-md select-none">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-6">Relatório Profissional Big Five</h3>
+                                {/* Simulação de conteúdo */}
+                                <div className="space-y-4">
+                                    <div className="h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg"></div>
+                                    <div className="h-32 bg-gradient-to-r from-green-100 to-yellow-100 rounded-lg"></div>
+                                    <div className="h-20 bg-gray-100 rounded-lg"></div>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit...
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm">
+                                <div className="text-center bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-4">
+                                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Lock size={32} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                        Relatório Completo Bloqueado
+                                    </h3>
+                                    <p className="text-gray-600 text-sm">
+                                        Este relatório detalhado é liberado apenas com a Devolutiva Profissional
+                                    </p>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
             )}
