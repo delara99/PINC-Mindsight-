@@ -121,7 +121,7 @@ export default function CompanyPage() {
                             </h1>
 
                             <p className="text-xl lg:text-2xl text-white/90 mb-8 leading-relaxed">
-                                A <span className="font-bold">PINC Mindsight</span> é uma plataforma de análise comportamental baseada no <span className="font-bold">Big Five</span>, que transforma respostas em relatórios claros, interpretações profundas e insights aplicáveis ao seu dia a dia.
+                                A <span className="font-bold">PINC</span> é uma plataforma de análise comportamental baseada no <span className="font-bold">Big Five</span>, que transforma respostas em relatórios claros, interpretações profundas e insights aplicáveis ao seu dia a dia.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4">
@@ -214,12 +214,12 @@ export default function CompanyPage() {
                                 className="relative group"
                             >
                                 <div className={`p-8 rounded-2xl border-2 transition-all duration-300 ${hoveredCard === index
-                                        ? 'border-primary bg-gradient-to-br from-primary/5 to-pink-50 shadow-xl scale-105'
-                                        : 'border-gray-200 bg-white'
+                                    ? 'border-primary bg-gradient-to-br from-primary/5 to-pink-50 shadow-xl scale-105'
+                                    : 'border-gray-200 bg-white'
                                     }`}>
                                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all ${hoveredCard === index
-                                            ? 'bg-gradient-to-br from-primary to-pink-600 text-white scale-110'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-gradient-to-br from-primary to-pink-600 text-white scale-110'
+                                        : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         <feature.icon size={28} />
                                     </div>
@@ -299,7 +299,7 @@ export default function CompanyPage() {
                         className="text-center mb-16"
                     >
                         <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
-                            Diferenciais da PINC Mindsight
+                            Diferenciais da PINC
                         </h2>
                         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                             Não somos apenas mais um teste de personalidade. Somos uma plataforma completa de desenvolvimento humano.
@@ -415,7 +415,7 @@ export default function CompanyPage() {
                             Comece sua jornada de autoconhecimento agora
                         </h2>
                         <p className="text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto">
-                            Milhares de pessoas já transformaram suas relações e decisões com a PINC Mindsight. Você será o próximo?
+                            Milhares de pessoas já transformaram suas relações e decisões com a PINC. Você será o próximo?
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
