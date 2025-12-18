@@ -1,8 +1,8 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
-import { FileText, User, Calendar, Award } from 'lucide-react';
+import { FileText, User, Calendar, Award, CheckCircle } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 interface Report {
@@ -12,6 +12,7 @@ interface Report {
     assessmentTitle: string;
     completedAt: string;
     scores: Record<string, number>;
+    viewedByAdmin?: boolean;
 }
 
 const TRAIT_TRANSLATIONS: Record<string, string> = {
@@ -25,6 +26,7 @@ const TRAIT_TRANSLATIONS: Record<string, string> = {
 export default function ReportsPage() {
     const router = useRouter();
     const token = useAuthStore((state) => state.token);
+    const queryClient = useQueryClient();
 
     const { data: reports, isLoading } = useQuery<Report[]>({
         queryKey: ['reports'],
@@ -34,6 +36,21 @@ export default function ReportsPage() {
             });
             if (!response.ok) throw new Error('Erro ao carregar relatórios');
             return response.json();
+        }
+    });
+
+    const markAsViewedMutation = useMutation({
+        mutationFn: async (reportId: string) => {
+            const res = await fetch(`${API_URL}/api/v1/users/reports/${reportId}/mark-viewed`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao marcar como visualizado');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reports'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
         }
     });
 
@@ -107,12 +124,25 @@ export default function ReportsPage() {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => router.push(`/dashboard/reports/${report.id}`)}
-                                    className="text-white hover:text-white/90 bg-[#cc0058] hover:bg-[#a30046] px-4 py-2 text-sm font-medium rounded-md transition-colors w-full md:w-auto text-center flex-shrink-0"
-                                >
-                                    Ver Detalhes
-                                </button>
+                                <div className="flex flex-col gap-2 w-full md:w-auto">
+                                    <button
+                                        onClick={() => router.push(`/dashboard/reports/${report.id}`)}
+                                        className="text-white hover:text-white/90 bg-[#cc0058] hover:bg-[#a30046] px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex-shrink-0"
+                                    >
+                                        Ver Detalhes
+                                    </button>
+
+                                    {!report.viewedByAdmin && (
+                                        <button
+                                            onClick={() => markAsViewedMutation.mutate(report.id)}
+                                            disabled={markAsViewedMutation.isPending}
+                                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            <CheckCircle size={16} />
+                                            {markAsViewedMutation.isPending ? 'Marcando...' : 'Visualizado'}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}

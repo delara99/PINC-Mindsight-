@@ -119,6 +119,22 @@ export default function ClientsPage() {
         }
     });
 
+    // Marcar cliente como visualizado
+    const markClientAsViewedMutation = useMutation({
+        mutationFn: async (clientId: string) => {
+            const res = await fetch(`${API_URL}/api/v1/users/${clientId}/mark-viewed`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao marcar como visualizado');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
+        }
+    });
+
     const handleCreateCoupon = (e: React.FormEvent) => {
         e.preventDefault();
         createCouponMutation.mutate({
@@ -509,7 +525,7 @@ export default function ClientsPage() {
                                         </div>
                                     </td>
                                     <td className="py-4 px-6 text-right">
-                                        <div className="flex gap-2 justify-end">
+                                        <div className="flex gap-2 justify-end flex-wrap">
                                             <button
                                                 onClick={() => fetchClientReports(client.id, client.name || (client as any).companyName || 'Cliente')}
                                                 className="flex items-center gap-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
@@ -517,6 +533,16 @@ export default function ClientsPage() {
                                             >
                                                 📄 Report
                                             </button>
+                                            {!(client as any).viewedByAdmin && (
+                                                <button
+                                                    onClick={() => markClientAsViewedMutation.mutate(client.id)}
+                                                    disabled={markClientAsViewedMutation.isPending}
+                                                    className="flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
+                                                    title="Marcar como Visualizado"
+                                                >
+                                                    ✓ Visualizado
+                                                </button>
+                                            )}
                                             {(client as any).status === 'pending' && (
                                                 <button
                                                     onClick={() => updateClientMutation.mutate({ id: client.id, data: { ...client, status: 'active' } })}
