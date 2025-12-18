@@ -529,6 +529,34 @@ export class AssessmentController {
         // Se for cliente (MEMBER) ou Pessoa Física (INDIVIDUAL - exceto Super Admin), 
         // retornar apenas avaliações atribuídas a ele
         if (user.role === 'MEMBER' || (user.userType === 'INDIVIDUAL' && user.role !== 'SUPER_ADMIN')) {
+            // GARANTIR que sempre existe pelo menos 1 inventário BIG_FIVE
+            const bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE' }
+            });
+
+            if (bigFiveModel) {
+                // Verificar se o usuário tem algum assignment BIG_FIVE não completado
+                const existingAssignment = await this.prisma.assessmentAssignment.findFirst({
+                    where: {
+                        userId: user.userId,
+                        assessmentId: bigFiveModel.id,
+                        status: { not: 'COMPLETED' }
+                    }
+                });
+
+                // Se não existe nenhum assignment não-completado, criar um PENDING
+                if (!existingAssignment) {
+                    await this.prisma.assessmentAssignment.create({
+                        data: {
+                            userId: user.userId,
+                            assessmentId: bigFiveModel.id,
+                            status: 'PENDING',
+                            assignedAt: new Date(),
+                        }
+                    });
+                }
+            }
+
             const assignments = await this.prisma.assessmentAssignment.findMany({
                 where: { userId: user.userId },
                 include: {
