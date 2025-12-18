@@ -469,131 +469,139 @@ export default function ClientsPage() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    {activeTab === 'COMPANY' ? 'Empresa / Responsável' : 'Nome / Email'}
-                                </th>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Telefone</th>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    {activeTab === 'COMPANY' ? 'CNPJ' : 'CPF'}
-                                </th>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Plano</th>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Data Cadastro</th>
-                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Saldo de Créditos</th>
-                                <th className="text-right py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {clients?.filter(c => (c.userType || 'INDIVIDUAL') === activeTab).map((client) => (
-                                <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="py-4 px-6">
-                                        <div className="font-medium text-gray-900">
-                                            {client.companyName || client.name || 'Sem nome'}
-                                        </div>
-                                        <div className="text-sm text-gray-500">{client.email}</div>
-                                        {activeTab === 'COMPANY' && client.name && (
-                                            <div className="text-xs text-gray-400">Resp: {client.name}</div>
-                                        )}
-                                        {activeTab === 'INDIVIDUAL' && client.companyName && (
-                                            <div className="text-xs text-gray-400">{client.companyName}</div>
-                                        )}
-                                    </td>
-                                    <td className="py-4 px-6 text-sm text-gray-700">
-                                        {(client as any).phone || '-'}
-                                    </td>
-                                    <td className="py-4 px-6 text-sm text-gray-700">
-                                        {activeTab === 'COMPANY'
-                                            ? ((client as any).cnpj || '-')
-                                            : ((client as any).cpf || '-')
-                                        }
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${(client as any).status === 'active'
-                                            ? 'bg-green-100 text-green-700'
-                                            : (client as any).status === 'pending'
-                                                ? 'bg-yellow-100 text-yellow-700'
-                                                : 'bg-red-100 text-red-700'
-                                            }`}>
-                                            {(client as any).status === 'active' ? 'Ativo' : (client as any).status === 'pending' ? 'Pendente' : 'Inativo'}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${client.plan === 'BUSINESS' ? 'bg-amber-100 text-amber-700' :
-                                            client.plan === 'PRO' ? 'bg-purple-100 text-purple-700' :
-                                                'bg-gray-100 text-gray-600'
-                                            }`}>
-                                            {client.plan || 'START'}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-6 text-sm text-gray-500">
-                                        {new Date(client.createdAt).toLocaleDateString('pt-BR')}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-bold">
-                                            <CreditCard size={14} />
-                                            {client.credits}
-                                        </div>
-                                    </td>
-                                    <td className="py-4 px-6 text-right">
-                                        <div className="flex gap-2 justify-end flex-wrap">
-                                            <button
-                                                onClick={() => fetchClientReports(client.id, client.name || (client as any).companyName || 'Cliente')}
-                                                className="flex items-center gap-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
-                                                title="Ver Relatórios"
-                                            >
-                                                📄 Report
-                                            </button>
-                                            {!(client as any).viewedByAdmin && (
-                                                <button
-                                                    onClick={() => markClientAsViewedMutation.mutate(client.id)}
-                                                    disabled={markClientAsViewedMutation.isPending}
-                                                    className="flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
-                                                    title="Marcar como Visualizado"
-                                                >
-                                                    ✓ Visualizado
-                                                </button>
-                                            )}
-                                            {(client as any).status === 'pending' && (
-                                                <button
-                                                    onClick={() => updateClientMutation.mutate({ id: client.id, data: { ...client, status: 'active' } })}
-                                                    className="bg-green-100 hover:bg-green-200 text-green-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm flex items-center gap-1"
-                                                >
-                                                    <Check size={14} /> Aprovar
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => openEditModal(client)}
-                                                className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
-                                            >
-                                                <Edit size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => openAddCredits(client.id)}
-                                                className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-4 py-2 rounded-lg transition-colors text-sm"
-                                                title="Gerenciar Créditos"
-                                            >
-                                                <CreditCard size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm(`Tem certeza que deseja excluir o cliente ${client.name}? Esta ação é irreversível.`)) {
-                                                        deleteClientMutation.mutate(client.id);
-                                                    }
-                                                }}
-                                                className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
-                                                title="Excluir Cliente"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full table-auto min-w-max">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                                <tr>
+                                    <th className="text-left py-5 px-6 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[200px]">
+                                        {activeTab === 'COMPANY' ? 'Empresa / Responsável' : 'Nome / Email'}
+                                    </th>
+                                    <th className="text-left py-5 px-4 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[130px]">Telefone</th>
+                                    <th className="text-left py-5 px-4 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[140px]">
+                                        {activeTab === 'COMPANY' ? 'CNPJ' : 'CPF'}
+                                    </th>
+                                    <th className="text-center py-5 px-4 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[100px]">Status</th>
+                                    <th className="text-center py-5 px-4 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[90px]">Plano</th>
+                                    <th className="text-center py-5 px-4 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[120px]">Data Cadastro</th>
+                                    <th className="text-center py-5 px-4 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[100px]">Créditos</th>
+                                    <th className="text-right py-5 px-6 text-xs font-extrabold text-gray-600 uppercase tracking-wide min-w-[180px]">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {clients?.filter(c => (c.userType || 'INDIVIDUAL') === activeTab).map((client) => (
+                                    <tr key={client.id} className="hover:bg-blue-50/30 transition-all duration-200">
+                                        <td className="py-5 px-6">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="font-semibold text-gray-900 text-sm">
+                                                    {client.companyName || client.name || 'Sem nome'}
+                                                </div>
+                                                <div className="text-sm text-gray-500 font-medium">{client.email}</div>
+                                                {activeTab === 'COMPANY' && client.name && (
+                                                    <div className="text-xs text-gray-400 mt-0.5">👤 Resp: {client.name}</div>
+                                                )}
+                                                {activeTab === 'INDIVIDUAL' && client.companyName && (
+                                                    <div className="text-xs text-gray-400 mt-0.5">🏢 {client.companyName}</div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="py-5 px-4 text-sm font-medium text-gray-700">
+                                            {(client as any).phone ? (
+                                                <span className="whitespace-nowrap">{(client as any).phone}</span>
+                                            ) : (
+                                                <span className="text-gray-400">--</span>
+                                            )}
+                                        </td>
+                                        <td className="py-5 px-4 text-sm font-medium text-gray-700">
+                                            {activeTab === 'COMPANY'
+                                                ? ((client as any).cnpj ? <span className="whitespace-nowrap">{(client as any).cnpj}</span> : <span className="text-gray-400">--</span>)
+                                                : ((client as any).cpf ? <span className="whitespace-nowrap">{(client as any).cpf}</span> : <span className="text-gray-400">--</span>)
+                                            }
+                                        </td>
+                                        <td className="py-5 px-4 text-center">
+                                            <span className={`inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-sm ${(client as any).status === 'active'
+                                                ? 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border border-green-200'
+                                                : (client as any).status === 'pending'
+                                                    ? 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border border-yellow-200'
+                                                    : 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border border-red-200'
+                                                }`}>
+                                                {(client as any).status === 'active' ? '✓ Ativo' : (client as any).status === 'pending' ? '⏳ Pendente' : '✕ Inativo'}
+                                            </span>
+                                        </td>
+                                        <td className="py-5 px-4 text-center">
+                                            <span className={`inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-sm ${client.plan === 'BUSINESS' ? 'bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200' :
+                                                client.plan === 'PRO' ? 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border border-purple-200' :
+                                                    'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-600 border border-gray-200'
+                                                }`}>
+                                                {client.plan || 'START'}
+                                            </span>
+                                        </td>
+                                        <td className="py-5 px-4 text-center text-sm font-medium text-gray-600">
+                                            {new Date(client.createdAt).toLocaleDateString('pt-BR')}
+                                        </td>
+                                        <td className="py-5 px-4 text-center">
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 text-sm font-bold border border-blue-200 shadow-sm">
+                                                <CreditCard size={14} />
+                                                {client.credits}
+                                            </div>
+                                        </td>
+                                        <td className="py-5 px-6 text-right">
+                                            <div className="flex gap-2 justify-end flex-wrap">
+                                                <button
+                                                    onClick={() => fetchClientReports(client.id, client.name || (client as any).companyName || 'Cliente')}
+                                                    className="flex items-center gap-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
+                                                    title="Ver Relatórios"
+                                                >
+                                                    📄 Report
+                                                </button>
+                                                {!(client as any).viewedByAdmin && (
+                                                    <button
+                                                        onClick={() => markClientAsViewedMutation.mutate(client.id)}
+                                                        disabled={markClientAsViewedMutation.isPending}
+                                                        className="flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
+                                                        title="Marcar como Visualizado"
+                                                    >
+                                                        ✓ Visualizado
+                                                    </button>
+                                                )}
+                                                {(client as any).status === 'pending' && (
+                                                    <button
+                                                        onClick={() => updateClientMutation.mutate({ id: client.id, data: { ...client, status: 'active' } })}
+                                                        className="bg-green-100 hover:bg-green-200 text-green-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm flex items-center gap-1"
+                                                    >
+                                                        <Check size={14} /> Aprovar
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => openEditModal(client)}
+                                                    className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
+                                                >
+                                                    <Edit size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => openAddCredits(client.id)}
+                                                    className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-4 py-2 rounded-lg transition-colors text-sm"
+                                                    title="Gerenciar Créditos"
+                                                >
+                                                    <CreditCard size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`Tem certeza que deseja excluir o cliente ${client.name}? Esta ação é irreversível.`)) {
+                                                            deleteClientMutation.mutate(client.id);
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-lg transition-colors text-sm"
+                                                    title="Excluir Cliente"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
