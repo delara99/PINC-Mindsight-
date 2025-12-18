@@ -239,8 +239,17 @@ export class AssessmentController {
             return existing;
         }
 
-        // Sem créditos e sem inventário pendente
-        throw new BadRequestException('Você não possui créditos disponíveis. Adquira créditos para realizar uma nova avaliação.');
+        // Sem créditos e sem inventário pendente: CRIAR UM INVENTÁRIO BLOQUEADO
+        // O frontend mostrará que precisa adicionar créditos, mas o inventário existe
+        const blockedAssignment = await this.prisma.assessmentAssignment.create({
+            data: {
+                userId: user.userId,
+                assessmentId: assessmentModel.id,
+                status: 'PENDING', // PENDING = bloqueado até adicionar crédito
+                assignedAt: new Date(),
+            }
+        });
+        return blockedAssignment;
     }
 
     // Listar avaliações completadas (para relatórios)
@@ -826,21 +835,31 @@ export class AssessmentController {
                 return savedResult;
             });
 
-            // Após completar, verificar se o usuário ainda tem créditos para criar um novo inventário automaticamente
+            // Após completar, SEMPRE criar um novo inventário automaticamente (PENDING)
+            // Se tiver créditos, pode iniciar. Se não tiver, fica bloqueado até adicionar.
             const updatedUser = await this.prisma.user.findUnique({
                 where: { id: userId },
                 select: { credits: true }
             });
 
             let newAssignmentCreated = false;
-            if (updatedUser && updatedUser.credits > 0) {
-                // Buscar o modelo Big Five para criar novo assignment
-                const assessmentModel = await this.prisma.assessmentModel.findFirst({
-                    where: { type: 'BIG_FIVE' }
+            // Buscar o modelo Big Five para criar novo assignment
+            const assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE' }
+            });
+
+            if (assessmentModel) {
+                // Verificar se já existe um PENDING (evitar duplicatas)
+                const existingPending = await this.prisma.assessmentAssignment.findFirst({
+                    where: {
+                        userId: userId,
+                        assessmentId: assessmentModel.id,
+                        status: 'PENDING'
+                    }
                 });
 
-                if (assessmentModel) {
-                    // Criar novo assignment automaticamente (PENDING para que ele inicie quando quiser)
+                if (!existingPending) {
+                    // Criar novo assignment automaticamente (PENDING = pronto se tem créditos, bloqueado se não tem)
                     await this.prisma.assessmentAssignment.create({
                         data: {
                             userId: userId,
