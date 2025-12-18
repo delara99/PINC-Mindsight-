@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/src/store/auth-store';
 import { usePathname, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { API_URL } from '@/src/config/api';
 import {
     LayoutDashboard,
     Users,
@@ -27,11 +29,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const menuItems = [
     { label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
-    { label: 'Relatórios', href: '/dashboard/reports', icon: FileText, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
+    { label: 'Relatórios', href: '/dashboard/reports', icon: FileText, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], notificationKey: 'relatorios' },
     { label: 'Avaliações', href: '/dashboard/assessments', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
-    { label: 'Clientes', href: '/dashboard/clients', icon: Users, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
-    { label: 'Devolutivas', href: '/dashboard/devolutivas', icon: MessageSquare, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], premium: true },
-    { label: 'Minhas Conexões', href: '/dashboard/connections', icon: UserPlus, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
+    { label: 'Clientes', href: '/dashboard/clients', icon: Users, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], notificationKey: 'clientes' },
+    { label: 'Devolutivas', href: '/dashboard/devolutivas', icon: MessageSquare, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], premium: true, notificationKey: 'devolutivas' },
+    { label: 'Minhas Conexões', href: '/dashboard/connections', icon: UserPlus, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'], notificationKey: 'conexoes' },
     { label: 'Métricas de Avaliação', href: '/dashboard/metrics-config', icon: TrendingUp, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Responder', href: '/dashboard/my-assessments', icon: PlayCircle, roles: ['MEMBER'] },
@@ -44,9 +46,10 @@ interface SidebarContentProps {
     pathname: string;
     onLogout: () => void;
     onUpgradeOpen: () => void;
+    notifications?: any;
 }
 
-function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarContentProps) {
+function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications }: SidebarContentProps) {
     return (
         <div className="flex flex-col h-full bg-white text-slate-800">
             {/* Header / Logo */}
@@ -58,8 +61,8 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
                 <h1 className="font-bold text-gray-800 leading-tight truncate">{user?.name || 'Usuário'}</h1>
                 <span className="text-xs text-gray-500 font-medium block truncate">{user?.email || 'email@exemplo.com'}</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 ${user?.plan === 'PRO' || user?.plan === 'BUSINESS'
-                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                        : 'bg-gray-100 text-gray-600 border border-gray-200'
+                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200'
                     }`}>
                     {(user?.plan === 'PRO' || user?.plan === 'BUSINESS') && <Crown size={10} />}
                     {user?.plan || 'START'}
@@ -74,11 +77,12 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
                     const isSuperAdmin = user.role === 'SUPER_ADMIN';
                     const effectiveRole = (user.userType === 'INDIVIDUAL' && !isSuperAdmin) ? 'MEMBER' : user.role;
                     return item.roles.includes(effectiveRole);
-                }).map((item) => {
+                }).map((item: any) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
                     const isSuperAdmin = user?.role === 'SUPER_ADMIN';
                     const isLocked = item.label === 'Minhas Conexões' && user?.plan === 'START' && !isSuperAdmin;
+                    const notificationCount = item.notificationKey && notifications ? notifications[item.notificationKey] : 0;
 
                     return (
                         <Link
@@ -91,7 +95,7 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
                                 }
                             }}
                             className={clsx(
-                                "flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+                                "flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                                 isActive
                                     ? "bg-primary/10 text-primary"
                                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
@@ -101,6 +105,11 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
                             <Icon size={20} className={clsx(isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600")} />
                             <span className="flex-1">{item.label}</span>
                             {isLocked && <Lock size={16} className="text-gray-400" />}
+                            {notificationCount > 0 && (
+                                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                                    {notificationCount > 99 ? '99+' : notificationCount}
+                                </span>
+                            )}
                         </Link>
                     );
                 })}
@@ -123,10 +132,26 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen }: SidebarCont
 export function DashboardSidebar() {
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
+    const token = useAuthStore((state) => state.token);
     const pathname = usePathname();
     const router = useRouter();
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    // Buscar notificações para admin
+    const { data: notifications } = useQuery({
+        queryKey: ['admin-notifications'],
+        queryFn: async () => {
+            if (user?.role !== 'TENANT_ADMIN' && user?.role !== 'SUPER_ADMIN') return null;
+            const res = await fetch(`${API_URL}/api/v1/notifications/admin/counts`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) return null;
+            return res.json();
+        },
+        enabled: !!(user?.role === 'TENANT_ADMIN' || user?.role === 'SUPER_ADMIN'),
+        refetchInterval: 30000 // Atualizar a cada 30 segundos
+    });
 
     // Fechar sidebar mobile ao navegar
     useEffect(() => {
@@ -164,6 +189,7 @@ export function DashboardSidebar() {
                     pathname={pathname}
                     onLogout={handleLogout}
                     onUpgradeOpen={() => setIsUpgradeModalOpen(true)}
+                    notifications={notifications}
                 />
             </aside>
 
@@ -201,6 +227,7 @@ export function DashboardSidebar() {
                                 pathname={pathname}
                                 onLogout={handleLogout}
                                 onUpgradeOpen={() => setIsUpgradeModalOpen(true)}
+                                notifications={notifications}
                             />
                         </motion.aside>
                     </>
