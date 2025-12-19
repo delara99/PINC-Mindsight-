@@ -100,7 +100,7 @@ export class UserController {
         const hashedPassword = await bcrypt.hash(data.password, 10);
 
         // Criar novo cliente
-        return this.prisma.user.create({
+        const newUser = await this.prisma.user.create({
             data: {
                 email: data.email,
                 password: hashedPassword,
@@ -127,6 +127,45 @@ export class UserController {
                 createdAt: true
             }
         });
+
+        // AUTO-ASSIGN: Atribuir automaticamente a avaliação PADRÃO ao novo cliente
+        try {
+            // 1. Buscar Avaliação Padrão do Tenant
+            let assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { tenantId: user.tenantId, isDefault: true, type: 'BIG_FIVE' }
+            });
+
+            // Fallback: Primeira encontrada do tenant
+            if (!assessmentModel) {
+                assessmentModel = await this.prisma.assessmentModel.findFirst({
+                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                });
+            }
+
+            // 2. Buscar Configuração Big Five Ativa
+            const activeConfig = await this.prisma.bigFiveConfig.findFirst({
+                where: { tenantId: user.tenantId, isActive: true }
+            });
+
+            // Se encontrou ambos, cria a atribuição
+            if (assessmentModel && activeConfig) {
+                await this.prisma.assessmentAssignment.create({
+                    data: {
+                        userId: newUser.id,
+                        assessmentId: assessmentModel.id,
+                        configId: activeConfig.id,
+                        status: 'PENDING',
+                        assignedAt: new Date(),
+                    }
+                });
+                console.log(`[AutoAssign] Avaliação ${assessmentModel.title} atribuída para ${newUser.email}`);
+            }
+        } catch (error) {
+            console.error('[AutoAssign] Falha ao atribuir avaliação automática:', error);
+            // Não bloqueia o retorno da criação do usuário
+        }
+
+        return newUser;
     }
 
     // Atualizar dados do cliente
