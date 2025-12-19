@@ -117,7 +117,11 @@ export class DebugReportsController {
                     trait: s.traitName,
                     score: s.normalizedScore,
                     level: s.level,
-                    interpretation: s.interpretation?.substring(0, 100) + '...'
+                    interpretation: s.interpretation?.substring(0, 100) + '...',
+                    facets: s.facets?.map(f => ({
+                        name: f.facetName,
+                        score: f.score
+                    })) || []
                 }))
             };
         } catch (error) {
