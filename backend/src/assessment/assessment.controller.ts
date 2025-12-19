@@ -1139,6 +1139,9 @@ export class AssessmentController {
             throw new ForbiddenException('Apenas administradores podem clonar templates');
         }
 
+        // NORMALIZAR template ANTES de clonar
+        await this.fixTemplate(req);
+
         return this.templateService.cloneTemplate(
             templateId,
             user.tenantId,
