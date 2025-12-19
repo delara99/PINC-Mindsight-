@@ -149,4 +149,34 @@ export class DebugReportsController {
             message: 'Debug controller está ativo com cálculo de scores'
         };
     }
+
+    /**
+     * DEBUG: Listar todas as configs do banco (SYSTEM ADMIN ONLY)
+     * GET /api/v1/debug-reports/configs
+     */
+    @Get('configs')
+    async listAllConfigs() {
+        if (!this.prisma) {
+            return { error: 'Prisma Service not available' };
+        }
+
+        try {
+            const configs = await this.prisma.bigFiveConfig.findMany({
+                include: {
+                    _count: { select: { traits: true } }
+                }
+            });
+
+            // Retornar dados para debug
+            return configs.map(c => ({
+                id: c.id,
+                name: c.name,
+                isActive: c.isActive,
+                tenantId: c.tenantId, // Mostrar o tenantId real para compararmos
+                traitsCount: c._count?.traits
+            }));
+        } catch (e) {
+            return { error: e.message };
+        }
+    }
 }
