@@ -112,11 +112,14 @@ export class ScoreCalculationService {
 
                     const facetNameFromQuestion = parts[1].trim();
 
+                    // Helper para normalizar strings (remover acentos e lowercase)
+                    const cleanString = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
                     // Comparar nome da faceta da questão com nome da faceta da config
-                    const match = facetNameFromQuestion === facet.name;
+                    const match = cleanString(facetNameFromQuestion) === cleanString(facet.name);
 
                     if (!match && idx === 0 && r === traitResponses[0]) {
-                        console.log(`[Facet Debug] Comparando: '${facetNameFromQuestion}' (Questão) vs '${facet.name}' (Config) -> Match? ${match}`);
+                        console.log(`[Facet Debug] Comparando: '${facetNameFromQuestion}' (Clean: ${cleanString(facetNameFromQuestion)}) vs '${facet.name}' (Clean: ${cleanString(facet.name)}) -> Match? ${match}`);
                     }
 
                     return match;
