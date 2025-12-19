@@ -53,13 +53,37 @@ export default function AssessmentDetailPage() {
     // Busca o traço na config
     const getActiveTrait = (key: string) => {
         if (!config?.traits) return null;
+
+        const search = normalize(key);
+        const hasFacets = (t: any) => t.facets && t.facets.length > 0;
+
+        // 1. Tenta encontrar pelo TraitKey Exato
         let trait = config.traits.find((t: any) => t.traitKey === key);
-        if (!trait) {
-            const search = normalize(key);
-            trait = config.traits.find((t: any) =>
-                normalize(t.traitKey) === search ||
-                normalize(t.name) === search
+
+        // Se achou pelo Key Exato (ex: "Conscienciosidade"), mas ele NÃO tem facetas,
+        // tenta achar um "Irmão Rico" (Name match e com facetas)
+        if (trait && !hasFacets(trait)) {
+            const betterTrait = config.traits.find((t: any) =>
+                hasFacets(t) &&
+                (normalize(t.name) === normalize(trait.name))
             );
+            if (betterTrait) return betterTrait;
+        }
+
+        // 2. Se não achou exato, busca apromixada (Nome ou Key normalizado)
+        if (!trait) {
+            // Prioridade: Quem tem facetas
+            trait = config.traits.find((t: any) =>
+                hasFacets(t) &&
+                (normalize(t.traitKey) === search || normalize(t.name) === search)
+            );
+
+            // Fallback: Quem não tem facetas
+            if (!trait) {
+                trait = config.traits.find((t: any) =>
+                    normalize(t.traitKey) === search || normalize(t.name) === search
+                );
+            }
         }
         return trait;
     };
