@@ -94,6 +94,32 @@ export class BigFiveConfigController {
     }
 
     /**
+     * Cria novo traço
+     */
+    @Post(':configId/traits')
+    async createTrait(@Param('configId') configId: string, @Body() data: any, @Request() req) {
+        // Apenas admins
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem criar traços');
+        }
+
+        return this.configService.createTrait(configId, data);
+    }
+
+    /**
+     * Cria nova faceta
+     */
+    @Post('traits/:traitId/facets')
+    async createFacet(@Param('traitId') traitId: string, @Body() data: any, @Request() req) {
+        // Apenas admins
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem criar facetas');
+        }
+
+        return this.configService.createFacet(traitId, data);
+    }
+
+    /**
      * Atualiza traço
      */
     @Put('traits/:traitId')

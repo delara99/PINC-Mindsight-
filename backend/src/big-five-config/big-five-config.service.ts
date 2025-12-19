@@ -264,6 +264,42 @@ export class BigFiveConfigService {
     }
 
     /**
+     * Cria um novo traço na configuração
+     */
+    async createTrait(configId: string, data: any) {
+        return this.prisma.bigFiveTraitConfig.create({
+            data: {
+                configId,
+                traitKey: data.traitKey,
+                name: data.name,
+                icon: data.icon || 'circle',
+                weight: data.weight || 1.0,
+                description: data.description || '',
+                veryLowText: data.veryLowText || '',
+                lowText: data.lowText || '',
+                averageText: data.averageText || '',
+                highText: data.highText || '',
+                veryHighText: data.veryHighText || ''
+            }
+        });
+    }
+
+    /**
+     * Cria uma nova faceta para um traço
+     */
+    async createFacet(traitId: string, data: any) {
+        return this.prisma.bigFiveFacetConfig.create({
+            data: {
+                traitId,
+                facetKey: data.facetKey,
+                name: data.name,
+                weight: data.weight || 1.0,
+                description: data.description || ''
+            }
+        });
+    }
+
+    /**
      * Lista recomendações de uma configuração
      */
     async listRecommendations(configId: string) {

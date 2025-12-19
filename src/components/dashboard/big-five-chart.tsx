@@ -16,55 +16,47 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
         );
     }
 
-    // Função auxiliar para normalizar string (remover acentos e lowercase)
-    const normalizeKey = (key: string) => key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    // Cores para rotação dinâmica (para suportar novos traços)
+    const COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6', '#EF4444', '#06B6D4', '#6366F1'];
 
-    // Mapeamento normalizado para acesso rápido
-    const normalizedTraitsMap: Record<string, string> = {
-        [normalizeKey('Abertura à Experiência')]: 'Abertura à Experiência',
-        [normalizeKey('Extroversão')]: 'Extroversão',
-        [normalizeKey('Conscienciosidade')]: 'Conscienciosidade',
-        [normalizeKey('Amabilidade')]: 'Amabilidade',
-        [normalizeKey('Estabilidade Emocional')]: 'Estabilidade Emocional',
-        // Variações comuns
-        'abertura a experiencias': 'Abertura à Experiência',
-        'neuroticismo': 'Estabilidade Emocional',
-        'socializacao': 'Extroversão'
-    };
-
-    // Organizar dados por traço
-    const traitsData: Record<string, { facets: Array<{ name: string, score: number }>, color: string }> = {
-        'Abertura à Experiência': { facets: [], color: '#10B981' }, // Verde
-        'Extroversão': { facets: [], color: '#F59E0B' }, // Amarelo
-        'Conscienciosidade': { facets: [], color: '#3B82F6' }, // Azul
-        'Amabilidade': { facets: [], color: '#EC4899' }, // Rosa
-        'Estabilidade Emocional': { facets: [], color: '#8B5CF6' } // Roxo
-    };
-
-    // Processar scores
+    // Processar scores dinamicamente - Agnostic to Trait Names
+    // Estrutura esperada de keys: "TraitName::FacetName"
+    const traitsData: Record<string, { facets: Array<{ name: string, score: number }>, color: string }> = {};
     const allFacets: Array<{ trait: string, name: string, score: number, color: string }> = [];
+
+    let traitColorIndex = 0;
+    const traitColorMap: Record<string, string> = {};
 
     Object.entries(scores).forEach(([key, value]) => {
         const parts = key.split('::');
         if (parts.length === 2) {
             const [traitNameRaw, facetName] = parts;
             const score = typeof value === 'number' ? value : parseFloat(value as string) || 0;
+            const traitName = traitNameRaw.trim(); // Usar o nome exato que vem do backend (configurado pelo usuário)
 
-            const normalizedTrait = normalizeKey(traitNameRaw);
-            const officialTraitName = normalizedTraitsMap[normalizedTrait];
-
-            if (officialTraitName && traitsData[officialTraitName]) {
-                traitsData[officialTraitName].facets.push({ name: facetName, score });
-                allFacets.push({
-                    trait: officialTraitName,
-                    name: facetName,
-                    score,
-                    color: traitsData[officialTraitName].color
-                });
-            } else {
-                // Tentar encontrar por aproximação se falhar
-                console.warn(`Traço não reconhecido: ${traitNameRaw} (Normalizado: ${normalizedTrait})`);
+            // Inicializar grupo do traço se não existir
+            if (!traitsData[traitName]) {
+                // Atribuir cor
+                if (!traitColorMap[traitName]) {
+                    traitColorMap[traitName] = COLORS[traitColorIndex % COLORS.length];
+                    traitColorIndex++;
+                }
+                traitsData[traitName] = {
+                    facets: [],
+                    color: traitColorMap[traitName]
+                };
             }
+
+            // Adicionar faceta
+            traitsData[traitName].facets.push({ name: facetName, score });
+
+            // Adicionar à lista flat
+            allFacets.push({
+                trait: traitName,
+                name: facetName,
+                score,
+                color: traitsData[traitName].color
+            });
         }
     });
 

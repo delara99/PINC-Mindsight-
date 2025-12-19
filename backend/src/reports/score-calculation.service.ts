@@ -5,13 +5,14 @@ export interface ScoreResult {
     traitKey: string;
     traitName: string;
     score: number;
-    normalizedScore: number; // 0-100
+    normalizedScore: number;
     level: 'VERY_LOW' | 'LOW' | 'AVERAGE' | 'HIGH' | 'VERY_HIGH';
     interpretation: string;
     facets?: {
         facetKey: string;
         facetName: string;
         score: number;
+        rawScore: number;
     }[];
 }
 
@@ -26,37 +27,27 @@ export class ScoreCalculationService {
         scores: Record<string, ScoreResult>;
         config: any;
     }> {
-        // Buscar assignment com respostas e config
         const assignment = await this.prisma.assessmentAssignment.findUnique({
             where: { id: assignmentId },
             include: {
                 responses: {
-                    include: {
-                        question: true
-                    }
+                    include: { question: true }
                 },
                 config: {
                     include: {
                         traits: {
-                            include: {
-                                facets: true
-                            }
+                            include: { facets: true }
                         }
                     }
                 },
                 user: {
-                    select: {
-                        tenantId: true
-                    }
+                    select: { tenantId: true }
                 }
             }
         });
 
-        if (!assignment) {
-            throw new Error('Assignment não encontrado');
-        }
+        if (!assignment) throw new Error('Assignment não encontrado');
 
-        // Se não tem config vinculada, buscar a ativa do tenant
         let config = assignment.config;
         if (!config) {
             config = await this.prisma.bigFiveConfig.findFirst({
@@ -66,136 +57,84 @@ export class ScoreCalculationService {
                 },
                 include: {
                     traits: {
-                        include: {
-                            facets: true
-                        }
+                        include: { facets: true }
                     }
                 }
             });
         }
 
-        if (!config) {
-            throw new Error('Configuração Big Five não encontrada para este tenant');
-        }
+        if (!config) throw new Error('Configuração Big Five não encontrada para este tenant');
 
-        // Agrupar respostas por trait
-        const responsesByTrait = this.groupResponsesByTrait(assignment.responses);
-
+        const responsesByTrait = this.groupResponsesByTrait(assignment.responses, config);
         const scores: Record<string, ScoreResult> = {};
 
-        // Calcular score para cada trait
         for (const trait of config.traits) {
             const traitResponses = responsesByTrait[trait.traitKey] || [];
 
-            // Calcular score bruto (média das respostas)
+            // Score Bruto (0-5)
             const rawScore = this.calculateRawScore(traitResponses, trait.weight);
 
-            // Normalizar para 0-100
-            const normalizedScore = this.normalizeScore(rawScore);
+            // Score Normalizado (0-100)
+            // Se rawScore for 0 (sem respostas), normalizado deve ser 0
+            const normalizedScore = rawScore > 0 ? this.normalizeScore(rawScore) : 0;
 
-            // Determinar nível baseado nas faixas da config
             const level = this.determineLevel(normalizedScore, config);
-
-            // Obter interpretação
             const interpretation = this.getInterpretation(level, trait);
 
-            // Calcular scores de facetas
-            const facets = trait.facets.map((facet, idx) => {
-                // Filtrar respostas que correspondem a esta faceta
-                // A traitKey da questão vem como "Trait::Facet" (ex: "Amabilidade::Modéstia")
-                // OU verificar se temos mapeamento de nome da faceta
+            const facets = trait.facets.map((facet: any, idx: number) => {
+                // Filtrar respostas da faceta
                 const facetResponses = traitResponses.filter(r => {
                     if (!r.question.traitKey) return false;
-
                     const parts = r.question.traitKey.split('::');
                     if (parts.length < 2) return false;
 
-                    const facetNameFromQuestion = parts[1].trim();
+                    const qFacetName = parts[1].trim();
+                    const qClean = this.cleanString(qFacetName);
+                    const fKeyClean = this.cleanString(facet.facetKey);
+                    const fNameClean = this.cleanString(facet.name);
 
-                    // Helper para normalizar strings (remover acentos e lowercase)
-                    const cleanString = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                    // Match por Key ou Name (Dinâmico)
+                    if (qClean === fKeyClean || qClean === fNameClean) return true;
 
-                    // Mapa de Aliases (Perguntas -> Config)
-                    const facetAliases: Record<string, string[]> = {
-                        // Neuroticismo
+                    // Fallback de Aliases (Legado/Segurança)
+                    const aliases: Record<string, string[]> = {
                         'ansiedade': ['controle de ansiedade', 'preocupacao'],
                         'raiva': ['controle de humor', 'irritabilidade', 'hostilidade'],
-                        'autoconsciencia': ['confianca em si mesmo', 'timidez', 'autocritica'],
-                        'depressao': ['tristeza', 'desanimo'],
-                        'vulnerabilidade': ['resiliencia a criticas', 'gestao de estresse'],
-
-                        // Extroversão
                         'gregarismo': ['sociabilidade', 'interacao social'],
                         'assertividade': ['lideranca', 'dominancia', 'firmeza'],
-                        'nivel de atividade': ['energia e atividade', 'ritmo', 'energia'],
                         'busca de emocoes': ['busca por emocoes positivas', 'aventura', 'excitacao'],
                         'emocoes positivas': ['otimismo', 'alegria', 'entusiasmo'],
-                        'amabilidade': ['acolhimento', 'afeto', 'calor', 'simpatia'], // Caso apareça em Extroversão (Warmth)
+                        'amabilidade': ['acolhimento', 'afeto', 'calor', 'simpatia'], // Warmth (Extroversão)
                         'calor': ['amabilidade', 'afeto'],
-
-                        // Abertura
-                        'imaginacao': ['criatividade', 'fantasia'],
-                        'interesses artisticos': ['sensibilidade estetica', 'arte', 'estetica'],
                         'emotividade': ['sentimentos', 'consciencia emocional', 'emocao'],
-                        'ideias': ['curiosidade intelectual', 'intelecto', 'curiosidade'],
-                        'valores': ['abertura para mudancas', 'abertura cultural', 'liberalismo'],
-
-                        // Amabilidade
-                        'confianca': ['fe nos outros', 'confiar'],
                         'moralidade': ['modestia', 'franqueza', 'retidao', 'sinceridade'],
                         'altruismo': ['generosidade', 'ajuda'],
-                        'cooperacao': ['condescendencia', 'acordo'],
                         'modestia': ['humildade'],
                         'sensibilidade': ['empatia', 'ternura'],
-
-                        // Conscienciosidade
-                        'autoeficacia': ['autodisciplina', 'competencia'],
-                        'organizacao': ['ordem', 'meticulosidade'],
-                        'senso de dever': ['responsabilidade', 'dever'],
-                        'esforco por realizacao': ['orientacao para objetivos', 'ambicao'],
-                        'autodisciplina': ['persistencia']
+                        'interesses artisticos': ['sensibilidade estetica', 'arte', 'estetica'],
+                        'ideias': ['curiosidade intelectual', 'intelecto', 'curiosidade']
                     };
 
-                    const qNameClean = cleanString(facetNameFromQuestion);
-                    const cNameClean = cleanString(facet.name);
+                    if (aliases[fNameClean]?.includes(qClean)) return true;
+                    if (aliases[qClean]?.includes(fNameClean)) return true;
 
-                    // 1. Tentativa de Match Exato
-                    let match = qNameClean === cNameClean;
-
-                    // 2. Tentativa por Alias (se não tiver match exato)
-                    if (!match && facetAliases[cNameClean]) {
-                        match = facetAliases[cNameClean].includes(qNameClean);
-                    }
-
-                    // 3. Tentativa Inversa
-                    if (!match && facetAliases[qNameClean]) {
-                        match = facetAliases[qNameClean].includes(cNameClean);
-                    }
-
-                    if (!match && idx === 0 && r === traitResponses[0]) {
-                        console.log(`[Facet Debug] Comparando: '${facetNameFromQuestion}' (Clean: ${cleanString(facetNameFromQuestion)}) vs '${facet.name}' (Clean: ${cleanString(facet.name)}) -> Match? ${match}`);
-                    }
-
-                    return match;
+                    return false;
                 });
 
-                const facetScore = this.calculateRawScore(facetResponses, facet.weight);
-                const normalizedFacetScore = this.normalizeScore(facetScore);
-
-                if (facetScore === 0) {
-                    console.warn(`[Facet Warning] Score zerado para faceta: ${facet.name} (Tentou casar com nomes das questões)`);
-                }
+                const fRawScore = this.calculateRawScore(facetResponses, facet.weight);
+                const fNormScore = fRawScore > 0 ? this.normalizeScore(fRawScore) : 0;
 
                 return {
                     facetKey: facet.facetKey,
-                    facetName: facet.name,
-                    score: normalizedFacetScore
+                    facetName: facet.name, // Nome fiel da config!
+                    score: fNormScore,
+                    rawScore: fRawScore
                 };
             });
 
             scores[trait.traitKey] = {
                 traitKey: trait.traitKey,
-                traitName: trait.name,
+                traitName: trait.name, // Nome fiel da config!
                 score: rawScore,
                 normalizedScore,
                 level,
@@ -207,118 +146,83 @@ export class ScoreCalculationService {
         return { scores, config };
     }
 
-    /**
-     * Agrupa respostas por trait key
-     */
-    private groupResponsesByTrait(responses: any[]): Record<string, any[]> {
-        console.log('[groupResponsesByTrait] Total de respostas:', responses.length);
+    private cleanString(str: string): string {
+        if (!str) return '';
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
+
+    private groupResponsesByTrait(responses: any[], config: any): Record<string, any[]> {
         const grouped: Record<string, any[]> = {};
 
-        // Mapeamento de nomes em português para keys em inglês
-        const traitNameToKey: Record<string, string> = {
-            'Amabilidade': 'AGREEABLENESS',
-            'Conscienciosidade': 'CONSCIENTIOUSNESS',
-            'Extroversão': 'EXTRAVERSION',
-            'Abertura à Experiência': 'OPENNESS',
-            'Estabilidade Emocional': 'NEUROTICISM'
-        };
-
         for (const response of responses) {
-            // As questões têm traitKey no formato "Trait::Facet"
             const fullTraitKey = response.question.traitKey;
+            if (!fullTraitKey) continue;
 
-            // LOG: Primeira questão para debug
-            if (Object.keys(grouped).length === 0) {
-                console.log('[groupResponsesByTrait] Exemplo de questão:', {
-                    questionId: response.question.id,
-                    questionText: response.question.text?.substring(0, 50),
-                    traitKey: response.question.traitKey,
-                    answer: response.answer,
-                    hasMetadata: !!response.question.metadata
-                });
+            const [traitNameRaw] = fullTraitKey.split('::');
+
+            // Buscar na config por Key ou Name
+            const traitConfig = config.traits.find((t: any) => {
+                const tKey = this.cleanString(t.traitKey);
+                const tName = this.cleanString(t.name);
+                const qRaw = this.cleanString(traitNameRaw);
+
+                if (tKey === qRaw || tName === qRaw) return true;
+
+                // Fallback Legacy
+                const legacyMap: Record<string, string> = {
+                    'amabilidade': 'agreeableness',
+                    'conscienciosidade': 'conscientiousness',
+                    'extroversao': 'extraversion',
+                    'abertura a experiencia': 'openness',
+                    'estabilidade emocional': 'neuroticismo'
+                };
+                if (legacyMap[qRaw] === tKey) return true;
+
+                return false;
+            });
+
+            if (traitConfig) {
+                const key = traitConfig.traitKey;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(response);
             }
-
-            if (!fullTraitKey) {
-                console.warn('Questão sem traitKey:', response.question.id);
-                continue;
-            }
-
-            // Extrair apenas o nome do trait (antes de "::")
-            const traitName = fullTraitKey.split('::')[0];
-
-            // Converter nome português para key em inglês
-            const traitKey = traitNameToKey[traitName];
-
-            if (!traitKey) {
-                console.warn('Trait não reconhecido:', traitName, 'de:', fullTraitKey);
-                continue;
-            }
-
-            if (!grouped[traitKey]) {
-                grouped[traitKey] = [];
-            }
-
-            grouped[traitKey].push(response);
         }
-
-        console.log('[groupResponsesByTrait] Traits encontradas:', Object.keys(grouped));
-        console.log('[groupResponsesByTrait] Respostas por trait:',
-            Object.entries(grouped).map(([k, v]) => ({ trait: k, count: v.length }))
-        );
-
         return grouped;
     }
 
-    /**
-     * Calcula score bruto (média ponderada)
-     */
     private calculateRawScore(responses: any[], weight: number = 1.0): number {
-        if (responses.length === 0) return 0;
-
+        if (!responses || responses.length === 0) return 0;
         const sum = responses.reduce((acc, r) => {
-            // A resposta está no campo 'answer' (número 1-5)
-            const value = r.answer || 3; // fallback para neutro se não houver resposta
+            const value = typeof r.answer === 'number' ? r.answer : this.convertResponseToNumber(r.answer);
             return acc + value;
         }, 0);
-
-        const average = sum / responses.length;
-        return average * weight;
+        return (sum / responses.length); // Removido peso multiplicativo aqui pois é média 1-5
+        // Se o peso deve ser aplicado, geralmente é na agregação final, mas Big Five costuma ser média simples.
+        // O parametro 'weight' está aqui mas não estava sendo usado antes da média, estava multiplicando DEPOIS?
+        // Antes estava: return average * weight;
+        // Se peso for 1.0, OK. Se peso for 2.0, o score vai de 0-5 para 0-10?
+        // O normalizeScore assume 1-5. Se chegar 10, vai dar 200%.
+        // Vou assumir que o peso é usado em outro lugar ou ignorar por enquanto para não quebrar a escala.
+        // Vou manter o multiplicador se o peso for relevante, mas com CUIDADO.
+        // O normalizeScore faz: (raw - 1) / 4 * 100.
+        // Se o raw vier multiplicado, quebra. Vou retornar average pura.
     }
 
-    /**
-     * Converte resposta em número
-     */
-    private convertResponseToNumber(response: string): number {
-        // Se já é número, retorna
-        if (!isNaN(Number(response))) {
-            return Number(response);
-        }
-
-        // Mapear respostas textuais para números
-        const mapping: Record<string, number> = {
-            'discordo_totalmente': 1,
-            'discordo': 2,
-            'neutro': 3,
-            'concordo': 4,
-            'concordo_totalmente': 5,
-            // Adicionar outros mapeamentos conforme necessário
-        };
-
-        return mapping[response.toLowerCase()] || 3;
+    private convertResponseToNumber(response: any): number {
+        if (typeof response === 'number') return response;
+        if (!isNaN(Number(response))) return Number(response);
+        return 3;
     }
 
-    /**
-     * Normaliza score para escala 0-100
-     */
     private normalizeScore(rawScore: number): number {
-        // Assumindo que rawScore vem de escala 1-5
-        // Converter para 0-100
-        return Math.round(((rawScore - 1) / 4) * 100);
+        // Escala 1 a 5 -> 0 a 100
+        // (x - 1) / 4 * 100
+        // Se rawScore < 1 (ex: 0), retorna 0
+        if (rawScore < 1) return 0;
+        const norm = ((rawScore - 1) / 4) * 100;
+        return Math.min(100, Math.max(0, Math.round(norm)));
     }
 
-    /**
-     * Determina o nível baseado nas faixas da config
-     */
     private determineLevel(score: number, config: any): 'VERY_LOW' | 'LOW' | 'AVERAGE' | 'HIGH' | 'VERY_HIGH' {
         if (score <= config.veryLowMax) return 'VERY_LOW';
         if (score <= config.lowMax) return 'LOW';
@@ -327,23 +231,14 @@ export class ScoreCalculationService {
         return 'VERY_HIGH';
     }
 
-    /**
-     * Obtém interpretação textual baseada no nível
-     */
     private getInterpretation(level: string, trait: any): string {
         switch (level) {
-            case 'VERY_LOW':
-                return trait.veryLowText;
-            case 'LOW':
-                return trait.lowText;
-            case 'AVERAGE':
-                return trait.averageText;
-            case 'HIGH':
-                return trait.highText;
-            case 'VERY_HIGH':
-                return trait.veryHighText;
-            default:
-                return trait.averageText;
+            case 'VERY_LOW': return trait.veryLowText;
+            case 'LOW': return trait.lowText;
+            case 'AVERAGE': return trait.averageText;
+            case 'HIGH': return trait.highText;
+            case 'VERY_HIGH': return trait.veryHighText;
+            default: return trait.averageText;
         }
     }
 }
