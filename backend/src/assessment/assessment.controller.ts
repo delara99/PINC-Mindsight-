@@ -1156,14 +1156,16 @@ export class AssessmentController {
             throw new ForbiddenException('Apenas administradores podem corrigir templates');
         }
 
-        // Buscar template Big Five
+        // Buscar template Big Five (primeiro do tipo BIG_FIVE encontrado)
         const template = await this.prisma.assessmentModel.findFirst({
             where: {
-                type: 'BIG_FIVE',
-                isTemplate: true
+                type: 'BIG_FIVE'
             },
             include: {
                 questions: true
+            },
+            orderBy: {
+                createdAt: 'asc' // Pega o mais antigo (geralmente o template original)
             }
         });
 
