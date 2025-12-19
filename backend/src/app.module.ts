@@ -14,6 +14,7 @@ import { CrossProfileModule } from './reports/cross-profile/cross-profile.module
 import { CouponsModule } from './coupons/coupons.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MigrationModule } from './migration/migration.module';
 
 @Module({
     imports: [
@@ -29,7 +30,8 @@ import { NotificationsModule } from './notifications/notifications.module';
         CrossProfileModule,
         CouponsModule,
         FeedbackModule,
-        NotificationsModule
+        NotificationsModule,
+        MigrationModule
     ],
     controllers: [],
     providers: [],
