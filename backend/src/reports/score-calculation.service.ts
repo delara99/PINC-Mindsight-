@@ -100,15 +100,39 @@ export class ScoreCalculationService {
             const interpretation = this.getInterpretation(level, trait);
 
             // Calcular scores de facetas
-            const facets = trait.facets.map(facet => {
-                const facetResponses = traitResponses.filter(r =>
-                    r.question.metadata && JSON.parse(r.question.metadata as string).facet === facet.facetKey
-                );
+            const facets = trait.facets.map((facet, idx) => {
+                // Filtrar respostas que correspondem a esta faceta
+                // A traitKey da questão vem como "Trait::Facet" (ex: "Amabilidade::Modéstia")
+                // OU verificar se temos mapeamento de nome da faceta
+                const facetResponses = traitResponses.filter(r => {
+                    if (!r.question.traitKey) return false;
+
+                    const parts = r.question.traitKey.split('::');
+                    if (parts.length < 2) return false;
+
+                    const facetNameFromQuestion = parts[1].trim();
+
+                    // Comparar nome da faceta da questão com nome da faceta da config
+                    const match = facetNameFromQuestion === facet.name;
+
+                    if (!match && idx === 0 && r === traitResponses[0]) {
+                        console.log(`[Facet Debug] Comparando: '${facetNameFromQuestion}' (Questão) vs '${facet.name}' (Config) -> Match? ${match}`);
+                    }
+
+                    return match;
+                });
+
                 const facetScore = this.calculateRawScore(facetResponses, facet.weight);
+                const normalizedFacetScore = this.normalizeScore(facetScore);
+
+                if (facetScore === 0) {
+                    console.warn(`[Facet Warning] Score zerado para faceta: ${facet.name} (Tentou casar com nomes das questões)`);
+                }
+
                 return {
                     facetKey: facet.facetKey,
                     facetName: facet.name,
-                    score: this.normalizeScore(facetScore)
+                    score: normalizedFacetScore
                 };
             });
 
