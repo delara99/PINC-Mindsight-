@@ -57,6 +57,18 @@ export default function AssessmentDetailPage() {
         const search = normalize(key);
         const hasFacets = (t: any) => t.facets && t.facets.length > 0;
 
+        // MAPA DE COMPATIBILIDADE (PORTUGUÊS -> INGLÊS PADRÃO)
+        const legacyMap: Record<string, string> = {
+            'amabilidade': 'AGREEABLENESS',
+            'conscienciosidade': 'CONSCIENTIOUSNESS',
+            'extroversao': 'EXTRAVERSION',
+            'abertura': 'OPENNESS',
+            'abertura a experiencia': 'OPENNESS',
+            'estabilidade emocional': 'NEUROTICISM',
+            'neuroticismo': 'NEUROTICISM'
+        };
+        const mappedKey = legacyMap[search];
+
         // 1. Tenta encontrar pelo TraitKey Exato
         let trait = config.traits.find((t: any) => t.traitKey === key);
 
@@ -70,7 +82,14 @@ export default function AssessmentDetailPage() {
             if (betterTrait) return betterTrait;
         }
 
-        // 2. Se não achou exato, busca apromixada (Nome ou Key normalizado)
+        // 2. Se não achou exato, tenta via Mapa Legacy
+        if (!trait && mappedKey) {
+            trait = config.traits.find((t: any) =>
+                hasFacets(t) && normalize(t.traitKey) === normalize(mappedKey)
+            );
+        }
+
+        // 3. Se ainda não achou, busca apromixada (Nome ou Key normalizado)
         if (!trait) {
             // Prioridade: Quem tem facetas
             trait = config.traits.find((t: any) =>
