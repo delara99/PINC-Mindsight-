@@ -154,7 +154,7 @@ export class UserController {
                         userId: newUser.id,
                         assessmentId: assessmentModel.id,
                         configId: activeConfig.id,
-                        status: 'PENDING',
+                        status: 'IN_PROGRESS',
                         assignedAt: new Date(),
                     }
                 });

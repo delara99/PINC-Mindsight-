@@ -144,9 +144,9 @@ export class DebugReportsController {
     async healthCheck() {
         return {
             status: 'OK',
-            version: '2.1-auto-assign-fix',
+            version: '2.2-in-progress-fix',
             timestamp: new Date().toISOString(),
-            message: 'Debug active. Fixes: Scores, Facets UI, Auto-Assign.'
+            message: 'Debug active. Fixes: Scores, Facets UI, Auto-Assign (IN_PROGRESS).'
         };
     }
 
