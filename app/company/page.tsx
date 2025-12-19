@@ -104,6 +104,22 @@ export default function CompanyPage() {
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-6 py-24 lg:py-32">
+                    {/* Logo no Topo */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="mb-12"
+                    >
+                        <Link href="/" className="inline-block">
+                            <img
+                                src="/logo.png"
+                                alt="PINC Logo"
+                                className="h-16 w-auto hover:scale-105 transition-transform duration-300"
+                            />
+                        </Link>
+                    </motion.div>
+
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Left Content */}
                         <motion.div
