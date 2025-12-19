@@ -47,6 +47,44 @@ export default function AssessmentDetailPage() {
         }
     });
 
+    // Helper para normalizar string para comparação (ignora acentos e case)
+    const normalize = (s: string) => s?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    // Busca o traço na config
+    const getActiveTrait = (key: string) => {
+        if (!config?.traits) return null;
+        let trait = config.traits.find((t: any) => t.traitKey === key);
+        if (!trait) {
+            const search = normalize(key);
+            trait = config.traits.find((t: any) =>
+                normalize(t.traitKey) === search ||
+                normalize(t.name) === search
+            );
+        }
+        return trait;
+    };
+
+    const hasMissingFacets = config?.traits?.some((t: any) => !t.facets || t.facets.length === 0);
+
+    const fixFacets = useMutation({
+        mutationFn: async () => {
+            if (!config?.id) return;
+            const response = await fetch(`${API_URL}/api/v1/debug-reports/fix-facets/${config.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            return response.json();
+        },
+        onSuccess: (data) => {
+            alert('Configuração corrigida automaticamente! As facetas agora devem aparecer.');
+            queryClient.invalidateQueries({ queryKey: ['active-big-five-config'] });
+        }
+    });
+
+    const getFacetsForTrait = (traitKey: string) => {
+        const trait = getActiveTrait(traitKey);
+        return trait?.facets || [];
+    };
+
     const { data: assessment, isLoading } = useQuery<Assessment>({
         queryKey: ['assessment', params.id],
         queryFn: async () => {
@@ -129,49 +167,6 @@ export default function AssessmentDetailPage() {
         );
     }
 
-    // Helpers para renderização dos dropdowns
-
-    // Helper para normalizar string para comparação (ignora acentos e case)
-    const normalize = (s: string) => s?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
-    // Busca o traço na config, sendo resiliente a chaves antigas (ex: "Conscienciosidade" vs "CONSCIENTIOUSNESS")
-    const getActiveTrait = (key: string) => {
-        if (!config?.traits) return null;
-
-        // 1. Tenta match exato pelo traitKey (padrão novo)
-        let trait = config.traits.find((t: any) => t.traitKey === key);
-
-        // 2. Tenta match normalizado pelo traitKey ou Name (padrão antigo)
-        if (!trait) {
-            const search = normalize(key);
-            trait = config.traits.find((t: any) =>
-                normalize(t.traitKey) === search ||
-                normalize(t.name) === search
-            );
-        }
-        return trait;
-    };
-
-    const hasMissingFacets = config?.traits?.some((t: any) => !t.facets || t.facets.length === 0);
-
-    const fixFacets = useMutation({
-        mutationFn: async () => {
-            if (!config?.id) return;
-            const response = await fetch(`${API_URL}/api/v1/debug-reports/fix-facets/${config.id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            return response.json();
-        },
-        onSuccess: (data) => {
-            alert('Configuração corrigida automaticamente! As facetas agora devem aparecer.');
-            queryClient.invalidateQueries({ queryKey: ['active-big-five-config'] });
-        }
-    });
-
-    const getFacetsForTrait = (traitKey: string) => {
-        const trait = getActiveTrait(traitKey);
-        return trait?.facets || [];
-    };
 
     return (
         <div className="space-y-8 pb-20">
