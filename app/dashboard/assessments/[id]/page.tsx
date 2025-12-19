@@ -130,7 +130,44 @@ export default function AssessmentDetailPage() {
     }
 
     // Helpers para renderização dos dropdowns
-    const getActiveTrait = (key: string) => config?.traits?.find((t: any) => t.traitKey === key);
+
+    // Helper para normalizar string para comparação (ignora acentos e case)
+    const normalize = (s: string) => s?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    // Busca o traço na config, sendo resiliente a chaves antigas (ex: "Conscienciosidade" vs "CONSCIENTIOUSNESS")
+    const getActiveTrait = (key: string) => {
+        if (!config?.traits) return null;
+
+        // 1. Tenta match exato pelo traitKey (padrão novo)
+        let trait = config.traits.find((t: any) => t.traitKey === key);
+
+        // 2. Tenta match normalizado pelo traitKey ou Name (padrão antigo)
+        if (!trait) {
+            const search = normalize(key);
+            trait = config.traits.find((t: any) =>
+                normalize(t.traitKey) === search ||
+                normalize(t.name) === search
+            );
+        }
+        return trait;
+    };
+
+    const hasMissingFacets = config?.traits?.some((t: any) => !t.facets || t.facets.length === 0);
+
+    const fixFacets = useMutation({
+        mutationFn: async () => {
+            if (!config?.id) return;
+            const response = await fetch(`${API_URL}/api/v1/debug-reports/fix-facets/${config.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            return response.json();
+        },
+        onSuccess: (data) => {
+            alert('Configuração corrigida automaticamente! As facetas agora devem aparecer.');
+            queryClient.invalidateQueries({ queryKey: ['active-big-five-config'] });
+        }
+    });
+
     const getFacetsForTrait = (traitKey: string) => {
         const trait = getActiveTrait(traitKey);
         return trait?.facets || [];
@@ -166,6 +203,27 @@ export default function AssessmentDetailPage() {
                     </button>
                 )}
             </div>
+
+            {/* Banner de Correção Automática */}
+            {config && hasMissingFacets && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle className="text-amber-600 flex-shrink-0" size={24} />
+                        <div>
+                            <h3 className="font-bold text-amber-900">Configuração Incompleta Detectada</h3>
+                            <p className="text-sm text-amber-700">Alguns traços não possuem facetas cadastradas no banco de dados, o que bloqueia a seleção de subcategorias.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => fixFacets.mutate()}
+                        disabled={fixFacets.isPending}
+                        className="bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg font-bold text-sm border border-amber-300 transition-colors flex items-center gap-2 whitespace-nowrap"
+                    >
+                        {fixFacets.isPending ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle size={16} />}
+                        Corrigir Facetas Agora
+                    </button>
+                </div>
+            )}
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
                 <div>
