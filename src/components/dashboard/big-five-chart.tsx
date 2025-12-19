@@ -16,6 +16,22 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
         );
     }
 
+    // Função auxiliar para normalizar string (remover acentos e lowercase)
+    const normalizeKey = (key: string) => key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+    // Mapeamento normalizado para acesso rápido
+    const normalizedTraitsMap: Record<string, string> = {
+        [normalizeKey('Abertura à Experiência')]: 'Abertura à Experiência',
+        [normalizeKey('Extroversão')]: 'Extroversão',
+        [normalizeKey('Conscienciosidade')]: 'Conscienciosidade',
+        [normalizeKey('Amabilidade')]: 'Amabilidade',
+        [normalizeKey('Estabilidade Emocional')]: 'Estabilidade Emocional',
+        // Variações comuns
+        'abertura a experiencias': 'Abertura à Experiência',
+        'neuroticismo': 'Estabilidade Emocional',
+        'socializacao': 'Extroversão'
+    };
+
     // Organizar dados por traço
     const traitsData: Record<string, { facets: Array<{ name: string, score: number }>, color: string }> = {
         'Abertura à Experiência': { facets: [], color: '#10B981' }, // Verde
@@ -31,17 +47,23 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
     Object.entries(scores).forEach(([key, value]) => {
         const parts = key.split('::');
         if (parts.length === 2) {
-            const [traitName, facetName] = parts;
+            const [traitNameRaw, facetName] = parts;
             const score = typeof value === 'number' ? value : parseFloat(value as string) || 0;
 
-            if (traitsData[traitName]) {
-                traitsData[traitName].facets.push({ name: facetName, score });
+            const normalizedTrait = normalizeKey(traitNameRaw);
+            const officialTraitName = normalizedTraitsMap[normalizedTrait];
+
+            if (officialTraitName && traitsData[officialTraitName]) {
+                traitsData[officialTraitName].facets.push({ name: facetName, score });
                 allFacets.push({
-                    trait: traitName,
+                    trait: officialTraitName,
                     name: facetName,
                     score,
-                    color: traitsData[traitName].color
+                    color: traitsData[officialTraitName].color
                 });
+            } else {
+                // Tentar encontrar por aproximação se falhar
+                console.warn(`Traço não reconhecido: ${traitNameRaw} (Normalizado: ${normalizedTrait})`);
             }
         }
     });
