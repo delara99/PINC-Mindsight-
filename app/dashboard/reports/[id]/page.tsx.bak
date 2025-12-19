@@ -188,9 +188,9 @@ export default function AssessmentDetailsPage() {
                             ])
                         )}
                     />
-                ) : result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
+                ) : result?.scores ? (
                     <BigFiveChart scores={result.scores} />
-                ) : (<div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6"><p className="text-yellow-800 font-medium">⚠️ Aguardando cálculo de scores...</p></div>)
+                ) : null}
 
                 {/* Respostas Detalhadas - Melhorado */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
