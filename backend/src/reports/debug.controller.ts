@@ -151,6 +151,32 @@ export class DebugReportsController {
     }
 
     /**
+     * DEBUG: Listar questões e respostas de um assignment para ver os traitKeys brutos
+     * GET /api/v1/debug-reports/questions/:assignmentId
+     */
+    @Get('questions/:assignmentId')
+    async listQuestionsWithTraits(@Param('assignmentId') assignmentId: string) {
+        if (!this.prisma) return { error: 'Prisma not available' };
+
+        const responses = await this.prisma.assessmentResponse.findMany({
+            where: { assignmentId },
+            include: {
+                question: true
+            }
+        });
+
+        return {
+            total: responses.length,
+            samples: responses.map(r => ({
+                qId: r.questionId,
+                text: r.question.text,
+                traitKey: r.question.traitKey, // O QUE IMPORTA: Ver o nome exato aqui!
+                answer: r.answer
+            }))
+        };
+    }
+
+    /**
      * DEBUG: Listar todas as configs do banco (SYSTEM ADMIN ONLY)
      * GET /api/v1/debug-reports/configs
      */
