@@ -119,7 +119,13 @@ export class BigFiveConfigService {
                                 facetKey: facet.facetKey,
                                 name: facet.name,
                                 weight: facet.weight,
-                                description: facet.description
+                                description: facet.description,
+                                isActive: facet.isActive,
+                                veryLowText: facet.veryLowText,
+                                lowText: facet.lowText,
+                                averageText: facet.averageText,
+                                highText: facet.highText,
+                                veryHighText: facet.veryHighText
                             }
                         });
                     }
@@ -189,6 +195,7 @@ export class BigFiveConfigService {
                     name: trait.name,
                     icon: trait.icon,
                     weight: trait.weight,
+                    isActive: trait.isActive,
                     description: trait.description,
                     veryLowText: trait.veryLowText,
                     lowText: trait.lowText,
@@ -207,7 +214,13 @@ export class BigFiveConfigService {
                             facetKey: facet.facetKey,
                             name: facet.name,
                             weight: facet.weight,
-                            description: facet.description
+                            description: facet.description,
+                            isActive: facet.isActive,
+                            veryLowText: facet.veryLowText,
+                            lowText: facet.lowText,
+                            averageText: facet.averageText,
+                            highText: facet.highText,
+                            veryHighText: facet.veryHighText
                         }
                     });
                 }
@@ -274,6 +287,7 @@ export class BigFiveConfigService {
                 name: data.name,
                 icon: data.icon || 'circle',
                 weight: data.weight || 1.0,
+                isActive: data.isActive !== undefined ? data.isActive : true,
                 description: data.description || '',
                 veryLowText: data.veryLowText || '',
                 lowText: data.lowText || '',
@@ -294,7 +308,13 @@ export class BigFiveConfigService {
                 facetKey: data.facetKey,
                 name: data.name,
                 weight: data.weight || 1.0,
-                description: data.description || ''
+                isActive: data.isActive !== undefined ? data.isActive : true,
+                description: data.description || '',
+                veryLowText: data.veryLowText || '',
+                lowText: data.lowText || '',
+                averageText: data.averageText || '',
+                highText: data.highText || '',
+                veryHighText: data.veryHighText || ''
             }
         });
     }

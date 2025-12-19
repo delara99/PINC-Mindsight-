@@ -6,9 +6,11 @@ import { AssessmentTemplateService } from './assessment-template.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
 
+import { QuestionController } from './question.controller';
+
 @Module({
     imports: [PrismaModule],
-    controllers: [AssessmentController],
+    controllers: [AssessmentController, QuestionController],
     providers: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService, ScoreCalculationService],
     exports: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService]
 })

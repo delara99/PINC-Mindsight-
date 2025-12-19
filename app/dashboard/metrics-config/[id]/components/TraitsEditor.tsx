@@ -266,6 +266,20 @@ export default function TraitsEditor({ config, configId }: TraitsEditorProps) {
                                             />
                                         </div>
 
+                                        <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <input
+                                                type="checkbox"
+                                                id="trait-active"
+                                                checked={editingTrait.isActive !== false}
+                                                onChange={(e) => setEditingTrait({ ...editingTrait, isActive: e.target.checked })}
+                                                className="w-5 h-5 text-primary rounded focus:ring-primary"
+                                            />
+                                            <label htmlFor="trait-active" className="text-sm font-bold text-gray-700 cursor-pointer">
+                                                Traço Ativo?
+                                            </label>
+                                            <span className="text-xs text-gray-500 ml-2">Desativar remove este traço dos cálculos e relatórios.</span>
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Ícone</label>

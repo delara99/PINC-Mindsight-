@@ -11,8 +11,9 @@ import RangesEditor from './components/RangesEditor';
 import TraitsEditor from './components/TraitsEditor';
 import RecommendationsEditor from './components/RecommendationsEditor';
 import BrandingEditor from './components/BrandingEditor';
+import QuestionsEditor from './components/QuestionsEditor';
 
-type TabType = 'ranges' | 'traits' | 'recommendations' | 'branding';
+type TabType = 'ranges' | 'traits' | 'recommendations' | 'branding' | 'questions';
 
 export default function MetricsConfigEditorPage() {
     const { token } = useAuthStore();
@@ -78,6 +79,7 @@ export default function MetricsConfigEditorPage() {
 
     const tabs = [
         { id: 'ranges' as TabType, label: 'Interpretação de Scores', icon: TrendingUp },
+        { id: 'questions' as TabType, label: 'Parametrização Perguntas', icon: FileText },
         { id: 'traits' as TabType, label: 'Traços e Facetas', icon: Settings },
         { id: 'recommendations' as TabType, label: 'Recomendações', icon: Lightbulb },
         { id: 'branding' as TabType, label: 'Branding', icon: Palette }
@@ -216,6 +218,7 @@ export default function MetricsConfigEditorPage() {
                 {/* Tab Content */}
                 <div className="p-8">
                     {activeTab === 'ranges' && <RangesEditor config={config} configId={configId} />}
+                    {activeTab === 'questions' && <QuestionsEditor />}
                     {activeTab === 'traits' && <TraitsEditor config={config} configId={configId} />}
                     {activeTab === 'recommendations' && <RecommendationsEditor config={config} configId={configId} />}
                     {activeTab === 'branding' && <BrandingEditor config={config} configId={configId} />}

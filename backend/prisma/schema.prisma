@@ -143,6 +143,10 @@ model Question {
   traitKey          String?  // e.g., 'OPENNESS', 'EXTRAVERSION'
   weight            Float    @default(1.0)
   
+  isReverse         Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  facetKey          String?
+
   createdAt         DateTime @default(now())
   responses         AssessmentResponse[]
 
@@ -536,6 +540,13 @@ model BigFiveConfig {
   highMax        Int  @default(80)   // 61-80 = Alto
   // 81-100 = Muito Alto
   
+  // Labels das Faixas (Customizáveis)
+  veryLowLabel  String @default("Muito Baixo")
+  lowLabel      String @default("Baixo")
+  averageLabel  String @default("Médio")
+  highLabel     String @default("Alto")
+  veryHighLabel String @default("Muito Alto")
+
   // Branding do Relatório
   companyLogo     String?  @db.Text
   reportHeader    String?  @db.Text
@@ -560,6 +571,7 @@ model BigFiveTraitConfig {
   name       String
   icon       String
   weight     Float   @default(1.0)
+  isActive   Boolean @default(true)
   
   description  String @db.Text
   veryLowText  String @db.Text
@@ -581,7 +593,15 @@ model BigFiveFacetConfig {
   facetKey    String
   name        String
   weight      Float   @default(1.0)
+  isActive    Boolean @default(true)
   description String  @db.Text
+  
+  // Textos interpretativos da faceta (Opcionais, mas solicitados)
+  veryLowText  String? @db.Text
+  lowText      String? @db.Text
+  averageText  String? @db.Text
+  highText     String? @db.Text
+  veryHighText String? @db.Text
   
   trait BigFiveTraitConfig @relation(fields: [traitId], references: [id], onDelete: Cascade)
   

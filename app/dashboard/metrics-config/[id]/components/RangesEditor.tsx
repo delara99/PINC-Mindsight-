@@ -15,19 +15,25 @@ export default function RangesEditor({ config, configId }: RangesEditorProps) {
     const queryClient = useQueryClient();
 
     const [ranges, setRanges] = useState({
-        veryLowMax: config?.veryLowMax || 20,
-        lowMax: config?.lowMax || 40,
-        averageMax: config?.averageMax || 60,
-        highMax: config?.highMax || 80
+        veryLowMax: 20, veryLowLabel: 'Muito Baixo',
+        lowMax: 40, lowLabel: 'Baixo',
+        averageMax: 60, averageLabel: 'Médio',
+        highMax: 80, highLabel: 'Alto',
+        veryHighLabel: 'Muito Alto'
     });
 
     useEffect(() => {
         if (config) {
             setRanges({
-                veryLowMax: config.veryLowMax,
-                lowMax: config.lowMax,
-                averageMax: config.averageMax,
-                highMax: config.highMax
+                veryLowMax: config.veryLowMax || 20,
+                veryLowLabel: config.veryLowLabel || 'Muito Baixo',
+                lowMax: config.lowMax || 40,
+                lowLabel: config.lowLabel || 'Baixo',
+                averageMax: config.averageMax || 60,
+                averageLabel: config.averageLabel || 'Médio',
+                highMax: config.highMax || 80,
+                highLabel: config.highLabel || 'Alto',
+                veryHighLabel: config.veryHighLabel || 'Muito Alto'
             });
         }
     }, [config]);
@@ -52,119 +58,91 @@ export default function RangesEditor({ config, configId }: RangesEditorProps) {
     });
 
     const handleSave = () => {
-        // Validação
         if (ranges.veryLowMax >= ranges.lowMax ||
             ranges.lowMax >= ranges.averageMax ||
             ranges.averageMax >= ranges.highMax) {
             alert('As faixas devem estar em ordem crescente!');
             return;
         }
-
         updateMutation.mutate(ranges);
     };
+
+    const renderRangeInput = (
+        label: string,
+        min: number,
+        valKey: 'veryLowMax' | 'lowMax' | 'averageMax' | 'highMax',
+        labelKey: 'veryLowLabel' | 'lowLabel' | 'averageLabel' | 'highLabel',
+        maxLimit: number,
+        desc: string,
+        bgClass: string
+    ) => (
+        <div className={`border border-gray-200 rounded-lg p-6 ${bgClass}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Limite Superior ({label})</label>
+                    <input
+                        type="number"
+                        value={ranges[valKey]}
+                        onChange={(e) => setRanges({ ...ranges, [valKey]: parseInt(e.target.value) })}
+                        min={min}
+                        max={maxLimit}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                    />
+                    <p className="text-sm text-gray-600 mt-2">{desc}</p>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rótulo da Faixa</label>
+                    <input
+                        type="text"
+                        value={ranges[labelKey]}
+                        onChange={(e) => setRanges({ ...ranges, [labelKey]: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                    />
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div>
             <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Faixas de Interpretação de Scores</h3>
-                <p className="text-gray-600">
-                    Defina os limites de cada faixa de interpretação. Scores de 0 até o valor máximo de "Muito Baixo", e assim sucessivamente.
-                </p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Faixas de Interpretação</h3>
+                <p className="text-gray-600">Defina os limites e os nomes de cada faixa.</p>
             </div>
 
             <div className="space-y-6">
-                {/* Very Low */}
-                <div className="border border-gray-200 rounded-lg p-6 bg-blue-50/50">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Muito Baixo (0 até)
-                    </label>
-                    <input
-                        type="number"
-                        value={ranges.veryLowMax}
-                        onChange={(e) => setRanges({ ...ranges, veryLowMax: parseInt(e.target.value) })}
-                        min="1"
-                        max="100"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                    <p className="text-sm text-gray-600 mt-2">
-                        Exemplo: Se definir 20, a faixa "Muito Baixo" será de 0 a 20
-                    </p>
-                </div>
+                {renderRangeInput('Muito Baixo', 1, 'veryLowMax', 'veryLowLabel', 100, `0 até ${ranges.veryLowMax}`, 'bg-blue-50/50')}
+                {renderRangeInput('Baixo', ranges.veryLowMax + 1, 'lowMax', 'lowLabel', 100, `${ranges.veryLowMax + 1} até ${ranges.lowMax}`, 'bg-blue-50/30')}
+                {renderRangeInput('Médio', ranges.lowMax + 1, 'averageMax', 'averageLabel', 100, `${ranges.lowMax + 1} até ${ranges.averageMax}`, 'bg-yellow-50/50')}
+                {renderRangeInput('Alto', ranges.averageMax + 1, 'highMax', 'highLabel', 99, `${ranges.averageMax + 1} até ${ranges.highMax}`, 'bg-green-50/50')}
 
-                {/* Low */}
-                <div className="border border-gray-200 rounded-lg p-6 bg-blue-50/30">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Baixo ({ranges.veryLowMax + 1} até)
-                    </label>
-                    <input
-                        type="number"
-                        value={ranges.lowMax}
-                        onChange={(e) => setRanges({ ...ranges, lowMax: parseInt(e.target.value) })}
-                        min={ranges.veryLowMax + 1}
-                        max="100"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                    <p className="text-sm text-gray-600 mt-2">
-                        Exemplo: Se definir 40, a faixa "Baixo" será de {ranges.veryLowMax + 1} a 40
-                    </p>
-                </div>
-
-                {/* Average */}
-                <div className="border border-gray-200 rounded-lg p-6 bg-yellow-50/50">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Médio ({ranges.lowMax + 1} até)
-                    </label>
-                    <input
-                        type="number"
-                        value={ranges.averageMax}
-                        onChange={(e) => setRanges({ ...ranges, averageMax: parseInt(e.target.value) })}
-                        min={ranges.lowMax + 1}
-                        max="100"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                    <p className="text-sm text-gray-600 mt-2">
-                        Exemplo: Se definir 60, a faixa "Médio" será de {ranges.lowMax + 1} a 60
-                    </p>
-                </div>
-
-                {/* High */}
-                <div className="border border-gray-200 rounded-lg p-6 bg-green-50/50">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Alto ({ranges.averageMax + 1} até)
-                    </label>
-                    <input
-                        type="number"
-                        value={ranges.highMax}
-                        onChange={(e) => setRanges({ ...ranges, highMax: parseInt(e.target.value) })}
-                        min={ranges.averageMax + 1}
-                        max="99"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                    <p className="text-sm text-gray-600 mt-2">
-                        Exemplo: Se definir 80, a faixa "Alto" será de {ranges.averageMax + 1} a 80
-                    </p>
-                </div>
-
-                {/* Very High - Automatic */}
+                {/* Very High */}
                 <div className="border border-gray-200 rounded-lg p-6 bg-green-50/80">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Muito Alto (automático)
-                    </label>
-                    <div className="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-medium">
-                        {ranges.highMax + 1} até 100
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Muito Alto (Automático)</label>
+                            <div className="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-medium">
+                                {ranges.highMax + 1} até 100
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Rótulo da Faixa</label>
+                            <input
+                                type="text"
+                                value={ranges.veryHighLabel}
+                                onChange={(e) => setRanges({ ...ranges, veryHighLabel: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            />
+                        </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">
-                        Esta faixa é calculada automaticamente a partir do limite superior da faixa "Alto"
-                    </p>
                 </div>
             </div>
 
-            {/* Save Button */}
             <div className="mt-8 flex justify-end">
                 <button
                     onClick={handleSave}
                     disabled={updateMutation.isPending}
-                    className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg flex items-center gap-2"
                 >
                     <Save size={20} />
                     {updateMutation.isPending ? 'Salvando...' : 'Salvar Faixas'}
