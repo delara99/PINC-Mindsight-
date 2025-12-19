@@ -4,6 +4,7 @@ import { AssessmentService } from './assessment.service';
 import { BigFiveCalculatorService } from './big-five-calculator.service';
 import { AssessmentTemplateService } from './assessment-template.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ScoreCalculationService } from '../reports/score-calculation.service';
 
 @Controller('assessments')
 @UseGuards(AuthGuard('jwt'))
@@ -12,7 +13,8 @@ export class AssessmentController {
         private assessmentService: AssessmentService,
         private bigFiveCalculator: BigFiveCalculatorService,
         private templateService: AssessmentTemplateService,
-        private prisma: PrismaService
+        private prisma: PrismaService,
+        private scoreCalculation: ScoreCalculationService
     ) { }
 
     @Get('my-assignments-list')
@@ -85,8 +87,9 @@ export class AssessmentController {
 
         if (isAssignee) {
             console.log('[DEBUG] ✅ User IS the assignee - GRANTING ACCESS');
-            // Usuário sempre pode ver seu próprio assignment
-            return assignment;
+            // Calcular scores reais antes de retornar
+            const calculatedScores = await this.calculateRealScores(id);
+            return { ...assignment, calculatedScores };
         }
 
         // Se não for o dono, verificar outras permissões
@@ -94,7 +97,9 @@ export class AssessmentController {
         const isSuperAdmin = user.role === 'SUPER_ADMIN';
 
         if (isOwnerAdmin || isSuperAdmin) {
-            return assignment;
+            // Calcular scores reais antes de retornar
+            const calculatedScores = await this.calculateRealScores(id);
+            return { ...assignment, calculatedScores };
         }
 
         // Verificar se há conexão ativa com permissão de compartilhar inventários
@@ -116,12 +121,41 @@ export class AssessmentController {
                 s => s.userId === assignment.userId
             );
             if (ownerSettings?.shareInventories === true) {
-                return assignment;
+                // Calcular scores reais antes de retornar
+                const calculatedScores = await this.calculateRealScores(id);
+                return { ...assignment, calculatedScores };
             }
         }
 
         // Se chegou aqui, não tem permissão
         throw new ForbiddenException('Acesso negado');
+    }
+
+    /**
+     * Helper: Calcular scores reais usando a nova lógica
+     */
+    private async calculateRealScores(assignmentId: string) {
+        try {
+            const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
+            return {
+                scores: Object.values(scores).map(score => ({
+                    key: score.traitKey,
+                    name: score.traitName,
+                    score: score.normalizedScore,
+                    rawScore: score.score,
+                    level: score.level,
+                    interpretation: score.interpretation,
+                    facets: score.facets
+                })),
+                config: {
+                    id: config.id,
+                    name: config.name
+                }
+            };
+        } catch (error) {
+            console.error('Erro ao calcular scores:', error);
+            return null;
+        }
     }
 
     /**
