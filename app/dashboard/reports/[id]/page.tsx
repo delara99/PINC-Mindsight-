@@ -152,8 +152,8 @@ export default function AssessmentDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Detalhes por Traço - Usando dados calculados pela API */}
-                    {assignment.calculatedScores && assignment.calculatedScores.scores && assignment.calculatedScores.scores.length > 0 && (
+                    {/* Detalhes por Traço - Usando dados calculados pela API com fallback */}
+                    {assignment.calculatedScores?.scores?.length > 0 ? (
                         <div className="mt-6 space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
                             {assignment.calculatedScores.scores.map((trait: any, index: number) => (
@@ -169,11 +169,17 @@ export default function AssessmentDetailsPage() {
                                 />
                             ))}
                         </div>
-                    )}
+                    ) : result?.scores ? (
+                        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-sm text-yellow-800">
+                                ⚠️ Usando dados de fallback. Os scores podem não estar atualizados.
+                            </p>
+                        </div>
+                    ) : null}
                 </div>
 
-                {/* Gráfico Radar - Usando dados calculados */}
-                {assignment.calculatedScores && assignment.calculatedScores.scores && (
+                {/* Gráfico Radar - Usando dados calculados com fallback */}
+                {assignment.calculatedScores?.scores?.length > 0 ? (
                     <BigFiveChart
                         scores={Object.fromEntries(
                             assignment.calculatedScores.scores.map((trait: any) => [
@@ -182,7 +188,9 @@ export default function AssessmentDetailsPage() {
                             ])
                         )}
                     />
-                )}
+                ) : result?.scores ? (
+                    <BigFiveChart scores={result.scores} />
+                ) : null}
 
                 {/* Respostas Detalhadas - Melhorado */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
