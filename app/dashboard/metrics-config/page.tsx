@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/store/auth-store';
 import { useRouter } from 'next/navigation';
-import { Settings, Plus, Check, Edit, TrendingUp } from 'lucide-react';
+import { Settings, Plus, Check, Edit, TrendingUp, Loader2, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { API_URL } from '@/src/config/api';
 
@@ -53,6 +53,25 @@ export default function MetricsConfigPage() {
         }
     });
 
+    const fixAllFacetsMutation = useMutation({
+        mutationFn: async () => {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/fix-all-facets`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Erro ao corrigir facetas');
+            }
+            return response.json();
+        },
+        onSuccess: (data) => {
+            alert(`✅ FACETAS CORRIGIDAS!\n\n${data.message}\n\nRecarregue qualquer inventário aberto para ver as mudanças.`);
+            queryClient.invalidateQueries({ queryKey: ['big-five-configs'] });
+        },
+        onError: (err: any) => alert('❌ ' + err.message)
+    });
+
     const activeConfig = configs?.find(c => c.isActive);
 
     if (isLoading) {
@@ -67,9 +86,19 @@ export default function MetricsConfigPage() {
         <div className="max-w-7xl mx-auto p-8">
             {/* Header */}
             <div className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                    <TrendingUp className="text-primary" size={32} />
-                    <h1 className="text-3xl font-bold text-gray-900">Métricas de Avaliação Big Five</h1>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                        <TrendingUp className="text-primary" size={32} />
+                        <h1 className="text-3xl font-bold text-gray-900">Métricas de Avaliação Big Five</h1>
+                    </div>
+                    <button
+                        onClick={() => fixAllFacetsMutation.mutate()}
+                        disabled={fixAllFacetsMutation.isPending}
+                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold text-sm shadow-lg shadow-red-600/30 transition-all flex items-center gap-2 animate-pulse"
+                    >
+                        {fixAllFacetsMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Wrench size={20} />}
+                        CORRIGIR FACETAS AGORA
+                    </button>
                 </div>
                 <p className="text-gray-600">
                     Configure pesos, interpretações, descrições e recomendações do sistema Big Five
