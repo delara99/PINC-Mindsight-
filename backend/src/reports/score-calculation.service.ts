@@ -115,8 +115,60 @@ export class ScoreCalculationService {
                     // Helper para normalizar strings (remover acentos e lowercase)
                     const cleanString = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-                    // Comparar nome da faceta da questão com nome da faceta da config
-                    const match = cleanString(facetNameFromQuestion) === cleanString(facet.name);
+                    // Mapa de Aliases (Perguntas -> Config)
+                    const facetAliases: Record<string, string[]> = {
+                        // Neuroticismo
+                        'ansiedade': ['controle de ansiedade', 'preocupacao'],
+                        'raiva': ['controle de humor', 'irritabilidade', 'hostilidade'],
+                        'autoconsciencia': ['confianca em si mesmo', 'timidez', 'autocritica'],
+                        'depressao': ['tristeza', 'desanimo'],
+                        'vulnerabilidade': ['resiliencia a criticas', 'gestao de estresse'],
+
+                        // Extroversão
+                        'gregarismo': ['sociabilidade', 'interacao social'],
+                        'assertividade': ['lideranca', 'dominancia'],
+                        'nivel de atividade': ['energia e atividade', 'ritmo'],
+                        'busca de emocoes': ['busca por emocoes positivas', 'aventura'],
+                        'emocoes positivas': ['otimismo', 'alegria'],
+
+                        // Abertura
+                        'imaginacao': ['criatividade', 'fantasia'],
+                        'interesses artisticos': ['sensibilidade estetica', 'arte'],
+                        'emotividade': ['sentimentos', 'consciencia emocional'],
+                        'ideias': ['curiosidade intelectual', 'intelecto'],
+                        'valores': ['abertura para mudancas', 'abertura cultural', 'liberalismo'],
+
+                        // Amabilidade
+                        'confianca': ['fe nos outros'],
+                        'moralidade': ['modestia', 'franqueza', 'retidao'],
+                        'altruismo': ['generosidade'],
+                        'cooperacao': ['condescendencia', 'acordo'],
+                        'modestia': ['humildade'],
+                        'sensibilidade': ['empatia', 'ternura'],
+
+                        // Conscienciosidade
+                        'autoeficacia': ['autodisciplina', 'competencia'],
+                        'organizacao': ['ordem', 'meticulosidade'],
+                        'senso de dever': ['responsabilidade', 'dever'],
+                        'esforco por realizacao': ['orientacao para objetivos', 'ambicao'],
+                        'autodisciplina': ['persistencia']
+                    };
+
+                    const qNameClean = cleanString(facetNameFromQuestion);
+                    const cNameClean = cleanString(facet.name);
+
+                    // 1. Tentativa de Match Exato
+                    let match = qNameClean === cNameClean;
+
+                    // 2. Tentativa por Alias (se não tiver match exato)
+                    if (!match && facetAliases[cNameClean]) {
+                        match = facetAliases[cNameClean].includes(qNameClean);
+                    }
+
+                    // 3. Tentativa Inversa
+                    if (!match && facetAliases[qNameClean]) {
+                        match = facetAliases[qNameClean].includes(cNameClean);
+                    }
 
                     if (!match && idx === 0 && r === traitResponses[0]) {
                         console.log(`[Facet Debug] Comparando: '${facetNameFromQuestion}' (Clean: ${cleanString(facetNameFromQuestion)}) vs '${facet.name}' (Clean: ${cleanString(facet.name)}) -> Match? ${match}`);
