@@ -132,4 +132,17 @@ export class DebugReportsController {
             };
         }
     }
+
+    /**
+     * Health check - Verificar se o código novo está deployado
+     */
+    @Get('health')
+    async healthCheck() {
+        return {
+            status: 'OK',
+            version: '2.0-scores-fix',
+            timestamp: new Date().toISOString(),
+            message: 'Debug controller está ativo com cálculo de scores'
+        };
+    }
 }
