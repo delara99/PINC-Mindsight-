@@ -172,6 +172,7 @@ model AssessmentAssignment {
   
   assessmentId String
   userId       String
+  configId     String?  // ID da configuração BigFive usada (se aplicável)
   status       String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
   assignedAt   DateTime @default(now())
   completedAt  DateTime?
@@ -182,6 +183,7 @@ model AssessmentAssignment {
 
   assessment AssessmentModel @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  config     BigFiveConfig?  @relation(fields: [configId], references: [id], onDelete: SetNull)
   responses  AssessmentResponse[]
   result     AssessmentResult?
   professionalFeedback ProfessionalFeedback[]
@@ -543,8 +545,9 @@ model BigFiveConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  traits   BigFiveTraitConfig[]
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  traits      BigFiveTraitConfig[]
+  assignments AssessmentAssignment[]
   
   @@map("bigfive_configs")
 }

@@ -113,7 +113,7 @@ export default function CompanyPage() {
                     >
                         <Link href="/" className="inline-block">
                             <img
-                                src="/logot.png"
+                                src="/logott.png"
                                 alt="PINC Logo"
                                 className="h-16 w-auto hover:scale-105 transition-transform duration-300"
                             />

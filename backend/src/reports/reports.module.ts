@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { InterpretationService } from './interpretation.service';
 import { PdfService } from './pdf.service';
+import { ScoreCalculationService } from './score-calculation.service';
 import { ReportsController } from './reports.controller';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -12,8 +13,9 @@ import { PrismaService } from '../prisma/prisma.service';
         AnalyticsService,
         InterpretationService,
         PdfService,
+        ScoreCalculationService,
         PrismaService
     ],
-    exports: [AnalyticsService, InterpretationService, PdfService]
+    exports: [AnalyticsService, InterpretationService, PdfService, ScoreCalculationService]
 })
 export class ReportsModule { }

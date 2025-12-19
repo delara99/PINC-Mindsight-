@@ -182,6 +182,18 @@ export class AssessmentController {
             throw new BadRequestException('Configuração de avaliação não encontrada no sistema.');
         }
 
+        // ✅ CORREÇÃO: Buscar configuração ATIVA do tenant
+        const activeConfig = await this.prisma.bigFiveConfig.findFirst({
+            where: {
+                tenantId: user.tenantId,
+                isActive: true
+            }
+        });
+
+        if (!activeConfig) {
+            throw new BadRequestException('Configuração Big Five não encontrada. Entre em contato com o administrador.');
+        }
+
         // Buscar dados do usuário para verificar créditos
         const userData = await this.prisma.user.findUnique({
             where: { id: user.userId },
@@ -208,7 +220,10 @@ export class AssessmentController {
                 if (existingPending.status === 'PENDING') {
                     return await this.prisma.assessmentAssignment.update({
                         where: { id: existingPending.id },
-                        data: { status: 'IN_PROGRESS' }
+                        data: {
+                            status: 'IN_PROGRESS',
+                            configId: activeConfig.id // ✅ Garantir que tem config
+                        }
                     });
                 }
                 return existingPending;
@@ -219,6 +234,7 @@ export class AssessmentController {
                 data: {
                     userId: user.userId,
                     assessmentId: assessmentModel.id,
+                    configId: activeConfig.id, // ✅ VINCULAR CONFIG
                     status: 'IN_PROGRESS',
                     assignedAt: new Date(),
                 }
@@ -245,6 +261,7 @@ export class AssessmentController {
             data: {
                 userId: user.userId,
                 assessmentId: assessmentModel.id,
+                configId: activeConfig.id, // ✅ VINCULAR CONFIG
                 status: 'PENDING', // PENDING = bloqueado até adicionar crédito
                 assignedAt: new Date(),
             }
