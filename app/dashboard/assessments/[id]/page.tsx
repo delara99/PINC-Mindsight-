@@ -142,7 +142,11 @@ export default function AssessmentDetailPage() {
     });
 
     const getFacetsForTrait = (traitKey: string) => {
+        console.log('🔍 getFacetsForTrait chamado com:', traitKey);
+        console.log('📦 Config disponível:', config);
         const trait = getActiveTrait(traitKey);
+        console.log('✅ Traço encontrado:', trait);
+        console.log('📋 Facetas do traço:', trait?.facets);
         return trait?.facets || [];
     };
 
