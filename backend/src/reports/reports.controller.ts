@@ -116,4 +116,120 @@ export class ReportsController {
 
         return new StreamableFile(pdfBuffer);
     }
+
+    /**
+     * DEBUG: Verificar dados do assignment
+     */
+    @Get('debug/:assignmentId')
+    async debugAssignment(
+        @Param('assignmentId') assignmentId: string,
+        @Request() req
+    ) {
+        // Buscar assignment completo
+        const assignment = await this.prisma.assessmentAssignment.findUnique({
+            where: { id: assignmentId },
+            include: {
+                responses: {
+                    include: {
+                        question: true
+                    }
+                },
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        tenantId: true
+                    }
+                },
+                assessment: true,
+                config: {
+                    include: {
+                        traits: {
+                            include: {
+                                facets: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!assignment) {
+            return { error: 'Assignment não encontrado' };
+        }
+
+        // Calcular scores
+        const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
+
+        return {
+            assignment: {
+                id: assignment.id,
+                userId: assignment.userId,
+                userName: assignment.user.name,
+                userEmail: assignment.user.email,
+                completedAt: assignment.completedAt,
+                configId: assignment.configId,
+                responsesCount: assignment.responses.length
+            },
+            config: {
+                id: config.id,
+                name: config.name,
+                isActive: config.isActive,
+                traitsCount: config.traits.length
+            },
+            scores: scores,
+            rawResponses: assignment.responses.map(r => ({
+                questionId: r.questionId,
+                questionText: r.question.text,
+                answer: r.answer,
+                traitKey: r.question.traitKey
+            }))
+        };
+    }
+
+    /**
+     * DEBUG: Buscar assignments por email do usuário
+     */
+    @Get('debug-user/:email')
+    async debugUserAssignments(
+        @Param('email') email: string
+    ) {
+        const user = await this.prisma.user.findFirst({
+            where: { email }
+        });
+
+        if (!user) {
+            return { error: 'Usuário não encontrado', email };
+        }
+
+        const assignments = await this.prisma.assessmentAssignment.findMany({
+            where: { userId: user.id },
+            include: {
+                assessment: true,
+                config: true
+            },
+            orderBy: {
+                completedAt: 'desc'
+            }
+        });
+
+        return {
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                tenantId: user.tenantId
+            },
+            assignmentsCount: assignments.length,
+            assignments: assignments.map(a => ({
+                id: a.id,
+                assessmentName: a.assessment.title,
+                completedAt: a.completedAt,
+                configId: a.configId,
+                configName: a.config?.name || 'SEM CONFIG',
+                hasConfig: !!a.configId
+            }))
+        };
+    }
 }
