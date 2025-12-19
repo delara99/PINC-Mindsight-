@@ -374,4 +374,90 @@ export class BigFiveConfigService {
             orderBy: { order: 'asc' }
         });
     }
+
+    /**
+     * Corrige facetas faltantes em todas as configurações do tenant
+     */
+    async fixAllFacets(tenantId: string) {
+        // Template de facetas padrão do Big Five
+        const standardFacets = {
+            'EXTRAVERSION': ['Cordialidade', 'Gregariedade', 'Assertividade', 'Atividade', 'Busca de sensações', 'Emoções positivas'],
+            'AGREEABLENESS': ['Confiança', 'Franqueza', 'Altruísmo', 'Complacência', 'Modéstia', 'Sensibilidade'],
+            'CONSCIENTIOUSNESS': ['Competência', 'Ordem', 'Senso de dever', 'Esforço por realizações', 'Autodisciplina', 'Ponderação'],
+            'NEUROTICISM': ['Ansiedade', 'Hostilidade', 'Depressão', 'Embaraço', 'Impulsividade', 'Vulnerabilidade'],
+            'OPENNESS': ['Fantasia', 'Estética', 'Sentimentos', 'Ações', 'Ideias', 'Valores']
+        };
+
+        // Buscar todas as configs do tenant
+        const configs = await this.prisma.bigFiveConfig.findMany({
+            where: { tenantId },
+            include: {
+                traits: {
+                    include: { facets: true }
+                }
+            }
+        });
+
+        const results = [];
+
+        for (const config of configs) {
+            const configResult = {
+                configId: config.id,
+                configName: config.name,
+                traitsFixed: []
+            };
+
+            for (const trait of config.traits) {
+                // Se já tem facetas, pula
+                if (trait.facets && trait.facets.length > 0) continue;
+
+                // Normalizar traitKey para match (ex: "CONSCIENTIOUSNESS" ou "Conscienciosidade")
+                const normalizedKey = trait.traitKey.toUpperCase();
+                let facetTemplate = standardFacets[normalizedKey];
+
+                // Tentar match parcial se não achou exato
+                if (!facetTemplate) {
+                    const keyMap = {
+                        'CONSCIENCIOSIDADE': 'CONSCIENTIOUSNESS',
+                        'AMABILIDADE': 'AGREEABLENESS',
+                        'EXTROVERSAO': 'EXTRAVERSION',
+                        'ABERTURA': 'OPENNESS',
+                        'NEUROTICISMO': 'NEUROTICISM',
+                        'ESTABILIDADE EMOCIONAL': 'NEUROTICISM'
+                    };
+                    const mappedKey = keyMap[normalizedKey];
+                    if (mappedKey) {
+                        facetTemplate = standardFacets[mappedKey];
+                    }
+                }
+
+                if (facetTemplate) {
+                    // Criar facetas
+                    for (let i = 0; i < facetTemplate.length; i++) {
+                        await this.prisma.bigFiveFacetConfig.create({
+                            data: {
+                                trait: { connect: { id: trait.id } },
+                                facetKey: `${trait.traitKey}_F${i + 1}`,
+                                name: facetTemplate[i],
+                                weight: 1.0,
+                                isActive: true,
+                                description: ''
+                            }
+                        });
+                    }
+                    configResult.traitsFixed.push(trait.name);
+                }
+            }
+
+            if (configResult.traitsFixed.length > 0) {
+                results.push(configResult);
+            }
+        }
+
+        return {
+            success: true,
+            message: `Correção concluída para ${configs.length} configuração(ões)`,
+            details: results
+        };
+    }
 }

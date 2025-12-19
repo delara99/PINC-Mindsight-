@@ -123,6 +123,24 @@ export default function AssessmentDetailPage() {
         }
     });
 
+    const fixAllFacets = useMutation({
+        mutationFn: async () => {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/fix-all-facets`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Falha ao corrigir configurações');
+            return response.json();
+        },
+        onSuccess: (data) => {
+            alert(`✅ Correção Definitiva Concluída!\n\n${data.message}\n\nTodas as configurações foram corrigidas.`);
+            queryClient.invalidateQueries({ queryKey: ['active-big-five-config'] });
+        },
+        onError: () => {
+            alert('❌ Erro ao corrigir as configurações. Verifique os logs.');
+        }
+    });
+
     const getFacetsForTrait = (traitKey: string) => {
         const trait = getActiveTrait(traitKey);
         return trait?.facets || [];
@@ -252,16 +270,27 @@ export default function AssessmentDetailPage() {
                             <p className="text-sm text-amber-700">Alguns traços não possuem facetas cadastradas no banco de dados, o que bloqueia a seleção de subcategorias.</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => fixFacets.mutate()}
-                        disabled={fixFacets.isPending}
-                        className="bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg font-bold text-sm border border-amber-300 transition-colors flex items-center gap-2 whitespace-nowrap"
-                    >
-                        {fixFacets.isPending ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle size={16} />}
-                        Corrigir Facetas Agora
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => fixFacets.mutate()}
+                            disabled={fixFacets.isPending}
+                            className="bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg font-bold text-sm border border-amber-300 transition-colors flex items-center gap-2 whitespace-nowrap"
+                        >
+                            {fixFacets.isPending ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle size={16} />}
+                            Corrigir Config Ativa
+                        </button>
+                        <button
+                            onClick={() => fixAllFacets.mutate()}
+                            disabled={fixAllFacets.isPending}
+                            className="bg-green-100 hover:bg-green-200 text-green-900 px-4 py-2 rounded-lg font-bold text-sm border border-green-300 transition-colors flex items-center gap-2 whitespace-nowrap"
+                        >
+                            {fixAllFacets.isPending ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle size={16} />}
+                            Corrigir TODAS (Definitivo)
+                        </button>
+                    </div>
                 </div>
             )}
+
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
                 <div>

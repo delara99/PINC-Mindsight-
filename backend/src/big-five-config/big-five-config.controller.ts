@@ -191,4 +191,18 @@ export class BigFiveConfigController {
 
         return this.configService.deleteRecommendation(id);
     }
+
+    /**
+     * Corrige facetas faltantes em TODAS as configurações do tenant
+     * POST /api/v1/big-five-config/fix-all-facets
+     */
+    @Post('fix-all-facets')
+    async fixAllFacets(@Request() req) {
+        // Apenas admins
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem corrigir configurações');
+        }
+
+        return this.configService.fixAllFacets(req.user.tenantId);
+    }
 }
