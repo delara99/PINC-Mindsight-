@@ -47,11 +47,21 @@ export default function AssessmentDetailPage() {
         }
     });
 
-    // Helper para normalizar string para comparação (ignora acentos e case)
-    const normalize = (s: string) => s?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    // Normaliza strings removendo acentos, case, espaços e caracteres especiais
+    const normalize = (str: string) => {
+        return str
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[()%]/g, '') // Remove parênteses e porcentagem
+            .trim();
+    };
 
     // Busca o traço na config
     const getActiveTrait = (key: string) => {
+        console.log('🔍 getFacetsForTrait chamado com:', key);
+        console.log('📦 Config disponível:', config);
+
         if (!config?.traits) return null;
 
         const search = normalize(key);
@@ -59,51 +69,51 @@ export default function AssessmentDetailPage() {
 
         // MAPA DE COMPATIBILIDADE (PORTUGUÊS -> INGLÊS PADRÃO)
         const legacyMap: Record<string, string> = {
-            'amabilidade': 'AGREEABLENESS',
-            'conscienciosidade': 'CONSCIENTIOUSNESS',
-            'extroversao': 'EXTRAVERSION',
-            'abertura': 'OPENNESS',
-            'abertura a experiencia': 'OPENNESS',
-            'estabilidade emocional': 'NEUROTICISM',
-            'neuroticismo': 'NEUROTICISM'
+            'amabilidade': 'agreeableness',
+            'conscienciosidade': 'conscientiousness',
+            'extroversao': 'extraversion',
+            'abertura': 'openness',
+            'abertura a experiencia': 'openness',
+            'estabilidade emocional': 'neuroticism',
+            'neuroticismo': 'neuroticism'
         };
-        const mappedKey = legacyMap[search];
+        const mappedKey = legacyMap[search] || search;
 
-        // 1. Tenta encontrar pelo TraitKey Exato
-        let trait = config.traits.find((t: any) => t.traitKey === key);
+        // 1. Tenta encontrar pelo TraitKey Exato (normalizado)
+        let trait = config.traits.find((t: any) => normalize(t.traitKey) === mappedKey);
 
-        // Se achou pelo Key Exato (ex: "Conscienciosidade"), mas ele NÃO tem facetas,
-        // tenta achar um "Irmão Rico" (Name match e com facetas)
+        // Se achou, mas é pobre (sem facetas), tenta achar irmão rico
         if (trait && !hasFacets(trait)) {
             const betterTrait = config.traits.find((t: any) =>
                 hasFacets(t) &&
                 (normalize(t.name) === normalize(trait.name))
             );
-            if (betterTrait) return betterTrait;
-        }
-
-        // 2. Se não achou exato, tenta via Mapa Legacy
-        if (!trait && mappedKey) {
-            trait = config.traits.find((t: any) =>
-                hasFacets(t) && normalize(t.traitKey) === normalize(mappedKey)
-            );
-        }
-
-        // 3. Se ainda não achou, busca apromixada (Nome ou Key normalizado)
-        if (!trait) {
-            // Prioridade: Quem tem facetas
-            trait = config.traits.find((t: any) =>
-                hasFacets(t) &&
-                (normalize(t.traitKey) === search || normalize(t.name) === search)
-            );
-
-            // Fallback: Quem não tem facetas
-            if (!trait) {
-                trait = config.traits.find((t: any) =>
-                    normalize(t.traitKey) === search || normalize(t.name) === search
-                );
+            if (betterTrait) {
+                console.log('✅ Traço encontrado (irmão rico):', betterTrait);
+                return betterTrait;
             }
         }
+
+        // 2. Se não achou exato, busca por nome normalizado
+        if (!trait) {
+            trait = config.traits.find((t: any) =>
+                hasFacets(t) && normalize(t.name) === mappedKey
+            );
+        }
+
+        // 3. Fallback final: busca parcial (contém)
+        if (!trait) {
+            trait = config.traits.find((t: any) =>
+                hasFacets(t) && (
+                    normalize(t.traitKey).includes(mappedKey) ||
+                    normalize(t.name).includes(mappedKey) ||
+                    mappedKey.includes(normalize(t.traitKey)) ||
+                    mappedKey.includes(normalize(t.name))
+                )
+            );
+        }
+
+        console.log('✅ Traço encontrado:', trait);
         return trait;
     };
 
