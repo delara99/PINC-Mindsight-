@@ -161,14 +161,19 @@ export default function AssessmentDetailsPage() {
                                     key={index}
                                     traitName={trait.name}
                                     overallScore={trait.score}
-                                    interpretation={trait.level}
+                                    interpretation={(({
+                                        'HIGH': 'Alto',
+                                        'AVERAGE': 'Médio',
+                                        'LOW': 'Baixo',
+                                        'VERY_HIGH': 'Muito Alto',
+                                        'VERY_LOW': 'Muito Baixo'
+                                    })[trait.level as string] || trait.level)}
                                     facets={trait.facets?.map((f: any) => ({
                                         facet: f.facetName,
-                                        normalizedScore: typeof f.score === 'number' ? f.score : 0,
-                                        // Converter score normalizado (0-100) para raw (0-5) para exibição correta
-                                        // O backend envia 'score' como normalizado
-                                        rawScore: f.rawScore !== undefined ? f.rawScore : ((typeof f.score === 'number' ? f.score : 0) / 20)
+                                        normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
+                                        rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
                                     })) || []}
+                                    defaultExpanded={true}
                                 />
                             ))}
                         </div>

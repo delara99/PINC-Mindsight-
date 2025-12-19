@@ -126,22 +126,24 @@ export class ScoreCalculationService {
 
                         // Extroversão
                         'gregarismo': ['sociabilidade', 'interacao social'],
-                        'assertividade': ['lideranca', 'dominancia'],
-                        'nivel de atividade': ['energia e atividade', 'ritmo'],
-                        'busca de emocoes': ['busca por emocoes positivas', 'aventura'],
-                        'emocoes positivas': ['otimismo', 'alegria'],
+                        'assertividade': ['lideranca', 'dominancia', 'firmeza'],
+                        'nivel de atividade': ['energia e atividade', 'ritmo', 'energia'],
+                        'busca de emocoes': ['busca por emocoes positivas', 'aventura', 'excitacao'],
+                        'emocoes positivas': ['otimismo', 'alegria', 'entusiasmo'],
+                        'amabilidade': ['acolhimento', 'afeto', 'calor', 'simpatia'], // Caso apareça em Extroversão (Warmth)
+                        'calor': ['amabilidade', 'afeto'],
 
                         // Abertura
                         'imaginacao': ['criatividade', 'fantasia'],
-                        'interesses artisticos': ['sensibilidade estetica', 'arte'],
-                        'emotividade': ['sentimentos', 'consciencia emocional'],
-                        'ideias': ['curiosidade intelectual', 'intelecto'],
+                        'interesses artisticos': ['sensibilidade estetica', 'arte', 'estetica'],
+                        'emotividade': ['sentimentos', 'consciencia emocional', 'emocao'],
+                        'ideias': ['curiosidade intelectual', 'intelecto', 'curiosidade'],
                         'valores': ['abertura para mudancas', 'abertura cultural', 'liberalismo'],
 
                         // Amabilidade
-                        'confianca': ['fe nos outros'],
-                        'moralidade': ['modestia', 'franqueza', 'retidao'],
-                        'altruismo': ['generosidade'],
+                        'confianca': ['fe nos outros', 'confiar'],
+                        'moralidade': ['modestia', 'franqueza', 'retidao', 'sinceridade'],
+                        'altruismo': ['generosidade', 'ajuda'],
                         'cooperacao': ['condescendencia', 'acordo'],
                         'modestia': ['humildade'],
                         'sensibilidade': ['empatia', 'ternura'],
