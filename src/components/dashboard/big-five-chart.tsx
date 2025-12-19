@@ -6,6 +6,16 @@ interface RadarChartProfessionalProps {
 
 export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    // Validação: verificar se scores existe e não está vazio
+    if (!scores || typeof scores !== 'object' || Object.keys(scores).length === 0) {
+        return (
+            <div className="w-full bg-yellow-50 border border-yellow-200 p-6 rounded-xl">
+                <p className="text-yellow-800 font-medium">⚠️ Dados insuficientes para gerar o gráfico radar.</p>
+            </div>
+        );
+    }
+
     // Organizar dados por traço
     const traitsData: Record<string, { facets: Array<{ name: string, score: number }>, color: string }> = {
         'Abertura à Experiência': { facets: [], color: '#10B981' }, // Verde
@@ -37,6 +47,16 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
     });
 
     const totalFacets = allFacets.length;
+
+    // Validação adicional: se nenhuma facet foi processada
+    if (totalFacets === 0) {
+        return (
+            <div className="w-full bg-yellow-50 border border-yellow-200 p-6 rounded-xl">
+                <p className="text-yellow-800 font-medium">⚠️ Nenhuma faceta encontrada nos dados.</p>
+            </div>
+        );
+    }
+
     // Ajustado para dar muito mais espaço lateral para os textos
     const centerX = 450;
     const centerY = 350;
