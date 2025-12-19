@@ -59,9 +59,6 @@ export default function AssessmentDetailPage() {
 
     // Busca o traço na config
     const getActiveTrait = (key: string) => {
-        console.log('🔍 getFacetsForTrait chamado com:', key);
-        console.log('📦 Config disponível:', config);
-
         if (!config?.traits) return null;
 
         const search = normalize(key);
@@ -88,10 +85,7 @@ export default function AssessmentDetailPage() {
                 hasFacets(t) &&
                 (normalize(t.name) === normalize(trait.name))
             );
-            if (betterTrait) {
-                console.log('✅ Traço encontrado (irmão rico):', betterTrait);
-                return betterTrait;
-            }
+            if (betterTrait) return betterTrait;
         }
 
         // 2. Se não achou exato, busca por nome normalizado
@@ -113,7 +107,6 @@ export default function AssessmentDetailPage() {
             );
         }
 
-        console.log('✅ Traço encontrado:', trait);
         return trait;
     };
 
@@ -152,11 +145,7 @@ export default function AssessmentDetailPage() {
     });
 
     const getFacetsForTrait = (traitKey: string) => {
-        console.log('🔍 getFacetsForTrait chamado com:', traitKey);
-        console.log('📦 Config disponível:', config);
         const trait = getActiveTrait(traitKey);
-        console.log('✅ Traço encontrado:', trait);
-        console.log('📋 Facetas do traço:', trait?.facets);
         return trait?.facets || [];
     };
 

@@ -9,8 +9,6 @@ export class BigFiveConfigService {
      * Busca configuração ativa do tenant
      */
     async getActiveConfig(tenantId: string) {
-        console.log('🔍 getActiveConfig chamado para tenantId:', tenantId);
-
         // Tentar buscar config ativa
         let config = await this.prisma.bigFiveConfig.findFirst({
             where: {
@@ -26,11 +24,8 @@ export class BigFiveConfigService {
             }
         });
 
-        console.log('✅ Config ativa encontrada:', config ? config.id : 'NENHUMA');
-
         // FALLBACK: Se não tiver config ativa, pega a primeira disponível
         if (!config) {
-            console.log('⚠️  Nenhuma config ativa! Buscando primeira disponível...');
             config = await this.prisma.bigFiveConfig.findFirst({
                 where: { tenantId },
                 include: {
@@ -41,14 +36,6 @@ export class BigFiveConfigService {
                     }
                 },
                 orderBy: { createdAt: 'desc' }
-            });
-            console.log('📦 Config fallback:', config ? config.id : 'NENHUMA');
-        }
-
-        if (config) {
-            console.log(`📋 Traços: ${config.traits?.length || 0}`);
-            config.traits?.forEach(t => {
-                console.log(`  - ${t.name}: ${t.facets?.length || 0} facetas`);
             });
         }
 

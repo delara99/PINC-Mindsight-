@@ -267,7 +267,12 @@ export class ScoreCalculationService {
 
     private cleanString(str: string): string {
         if (!str) return '';
-        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .replace(/[()%]/g, "") // Remove parênteses e porcentagem
+            .toLowerCase()
+            .trim();
     }
 
     private normalizeScore(rawScore: number): number {
