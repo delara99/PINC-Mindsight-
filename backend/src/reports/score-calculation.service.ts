@@ -133,22 +133,19 @@ export class ScoreCalculationService {
         const grouped: Record<string, any[]> = {};
 
         for (const response of responses) {
-            if (!response.question.metadata) continue;
+            // As questões têm traitKey diretamente, não em metadata
+            const traitKey = response.question.traitKey;
 
-            try {
-                const metadata = JSON.parse(response.question.metadata as string);
-                const traitKey = metadata.trait || metadata.dimension;
-
-                if (!traitKey) continue;
-
-                if (!grouped[traitKey]) {
-                    grouped[traitKey] = [];
-                }
-
-                grouped[traitKey].push(response);
-            } catch (e) {
-                console.error('Erro ao parsear metadata da questão:', e);
+            if (!traitKey) {
+                console.warn('Questão sem traitKey:', response.question.id);
+                continue;
             }
+
+            if (!grouped[traitKey]) {
+                grouped[traitKey] = [];
+            }
+
+            grouped[traitKey].push(response);
         }
 
         return grouped;
@@ -161,8 +158,8 @@ export class ScoreCalculationService {
         if (responses.length === 0) return 0;
 
         const sum = responses.reduce((acc, r) => {
-            // Converter resposta para valor numérico (1-5 tipicamente)
-            const value = this.convertResponseToNumber(r.response);
+            // A resposta está no campo 'answer' (número 1-5)
+            const value = r.answer || 3; // fallback para neutro se não houver resposta
             return acc + value;
         }, 0);
 
