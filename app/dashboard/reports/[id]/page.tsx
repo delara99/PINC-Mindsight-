@@ -178,15 +178,43 @@ export default function AssessmentDetailsPage() {
                     ) : null}
                 </div>
 
-                {/* Gráfico Radar - Usando dados calculados com fallback */}
+                {/* VISUALIZAÇÃO TEMPORÁRIA - Sem BigFiveChart para evitar crash */}
                 {assignment.calculatedScores?.scores?.length > 0 ? (
-                    <BigFiveChart
+                    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mt-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Scores Calculados</h3>
+                        <div className="space-y-3">
+                            {assignment.calculatedScores.scores.map((trait: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <span className="font-medium text-gray-900">{trait.name || 'N/A'}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-2xl font-bold text-primary">{trait.score || 0}</span>
+                                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                            {trait.level || 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : result?.scores ? (
+                    <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
+                        <p className="text-yellow-800 font-medium">⚠️ Calculando scores... Aguarde.</p>
+                    </div>
+                ) : (
+                    <div className="bg-red-50 border border-red-200 p-6 rounded-xl mt-6">
+                        <p className="text-red-800 font-medium">❌ Nenhum dado de score disponível.</p>
+                    </div>
+                )}
+
+                {/* BigFiveChart DESABILITADO TEMPORARIAMENTE
+                {assignment.calculatedScores?.scores?.length > 0 ? (
+                    <BigFiveChart 
                         scores={Object.fromEntries(
                             assignment.calculatedScores.scores.map((trait: any) => [
-                                trait.key,
-                                trait.score / 20 // Converter 0-100 para 0-5 para o gráfico
+                                trait.key, 
+                                trait.score / 20
                             ])
-                        )}
+                        )} 
                     />
                 ) : result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
                     <BigFiveChart scores={result.scores} />
@@ -195,6 +223,7 @@ export default function AssessmentDetailsPage() {
                         <p className="text-yellow-800 font-medium">⚠️ Aguardando cálculo de scores...</p>
                     </div>
                 )}
+                */}
 
                 {/* Respostas Detalhadas - Melhorado */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
