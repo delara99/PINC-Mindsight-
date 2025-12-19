@@ -123,6 +123,26 @@ export default function AssessmentsListPage() {
         onError: (err: any) => alert(err.message)
     });
 
+    // Mutation para corrigir template
+    const fixTemplateMutation = useMutation({
+        mutationFn: async () => {
+            const response = await fetch(`${API_URL}/api/v1/assessments/fix-template`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Erro ao corrigir template');
+            }
+            return response.json();
+        },
+        onSuccess: (data) => {
+            alert(`✅ Template Corrigido!\n\n${data.message}\n\nAgora você pode cloná-lo e ele virá com as chaves corretas.`);
+            queryClient.invalidateQueries({ queryKey: ['assessments'] });
+        },
+        onError: (err: any) => alert('❌ ' + err.message)
+    });
+
     const { data: clients } = useQuery<Client[]>({
         queryKey: ['clients'],
         queryFn: async () => {
@@ -218,12 +238,22 @@ export default function AssessmentsListPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Minhas Avaliações</h1>
                     <p className="text-gray-500 mt-1">Gerencie os questionários disponíveis para aplicação.</p>
                 </div>
-                <Link href="/dashboard/assessments/new">
-                    <button className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
-                        <Plus size={18} />
-                        Nova Avaliação
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => fixTemplateMutation.mutate()}
+                        disabled={fixTemplateMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-green-600/20 transition-all flex items-center gap-2"
+                    >
+                        {fixTemplateMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <BrainCircuit size={18} />}
+                        Corrigir Template
                     </button>
-                </Link>
+                    <Link href="/dashboard/assessments/new">
+                        <button className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+                            <Plus size={18} />
+                            Nova Avaliação
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             {isLoading ? (

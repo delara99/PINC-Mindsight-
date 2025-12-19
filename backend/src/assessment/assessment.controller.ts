@@ -1145,4 +1145,74 @@ export class AssessmentController {
             body.title
         );
     }
+
+    /**
+     * Normaliza os traitKeys do template Big Five para padrões consistentes
+     * POST /api/v1/assessments/fix-template
+     */
+    @Post('fix-template')
+    async fixTemplate(@Request() req) {
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem corrigir templates');
+        }
+
+        // Buscar template Big Five
+        const template = await this.prisma.assessmentModel.findFirst({
+            where: {
+                type: 'BIG_FIVE',
+                isTemplate: true
+            },
+            include: {
+                questions: true
+            }
+        });
+
+        if (!template) {
+            throw new BadRequestException('Template Big Five não encontrado');
+        }
+
+        // Mapa de normalização PT -> EN
+        const traitMap: Record<string, string> = {
+            'Amabilidade': 'AGREEABLENESS',
+            'Conscienciosidade': 'CONSCIENTIOUSNESS',
+            'Extroversão': 'EXTRAVERSION',
+            'Extroversao': 'EXTRAVERSION',
+            'Abertura': 'OPENNESS',
+            'Abertura a Experiência': 'OPENNESS',
+            'Abertura a Experiencia': 'OPENNESS',
+            'Neuroticismo': 'NEUROTICISM',
+            'Estabilidade Emocional': 'NEUROTICISM'
+        };
+
+        let updatedCount = 0;
+        const updates = [];
+
+        for (const question of template.questions) {
+            const currentKey = question.traitKey;
+            const normalizedKey = traitMap[currentKey];
+
+            if (normalizedKey && normalizedKey !== currentKey) {
+                await this.prisma.question.update({
+                    where: { id: question.id },
+                    data: { traitKey: normalizedKey }
+                });
+                updatedCount++;
+                updates.push({
+                    questionId: question.id,
+                    from: currentKey,
+                    to: normalizedKey
+                });
+            }
+        }
+
+        return {
+            success: true,
+            message: `Template corrigido! ${updatedCount} questões foram atualizadas.`,
+            templateId: template.id,
+            templateTitle: template.title,
+            totalQuestions: template.questions.length,
+            updatedQuestions: updatedCount,
+            details: updates.slice(0, 10) // Primeiras 10 para não sobrecarregar
+        };
+    }
 }
