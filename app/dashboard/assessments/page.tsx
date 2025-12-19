@@ -4,7 +4,7 @@ import { useAuthStore } from '@/src/store/auth-store';
 import Link from 'next/link';
 import Router from 'next/router';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader2, FileText, Calendar, Users, BrainCircuit, X, Copy, Edit, Trash2 } from 'lucide-react';
+import { Plus, Loader2, FileText, Calendar, Users, BrainCircuit, X, Copy, Edit, Trash2, Star } from 'lucide-react';
 import { useState } from 'react';
 import { API_URL } from '@/src/config/api';
 
@@ -19,6 +19,7 @@ interface Assessment {
     };
     isTemplate?: boolean;
     questionCount?: number;
+    isDefault?: boolean;
 }
 
 interface Client {
@@ -101,6 +102,25 @@ export default function AssessmentsListPage() {
             console.error('Erro ao deletar:', error);
             alert('Erro ao deletar avaliação: ' + (error.message || 'Erro desconhecido'));
         }
+    });
+
+    // Mutation para definir padrão
+    const setDefaultMutation = useMutation({
+        mutationFn: async (assessmentId: string) => {
+            const response = await fetch(`${API_URL}/api/v1/assessments/${assessmentId}/set-default`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Erro ao definir padrão');
+            }
+            return response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assessments'] });
+        },
+        onError: (err: any) => alert(err.message)
     });
 
     const { data: clients } = useQuery<Client[]>({
@@ -232,7 +252,7 @@ export default function AssessmentsListPage() {
                     {assessments?.map((assessment) => (
                         <div key={assessment.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
                                         {assessment.type === 'BIG_FIVE' ? 'Big Five' : assessment.type}
                                     </span>
@@ -240,6 +260,22 @@ export default function AssessmentsListPage() {
                                         <span className="bg-green-50 text-green-700 text-xs font-bold px-2 py-1 rounded uppercase">
                                             Template
                                         </span>
+                                    )}
+                                    {assessment.isDefault && (
+                                        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1 border border-amber-200">
+                                            <Star size={10} fill="currentColor" />
+                                            Padrão
+                                        </span>
+                                    )}
+                                    {!assessment.isDefault && !assessment.isTemplate && (
+                                        <button
+                                            onClick={() => setDefaultMutation.mutate(assessment.id)}
+                                            disabled={setDefaultMutation.isPending}
+                                            className="text-gray-300 hover:text-amber-500 transition-colors p-1 rounded-full hover:bg-amber-50"
+                                            title="Definir como Avaliação Padrão"
+                                        >
+                                            <Star size={16} />
+                                        </button>
                                     )}
                                 </div>
                                 {!assessment.isTemplate && (

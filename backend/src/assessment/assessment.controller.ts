@@ -220,10 +220,24 @@ export class AssessmentController {
     async initBigFive(@Request() req) {
         const user = req.user;
 
-        // Find Big Five Model
-        const assessmentModel = await this.prisma.assessmentModel.findFirst({
-            where: { type: 'BIG_FIVE' }
+        // Find Big Five Model (Prioritize Default)
+        let assessmentModel = await this.prisma.assessmentModel.findFirst({
+            where: { tenantId: user.tenantId, isDefault: true, type: 'BIG_FIVE' }
         });
+
+        if (!assessmentModel) {
+            // Fallback: qualquer um do tenant
+            assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+            });
+        }
+
+        if (!assessmentModel) {
+            // Fallback Final: qualquer Big Five do sistema (Template Global)
+            assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE' }
+            });
+        }
 
         if (!assessmentModel) {
             throw new BadRequestException('Configuração de avaliação não encontrada no sistema.');
@@ -551,6 +565,42 @@ export class AssessmentController {
         return newAssignment;
     }
 
+    @Put(':id/set-default')
+    @UseGuards(AuthGuard('jwt'))
+    async setDefault(@Param('id') id: string, @Request() req) {
+        const user = req.user;
+
+        // Permissão: Apenas Admins
+        if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem alterar o padrão.');
+        }
+
+        // Buscar avaliação e validar tenant
+        const assessment = await this.prisma.assessmentModel.findFirst({
+            where: { id, tenantId: user.tenantId }
+        });
+
+        if (!assessment) {
+            throw new BadRequestException('Avaliação não encontrada.');
+        }
+
+        // Transaction para garantir unicidade do Default
+        await this.prisma.$transaction([
+            // 1. Remove default de todas
+            this.prisma.assessmentModel.updateMany({
+                where: { tenantId: user.tenantId },
+                data: { isDefault: false }
+            }),
+            // 2. Define esta como default
+            this.prisma.assessmentModel.update({
+                where: { id },
+                data: { isDefault: true }
+            })
+        ]);
+
+        return { success: true, message: 'Avaliação definida como padrão com sucesso.' };
+    }
+
     @Post()
     create(@Body() createAssessmentDto: any, @Request() req) {
         return this.assessmentService.create(createAssessmentDto, req.user.tenantId);
@@ -594,9 +644,21 @@ export class AssessmentController {
         // retornar apenas avaliações atribuídas a ele
         if (user.role === 'MEMBER' || (user.userType === 'INDIVIDUAL' && user.role !== 'SUPER_ADMIN')) {
             // GARANTIR que sempre existe pelo menos 1 inventário BIG_FIVE
-            const bigFiveModel = await this.prisma.assessmentModel.findFirst({
-                where: { type: 'BIG_FIVE' }
+            let bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                where: { tenantId: user.tenantId, isDefault: true, type: 'BIG_FIVE' }
             });
+
+            if (!bigFiveModel) {
+                bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                });
+            }
+
+            if (!bigFiveModel) {
+                bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                    where: { type: 'BIG_FIVE' }
+                });
+            }
 
             if (bigFiveModel) {
                 // Verificar se o usuário tem algum assignment BIG_FIVE não completado

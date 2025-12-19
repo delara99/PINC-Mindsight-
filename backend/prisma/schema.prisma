@@ -114,6 +114,7 @@ model AssessmentModel {
   title       String
   description String?
   type        AssessmentType
+  isDefault   Boolean        @default(false)
   
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
