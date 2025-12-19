@@ -130,11 +130,23 @@ export class ScoreCalculationService {
      * Agrupa respostas por trait key
      */
     private groupResponsesByTrait(responses: any[]): Record<string, any[]> {
+        console.log('[groupResponsesByTrait] Total de respostas:', responses.length);
         const grouped: Record<string, any[]> = {};
 
         for (const response of responses) {
             // As questões têm traitKey diretamente, não em metadata
             const traitKey = response.question.traitKey;
+
+            // LOG: Primeira questão para debug
+            if (Object.keys(grouped).length === 0) {
+                console.log('[groupResponsesByTrait] Exemplo de questão:', {
+                    questionId: response.question.id,
+                    questionText: response.question.text?.substring(0, 50),
+                    traitKey: response.question.traitKey,
+                    answer: response.answer,
+                    hasMetadata: !!response.question.metadata
+                });
+            }
 
             if (!traitKey) {
                 console.warn('Questão sem traitKey:', response.question.id);
@@ -147,6 +159,11 @@ export class ScoreCalculationService {
 
             grouped[traitKey].push(response);
         }
+
+        console.log('[groupResponsesByTrait] Traits encontradas:', Object.keys(grouped));
+        console.log('[groupResponsesByTrait] Respostas por trait:',
+            Object.entries(grouped).map(([k, v]) => ({ trait: k, count: v.length }))
+        );
 
         return grouped;
     }
