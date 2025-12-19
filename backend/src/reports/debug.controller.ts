@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScoreCalculationService } from './score-calculation.service';
 
@@ -170,9 +170,88 @@ export class DebugReportsController {
             samples: responses.map(r => ({
                 qId: r.questionId,
                 text: r.question.text,
-                traitKey: r.question.traitKey, // O QUE IMPORTA: Ver o nome exato aqui!
+                traitKey: r.question.traitKey,
                 answer: r.answer
             }))
+        };
+    }
+
+    /**
+     * CORREÇÃO: Deduplicar Traits e Facetas em uma configuração
+     * POST /api/v1/debug-reports/deduplicate/:configId
+     */
+    @Post('deduplicate/:configId')
+    async deduplicateConfig(@Param('configId') configId: string) {
+        if (!this.prisma) return { error: 'Prisma not available' };
+
+        const config = await this.prisma.bigFiveConfig.findUnique({
+            where: { id: configId },
+            include: {
+                traits: {
+                    include: { facets: true }
+                }
+            }
+        });
+
+        if (!config) return { error: 'Config not found' };
+
+        const keptTraits = [];
+        const removedTraits = [];
+        const errors = [];
+
+        // Agrupar traits por KEY
+        const traitsByKey: Record<string, any[]> = {};
+        for (const trait of config.traits) {
+            if (!traitsByKey[trait.traitKey]) {
+                traitsByKey[trait.traitKey] = [];
+            }
+            traitsByKey[trait.traitKey].push(trait);
+        }
+
+        // Processar duplicatas
+        for (const key of Object.keys(traitsByKey)) {
+            const group = traitsByKey[key];
+            if (group.length > 1) {
+                // Ordenar por número de facetas (manter o mais completo) e depois data
+                group.sort((a, b) => b.facets.length - a.facets.length);
+
+                const toKeep = group[0];
+                const toRemove = group.slice(1);
+
+                keptTraits.push(`${toKeep.name} (${toKeep.id}) - Facets: ${toKeep.facets.length} `);
+
+                for (const traitToRemove of toRemove) {
+                    try {
+                        // Deletar facetas primeiro
+                        await this.prisma.bigFiveFacetConfig.deleteMany({
+                            where: { traitId: traitToRemove.id }
+                        });
+                        // Deletar trait
+                        await this.prisma.bigFiveTraitConfig.delete({
+                            where: { id: traitToRemove.id }
+                        });
+                        removedTraits.push(`${traitToRemove.name} (${traitToRemove.id})`);
+                    } catch (e) {
+                        errors.push(`Erro ao remover ${traitToRemove.id}: ${e.message} `);
+                    }
+                }
+            } else {
+                keptTraits.push(`${group[0].name} (Unique)`);
+            }
+        }
+
+        return {
+            message: 'Deduplicação concluída',
+            stats: {
+                kept: keptTraits.length,
+                removed: removedTraits.length,
+                errors: errors.length
+            },
+            details: {
+                keptTraits,
+                removedTraits,
+                errors
+            }
         };
     }
 
