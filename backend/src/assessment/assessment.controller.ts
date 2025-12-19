@@ -135,9 +135,18 @@ export class AssessmentController {
      * Helper: Calcular scores reais usando a nova lógica
      */
     private async calculateRealScores(assignmentId: string) {
+        console.log('[calculateRealScores] Iniciando cálculo para assignment:', assignmentId);
         try {
             const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
-            return {
+            console.log('[calculateRealScores] Scores calculados:', Object.keys(scores).length, 'traits');
+            console.log('[calculateRealScores] Config usada:', config?.id, config?.name);
+
+            if (!scores || Object.keys(scores).length === 0) {
+                console.error('[calculateRealScores] Nenhum score foi calculado!');
+                return null;
+            }
+
+            const result = {
                 scores: Object.values(scores).map(score => ({
                     key: score.traitKey,
                     name: score.traitName,
@@ -152,8 +161,12 @@ export class AssessmentController {
                     name: config.name
                 }
             };
+
+            console.log('[calculateRealScores] Retornando', result.scores.length, 'scores calculados');
+            return result;
         } catch (error) {
-            console.error('Erro ao calcular scores:', error);
+            console.error('[calculateRealScores] ERRO ao calcular scores:', error);
+            console.error('[calculateRealScores] Stack:', error.stack);
             return null;
         }
     }
