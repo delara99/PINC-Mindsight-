@@ -133,9 +133,18 @@ export class ScoreCalculationService {
         console.log('[groupResponsesByTrait] Total de respostas:', responses.length);
         const grouped: Record<string, any[]> = {};
 
+        // Mapeamento de nomes em português para keys em inglês
+        const traitNameToKey: Record<string, string> = {
+            'Amabilidade': 'AGREEABLENESS',
+            'Conscienciosidade': 'CONSCIENTIOUSNESS',
+            'Extroversão': 'EXTRAVERSION',
+            'Abertura à Experiência': 'OPENNESS',
+            'Estabilidade Emocional': 'NEUROTICISM'
+        };
+
         for (const response of responses) {
-            // As questões têm traitKey diretamente, não em metadata
-            const traitKey = response.question.traitKey;
+            // As questões têm traitKey no formato "Trait::Facet"
+            const fullTraitKey = response.question.traitKey;
 
             // LOG: Primeira questão para debug
             if (Object.keys(grouped).length === 0) {
@@ -148,8 +157,19 @@ export class ScoreCalculationService {
                 });
             }
 
-            if (!traitKey) {
+            if (!fullTraitKey) {
                 console.warn('Questão sem traitKey:', response.question.id);
+                continue;
+            }
+
+            // Extrair apenas o nome do trait (antes de "::")
+            const traitName = fullTraitKey.split('::')[0];
+
+            // Converter nome português para key em inglês
+            const traitKey = traitNameToKey[traitName];
+
+            if (!traitKey) {
+                console.warn('Trait não reconhecido:', traitName, 'de:', fullTraitKey);
                 continue;
             }
 
