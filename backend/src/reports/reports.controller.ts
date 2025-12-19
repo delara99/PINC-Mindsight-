@@ -19,11 +19,11 @@ export class ReportsController {
         private prisma: PrismaService
     ) { }
 
-    @Get('interpretation')
-    async getInterpretation(@Query('scores') scoresStr: string) {
-        const scores = JSON.parse(scoresStr);
-        return this.interpretation.generateFullReport(scores)
-    }
+    // @Get('interpretation')
+    // async getInterpretation(@Query('scores') scoresStr: string) {
+    //     const scores = JSON.parse(scoresStr);
+    //     return this.interpretation.generateFullReport(scores)
+    // }
 
     @Get('fit/:profileId')
     async getFit(@Param('profileId') profileId: string, @Query('scores') scoresStr: string) {
@@ -59,11 +59,7 @@ export class ReportsController {
                         tenantId: true
                     }
                 },
-                assessment: {
-                    include: {
-                        model: true
-                    }
-                }
+                assessment: true
             }
         });
 
