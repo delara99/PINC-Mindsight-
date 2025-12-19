@@ -164,7 +164,10 @@ export default function AssessmentDetailsPage() {
                                     interpretation={trait.level}
                                     facets={trait.facets?.map((f: any) => ({
                                         facet: f.facetName,
-                                        normalizedScore: f.score
+                                        normalizedScore: typeof f.score === 'number' ? f.score : 0,
+                                        // Converter score normalizado (0-100) para raw (0-5) para exibição correta
+                                        // O backend envia 'score' como normalizado
+                                        rawScore: f.rawScore !== undefined ? f.rawScore : ((typeof f.score === 'number' ? f.score : 0) / 20)
                                     })) || []}
                                 />
                             ))}
