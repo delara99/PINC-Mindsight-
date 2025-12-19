@@ -179,15 +179,48 @@ export default function AssessmentDetailsPage() {
                 </div>
 
                 {/* Gráfico Radar - Usando dados calculados com fallback */}
-                {assignment.calculatedScores?.scores?.length > 0 ? (
-                    <BigFiveChart
-                        scores={Object.fromEntries(
-                            assignment.calculatedScores.scores.map((trait: any) => [
-                                trait.key,
-                                trait.score / 20 // Converter 0-100 para 0-5 para o gráfico
-                            ])
-                        )}
-                    />
+                {/* Gráfico Radar - Usando dados calculados Corretos */}
+                {assignment.calculatedScores?.scores ? (
+                    (() => {
+                        // Preparar dados achatados para o gráfico (Formato "Trait::Facet": score 0-5)
+                        const chartData: Record<string, number> = {};
+
+                        // Mapeamento de chaves EN para PT para o gráfico (nomes devem bater com os do BigFiveChart)
+                        const traitTranslation: Record<string, string> = {
+                            'OPENNESS': 'Abertura à Experiência',
+                            'CONSCIENTIOUSNESS': 'Conscienciosidade',
+                            'EXTRAVERSION': 'Extroversão',
+                            'AGREEABLENESS': 'Amabilidade',
+                            'NEUROTICISM': 'Estabilidade Emocional',
+                            // Fallbacks
+                            'Abertura a Experiências': 'Abertura à Experiência'
+                        };
+
+                        // Garantir que scores seja iterável (pode ser array ou objeto)
+                        const scoresList = Array.isArray(assignment.calculatedScores.scores)
+                            ? assignment.calculatedScores.scores
+                            : Object.values(assignment.calculatedScores.scores);
+
+                        scoresList.forEach((trait: any) => {
+                            const traitNamePT = traitTranslation[trait.traitKey] || traitTranslation[trait.traitName] || trait.traitName;
+
+                            if (trait.facets && trait.facets.length > 0) {
+                                trait.facets.forEach((facet: any) => {
+                                    // O gráfico espera score 0-5
+                                    // facet.score vem 0-100 agora
+                                    chartData[`${traitNamePT}::${facet.facetName}`] = (typeof facet.score === 'number' ? facet.score : 0) / 20;
+                                });
+                            }
+                        });
+
+                        return Object.keys(chartData).length > 0 ? (
+                            <BigFiveChart scores={chartData} />
+                        ) : (
+                            <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
+                                <p className="text-yellow-800 font-medium">⚠️ Dados de facetas insuficientes para o gráfico.</p>
+                            </div>
+                        );
+                    })()
                 ) : result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
                     <BigFiveChart scores={result.scores} />
                 ) : (
