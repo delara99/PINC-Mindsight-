@@ -5,10 +5,11 @@ import { InterpretationService } from './interpretation.service';
 import { PdfService } from './pdf.service';
 import { ScoreCalculationService } from './score-calculation.service';
 import { ReportsController } from './reports.controller';
+import { DebugReportsController } from './debug.controller';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
-    controllers: [ReportsController],
+    controllers: [ReportsController, DebugReportsController],
     providers: [
         AnalyticsService,
         InterpretationService,
