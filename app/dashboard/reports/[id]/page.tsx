@@ -60,63 +60,6 @@ export default function AssessmentDetailsPage() {
     if (isLoading) return <div className="p-8 text-center text-gray-500">Carregando detalhes...</div>;
     if (error) return <div className="p-8 text-center text-red-500">Erro ao carregar detalhes: {error.message}</div>;
 
-
-    const TRAIT_TRANSLATIONS: Record<string, string> = {
-        'OPENNESS': 'Abertura',
-        'CONSCIENTIOUSNESS': 'Conscienciosidade',
-        'EXTRAVERSION': 'Extroversão',
-        'AGREEABLENESS': 'Amabilidade',
-        'NEUROTICISM': 'Neuroticismo'
-    };
-
-    // Função para organizar scores em estrutura de traits/facets
-    const organizeScoresByTraits = (scores: any) => {
-        if (!scores || typeof scores !== 'object') return [];
-
-        const traitsMap: Record<string, { facets: any[], totalScore: number, count: number }> = {};
-
-        // Percorrer todos os scores
-        Object.entries(scores).forEach(([key, value]) => {
-            // Formato esperado: "Amabilidade::Empatia" ou similar
-            const parts = key.split('::');
-            if (parts.length === 2) {
-                const [traitName, facetName] = parts;
-                const score = typeof value === 'number' ? value : parseFloat(value as string) || 0;
-
-                if (!traitsMap[traitName]) {
-                    traitsMap[traitName] = { facets: [], totalScore: 0, count: 0 };
-                }
-
-                traitsMap[traitName].facets.push({
-                    facet: facetName,
-                    rawScore: score,
-                    normalizedScore: (score / 5) * 100 // Converter de 0-5 para 0-100
-                });
-                traitsMap[traitName].totalScore += score;
-                traitsMap[traitName].count += 1;
-            }
-        });
-
-        // Converter para array de traits
-        return Object.entries(traitsMap).map(([traitName, data]) => {
-            const avgScore = data.totalScore / data.count;
-            const normalized = (avgScore / 5) * 100;
-
-            let interpretation = 'Médio';
-            if (normalized < 40) interpretation = 'Baixo';
-            else if (normalized >= 70) interpretation = 'Alto';
-
-            return {
-                trait: traitName,
-                rawScore: avgScore,
-                normalizedScore: normalized,
-                interpretation,
-                facets: data.facets
-            };
-        });
-    };
-
-
     const { user, assessment, responses, result } = assignment;
 
     return (
@@ -209,29 +152,36 @@ export default function AssessmentDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Detalhes por Traço - Novo Layout Profissional */}
-                    {result && result.scores && (() => {
-                        const organizedTraits = organizeScoresByTraits(result.scores);
-                        return organizedTraits.length > 0 && (
-                            <div className="mt-6 space-y-4">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
-                                {organizedTraits.map((trait: any, index: number) => (
-                                    <TraitCard
-                                        key={index}
-                                        traitName={trait.trait}
-                                        overallScore={trait.rawScore}
-                                        interpretation={trait.interpretation}
-                                        facets={trait.facets}
-                                    />
-                                ))}
-                            </div>
-                        );
-                    })()}
+                    {/* Detalhes por Traço - Usando dados calculados pela API */}
+                    {assignment.calculatedScores && assignment.calculatedScores.scores && assignment.calculatedScores.scores.length > 0 && (
+                        <div className="mt-6 space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
+                            {assignment.calculatedScores.scores.map((trait: any, index: number) => (
+                                <TraitCard
+                                    key={index}
+                                    traitName={trait.name}
+                                    overallScore={trait.score}
+                                    interpretation={trait.level}
+                                    facets={trait.facets?.map((f: any) => ({
+                                        facet: f.facetName,
+                                        normalizedScore: f.score
+                                    })) || []}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {/* Gráfico Radar */}
-                {result && result.scores && (
-                    <BigFiveChart scores={result.scores} />
+                {/* Gráfico Radar - Usando dados calculados */}
+                {assignment.calculatedScores && assignment.calculatedScores.scores && (
+                    <BigFiveChart
+                        scores={Object.fromEntries(
+                            assignment.calculatedScores.scores.map((trait: any) => [
+                                trait.key,
+                                trait.score / 20 // Converter 0-100 para 0-5 para o gráfico
+                            ])
+                        )}
+                    />
                 )}
 
                 {/* Respostas Detalhadas - Melhorado */}
