@@ -72,6 +72,26 @@ export default function MetricsConfigPage() {
         onError: (err: any) => alert('❌ ' + err.message)
     });
 
+    const resetConfigMutation = useMutation({
+        mutationFn: async () => {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/reset-config`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Erro ao resetar configuração');
+            }
+            return response.json();
+        },
+        onSuccess: (data) => {
+            alert(`✅ RESET COMPLETO!\n\nConfiguração criada do ZERO com:\n- 5 traços\n- 30 facetas\n\nTudo funcionando agora!`);
+            queryClient.invalidateQueries({ queryKey: ['big-five-configs'] });
+            window.location.reload(); // Recarrega para mostrar nova config
+        },
+        onError: (err: any) => alert('❌ ' + err.message)
+    });
+
     const activeConfig = configs?.find(c => c.isActive);
 
     if (isLoading) {
@@ -91,14 +111,24 @@ export default function MetricsConfigPage() {
                         <TrendingUp className="text-primary" size={32} />
                         <h1 className="text-3xl font-bold text-gray-900">Métricas de Avaliação Big Five</h1>
                     </div>
-                    <button
-                        onClick={() => fixAllFacetsMutation.mutate()}
-                        disabled={fixAllFacetsMutation.isPending}
-                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold text-sm shadow-lg shadow-red-600/30 transition-all flex items-center gap-2 animate-pulse"
-                    >
-                        {fixAllFacetsMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Wrench size={20} />}
-                        CORRIGIR FACETAS AGORA
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => resetConfigMutation.mutate()}
+                            disabled={resetConfigMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
+                        >
+                            {resetConfigMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Settings size={20} />}
+                            RESET COMPLETO (DO ZERO)
+                        </button>
+                        <button
+                            onClick={() => fixAllFacetsMutation.mutate()}
+                            disabled={fixAllFacetsMutation.isPending}
+                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold text-sm shadow-lg shadow-red-600/30 transition-all flex items-center gap-2 animate-pulse"
+                        >
+                            {fixAllFacetsMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Wrench size={20} />}
+                            CORRIGIR FACETAS AGORA
+                        </button>
+                    </div>
                 </div>
                 <p className="text-gray-600">
                     Configure pesos, interpretações, descrições e recomendações do sistema Big Five

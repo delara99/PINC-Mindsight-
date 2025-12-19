@@ -205,4 +205,17 @@ export class BigFiveConfigController {
 
         return this.configService.fixAllFacets(req.user.tenantId);
     }
+
+    /**
+     * RESET COMPLETO: Cria configuração Big Five do zero
+     * POST /api/v1/big-five-config/reset-config
+     */
+    @Post('reset-config')
+    async resetConfig(@Request() req) {
+        if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem resetar configurações');
+        }
+
+        return this.configService.createCompleteConfig(req.user.tenantId);
+    }
 }

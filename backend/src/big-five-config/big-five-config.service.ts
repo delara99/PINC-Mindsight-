@@ -491,4 +491,100 @@ export class BigFiveConfigService {
             details: results
         };
     }
+
+    /**
+     * Cria configuração Big Five completa do zero
+     */
+    async createCompleteConfig(tenantId: string) {
+        // Desativar todas as configs existentes
+        await this.prisma.bigFiveConfig.updateMany({
+            where: { tenantId },
+            data: { isActive: false }
+        });
+
+        // Criar nova configuração
+        const config = await this.prisma.bigFiveConfig.create({
+            data: {
+                tenantId,
+                name: 'Big Five - Configuração Completa',
+                isActive: true,
+                veryLowMax: 20,
+                lowMax: 40,
+                averageMax: 60,
+                highMax: 80,
+                primaryColor: '#8B5CF6'
+            }
+        });
+
+        // Traços e facetas
+        const traitsData = [
+            {
+                key: 'OPENNESS',
+                name: 'Abertura à Experiência',
+                facets: ['Fantasia', 'Estética', 'Sentimentos', 'Ações', 'Ideias', 'Valores']
+            },
+            {
+                key: 'CONSCIENTIOUSNESS',
+                name: 'Conscienciosidade',
+                facets: ['Competência', 'Ordem', 'Senso de dever', 'Esforço por realizações', 'Autodisciplina', 'Ponderação']
+            },
+            {
+                key: 'EXTRAVERSION',
+                name: 'Extroversão',
+                facets: ['Cordialidade', 'Gregariedade', 'Assertividade', 'Atividade', 'Busca de sensações', 'Emoções positivas']
+            },
+            {
+                key: 'AGREEABLENESS',
+                name: 'Amabilidade',
+                facets: ['Confiança', 'Franqueza', 'Altruísmo', 'Complacência', 'Modéstia', 'Sensibilidade']
+            },
+            {
+                key: 'NEUROTICISM',
+                name: 'Neuroticismo',
+                facets: ['Ansiedade', 'Hostilidade', 'Depressão', 'Embaraço', 'Impulsividade', 'Vulnerabilidade']
+            }
+        ];
+
+        // Criar traços e facetas
+        for (const traitData of traitsData) {
+            const trait = await this.prisma.bigFiveTraitConfig.create({
+                data: {
+                    config: { connect: { id: config.id } },
+                    traitKey: traitData.key,
+                    name: traitData.name,
+                    weight: 1.0,
+                    isActive: true,
+                    description: `Avalia o nível de ${traitData.name.toLowerCase()}`,
+                    icon: '',
+                    veryLowText: 'Muito Baixo',
+                    lowText: 'Baixo',
+                    averageText: 'Médio',
+                    highText: 'Alto',
+                    veryHighText: 'Muito Alto'
+                }
+            });
+
+            // Criar facetas
+            for (let i = 0; i < traitData.facets.length; i++) {
+                await this.prisma.bigFiveFacetConfig.create({
+                    data: {
+                        trait: { connect: { id: trait.id } },
+                        facetKey: `${traitData.key}_F${i + 1}`,
+                        name: traitData.facets[i],
+                        weight: 1.0,
+                        isActive: true,
+                        description: ''
+                    }
+                });
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Configuração completa criada com sucesso!',
+            configId: config.id,
+            traits: 5,
+            facets: 30
+        };
+    }
 }
