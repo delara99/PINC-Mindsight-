@@ -42,7 +42,7 @@ export default function ComparisonPage() {
 
         const fetchData = async () => {
             try {
-                const response = await fetch(`${API_URL}/api/v1/comparison/radar/${params.id}`, {
+                const response = await fetch(`${API_URL}/connections/${params.id}/comparison`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
