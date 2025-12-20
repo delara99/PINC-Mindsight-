@@ -180,9 +180,10 @@ export default function AssessmentDetailsPage() {
                     ) : null}
                 </div>
 
-                {/* Gráfico Radar - Usando dados calculados com fallback */}
-                {/* Gráfico Radar - Usando dados calculados Corretos */}
-                {assignment.calculatedScores?.scores ? (
+                {/* Gráfico Radar - USANDO DADOS JÁ SALVOS (result.scores) */}
+                {result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
+                    <BigFiveChart scores={result.scores} />
+                ) : assignment.calculatedScores?.scores ? (
                     (() => {
                         // Preparar dados achatados para o gráfico (Formato "Trait::Facet": score 0-5)
                         const chartData: Record<string, number> = {};
@@ -223,8 +224,6 @@ export default function AssessmentDetailsPage() {
                             </div>
                         );
                     })()
-                ) : result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
-                    <BigFiveChart scores={result.scores} />
                 ) : (
                     <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
                         <p className="text-yellow-800 font-medium">⚠️ Aguardando cálculo de scores...</p>
