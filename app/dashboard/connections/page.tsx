@@ -207,9 +207,9 @@ export default function ConnectionsPage() {
         mutationFn: async (connectionId: string) => {
             const res = await fetch(`${API_URL}/api/v1/cross-profile/generate`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}` 
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({ connectionId })
             });
@@ -326,6 +326,13 @@ export default function ConnectionsPage() {
                                             className="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover flex items-center justify-center gap-1"
                                         >
                                             <MessageSquare size={14} /> Chat
+                                        </button>
+                                        <button
+                                            onClick={() => router.push(`/connections/comparison/${conn.connectionId}`)}
+                                            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold py-2 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-1"
+                                            title="Comparar Perfis: Radar Chart e Compatibilidade"
+                                        >
+                                            🎯 Comparar
                                         </button>
                                         <button
                                             onClick={() => router.push(`/dashboard/connections/${conn.connectionId}`)}
