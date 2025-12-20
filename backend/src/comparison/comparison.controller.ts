@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Request, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface ComparisonData {
@@ -25,7 +25,7 @@ interface ComparisonData {
 }
 
 @Controller('api/v1/comparison')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard('jwt'))
 export class ComparisonController {
     constructor(private prisma: PrismaService) { }
 
@@ -41,13 +41,14 @@ export class ComparisonController {
             where: {
                 id: connectionId,
                 OR: [
-                    { userId: currentUserId },
-                    { connectedUserId: currentUserId }
+                    { userAId: currentUserId },
+                    { userBId: currentUserId }
                 ]
             },
             include: {
-                user: true,
-                connectedUser: true
+                userA: true,
+                userB: true,
+                sharingSettings: true
             }
         });
 
@@ -56,13 +57,13 @@ export class ComparisonController {
         }
 
         // Verificar permissões de compartilhamento
-        if (!connection.shareResults) {
-            throw new Error('Resultados não compartilhados');
-        }
+        const currentUserSetting = connection.sharingSettings.find(s => s.userId === currentUserId);
+        const otherUserId = connection.userAId === currentUserId ? connection.userBId : connection.userAId;
+        const otherUserSetting = connection.sharingSettings.find(s => s.userId === otherUserId);
 
-        // Determinar qual é o usuário atual e qual é o outro
-        const isCurrentUserOwner = connection.userId === currentUserId;
-        const otherUserId = isCurrentUserOwner ? connection.connectedUserId : connection.userId;
+        if (!currentUserSetting?.shareInventories || !otherUserSetting?.shareInventories) {
+            throw new Error('Um ou ambos usuários não compartilharam seus inventários');
+        }
 
         // Buscar último assessment completado de cada usuário
         const [currentUserAssignment, otherUserAssignment] = await Promise.all([
