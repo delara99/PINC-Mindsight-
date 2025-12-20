@@ -152,32 +152,91 @@ export default function AssessmentDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Detalhes por Traço - Usando dados calculados pela API com fallback */}
-                    {assignment.calculatedScores?.scores?.length > 0 ? (
-                        <div className="mt-6 space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
-                            {assignment.calculatedScores.scores.map((trait: any, index: number) => (
-                                <TraitCard
-                                    key={index}
-                                    traitName={trait.name}
-                                    overallScore={trait.score}
-                                    interpretation={(({
-                                        'HIGH': 'Alto',
-                                        'AVERAGE': 'Médio',
-                                        'LOW': 'Baixo',
-                                        'VERY_HIGH': 'Muito Alto',
-                                        'VERY_LOW': 'Muito Baixo'
-                                    })[trait.level as string] || trait.level)}
-                                    facets={trait.facets?.map((f: any) => ({
-                                        facet: f.facetName,
-                                        normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
-                                        rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
-                                    })) || []}
-                                    defaultExpanded={true}
-                                />
-                            ))}
-                        </div>
-                    ) : null}
+                    {/* Detalhes por Traço - Processar dados salvos */}
+                    {(() => {
+                        // Tentar usar calculatedScores primeiro, senão processar result.scores
+                        if (assignment.calculatedScores?.scores?.length > 0) {
+                            return (
+                                <div className="mt-6 space-y-4">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
+                                    {assignment.calculatedScores.scores.map((trait: any, index: number) => (
+                                        <TraitCard
+                                            key={index}
+                                            traitName={trait.name}
+                                            overallScore={trait.score}
+                                            interpretation={((({
+                                                'HIGH': 'Alto',
+                                                'AVERAGE': 'Médio',
+                                                'LOW': 'Baixo',
+                                                'VERY_HIGH': 'Muito Alto',
+                                                'VERY_LOW': 'Muito Baixo'
+                                            })[trait.level as string] || trait.level))}
+                                            facets={trait.facets?.map((f: any) => ({
+                                                facet: f.facetName,
+                                                normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
+                                                rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
+                                            })) || []}
+                                            defaultExpanded={true}
+                                        />
+                                    ))}
+                                </div>
+                            );
+                        }
+
+                        // Processar result.scores (formato: "Traço::Faceta": score)
+                        if (result?.scores && typeof result.scores === 'object') {
+                            const scoresByTrait: Record<string, { facets: Array<{ name: string; score: number }> }> = {};
+
+                            Object.entries(result.scores).forEach(([key, score]) => {
+                                if (typeof key === 'string' && key.includes('::')) {
+                                    const [traitName, facetName] = key.split('::');
+                                    if (!scoresByTrait[traitName]) {
+                                        scoresByTrait[traitName] = { facets: [] };
+                                    }
+                                    scoresByTrait[traitName].facets.push({
+                                        name: facetName,
+                                        score: typeof score === 'number' ? score : 0
+                                    });
+                                }
+                            });
+
+                            if (Object.keys(scoresByTrait).length > 0) {
+                                return (
+                                    <div className="mt-6 space-y-4">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
+                                        {Object.entries(scoresByTrait).map(([traitName, data]) => {
+                                            const avgScore = data.facets.reduce((sum, f) => sum + f.score, 0) / data.facets.length;
+                                            const normalizedAvg = avgScore * 20; // Converter 0-5 para 0-100
+
+                                            let interpretation = 'Médio';
+                                            if (normalizedAvg >= 80) interpretation = 'Muito Alto';
+                                            else if (normalizedAvg >= 60) interpretation = 'Alto';
+                                            else if (normalizedAvg >= 40) interpretation = 'Médio';
+                                            else if (normalizedAvg >= 20) interpretation = 'Baixo';
+                                            else interpretation = 'Muito Baixo';
+
+                                            return (
+                                                <TraitCard
+                                                    key={traitName}
+                                                    traitName={traitName}
+                                                    overallScore={normalizedAvg}
+                                                    interpretation={interpretation}
+                                                    facets={data.facets.map(f => ({
+                                                        facet: f.name,
+                                                        normalizedScore: f.score * 20,
+                                                        rawScore: f.score
+                                                    }))}
+                                                    defaultExpanded={true}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            }
+                        }
+
+                        return null;
+                    })()}
                 </div>
 
                 {/* Gráfico Radar - USANDO DADOS JÁ SALVOS (result.scores) */}
