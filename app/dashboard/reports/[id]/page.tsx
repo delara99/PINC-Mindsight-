@@ -177,12 +177,6 @@ export default function AssessmentDetailsPage() {
                                 />
                             ))}
                         </div>
-                    ) : result?.scores ? (
-                        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <p className="text-sm text-yellow-800">
-                                ⚠️ Usando dados de fallback. Os scores podem não estar atualizados.
-                            </p>
-                        </div>
                     ) : null}
                 </div>
 
