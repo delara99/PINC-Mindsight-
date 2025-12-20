@@ -58,6 +58,21 @@ export class ScoreCalculationService {
                     }
                 }
             });
+
+            // FALLBACK: se não tiver ativa, pega QUALQUER config do tenant
+            if (!config) {
+                config = await this.prisma.bigFiveConfig.findFirst({
+                    where: {
+                        tenantId: assignment.user.tenantId
+                    },
+                    include: {
+                        traits: {
+                            include: { facets: true }
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
         }
 
         if (!config) throw new Error('Configuração Big Five não encontrada.');
