@@ -320,43 +320,49 @@ export default function ConnectionsPage() {
                                             {conn.companyName && <p className="text-xs text-blue-600 font-medium">{conn.companyName}</p>}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                                        <button
-                                            onClick={() => router.push(`/dashboard/connections/${conn.connectionId}`)}
-                                            className="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover flex items-center justify-center gap-1"
-                                        >
-                                            <MessageSquare size={14} /> Chat
-                                        </button>
-                                        <button
-                                            onClick={() => router.push(`/connections/comparison/${conn.connectionId}`)}
-                                            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold py-2 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-1"
-                                            title="Comparar Perfis: Radar Chart e Compatibilidade"
-                                        >
-                                            🎯 Comparar
-                                        </button>
-                                        <button
-                                            onClick={() => router.push(`/dashboard/connections/${conn.connectionId}`)}
-                                            className="flex-1 bg-gray-100 text-gray-700 text-xs font-bold py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-1"
-                                        >
-                                            <Settings size={14} /> Perfil
-                                        </button>
-                                        <button
-                                            onClick={() => handleGenerateReport(conn.connectionId)}
-                                            className="flex-1 bg-violet-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-violet-700 flex items-center justify-center gap-1 transition-colors shadow-sm shadow-violet-200"
-                                            title="Análise de Pareamento Comportamental"
-                                        >
-                                            <GitCompare size={14} /> Relacional
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('Tem certeza que deseja remover esta conexão?')) {
-                                                    removeConnectionMutation.mutate(conn.connectionId);
-                                                }
-                                            }}
-                                            className="w-8 h-8 bg-red-50 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-100"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                    <div className="space-y-2 mt-4 pt-4 border-t border-gray-100">
+                                        {/* Linha 1: Chat, Comparar, Perfil */}
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => router.push(`/dashboard/connections/${conn.connectionId}`)}
+                                                className="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover flex items-center justify-center gap-1"
+                                            >
+                                                <MessageSquare size={14} /> Chat
+                                            </button>
+                                            <button
+                                                onClick={() => router.push(`/connections/comparison/${conn.connectionId}`)}
+                                                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold py-2 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-1"
+                                                title="Comparar Perfis: Radar Chart e Compatibilidade"
+                                            >
+                                                🎯 Comparar
+                                            </button>
+                                            <button
+                                                onClick={() => router.push(`/dashboard/connections/${conn.connectionId}`)}
+                                                className="flex-1 bg-gray-100 text-gray-700 text-xs font-bold py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-1"
+                                            >
+                                                <Settings size={14} /> Perfil
+                                            </button>
+                                        </div>
+                                        {/* Linha 2: Relacional e Remover */}
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleGenerateReport(conn.connectionId)}
+                                                className="flex-1 bg-violet-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-violet-700 flex items-center justify-center gap-1 transition-colors shadow-sm shadow-violet-200"
+                                                title="Análise de Pareamento Comportamental"
+                                            >
+                                                <GitCompare size={14} /> Relacional
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Tem certeza que deseja remover esta conexão?')) {
+                                                        removeConnectionMutation.mutate(conn.connectionId);
+                                                    }
+                                                }}
+                                                className="px-4 bg-red-50 text-red-600 text-xs font-bold py-2 rounded-lg hover:bg-red-100 flex items-center justify-center gap-1"
+                                            >
+                                                <Trash2 size={14} /> Remover
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
