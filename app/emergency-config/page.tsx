@@ -1,26 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuthStore } from '@/src/store/auth-store';
+import { API_URL } from '@/src/config/api';
 
 export default function EmergencyConfigPage() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
+    const token = useAuthStore((state) => state.token);
 
     const createConfig = async () => {
         setLoading(true);
         setResult(null);
 
+        if (!token) {
+            alert('⚠️ Token não encontrado!\n\nVocê precisa estar logado no sistema.\nVá para a página de login primeiro.');
+            setLoading(false);
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('token') ||
-                sessionStorage.getItem('token') ||
-                document.cookie.split('; ').find(r => r.startsWith('token='))?.split('=')[1];
-
-            if (!token) {
-                alert('Token não encontrado! Faça login primeiro.');
-                return;
-            }
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/big-five-config/reset-config`, {
+            const response = await fetch(`${API_URL}/api/v1/big-five-config/reset-config`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -38,7 +38,7 @@ export default function EmergencyConfigPage() {
                     traits: data.traits,
                     facets: data.facets
                 });
-                alert(`✅ SUCESSO!\n\n${data.message}\n\nConfig ID: ${data.configId}\nTraços: ${data.traits}\nFacetas: ${data.facets}\n\nAtualize a página dos relatórios!`);
+                alert(`✅ SUCESSO!\n\n${data.message}\n\nConfig ID: ${data.configId}\nTraços: ${data.traits}\nFacetas: ${data.facets}\n\n🎯 Agora atualize a página dos relatórios (F5)!`);
             } else {
                 throw new Error(data.message || 'Erro desconhecido');
             }
@@ -47,7 +47,7 @@ export default function EmergencyConfigPage() {
                 success: false,
                 error: error.message
             });
-            alert(`❌ ERRO: ${error.message}`);
+            alert(`❌ ERRO: ${error.message}\n\nVerifique se você tem permissão de admin.`);
         } finally {
             setLoading(false);
         }
@@ -59,13 +59,34 @@ export default function EmergencyConfigPage() {
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">
                     🚨 Emergência Big Five
                 </h1>
+
+                {!token ? (
+                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6">
+                        <p className="text-yellow-800 font-semibold">
+                            ⚠️ Você não está logado!
+                        </p>
+                        <p className="text-yellow-700 text-sm mt-2">
+                            Por favor, faça login primeiro e depois volte a esta página.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-6">
+                        <p className="text-green-800 font-semibold">
+                            ✅ Token encontrado!
+                        </p>
+                        <p className="text-green-700 text-sm mt-2">
+                            Você está autenticado e pode criar a configuração.
+                        </p>
+                    </div>
+                )}
+
                 <p className="text-gray-600 mb-6">
                     Clique no botão abaixo para criar uma configuração Big Five completa do zero.
                 </p>
 
                 <button
                     onClick={createConfig}
-                    disabled={loading}
+                    disabled={loading || !token}
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-4 px-6 rounded-lg disabled:opacity-50 hover:shadow-lg transition-all"
                 >
                     {loading ? 'Criando...' : 'Criar Configuração Completa'}
@@ -76,14 +97,14 @@ export default function EmergencyConfigPage() {
                         {result.success ? (
                             <>
                                 <strong>✅ Sucesso!</strong>
-                                <p className="mt-2">Config ID: {result.configId}</p>
-                                <p>Traços: {result.traits}</p>
-                                <p>Facetas: {result.facets}</p>
+                                <p className="mt-2 text-sm">Config ID: {result.configId}</p>
+                                <p className="text-sm">Traços: {result.traits}</p>
+                                <p className="text-sm">Facetas: {result.facets}</p>
                             </>
                         ) : (
                             <>
                                 <strong>❌ Erro!</strong>
-                                <p className="mt-2">{result.error}</p>
+                                <p className="mt-2 text-sm">{result.error}</p>
                             </>
                         )}
                     </div>
