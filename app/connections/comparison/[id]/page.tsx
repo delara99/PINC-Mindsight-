@@ -146,35 +146,37 @@ export default function ComparisonPage() {
                     </div>
                 </div>
 
-                {/* Compatibility Score */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    <div className="lg:col-span-1">
-                        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 h-full">
-                            <div className="flex items-center gap-2 mb-6">
-                                <Sparkles className="w-5 h-5 text-purple-600" />
-                                <h2 className="text-xl font-bold text-gray-900">Compatibilidade</h2>
-                            </div>
+                {/* Main Content Grid */}
+                <div className="space-y-6 mb-8">
+                    {/* Compatibility Score - Full Width */}
+                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
+                        <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                            {/* Score Circle */}
+                            <div className="flex-shrink-0">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-5 h-5 text-purple-600" />
+                                    <h2 className="text-xl font-bold text-gray-900">Compatibilidade</h2>
+                                </div>
 
-                            <div className="relative">
-                                <div className="w-40 h-40 mx-auto">
-                                    <svg className="transform -rotate-90 w-40 h-40">
+                                <div className="relative w-48 h-48 mx-auto">
+                                    <svg className="transform -rotate-90 w-full h-full">
                                         <circle
-                                            cx="80"
-                                            cy="80"
-                                            r="70"
+                                            cx="96"
+                                            cy="96"
+                                            r="85"
                                             stroke="#e5e7eb"
-                                            strokeWidth="12"
+                                            strokeWidth="14"
                                             fill="none"
                                         />
                                         <circle
-                                            cx="80"
-                                            cy="80"
-                                            r="70"
+                                            cx="96"
+                                            cy="96"
+                                            r="85"
                                             stroke="url(#gradient)"
-                                            strokeWidth="12"
+                                            strokeWidth="14"
                                             fill="none"
-                                            strokeDasharray={`${2 * Math.PI * 70}`}
-                                            strokeDashoffset={`${2 * Math.PI * 70 * (1 - data.insights.compatibility / 100)}`}
+                                            strokeDasharray={`${2 * Math.PI * 85}`}
+                                            strokeDashoffset={`${2 * Math.PI * 85 * (1 - data.insights.compatibility / 100)}`}
                                             className="transition-all duration-1000 ease-out"
                                             strokeLinecap="round"
                                         />
@@ -196,17 +198,18 @@ export default function ComparisonPage() {
                                 </div>
                             </div>
 
+                            {/* Strengths */}
                             {data.insights.strengths.length > 0 && (
-                                <div className="mt-8">
-                                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                        <TrendingUp className="w-4 h-4" />
-                                        Pontos Fortes
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5 text-green-600" />
+                                        Pontos Fortes da Relação
                                     </h3>
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {data.insights.strengths.map((strength, idx) => (
-                                            <div key={idx} className="flex items-start gap-2 text-sm">
-                                                <span className="text-green-500 mt-0.5">✓</span>
-                                                <span className="text-gray-700">{strength}</span>
+                                            <div key={idx} className="flex items-start gap-2 bg-green-50 p-3 rounded-lg">
+                                                <span className="text-green-600 text-lg mt-0.5">✓</span>
+                                                <span className="text-gray-800 text-sm font-medium">{strength}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -215,14 +218,14 @@ export default function ComparisonPage() {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-2">
-                        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
-                            <div className="flex items-center gap-2 mb-6">
-                                <BarChart3 className="w-5 h-5 text-purple-600" />
-                                <h2 className="text-xl font-bold text-gray-900">Radar de Personalidade</h2>
-                            </div>
+                    {/* Radar Chart - Full Width */}
+                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
+                        <div className="flex items-center gap-2 mb-6">
+                            <BarChart3 className="w-5 h-5 text-purple-600" />
+                            <h2 className="text-2xl font-bold text-gray-900">Perfil de Personalidade</h2>
+                        </div>
 
-                            {/* Preparar dados para o radar chart */}
+                        <div className="flex justify-center items-center min-h-[400px]">
                             {(() => {
                                 const combinedScores: Record<string, number> = {};
 
