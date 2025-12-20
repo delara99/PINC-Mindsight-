@@ -77,6 +77,8 @@ export class ScoreCalculationService {
 
         if (!config) throw new Error('Configuração Big Five não encontrada.');
 
+        console.log('[Score Calc] ✅ Config:', config.name, '| Traits:', config.traits?.length, '| Respostas:', assignment.responses?.length);
+
         const scores: Record<string, ScoreResult> = {};
 
         // 1. Agrupar Respostas (Itens) por Traço e Faceta
@@ -109,6 +111,11 @@ export class ScoreCalculationService {
         }
 
         // 2. Processar Respostas
+        console.log('[Score Calc] Processando respostas. Amostra (3 primeiras):');
+        assignment.responses.slice(0, 3).forEach((r, i) => {
+            console.log(`[Score Calc]   ${i + 1}. traitKey: "${r.question.traitKey}" | facetKey: "${r.question.facetKey || 'N/A'}" | answer: ${r.answer}`);
+        });
+
         for (const response of assignment.responses) {
             const q = response.question;
             const answer = typeof response.answer === 'number' ? response.answer : Number(response.answer) || 3;
