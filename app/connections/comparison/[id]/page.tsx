@@ -231,7 +231,7 @@ export default function ComparisonPage() {
                                     combinedScores[key] = typeof value === 'number' ? value : 0;
                                 });
 
-                                return <BigFiveChart scores={combinedScores} comparisonScores={data.user2.scores} />;
+                                return <BigFiveChart scores={combinedScores} />;
                             })()}
                         </div>
                     </div>
@@ -259,8 +259,8 @@ export default function ComparisonPage() {
                                                 <div className="w-32 bg-gray-200 rounded-full h-2 overflow-hidden">
                                                     <div
                                                         className={`h-full bg-gradient-to-r ${diff.difference < 1 ? 'from-green-400 to-green-600' :
-                                                                diff.difference < 2 ? 'from-yellow-400 to-yellow-600' :
-                                                                    'from-red-400 to-red-600'
+                                                            diff.difference < 2 ? 'from-yellow-400 to-yellow-600' :
+                                                                'from-red-400 to-red-600'
                                                             }`}
                                                         style={{ width: `${Math.min(100, (diff.difference / 5) * 100)}%` }}
                                                     />
@@ -272,8 +272,8 @@ export default function ComparisonPage() {
                                         </td>
                                         <td className="py-4 px-4">
                                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${diff.difference < 1 ? 'bg-green-100 text-green-700' :
-                                                    diff.difference < 2 ? 'bg-yellow-100 text-yellow-700' :
-                                                        'bg-red-100 text-red-700'
+                                                diff.difference < 2 ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-red-100 text-red-700'
                                                 }`}>
                                                 {diff.interpretation}
                                             </span>
