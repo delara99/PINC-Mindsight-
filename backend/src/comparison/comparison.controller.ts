@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -27,12 +27,12 @@ interface ComparisonData {
 @Controller('api/v1/comparison')
 @UseGuards(AuthGuard('jwt'))
 export class ComparisonController {
-    constructor(private prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService) { }
 
     @Get('radar/:connectionId')
     async getRadarComparison(
         @Param('connectionId') connectionId: string,
-        @Request() req
+        @Req() req: any
     ): Promise<ComparisonData> {
         const currentUserId = req.user.userId;
 
@@ -95,7 +95,7 @@ export class ComparisonController {
             throw new Error('Um ou ambos usuários não possuem avaliações completadas');
         }
 
-        // Extrair scores (usando result.scores que já calculamos)
+        // Extrair scores
         const user1Scores = (currentUserAssignment as any).result?.scores || {};
         const user2Scores = (otherUserAssignment as any).result?.scores || {};
 
@@ -169,7 +169,7 @@ export class ComparisonController {
         };
     }
 
-    private groupScoresByTrait(scores: Record<string, number>) {
+    private groupScoresByTrait(scores: Record<string, number>): Record<string, number> {
         const traitScores: Record<string, number[]> = {};
 
         Object.entries(scores).forEach(([key, score]) => {
