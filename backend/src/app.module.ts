@@ -15,6 +15,7 @@ import { CouponsModule } from './coupons/coupons.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MigrationModule } from './migration/migration.module';
+import { FixModule } from './fix/fix.module';
 
 @Module({
     imports: [
@@ -31,7 +32,8 @@ import { MigrationModule } from './migration/migration.module';
         CouponsModule,
         FeedbackModule,
         NotificationsModule,
-        MigrationModule
+        MigrationModule,
+        FixModule
     ],
     controllers: [],
     providers: [],
