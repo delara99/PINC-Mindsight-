@@ -7,7 +7,7 @@ export class CrossProfileService {
     constructor(
         private prisma: PrismaService,
         private calculator: BigFiveCalculatorService
-    ) {}
+    ) { }
 
     // Método principal para gerar o relatório
     async generateReport(connectionId: string, authorId: string) {
@@ -42,9 +42,9 @@ export class CrossProfileService {
         // 3. ENGINE: Calcular Diferenças
         try {
             if (!authorAssessment.scores || !targetAssessment.scores) {
-                console.error('[CrossProfile] Scores missing:', { 
-                    authorScores: authorAssessment.scores, 
-                    targetScores: targetAssessment.scores 
+                console.error('[CrossProfile] Scores missing:', {
+                    authorScores: authorAssessment.scores,
+                    targetScores: targetAssessment.scores
                 });
                 throw new Error('Pontuações inválidas encontradas.');
             }
@@ -82,8 +82,8 @@ export class CrossProfileService {
 
             if (assignments.length === 0) return '0 assignments found';
 
-            return assignments.map((a: any) => 
-                `[${a.assessment?.title?.substring(0,10)}..|Type:${a.assessment?.type}|St:${a.status}|Res:${a.result ? 'YES' : 'NO'}]`
+            return assignments.map((a: any) =>
+                `[${a.assessment?.title?.substring(0, 10)}..|Type:${a.assessment?.type}|St:${a.status}|Res:${a.result ? 'YES' : 'NO'}]`
             ).join(', ');
         } catch (e) {
             return 'Error details unavailable';
@@ -96,7 +96,7 @@ export class CrossProfileService {
             include: { author: true, target: true }
         });
     }
-    
+
     async listReports(connectionId: string) {
         return this.prisma.crossProfileReport.findMany({
             where: { connectionId },
@@ -107,7 +107,26 @@ export class CrossProfileService {
     // --- Helpers ---
 
     private async getLatestBigFiveResult(userId: string) {
-        // 1. Busca Assignment candidato (Big Five por Type ou Title)
+        // 1. TENTA BUSCAR PRIMEIRO UM VÁLIDO (COMPLETED e com RESULTADO)
+        const validAssignment = await this.prisma.assessmentAssignment.findFirst({
+            where: {
+                userId,
+                status: 'COMPLETED',
+                result: { isNot: null },
+                assessment: {
+                    OR: [
+                        { type: 'BIG_FIVE' },
+                        { title: { contains: 'Big Five' } }
+                    ]
+                }
+            },
+            orderBy: { completedAt: 'desc' },
+            include: { result: true }
+        });
+
+        if (validAssignment?.result) return validAssignment.result;
+
+        // 2. SE NÃO ACHOU, BUSCA O MAIS RECENTE (MESMO PENDENTE) PARA TENTAR REPARO
         const assignment = await this.prisma.assessmentAssignment.findFirst({
             where: {
                 userId,
@@ -119,22 +138,22 @@ export class CrossProfileService {
                 }
             },
             orderBy: { assignedAt: 'desc' },
-            include: { 
-                result: true, 
+            include: {
+                result: true,
                 responses: true,
-                assessment: true 
+                assessment: true
             }
         });
 
         if (!assignment) return null;
 
-        // 2. Se já tem resultado, retorna
+        // Se já tem resultado (caiu aqui por redundância), retorna
         if (assignment.result) return assignment.result;
 
         // 3. AUTO-REPAIR: Se tem respostas mas não tem resultado, calcula agora.
         if (assignment.responses && assignment.responses.length > 0) {
             console.log(`[CrossProfile] Repairing missing result for assignment ${assignment.id}`);
-            
+
             try {
                 // Formatar respostas
                 const formattedResponses = assignment.responses.map((r: any) => ({
@@ -156,7 +175,7 @@ export class CrossProfileService {
                     'Amabilidade': 'AGREEABLENESS',
                     'Estabilidade Emocional': 'NEUROTICISM'
                 };
-                
+
                 const finalScores: any = {};
                 calculated.traits.forEach(t => {
                     const enKey = traitMap[t.trait];
@@ -193,8 +212,8 @@ export class CrossProfileService {
 
     private calculateGaps(scoresA: any, scoresB: any) {
         if (!scoresA || !scoresB) {
-             // Redundancia pois verifiquei acima, mas seguro.
-             return {};
+            // Redundancia pois verifiquei acima, mas seguro.
+            return {};
         }
 
         const traits = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
@@ -204,7 +223,7 @@ export class CrossProfileService {
             const valA = scoresA[trait] || 0;
             const valB = scoresB[trait] || 0;
             const diff = Math.abs(valA - valB);
-            
+
             // Classificação da distância
             let classification = 'HIGH_SIMILARITY'; // 0-10
             if (diff > 10 && diff <= 25) classification = 'MODERATE_SIMILARITY';
