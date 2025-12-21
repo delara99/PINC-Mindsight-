@@ -1,9 +1,9 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
-import { useTrialStore } from '@/src/store/trial-store';
-import ClientDashboard from '@/src/components/dashboard/client-overview';
+import { useAuthStore } from '../../../src/store/auth-store';
+import { useTrialStore } from '../../../src/store/trial-store';
+import ClientDashboard from '../../../src/components/dashboard/client-overview';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';

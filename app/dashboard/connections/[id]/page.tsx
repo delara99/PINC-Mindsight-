@@ -1,8 +1,8 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../src/config/api';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar } from 'lucide-react';
 

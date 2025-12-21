@@ -1,8 +1,8 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../src/config/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../src/store/auth-store';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, CheckCircle, Clock, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

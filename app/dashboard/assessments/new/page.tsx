@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import { Plus, Save, Trash2, GripVertical, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/src/store/auth-store';
-import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '../../../../src/store/auth-store';
+import { API_URL } from '../../../../src/config/api';
 
 const TRAIT_MAPPING: Record<string, string> = {
     'Extroversão': 'EXTRAVERSION',

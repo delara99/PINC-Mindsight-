@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 import { Check, CreditCard, Loader2, Minus, Plus, Info } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { PaymentModal } from '../components/PaymentModal';
 
 export const dynamic = 'force-dynamic';

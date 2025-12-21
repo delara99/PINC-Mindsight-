@@ -1,11 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { ArrowUpRight, UserPlus, FileCheck, AlertCircle, PlayCircle, Clock, Users, CheckCircle2 } from 'lucide-react';
-import { useAuthStore } from '@/src/store/auth-store';
-import { useTrialStore } from '@/src/store/trial-store';
-import ClientDashboard from '@/src/components/dashboard/client-overview';
+import { useAuthStore } from '../../src/store/auth-store';
+import { useTrialStore } from '../../src/store/trial-store';
+import ClientDashboard from '../../src/components/dashboard/client-overview';
 import { useQuery } from '@tanstack/react-query';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../src/config/api';
 
 import ClientLayoutWrapper from './components/ClientWrapper';
 

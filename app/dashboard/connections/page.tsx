@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { Loader2, UserPlus, Check, X, MessageSquare, Trash2, Settings, Link as LinkIcon, Copy, CheckCircle2, Shield, XCircle, GitCompare } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 export default function ConnectionsPage() {
     const token = useAuthStore((state) => state.token);

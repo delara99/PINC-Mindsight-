@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Copy, CheckCircle2, QrCode, Ticket, Percent, Loader2, Sparkles } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 interface PaymentModalProps {
     isOpen: boolean;

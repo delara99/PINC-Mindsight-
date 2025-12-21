@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Building, Upload } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 export default function SettingsPage() {
     const token = useAuthStore((state) => state.token);

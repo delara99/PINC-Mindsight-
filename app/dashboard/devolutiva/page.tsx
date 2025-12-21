@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
-import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '../../../src/store/auth-store';
+import { API_URL } from '../../../src/config/api';
 import { Lock, Sparkles, Phone, CheckCircle2, Calendar, Clock, MessageSquare, FileText } from 'lucide-react';
 import Link from 'next/link';
 

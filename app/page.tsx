@@ -2,9 +2,9 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
-import { MethodologySection } from '@/src/components/landing/methodology-section';
-import { FeaturesGrid } from '@/src/components/landing/features-grid';
-import { API_URL } from '@/src/config/api';
+import { MethodologySection } from '../src/components/landing/methodology-section';
+import { FeaturesGrid } from '../src/components/landing/features-grid';
+import { API_URL } from '../src/config/api';
 
 // Icon mapping
 const iconMap: any = {

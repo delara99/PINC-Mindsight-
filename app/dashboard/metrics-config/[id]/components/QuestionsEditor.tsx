@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { API_URL } from '@/src/config/api';
-import { useAuthStore } from '@/src/store/auth-store';
+import { API_URL } from '../../../../../src/config/api';
+import { useAuthStore } from '../../../../../src/store/auth-store';
 import { Edit2, Save, X, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 export default function QuestionsEditor() {

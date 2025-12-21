@@ -1,7 +1,7 @@
 
 'use client';
-import { API_URL } from '@/src/config/api';
-import { useAuthStore } from '@/src/store/auth-store';
+import { API_URL } from '../../../../../src/config/api';
+import { useAuthStore } from '../../../../../src/store/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, Share2, Loader2, Info } from 'lucide-react';

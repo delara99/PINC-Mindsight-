@@ -1,12 +1,12 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import Link from 'next/link';
 import Router from 'next/router';
 import { useRouter } from 'next/navigation';
 import { Plus, Loader2, FileText, Calendar, Users, BrainCircuit, X, Copy, Edit, Trash2, Star } from 'lucide-react';
 import { useState } from 'react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 interface Assessment {
     id: string;

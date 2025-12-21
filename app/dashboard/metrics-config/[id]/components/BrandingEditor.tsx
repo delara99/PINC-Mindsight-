@@ -1,8 +1,8 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../../src/config/api';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../../src/store/auth-store';
 import { Save, Upload } from 'lucide-react';
 
 interface BrandingEditorProps {

@@ -1,9 +1,9 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { FileText, User, Calendar, Award, CheckCircle } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 interface Report {
     id: string;

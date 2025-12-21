@@ -1,8 +1,8 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../../src/config/api';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../../src/store/auth-store';
 import { ChevronDown, ChevronUp, Save, Edit2, AlertCircle, RefreshCw, Plus, X, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 
 interface TraitsEditorProps {

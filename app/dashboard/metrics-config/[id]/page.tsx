@@ -1,10 +1,10 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../src/store/auth-store';
 import { useRouter, useParams } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowLeft, Save, TrendingUp, Settings, FileText, Lightbulb, Palette, Check } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../src/config/api';
 
 // Tabs componentes
 import RangesEditor from './components/RangesEditor';

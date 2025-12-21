@@ -1,10 +1,10 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { PlayCircle, Loader2, Clock, CheckCircle2, BrainCircuit, Award, CreditCard, Wallet, ArrowRight, AlertCircle, TrendingUp, Calendar, History, RefreshCw, X, Sparkles, ChevronRight } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Assessment {

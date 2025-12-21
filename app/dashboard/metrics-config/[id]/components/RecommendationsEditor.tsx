@@ -1,8 +1,8 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../../src/config/api';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../../src/store/auth-store';
 import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 
 interface RecommendationsEditorProps {

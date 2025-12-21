@@ -1,9 +1,9 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../../src/config/api';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../../src/store/auth-store';
 
 export default function ViewReportPage() {
     const params = useParams();

@@ -1,7 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
-import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '../../../src/store/auth-store';
+import { API_URL } from '../../../src/config/api';
 import { CheckCircle2, XCircle, Clock, Calendar, User, FileText } from 'lucide-react';
 
 export default function DevolutivasAdminPage() {

@@ -4,12 +4,12 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download } from 'lucide-react';
-import { useAuthStore } from '@/src/store/auth-store';
-import { BigFiveChart } from '@/src/components/dashboard/big-five-chart';
-import { TraitCard } from '@/src/components/dashboard/TraitCard';
+import { useAuthStore } from '../../../../src/store/auth-store';
+import { BigFiveChart } from '../../../../src/components/dashboard/big-five-chart';
+import { TraitCard } from '../../../../src/components/dashboard/TraitCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../src/config/api';
 
 export default function AssessmentDetailsPage() {
     const params = useParams();

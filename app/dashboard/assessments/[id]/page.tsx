@@ -1,7 +1,7 @@
 'use client';
 import { API_URL } from '../../../../src/config/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../../src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, Plus, Trash2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';

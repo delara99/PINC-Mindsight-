@@ -1,9 +1,9 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../../../src/config/api';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useAuthStore } from '@/src/store/auth-store';
-import BigFiveResults from '@/src/components/assessment/BigFiveResults';
+import { useAuthStore } from '../../../../../src/store/auth-store';
+import BigFiveResults from '../../../../../src/components/assessment/BigFiveResults';
 import { Loader2, AlertCircle, Clock } from 'lucide-react';
 
 export default function AssessmentResultPage() {

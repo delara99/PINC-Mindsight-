@@ -1,6 +1,6 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { useState } from 'react';
 import { Loader2, Plus, CreditCard, X, Edit, Check, Trash2, FileText, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ import Link from 'next/link';
 // ... (início do componente)
 
 // Mutation movida para dentro do componente para acessar token
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 interface Client {
     id: string;
