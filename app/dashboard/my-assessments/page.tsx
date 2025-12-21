@@ -1,9 +1,9 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { PlayCircle, Loader2, Clock, CheckCircle2, BrainCircuit, Award, CreditCard, Wallet, ArrowRight, AlertCircle, TrendingUp, Calendar, History, RefreshCw, X, Sparkles, ChevronRight } from 'lucide-react';
+import { PlayCircle, Loader2, Clock, CheckCircle2, BrainCircuit, Award, CreditCard, Wallet, ArrowRight, AlertCircle, TrendingUp, Calendar, History, RefreshCw, X, Sparkles, ChevronRight, Trash2 } from 'lucide-react';
 import { API_URL } from '../../../src/config/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,6 +23,29 @@ export default function MyAssessmentsPage() {
     const user = useAuthStore((state) => state.user);
     const router = useRouter();
     const [isNudgeOpen, setIsNudgeOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const deleteMutation = useMutation({
+        mutationFn: async (assignmentId: string) => {
+            const res = await fetch(`${API_URL}/api/v1/assessments/my-assignment/${assignmentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Falha ao excluir');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['my-assessments'] });
+        },
+        onError: () => alert('Erro ao excluir avaliação.')
+    });
+
+    const handleDelete = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (confirm('Tem certeza que deseja excluir permanentemente este resultado?')) {
+            deleteMutation.mutate(id);
+        }
+    };
 
     // Carregar avaliações atribuídas ao usuário (Endpoint dedicado)
     const { data: assessments, isLoading } = useQuery<Assessment[]>({
@@ -249,7 +272,16 @@ export default function MyAssessmentsPage() {
                                                         <div className="p-2 bg-green-50 rounded-lg text-green-600 group-hover:bg-green-100 transition-colors">
                                                             <Award size={20} />
                                                         </div>
-                                                        <ArrowRight className="text-gray-300 group-hover:text-indigo-500 transition-colors" size={20} />
+                                                        <div className="flex items-center gap-2">
+                                                            <button 
+                                                                onClick={(e) => handleDelete(e, (assessment as any).assignmentId)}
+                                                                className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors z-10"
+                                                                title="Excluir resultado"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                            <ArrowRight className="text-gray-300 group-hover:text-indigo-500 transition-colors" size={20} />
+                                                        </div>
                                                     </div>
                                                     <h3 className="font-bold text-gray-900 mb-1">{assessment.title}</h3>
                                                     <p className="text-xs text-gray-500 mb-3 line-clamp-2">{assessment.description}</p>

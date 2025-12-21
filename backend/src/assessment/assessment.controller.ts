@@ -1292,4 +1292,31 @@ export class AssessmentController {
             details: updates.slice(0, 10) // Primeiras 10 para não sobrecarregar
         };
     }
+
+    // Usuário deletar seu próprio assignment (Histórico)
+    @Delete('my-assignment/:id')
+    async deleteMyAssignment(@Param('id') id: string, @Request() req) {
+        const userId = req.user.userId;
+
+        // 1. Buscar o assignment garantindo que pertence ao usuário
+        const assignment = await this.prisma.assessmentAssignment.findFirst({
+            where: {
+                id: id,
+                userId: userId
+            }
+        });
+
+        if (!assignment) {
+            throw new BadRequestException('Avaliação não encontrada ou você não tem permissão para excluí-la.');
+        }
+
+        // 2. Realizar exclusão em cascata (Respostas -> Resultados -> Assignment)
+        await this.prisma.$transaction(async (tx) => {
+            await tx.assessmentResponse.deleteMany({ where: { assignmentId: id } });
+            await tx.assessmentResult.deleteMany({ where: { assignmentId: id } });
+            await tx.assessmentAssignment.delete({ where: { id: id } });
+        });
+
+        return { message: 'Avaliação excluída com sucesso.' };
+    }
 }
