@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { LeadFormModal } from '@/src/components/business/LeadFormModal';
+import { LeadFormModal } from '../../src/components/business/LeadFormModal';
 import { ArrowRight, Check, BarChart, Users, Brain, Target, Shield, Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../src/config/api';
 
 export default function BusinessPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);

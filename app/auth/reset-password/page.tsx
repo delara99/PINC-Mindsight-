@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 import { CheckCircle, AlertCircle, Lock, User, Phone, Building, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';

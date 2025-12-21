@@ -8,7 +8,7 @@ import { API_URL } from '../../../src/config/api';
 import { useTrialStore } from '../../../src/store/trial-store';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExitIntentModal } from '@/src/components/auth/ExitIntentModal';
+import { ExitIntentModal } from '../../../src/components/auth/ExitIntentModal';
 
 // Fallback Planos
 const DEFAULT_PLANS = [
