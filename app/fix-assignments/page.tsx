@@ -15,7 +15,8 @@ export default function FixPage() {
         setResult(null);
 
         try {
-            const response = await fetch(`${API_URL}/api/v1/fix/my-assignments`, {
+            // Tenta primeiro no UserController (rota mais robusta)
+            const response = await fetch(`${API_URL}/api/v1/users/fix-my-assignments`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

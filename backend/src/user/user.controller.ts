@@ -454,4 +454,60 @@ export class UserController {
             throw new BadRequestException(`Erro ao processar aprovação: ${error.message}`);
         }
     }
+
+    @Post('fix-my-assignments')
+    async fixMyAssignments(@Request() req) {
+        const userId = req.user.userId;
+
+        // 1. Buscar tenant do usuário
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { tenantId: true }
+        });
+
+        if (!user) {
+            return { success: false, message: 'Usuário não encontrado' };
+        }
+
+        // 2. Buscar config ativa
+        const activeConfig = await this.prisma.bigFiveConfig.findFirst({
+            where: {
+                tenantId: user.tenantId,
+                isActive: true
+            }
+        });
+
+        if (!activeConfig) {
+            return { success: false, message: 'Config Big Five não encontrada para seu tenant' };
+        }
+
+        // 3. Buscar assignments COMPLETED sem config
+        const assignments = await this.prisma.assessmentAssignment.findMany({
+            where: {
+                userId,
+                status: 'COMPLETED',
+                OR: [
+                    { configId: null },
+                    { configId: '' }
+                ]
+            }
+        });
+
+        // 4. Vincular à config ativa
+        let fixed = 0;
+        for (const assignment of assignments) {
+            await this.prisma.assessmentAssignment.update({
+                where: { id: assignment.id },
+                data: { configId: activeConfig.id }
+            });
+            fixed++;
+        }
+
+        return {
+            success: true,
+            message: `${fixed} assignment(s) corrigido(s) com sucesso`,
+            configId: activeConfig.id,
+            fixed
+        };
+    }
 }
