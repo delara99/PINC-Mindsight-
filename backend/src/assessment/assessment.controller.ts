@@ -20,6 +20,56 @@ export class AssessmentController {
     @Get('my-assignments-list')
     async getMyAssignmentsList(@Request() req) {
         const user = req.user;
+
+        // --- AUTO-ASSIGN: START ---
+        // Garantir que o usuário tenha um inventário disponível (Regra de Negócio: Sempre ter um a fazer)
+        try {
+            // 1. Buscar modelo Padrão do Tenant
+            let bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                where: { tenantId: user.tenantId, isDefault: true, type: 'BIG_FIVE' }
+            });
+
+            // 2. Fallback: Qualquer do Tenant
+            if (!bigFiveModel) {
+                bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                });
+            }
+
+            // 3. Fallback: Global/System
+            if (!bigFiveModel) {
+                bigFiveModel = await this.prisma.assessmentModel.findFirst({
+                    where: { type: 'BIG_FIVE' }
+                });
+            }
+
+            if (bigFiveModel) {
+                // Verificar se já existe algum pendente (de qualquer versão Big Five, para não acumular)
+                const anyPending = await this.prisma.assessmentAssignment.findFirst({
+                    where: {
+                        userId: user.userId,
+                        assessment: { type: 'BIG_FIVE' },
+                        status: { not: 'COMPLETED' }
+                    }
+                });
+
+                if (!anyPending) {
+                    console.log(`[AutoAssign] Criando novo assignment do modelo ${bigFiveModel.id} para user ${user.userId}`);
+                    await this.prisma.assessmentAssignment.create({
+                        data: {
+                            userId: user.userId,
+                            assessmentId: bigFiveModel.id,
+                            status: 'PENDING',
+                            assignedAt: new Date(),
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('[AutoAssign] Falha silenciosa ao tentar atribuir inventário:', e);
+        }
+        // --- AUTO-ASSIGN: END ---
+
         const assignments = await this.prisma.assessmentAssignment.findMany({
             where: { userId: user.userId },
             include: {
@@ -998,9 +1048,31 @@ export class AssessmentController {
 
             let newAssignmentCreated = false;
             // Buscar o modelo Big Five para criar novo assignment
-            const assessmentModel = await this.prisma.assessmentModel.findFirst({
-                where: { type: 'BIG_FIVE' }
+            // Buscar o modelo Big Five PADRÃO para criar novo assignment
+            let assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: {
+                    tenantId: assignment.user.tenantId, // Respeita o tenant do usuário
+                    type: 'BIG_FIVE',
+                    isDefault: true
+                }
             });
+
+            // Fallback: Se não tiver padrão definido, pega qualquer Big Five do Tenant
+            if (!assessmentModel) {
+                assessmentModel = await this.prisma.assessmentModel.findFirst({
+                    where: {
+                        tenantId: assignment.user.tenantId,
+                        type: 'BIG_FIVE'
+                    }
+                });
+            }
+
+            // Fallback Global: Se não tiver no tenant, pega o System Default (se existir)
+            if (!assessmentModel) {
+                assessmentModel = await this.prisma.assessmentModel.findFirst({
+                    where: { type: 'BIG_FIVE' }
+                });
+            }
 
             if (assessmentModel) {
                 // Verificar se já existe um PENDING (evitar duplicatas)
