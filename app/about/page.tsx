@@ -1,6 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../src/config/api';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
