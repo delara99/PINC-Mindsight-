@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore } from '@/src/store/auth-store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
