@@ -104,6 +104,12 @@ export class CrossProfileService {
         });
     }
 
+    async deleteReport(reportId: string) {
+        return this.prisma.crossProfileReport.delete({
+            where: { id: reportId }
+        });
+    }
+
     // --- Helpers ---
 
     private async getLatestBigFiveResult(userId: string) {

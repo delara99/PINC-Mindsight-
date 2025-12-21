@@ -1,12 +1,12 @@
 
-import { Controller, Post, Get, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CrossProfileService } from './cross-profile.service';
 
 @Controller('cross-profile')
 @UseGuards(AuthGuard('jwt'))
 export class CrossProfileController {
-    constructor(private readonly service: CrossProfileService) {}
+    constructor(private readonly service: CrossProfileService) { }
 
     @Post('generate')
     async generate(@Request() req, @Body('connectionId') connectionId: string) {
@@ -21,5 +21,10 @@ export class CrossProfileController {
     @Get(':id')
     async get(@Param('id') id: string) {
         return this.service.getReport(id);
+    }
+
+    @Delete(':id')
+    async delete(@Param('id') id: string) {
+        return this.service.deleteReport(id);
     }
 }

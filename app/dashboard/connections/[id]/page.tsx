@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar } from 'lucide-react';
+import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar, Trash2 } from 'lucide-react';
 
 export default function ConnectionDetailPage() {
     const { id } = useParams(); // Connection ID
@@ -109,11 +109,11 @@ export default function ConnectionDetailPage() {
 
     const generateReportMutation = useMutation({
         mutationFn: async () => {
-             const res = await fetch(`${API_URL}/api/v1/cross-profile/generate`, {
+            const res = await fetch(`${API_URL}/api/v1/cross-profile/generate`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}` 
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({ connectionId: id })
             });
@@ -126,6 +126,21 @@ export default function ConnectionDetailPage() {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['cross-profile-list', id] });
             router.push(`/dashboard/connections/cross-profile/${data.id}`);
+        },
+        onError: (err) => alert(err.message)
+    });
+
+    const deleteReportMutation = useMutation({
+        mutationFn: async (reportId: string) => {
+            const res = await fetch(`${API_URL}/api/v1/cross-profile/${reportId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao deletar relatório');
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['cross-profile-list', id] });
+            alert('Relatório removido com sucesso!');
         },
         onError: (err) => alert(err.message)
     });
@@ -353,12 +368,25 @@ export default function ConnectionDetailPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => router.push(`/dashboard/connections/cross-profile/${report.id}`)}
-                                                className="px-4 py-2 bg-gray-50 text-gray-700 font-bold text-xs rounded-lg group-hover:bg-violet-600 group-hover:text-white transition-colors"
-                                            >
-                                                Visualizar Relatório
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm('Tem certeza que deseja apagar este relatório?')) {
+                                                            deleteReportMutation.mutate(report.id);
+                                                        }
+                                                    }}
+                                                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                    title="Apagar Relatório"
+                                                >
+                                                    {deleteReportMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => router.push(`/dashboard/connections/cross-profile/${report.id}`)}
+                                                    className="px-4 py-2 bg-gray-50 text-gray-700 font-bold text-xs rounded-lg group-hover:bg-violet-600 group-hover:text-white transition-colors"
+                                                >
+                                                    Visualizar Relatório
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
