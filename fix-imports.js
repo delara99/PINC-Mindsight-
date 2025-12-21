@@ -2,15 +2,18 @@ const fs = require('fs');
 const path = require('path');
 
 function getAllFiles(dirPath, arrayOfFiles) {
+    if (!fs.existsSync(dirPath)) return arrayOfFiles || [];
+
     const files = fs.readdirSync(dirPath);
     arrayOfFiles = arrayOfFiles || [];
 
     files.forEach(function (file) {
-        if (fs.statSync(dirPath + "/" + file).isDirectory()) {
-            arrayOfFiles = getAllFiles(dirPath + "/" + file, arrayOfFiles);
+        const fullPath = path.join(dirPath, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+            arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
         } else {
             if (file.endsWith('.ts') || file.endsWith('.tsx')) {
-                arrayOfFiles.push(path.join(dirPath, "/", file));
+                arrayOfFiles.push(fullPath);
             }
         }
     });
@@ -19,15 +22,15 @@ function getAllFiles(dirPath, arrayOfFiles) {
 }
 
 function getBackPath(filePath) {
-    // filePath example: app/dashboard/page.tsx
-    // path.dirname: app/dashboard
-    // relative to root from app/dashboard is ../../
+    // filePath example: src/components/auth/file.tsx
+    // dir: src/components/auth
+    // relative to root: ../../../
 
     // Normalize path just in case
     const normalized = path.normalize(filePath);
     const dir = path.dirname(normalized);
 
-    // Count segments
+    // Count segments relative to root (assuming script is run from root)
     const segments = dir.split(path.sep).filter(s => s !== '.' && s !== '');
 
     let back = '';
@@ -37,7 +40,8 @@ function getBackPath(filePath) {
     return back;
 }
 
-const files = getAllFiles('app');
+// BUSCAR EM APP E SRC
+const files = [...getAllFiles('app'), ...getAllFiles('src')];
 
 let count = 0;
 files.forEach(file => {
@@ -50,6 +54,7 @@ files.forEach(file => {
 
     if (regex.test(content)) {
         const newContent = content.replace(regex, (match, p1) => {
+            // Se estivermos dentro de src, backPath volta para root, e depois entra em src
             return `from '${backPath}${p1}'`;
         });
 

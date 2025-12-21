@@ -1,6 +1,6 @@
 'use client';
-import { API_URL } from '@/src/config/api';
-import { useAuthStore } from '@/src/store/auth-store';
+import { API_URL } from '../../../src/config/api';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { PlayCircle, Award, History, ArrowRight } from 'lucide-react';

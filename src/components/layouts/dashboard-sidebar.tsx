@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 import {
     LayoutDashboard,
     Users,
@@ -24,7 +24,7 @@ import {
     MessageSquare
 } from 'lucide-react';
 import clsx from 'clsx';
-import { UpgradeModal } from '@/src/components/common/upgrade-modal';
+import { UpgradeModal } from '../../../src/components/common/upgrade-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const menuItems = [

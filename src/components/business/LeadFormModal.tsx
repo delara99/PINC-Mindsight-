@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { X, Loader2, Building2, User, Mail, Phone, Briefcase, Users } from 'lucide-react';
-import { API_URL } from '@/src/config/api';
-import { useAuthStore } from '@/src/store/auth-store'; // Might not be needed if public, but useful if we want to auto-login or use store for something
+import { API_URL } from '../../../src/config/api';
+import { useAuthStore } from '../../../src/store/auth-store'; // Might not be needed if public, but useful if we want to auto-login or use store for something
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LeadFormModalProps {

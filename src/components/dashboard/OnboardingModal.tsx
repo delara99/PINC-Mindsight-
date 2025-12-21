@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, CheckCircle, CreditCard, ArrowRight, Wallet } from 'lucide-react';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import Link from 'next/link';
 
 export function OnboardingModal() {

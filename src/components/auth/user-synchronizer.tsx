@@ -1,8 +1,8 @@
 'use client';
-import { API_URL } from '@/src/config/api';
+import { API_URL } from '../../../src/config/api';
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/src/store/auth-store';
+import { useAuthStore } from '../../../src/store/auth-store';
 import { useEffect } from 'react';
 
 export function UserSynchronizer() {
