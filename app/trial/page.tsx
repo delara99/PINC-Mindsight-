@@ -1,6 +1,6 @@
 'use client';
 
-import { useTrialStore } from '@/src/store/trial-store';
+import { useTrialStore } from '../../src/store/trial-store';
 import { TrialForm } from './components/TrialForm';
 import { TrialQuiz } from './components/TrialQuiz';
 import { TrialResult } from './components/TrialResult';

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/src/store/auth-store';
-import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '../../src/store/auth-store';
+import { API_URL } from '../../src/config/api';
 
 export default function DebugPage() {
     const [data, setData] = useState<any>(null);

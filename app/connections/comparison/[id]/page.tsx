@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '../../../../src/store/auth-store';
-import { API_URL } from '@/src/config/api';
-import { BigFiveChart } from '@/src/components/dashboard/big-five-chart';
+import { API_URL } from '../../../../src/config/api';
+import { BigFiveChart } from '../../../../src/components/dashboard/big-five-chart';
 import { ArrowLeft, TrendingUp, Users, Sparkles, BarChart3 } from 'lucide-react';
 
 interface ComparisonData {

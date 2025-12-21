@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTrialStore } from '@/src/store/trial-store';
+import { useTrialStore } from '../../../src/store/trial-store';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const QUESTIONS = [

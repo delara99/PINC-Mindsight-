@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuthStore } from '@/src/store/auth-store';
-import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '../../src/store/auth-store';
+import { API_URL } from '../../src/config/api';
 
 export default function EmergencyConfigPage() {
     const [loading, setLoading] = useState(false);

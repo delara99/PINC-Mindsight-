@@ -1,6 +1,6 @@
 'use client';
 
-import { useTrialStore } from '@/src/store/trial-store';
+import { useTrialStore } from '../../../src/store/trial-store';
 import { Lock, Unlock, ArrowRight, CheckCircle, BarChart3, Users } from 'lucide-react';
 import Link from 'next/link';
 

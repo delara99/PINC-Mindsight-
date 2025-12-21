@@ -1,6 +1,6 @@
 'use client';
 
-import { useTrialStore } from '@/src/store/trial-store';
+import { useTrialStore } from '../../../src/store/trial-store';
 
 // Checking package.json... No react-hook-form. Will use simple state.
 import { useState } from 'react';
