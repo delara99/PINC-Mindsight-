@@ -49,12 +49,6 @@ export default function DashboardPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Visão Geral</h1>
                     <p className="text-gray-500 mt-1">Bem-vindo ao painel de controle da sua organização.</p>
                 </div>
-                <Link href="/dashboard/assessments/new">
-                    <button className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
-                        <UserPlus size={18} />
-                        Nova Avaliação
-                    </button>
-                </Link>
             </div>
 
             {/* Stats Cards */}
@@ -106,7 +100,7 @@ export default function DashboardPage() {
                                                     </p>
                                                 )}
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={async () => {
                                                     if (!confirm(`Aprovar solicitação de ${req.user.name}? Isso irá adicionar créditos e alterar o plano.`)) return;
                                                     try {
@@ -114,12 +108,12 @@ export default function DashboardPage() {
                                                             method: 'POST',
                                                             headers: { 'Authorization': `Bearer ${token}` }
                                                         });
-                                                        
+
                                                         const data = await res.json();
-                                                        
+
                                                         if (res.ok) {
                                                             alert(data.message || 'Solicitação aprovada com sucesso!');
-                                                            window.location.reload(); 
+                                                            window.location.reload();
                                                         } else {
                                                             alert(`Erro ao aprovar: ${data.message || 'Erro desconhecido'}`);
                                                         }
@@ -208,7 +202,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

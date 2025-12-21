@@ -219,13 +219,6 @@ export default function AssessmentsListPage() {
                     <p className="text-gray-500 mt-1">Gerencie os questionários disponíveis para aplicação.</p>
                 </div>
                 <div className="flex gap-3">
-
-                    <Link href="/dashboard/assessments/new">
-                        <button className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
-                            <Plus size={18} />
-                            Nova Avaliação
-                        </button>
-                    </Link>
                 </div>
             </div>
 
