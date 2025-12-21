@@ -312,13 +312,10 @@ export default function AssessmentDetailsPage() {
 
                 {/* Área de Feedback */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Feedback do Administrador</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                        Este feedback ficará visível para o candidato na área "Minhas Avaliações".
-                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Dúvidas sobre seu resultado</h3>
                     <textarea
-                        className="w-full min-h-[150px] p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none resize-y"
-                        placeholder="Escreva aqui sua avaliação e observações sobre o perfil do candidato..."
+                        className="w-full min-h-[150px] p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none resize-y text-sm"
+                        placeholder="Utilize este espaço para descrever suas dúvidas ou pontos que gostaria de aprofundar sobre o seu resultado. O especialista terá acesso ao seu inventário completo e utilizará essa informação para orientar o atendimento."
                         defaultValue={assignment.feedback || ''}
                         onChange={(e) => setFeedback(e.target.value)}
                     ></textarea>
@@ -329,7 +326,7 @@ export default function AssessmentDetailsPage() {
                             className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-70"
                         >
                             <Save className="w-4 h-4" />
-                            {submitFeedbackMutation.isPending ? 'Salvando...' : 'Salvar Feedback'}
+                            {submitFeedbackMutation.isPending ? 'Enviando...' : 'Enviar para o especialista'}
                         </button>
                     </div>
                 </div>
