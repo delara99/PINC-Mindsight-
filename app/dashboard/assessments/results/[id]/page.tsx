@@ -41,72 +41,11 @@ export default function AssessmentResultPage() {
 
                 const assignment = await assignmentRes.json();
 
-                // ===== DEBUG CRÍTICO =====
-                console.log('[FRONTEND DEBUG] Assignment recebido:', assignment);
-                console.log('[FRONTEND DEBUG] calculatedScores existe?', !!assignment.calculatedScores);
-                console.log('[FRONTEND DEBUG] calculatedScores.scores existe?', !!assignment.calculatedScores?.scores);
-                console.log('[FRONTEND DEBUG] result existe?', !!assignment.result);
-                // ===== FIM DEBUG =====
+                console.log('[DEBUG] Assignment recebido');
 
-                // FIX: Priorizar scores calculados em tempo real (que incluem novos textos interpretativos)
-                if (assignment.calculatedScores && assignment.calculatedScores.scores) {
-                    console.log('[FRONTEND DEBUG] ✅ Usando cálculo em tempo real');
+                // SOLUÇÃO DEFINITIVA: Sempre recalcular via endpoint que funciona
+                // Ignorar calculatedScores e snapshots - sempre usar cálculo fresco
 
-                    const baseResult = assignment.result?.data || {};
-
-                    // CORREÇÃO: Mapear campos do backend para o formato esperado pelo BigFiveResults
-                    const mappedTraits = assignment.calculatedScores.scores.map((trait: any) => ({
-                        traitKey: trait.key,           // key → traitKey
-                        traitName: trait.name,         // name → traitName
-                        score: trait.score,
-                        rawScore: trait.rawScore,
-                        level: trait.level,
-                        interpretation: trait.interpretation,
-                        facets: trait.facets,
-                        customTexts: trait.customTexts
-                    }));
-
-                    console.log('[FRONTEND DEBUG] Mapped traits:', mappedTraits.length, 'traits');
-                    console.log('[FRONTEND DEBUG] First trait:', mappedTraits[0]);
-
-                    // Garantir estrutura compatível com BigFiveResults
-                    const freshResult = {
-                        ...baseResult,
-                        traits: mappedTraits,  // Usar array mapeado
-                        timeSpent: assignment.timeSpent,
-                        // Defaults seguros caso baseResult falhe
-                        answeredQuestions: baseResult.answeredQuestions || assignment.responses?.length || 0,
-                        totalQuestions: baseResult.totalQuestions || 50,
-                        completionPercentage: baseResult.completionPercentage || 100,
-                        _debugSource: 'REAL_TIME_CALCULATION',
-                        _debug: assignment.calculatedScores._debug,
-                        _success: assignment.calculatedScores._success,
-                        _textError: assignment.calculatedScores._textError,
-                        _steps: assignment.calculatedScores._steps
-                    };
-
-                    console.log('[FRONTEND DEBUG] Final result object:', freshResult);
-                    console.log('[FRONTEND DEBUG] Traits in result:', freshResult.traits?.length);
-
-                    setResult(freshResult);
-                    setLoading(false);
-                    return;
-                }
-
-                // Verificar se já tem resultado calculado (Snapshot Antigo)
-                if (assignment.result && assignment.result.data) {
-                    console.log('[FRONTEND DEBUG] ⚠️ Usando SNAPSHOT ANTIGO (calculatedScores não disponível)');
-                    setResult({
-                        ...assignment.result.data,
-                        timeSpent: assignment.timeSpent,
-                        _debugSource: 'OLD_SNAPSHOT',
-                        _warning: 'Dados antigos - calculatedScores não retornado pelo backend'
-                    });
-                    setLoading(false);
-                    return;
-                }
-
-                // Se não tem resultado, buscar respostas e calcular
                 const responses = assignment.responses?.map((r: any) => ({
                     questionId: r.questionId,
                     value: r.answer || r.value
@@ -115,6 +54,8 @@ export default function AssessmentResultPage() {
                 if (responses.length === 0) {
                     throw new Error('Nenhuma resposta encontrada para esta avaliação');
                 }
+
+                console.log('[DEBUG] Calculando scores via endpoint...');
 
                 const calcRes = await fetch(`${API_URL}/api/v1/assessments/${assignment.assessment?.id || assessmentId}/calculate-big-five`, {
                     method: 'POST',
@@ -131,6 +72,8 @@ export default function AssessmentResultPage() {
                 }
 
                 const calculatedResult = await calcRes.json();
+                console.log('[DEBUG] ✅ Resultado calculado:', calculatedResult);
+
                 setResult({ ...calculatedResult, timeSpent: assignment.timeSpent });
 
             } catch (err: any) {
@@ -185,39 +128,6 @@ export default function AssessmentResultPage() {
 
     return (
         <div className="max-w-6xl mx-auto">
-            {/* DEBUG: Mostrar fonte dos dados */}
-            {result._debugSource && (
-                <div className={`mb-4 p-3 rounded-lg text-sm ${result._debugSource === 'REAL_TIME_CALCULATION'
-                    ? 'bg-green-100 border border-green-300 text-green-800'
-                    : 'bg-yellow-100 border border-yellow-300 text-yellow-800'
-                    }`}>
-                    <strong>DEBUG:</strong> {result._debugSource === 'REAL_TIME_CALCULATION' ? '✅ Dados Atualizados' : '⚠️ Dados Antigos (Snapshot)'}
-                    {result._warning && <div className="text-xs mt-1">{result._warning}</div>}
-                </div>
-            )}
-
-            {/* Mostrar erros detalhados do backend */}
-            {result._debug && result._error && (
-                <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg">
-                    <div className="font-bold mb-2">🔴 ERRO NO BACKEND - Paso {result._step}: {result._stepName}</div>
-                    <div className="text-sm mb-2">Tipo: <code className="bg-red-200 px-2 py-1 rounded">{result._error}</code></div>
-                    <div className="text-sm">Mensagem: {result._message}</div>
-                    {result._stack && (
-                        <details className="mt-2">
-                            <summary className="cursor-pointer text-xs">Stack Trace</summary>
-                            <pre className="text-xs mt-1 overflow-auto max-h-40 bg-red-200 p-2 rounded">{result._stack}</pre>
-                        </details>
-                    )}
-                </div>
-            )}
-
-            {/* Mostrar avisos de textos */}
-            {result._debug && result._textError && !result._error && (
-                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-sm">
-                    <strong>⚠️ Aviso:</strong> Scores calculados com sucesso, mas textos interpretativos não foram carregados.
-                    <div className="text-xs mt-1">Motivo: {result._textError}</div>
-                </div>
-            )}
             {result.timeSpent > 0 && (
                 <div className="mb-6 flex justify-end">
                     <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100 shadow-sm">
