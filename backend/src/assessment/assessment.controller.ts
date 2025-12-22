@@ -200,20 +200,21 @@ export class AssessmentController {
 
             // Buscar report enriquecido com textos customizados
             let reportTraits: any[] = [];
+
+            // PROTEÇÃO: Mesmo que a interpretação falhe, retornamos os scores
             try {
-                // Se config tem tenantId, usamos. Se não, usamos o do contexto (fallback)
                 const effectiveTenantId = config?.tenantId || fallbackTenantId;
 
                 if (effectiveTenantId) {
-                    // gerar report usando o tenant efetivo e a CONFIG ESPECÍFICA usada no cálculo
-                    // Isso garante que peguemos os textos da config correta (que foi preenchida pelo seed)
                     const report = await this.interpretation.generateFullReport(assignmentId, effectiveTenantId, config?.id);
                     reportTraits = report.traits || [];
+                    console.log('[calculateRealScores] Textos carregados:', reportTraits.length, 'traits com textos');
                 } else {
-                    console.warn('[calculateRealScores] Sem TenantID para buscar textos.');
+                    console.warn('[calculateRealScores] Sem TenantID para buscar textos. Continuando sem textos interpretativos.');
                 }
-            } catch (e) {
-                console.error('[calculateRealScores] Erro ao buscar textos interpretativos:', e);
+            } catch (interpretError) {
+                console.error('[calculateRealScores] ERRO ao buscar textos (continuando sem eles):', interpretError);
+                // Não interrompe - continua sem textos
             }
 
             const result = {
@@ -227,7 +228,7 @@ export class AssessmentController {
                         level: score.level,
                         interpretation: score.interpretation,
                         facets: score.facets,
-                        customTexts: enriched?.customTexts
+                        customTexts: enriched?.customTexts || null // null se não encontrou textos
                     };
                 }),
                 config: {
@@ -236,7 +237,7 @@ export class AssessmentController {
                 }
             };
 
-            console.log('[calculateRealScores] Retornando', result.scores.length, 'scores calculados');
+            console.log('[calculateRealScores] ✅ Retornando', result.scores.length, 'scores calculados');
             return result;
         } catch (error) {
             console.error('[calculateRealScores] ERRO CRÍTICO ao calcular scores:', error);
