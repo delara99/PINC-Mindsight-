@@ -25,8 +25,14 @@ export default function AssessmentResultPage() {
 
             try {
                 // Buscar assignment
-                const assignmentRes = await fetch(`${API_URL}/api/v1/assessments/assignments/${assessmentId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                // Buscar assignment (Forçando atualização sem cache)
+                const assignmentRes = await fetch(`${API_URL}/api/v1/assessments/assignments/${assessmentId}?_t=${Date.now()}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    },
+                    cache: 'no-store'
                 });
 
                 if (!assignmentRes.ok) {
