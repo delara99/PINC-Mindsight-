@@ -8,11 +8,12 @@ import { ReportsModule } from '../reports/reports.module';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
 
 import { QuestionController } from './question.controller';
+import { DiagnosticController } from './diagnostic.controller';
 
 @Module({
     imports: [PrismaModule, ReportsModule],
-    controllers: [AssessmentController, QuestionController],
-    providers: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService, ScoreCalculationService],
+    controllers: [AssessmentController, QuestionController, DiagnosticController],
+    providers: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService, ScoreCalculationService, DiagnosticController],
     exports: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService]
 })
 export class AssessmentModule { }
