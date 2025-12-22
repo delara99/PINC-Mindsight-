@@ -175,7 +175,7 @@ export class PaymentController {
             try {
                 const btgStatus = await this.btgService.getChargeStatus(payment.btgChargeId);
 
-                if (btgStatus.status === 'PAID' && payment.status !== 'PAID') {
+                if (btgStatus.status === 'PAID') {
                     // Atualizar localmente
                     await this.prisma.payment.update({
                         where: { id: paymentId },
@@ -250,10 +250,11 @@ export class PaymentController {
         }
 
         // Validar planos permitidos
-        if (coupon.allowedPlans && coupon.allowedPlans.length > 0) {
+        if (coupon.allowedPlans && Array.isArray(coupon.allowedPlans) && coupon.allowedPlans.length > 0) {
             const planMap: any = { starter: 'START', pro: 'PRO', business: 'BUSINESS' };
             const planEnum = planMap[planId.toLowerCase()];
-            if (!coupon.allowedPlans.includes(planEnum)) {
+            const allowedPlansArray = coupon.allowedPlans as string[];
+            if (!allowedPlansArray.includes(planEnum)) {
                 throw new BadRequestException('Cupom não válido para este plano');
             }
         }
