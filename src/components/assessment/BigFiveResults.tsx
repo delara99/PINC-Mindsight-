@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
-import { ChevronDown, ChevronUp, Target, Brain, Heart, Users, Sparkles, TrendingUp, AlertCircle, Download, Share2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Brain, Heart, Users, Sparkles, TrendingUp, AlertCircle, Download, Share2, Lightbulb, Briefcase } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -18,6 +18,12 @@ interface TraitScore {
     interpretation: string;
     description: string;
     facets: FacetScore[];
+    customTexts?: {
+        summary?: string;
+        practicalImpact?: { context: string; text: string }[];
+        expertSynthesis?: string;
+        expertHypothesis?: { type: string; text: string }[];
+    };
 }
 
 interface BigFiveResultProps {
@@ -272,7 +278,7 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
                                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{trait.description}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between w-full md:w-auto md:justify-end gap-4 pl-[4rem] md:pl-0">
                                     <div className="text-left md:text-right">
                                         <div className="text-2xl md:text-3xl font-bold text-gray-800">{Math.round(trait.normalizedScore)}</div>
@@ -287,6 +293,49 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
                             {/* Facets (Expandable) */}
                             {isExpanded && (
                                 <div className="border-t border-gray-200 bg-gray-50 p-6">
+                                    {/* --- Custom Interpretative Texts --- */}
+                                    {trait.customTexts && (
+                                        <div className="mb-8 p-6 bg-white rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
+
+                                            {trait.customTexts.summary && (
+                                                <div className="mb-6">
+                                                    <h4 className="flex items-center gap-2 text-sm font-bold text-indigo-900 uppercase tracking-wide mb-2">
+                                                        <Sparkles className="w-4 h-4 text-indigo-500" /> Resumo do Comportamento
+                                                    </h4>
+                                                    <p className="text-gray-700 leading-relaxed text-base">{trait.customTexts.summary}</p>
+                                                </div>
+                                            )}
+
+                                            {trait.customTexts.practicalImpact && trait.customTexts.practicalImpact.length > 0 && (
+                                                <div className="mb-6">
+                                                    <h4 className="flex items-center gap-2 text-sm font-bold text-indigo-900 uppercase tracking-wide mb-3">
+                                                        <Briefcase className="w-4 h-4 text-indigo-500" /> Impacto Prático
+                                                    </h4>
+                                                    <div className="grid gap-3">
+                                                        {trait.customTexts.practicalImpact.map((p, idx) => (
+                                                            <div key={idx} className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
+                                                                {p.context && <span className="block text-xs font-bold text-indigo-600 uppercase mb-1">{p.context}</span>}
+                                                                <span className="text-gray-800 text-sm">{p.text}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {trait.customTexts.expertSynthesis && (
+                                                <div className="mt-6 pt-6 border-t border-indigo-50">
+                                                    <h4 className="flex items-center gap-2 text-sm font-bold text-purple-900 uppercase tracking-wide mb-3">
+                                                        <Lightbulb className="w-4 h-4 text-purple-500" /> Síntese do Especialista
+                                                    </h4>
+                                                    <div className="bg-purple-50 p-4 rounded-lg text-purple-900 italic text-sm border-l-4 border-purple-400">
+                                                        "{trait.customTexts.expertSynthesis}"
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <h4 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Facetas Detalhadas</h4>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         {trait.facets.map(facet => (

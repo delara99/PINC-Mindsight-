@@ -5,6 +5,7 @@ import { BigFiveCalculatorService } from './big-five-calculator.service';
 import { AssessmentTemplateService } from './assessment-template.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
+import { InterpretationService } from '../reports/interpretation.service';
 
 @Controller('assessments')
 @UseGuards(AuthGuard('jwt'))
@@ -14,7 +15,8 @@ export class AssessmentController {
         private bigFiveCalculator: BigFiveCalculatorService,
         private templateService: AssessmentTemplateService,
         private prisma: PrismaService,
-        private scoreCalculation: ScoreCalculationService
+        private scoreCalculation: ScoreCalculationService,
+        private interpretation: InterpretationService
     ) { }
 
     @Get('my-assignments-list')
@@ -196,16 +198,36 @@ export class AssessmentController {
                 return null;
             }
 
+            // Buscar report enriquecido com textos customizados
+            let reportTraits: any[] = [];
+            try {
+                // Se config tem tenantId, buscamos os textos
+                // O config retornado pelo scoreCalculation deve ser o BigFiveConfig completo
+                // Mas precisamos garantir
+                const tenantId = config?.tenantId;
+                if (tenantId) {
+                    // precisamos validar se assignmentId é uuid valido, normalmente é
+                    const report = await this.interpretation.generateFullReport(assignmentId, tenantId);
+                    reportTraits = report.traits || [];
+                }
+            } catch (e) {
+                console.error('[calculateRealScores] Erro ao buscar textos interpretativos:', e);
+            }
+
             const result = {
-                scores: Object.values(scores).map(score => ({
-                    key: score.traitKey,
-                    name: score.traitName,
-                    score: score.normalizedScore,
-                    rawScore: score.score,
-                    level: score.level,
-                    interpretation: score.interpretation,
-                    facets: score.facets
-                })),
+                scores: Object.values(scores).map(score => {
+                    const enriched = reportTraits.find((t: any) => t.key === score.traitKey);
+                    return {
+                        key: score.traitKey,
+                        name: score.traitName,
+                        score: score.normalizedScore,
+                        rawScore: score.score,
+                        level: score.level,
+                        interpretation: score.interpretation,
+                        facets: score.facets,
+                        customTexts: enriched?.customTexts
+                    };
+                }),
                 config: {
                     id: config.id,
                     name: config.name
@@ -1323,7 +1345,7 @@ export class AssessmentController {
         //    throw new ForbiddenException('Apenas admin pode restaurar.');
         // }
         // Simplificado para teste, adicione roles depois se precisar importar ForbiddenException
-        
+
         const assignment = await this.prisma.assessmentAssignment.findUnique({ where: { id } });
         if (!assignment) throw new BadRequestException('Assignment not found');
 
@@ -1344,10 +1366,10 @@ export class AssessmentController {
         // if (req.user.role !== 'TENANT_ADMIN') ...
 
         const assignments = await this.prisma.assessmentAssignment.findMany({
-            where: { 
+            where: {
                 status: 'DELETED' /* filter removed */
             },
-            include: { 
+            include: {
                 user: { select: { name: true, email: true } },
                 assessment: { select: { title: true } }
             },
