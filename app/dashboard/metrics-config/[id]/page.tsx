@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { useRouter, useParams } from 'next/navigation';
 import { useState } from 'react';
-import { ArrowLeft, Save, TrendingUp, Settings, FileText, Lightbulb, Palette, Check } from 'lucide-react';
+import { ArrowLeft, Save, TrendingUp, Settings, FileText, Lightbulb, Palette, Check, BookOpen } from 'lucide-react';
 import { API_URL } from '../../../../src/config/api';
 
 // Tabs componentes
@@ -12,15 +12,16 @@ import TraitsEditor from './components/TraitsEditor';
 import RecommendationsEditor from './components/RecommendationsEditor';
 import BrandingEditor from './components/BrandingEditor';
 import QuestionsEditor from './components/QuestionsEditor';
+import InterpretativeTextsEditor from './components/InterpretativeTextsEditor';
 
-type TabType = 'ranges' | 'traits' | 'recommendations' | 'branding' | 'questions';
+type TabType = 'ranges' | 'traits' | 'recommendations' | 'branding' | 'questions' | 'interpretative';
 
 export default function MetricsConfigEditorPage() {
     const { token } = useAuthStore();
     const router = useRouter();
     const params = useParams();
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<TabType>('ranges');
+    const [activeTab, setActiveTab] = useState<TabType>('interpretative');
     const [newConfigName, setNewConfigName] = useState('');
 
     const configId = params.id as string;
@@ -78,6 +79,7 @@ export default function MetricsConfigEditorPage() {
     });
 
     const tabs = [
+        { id: 'interpretative' as TabType, label: 'Textos Interpretativos', icon: BookOpen },
         { id: 'ranges' as TabType, label: 'Interpretação de Scores', icon: TrendingUp },
         { id: 'questions' as TabType, label: 'Parametrização Perguntas', icon: FileText },
         { id: 'traits' as TabType, label: 'Traços e Facetas', icon: Settings },
@@ -166,9 +168,9 @@ export default function MetricsConfigEditorPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-8">
-            {/* Header */}
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto p-8 pb-32">
+             {/* Header */}
+             <div className="mb-8">
                 <button
                     onClick={() => router.push('/dashboard/metrics-config')}
                     className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
@@ -195,14 +197,14 @@ export default function MetricsConfigEditorPage() {
             {/* Tabs */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="border-b border-gray-200">
-                    <nav className="flex">
+                    <nav className="flex overflow-x-auto">
                         {tabs.map(tab => {
                             const Icon = tab.icon;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 ${activeTab === tab.id
+                                    className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id
                                         ? 'border-primary text-primary bg-primary/5'
                                         : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                         }`}
@@ -217,6 +219,7 @@ export default function MetricsConfigEditorPage() {
 
                 {/* Tab Content */}
                 <div className="p-8">
+                    {activeTab === 'interpretative' && <InterpretativeTextsEditor config={config} configId={configId} />}
                     {activeTab === 'ranges' && <RangesEditor config={config} configId={configId} />}
                     {activeTab === 'questions' && <QuestionsEditor />}
                     {activeTab === 'traits' && <TraitsEditor config={config} configId={configId} />}

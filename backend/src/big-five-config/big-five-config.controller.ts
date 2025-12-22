@@ -218,4 +218,48 @@ export class BigFiveConfigController {
 
         return this.configService.createCompleteConfig(req.user.tenantId);
     }
+
+    /**
+     * Lista textos interpretativos
+     */
+    @Get(':configId/interpretative-texts')
+    async listInterpretativeTexts(@Param('configId') configId: string, @Request() req) {
+         if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Acesso negado');
+         }
+         return this.configService.listInterpretativeTexts(configId);
+    }
+
+    /**
+     * Cria texto interpretativo
+     */
+    @Post('interpretative-texts')
+    async createInterpretativeText(@Body() data: any, @Request() req) {
+         if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Acesso negado');
+         }
+         return this.configService.createInterpretativeText(data);
+    }
+
+    /**
+     * Atualiza texto interpretativo
+     */
+    @Put('interpretative-texts/:id')
+    async updateInterpretativeText(@Param('id') id: string, @Body() data: any, @Request() req) {
+         if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Acesso negado');
+         }
+         return this.configService.updateInterpretativeText(id, data);
+    }
+
+    /**
+     * Deleta texto interpretativo
+     */
+    @Delete('interpretative-texts/:id')
+    async deleteInterpretativeText(@Param('id') id: string, @Request() req) {
+         if (req.user.role !== 'TENANT_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Acesso negado');
+         }
+         return this.configService.deleteInterpretativeText(id);
+    }
 }

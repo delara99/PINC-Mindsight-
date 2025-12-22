@@ -560,6 +560,7 @@ model BigFiveConfig {
   
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   traits      BigFiveTraitConfig[]
+  interpretativeTexts BigFiveInterpretativeText[]
   assignments AssessmentAssignment[]
   
   @@map("bigfive_configs")
@@ -664,4 +665,24 @@ enum FeedbackStatus {
   SCHEDULED
   COMPLETED
   CANCELLED
+}
+
+model BigFiveInterpretativeText {
+  id        String   @id @default(uuid())
+  configId  String
+  
+  traitKey    String
+  scoreRange  String
+  category    String   // SUMMARY, PRACTICAL_IMPACT, EXPERT_SYNTHESIS, EXPERT_HYPOTHESIS
+  context     String?  // Opcional: COMMUNICATION, DECISION_MAKING, etc.
+  
+  text        String   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  config BigFiveConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  
+  @@map("bigfive_interpretative_texts")
+  @@index([configId, traitKey, category])
 }

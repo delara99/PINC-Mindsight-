@@ -574,4 +574,46 @@ export class BigFiveConfigService {
             facets: 30
         };
     }
+
+    /**
+     * Lista textos interpretativos de uma configuração
+     */
+    async listInterpretativeTexts(configId: string) {
+        return this.prisma.bigFiveInterpretativeText.findMany({
+            where: { configId },
+            orderBy: [
+                { category: 'asc' },
+                { traitKey: 'asc' },
+                { scoreRange: 'asc' }
+            ]
+        });
+    }
+
+    /**
+     * Cria novo texto interpretativo
+     */
+    async createInterpretativeText(data: any) {
+        return this.prisma.bigFiveInterpretativeText.create({
+            data
+        });
+    }
+
+    /**
+     * Atualiza texto interpretativo
+     */
+    async updateInterpretativeText(id: string, data: any) {
+        return this.prisma.bigFiveInterpretativeText.update({
+            where: { id },
+            data
+        });
+    }
+
+    /**
+     * Deleta texto interpretativo
+     */
+    async deleteInterpretativeText(id: string) {
+        return this.prisma.bigFiveInterpretativeText.delete({
+            where: { id }
+        });
+    }
 }

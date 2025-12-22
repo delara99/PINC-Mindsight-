@@ -16,6 +16,7 @@ export class InterpretationService {
                 isActive: true
             },
             include: {
+                interpretativeTexts: true,
                 traits: {
                     include: {
                         facets: true
@@ -99,6 +100,23 @@ export class InterpretationService {
                 };
             });
 
+            
+            // Mapear Level para Enum
+            const levelMap: Record<string, string> = {
+                'Muito Baixo': 'VERY_LOW',
+                'Baixo': 'LOW',
+                'Médio': 'AVERAGE',
+                'Alto': 'HIGH',
+                'Muito Alto': 'VERY_HIGH'
+            };
+            const rangeEnum = levelMap[level] || 'AVERAGE';
+            
+            // Filtrar textos da config
+            // @ts-ignore
+            const relevantTexts = config.interpretativeTexts ? config.interpretativeTexts.filter((t: any) => 
+                t.traitKey === trait.traitKey && t.scoreRange === rangeEnum
+            ) : [];
+    
             report.traits.push({
                 key: trait.traitKey,
                 name: trait.name,
@@ -107,7 +125,15 @@ export class InterpretationService {
                 score: normalizedScore,
                 level: level,
                 interpretation: interpretation,
-                facets: facets
+                facets: facets,
+
+                customTexts: {
+                    summary: relevantTexts.find((t: any) => t.category === 'SUMMARY')?.text,
+                    practicalImpact: relevantTexts.filter((t: any) => t.category === 'PRACTICAL_IMPACT').map((t: any) => ({ context: t.context, text: t.text })),
+                    expertSynthesis: relevantTexts.find((t: any) => t.category === 'EXPERT_SYNTHESIS')?.text,
+                    expertHypothesis: relevantTexts.filter((t: any) => t.category === 'EXPERT_HYPOTHESIS').map((t: any) => ({ type: t.context, text: t.text }))
+                },
+    
             });
         }
 
