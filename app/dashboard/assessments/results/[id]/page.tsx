@@ -35,7 +35,26 @@ export default function AssessmentResultPage() {
 
                 const assignment = await assignmentRes.json();
 
-                // Verificar se já tem resultado calculado
+                // FIX: Priorizar scores calculados em tempo real (que incluem novos textos interpretativos)
+                if (assignment.calculatedScores && assignment.calculatedScores.scores) {
+                    const baseResult = assignment.result?.data || {};
+                    // Garantir estrutura compatível com BigFiveResults
+                    const freshResult = {
+                        ...baseResult,
+                        traits: assignment.calculatedScores.scores, // Dados frescos (com customTexts)
+                        timeSpent: assignment.timeSpent,
+                        // Defaults seguros caso baseResult falhe
+                        answeredQuestions: baseResult.answeredQuestions || assignment.responses?.length || 0,
+                        totalQuestions: baseResult.totalQuestions || 50,
+                        completionPercentage: baseResult.completionPercentage || 100
+                    };
+
+                    setResult(freshResult);
+                    setLoading(false);
+                    return;
+                }
+
+                // Verificar se já tem resultado calculado (Snapshot Antigo)
                 if (assignment.result && assignment.result.data) {
                     setResult({ ...assignment.result.data, timeSpent: assignment.timeSpent });
                     setLoading(false);
@@ -121,7 +140,7 @@ export default function AssessmentResultPage() {
 
     return (
         <div className="max-w-6xl mx-auto">
-             {result.timeSpent > 0 && (
+            {result.timeSpent > 0 && (
                 <div className="mb-6 flex justify-end">
                     <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100 shadow-sm">
                         <Clock size={16} />
