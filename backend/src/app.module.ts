@@ -16,6 +16,7 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MigrationModule } from './migration/migration.module';
 import { FixModule } from './fix/fix.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
     imports: [
@@ -33,7 +34,8 @@ import { FixModule } from './fix/fix.module';
         FeedbackModule,
         NotificationsModule,
         MigrationModule,
-        FixModule
+        FixModule,
+        PaymentModule
     ],
     controllers: [],
     providers: [],

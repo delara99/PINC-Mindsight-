@@ -77,6 +77,7 @@ model User {
   reportsAsTarget     CrossProfileReport[]   @relation("ReportTarget")
 
   professionalFeedbacks ProfessionalFeedback[]
+  payments                Payment[]
 
   viewedByAdmin Boolean @default(false) @map("viewed_by_admin")
 
@@ -104,6 +105,47 @@ enum UserStatus {
   pending
   inactive
 }
+
+// =======================
+// Payment Domain (BTG PIX)
+// =======================
+
+model Payment {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  
+  planId        String
+  planName      String
+  amount        Float
+  
+  status        PaymentStatus @default(PENDING)
+  
+  // Dados BTG
+  btgChargeId   String?       @unique
+  pixCopyPaste  String?       @db.Text
+  qrCodeBase64  String?       @db.Text
+  
+  expiresAt     DateTime
+  paidAt        DateTime?
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@index([userId])
+  @@index([btgChargeId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELED
+  REFUNDED
+}
+
 
 // =======================
 // Assessment Domain
