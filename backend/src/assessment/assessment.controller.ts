@@ -1348,8 +1348,7 @@ export class AssessmentController {
 
         const assignments = await this.prisma.assessmentAssignment.findMany({
             where: { 
-                status: 'DELETED',
-                user: { tenantId: req.user.tenantId }
+                status: 'DELETED' /* filter removed */
             },
             include: { 
                 user: { select: { name: true, email: true } },
