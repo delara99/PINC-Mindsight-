@@ -140,7 +140,7 @@ export class AssessmentController {
         if (isAssignee) {
             console.log('[DEBUG] ✅ User IS the assignee - GRANTING ACCESS');
             // Calcular scores reais antes de retornar
-            const calculatedScores = await this.calculateRealScores(id);
+            const calculatedScores = await this.calculateRealScores(id, user.tenantId);
             return { ...assignment, calculatedScores };
         }
 
@@ -150,7 +150,7 @@ export class AssessmentController {
 
         if (isOwnerAdmin || isSuperAdmin) {
             // Calcular scores reais antes de retornar
-            const calculatedScores = await this.calculateRealScores(id);
+            const calculatedScores = await this.calculateRealScores(id, user.tenantId);
             return { ...assignment, calculatedScores };
         }
 
@@ -174,7 +174,7 @@ export class AssessmentController {
             );
             if (ownerSettings?.shareInventories === true) {
                 // Calcular scores reais antes de retornar
-                const calculatedScores = await this.calculateRealScores(id);
+                const calculatedScores = await this.calculateRealScores(id, user.tenantId);
                 return { ...assignment, calculatedScores };
             }
         }
@@ -186,7 +186,7 @@ export class AssessmentController {
     /**
      * Helper: Calcular scores reais usando a nova lógica
      */
-    private async calculateRealScores(assignmentId: string) {
+    private async calculateRealScores(assignmentId: string, fallbackTenantId?: string) {
         console.log('[calculateRealScores] Iniciando cálculo para assignment:', assignmentId);
         try {
             const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
@@ -201,14 +201,15 @@ export class AssessmentController {
             // Buscar report enriquecido com textos customizados
             let reportTraits: any[] = [];
             try {
-                // Se config tem tenantId, buscamos os textos
-                // O config retornado pelo scoreCalculation deve ser o BigFiveConfig completo
-                // Mas precisamos garantir
-                const tenantId = config?.tenantId;
-                if (tenantId) {
-                    // precisamos validar se assignmentId é uuid valido, normalmente é
-                    const report = await this.interpretation.generateFullReport(assignmentId, tenantId);
+                // Se config tem tenantId, usamos. Se não, usamos o do contexto (fallback)
+                const effectiveTenantId = config?.tenantId || fallbackTenantId;
+
+                if (effectiveTenantId) {
+                    // gerar report usando o tenant efetivo
+                    const report = await this.interpretation.generateFullReport(assignmentId, effectiveTenantId);
                     reportTraits = report.traits || [];
+                } else {
+                    console.warn('[calculateRealScores] Sem TenantID para buscar textos.');
                 }
             } catch (e) {
                 console.error('[calculateRealScores] Erro ao buscar textos interpretativos:', e);
