@@ -113,11 +113,17 @@ export class InterpretationService {
             };
             const rangeEnum = levelMap[level] || 'AVERAGE';
 
-            // Filtrar textos da config
+            // Filtrar textos da config específica
             // @ts-ignore
-            const relevantTexts = config.interpretativeTexts ? config.interpretativeTexts.filter((t: any) =>
+            let relevantTexts = config.interpretativeTexts ? config.interpretativeTexts.filter((t: any) =>
                 t.traitKey === trait.traitKey && t.scoreRange === rangeEnum
             ) : [];
+
+            // FALLBACK UNIVERSAL: Se não achou textos na config específica, busca de qualquer config
+            if (!relevantTexts || relevantTexts.length === 0) {
+                console.warn(`[generateFullReport] Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}. Usando fallback universal.`);
+                relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
+            }
 
             report.traits.push({
                 key: trait.traitKey,
@@ -242,5 +248,24 @@ export class InterpretationService {
             default:
                 return trait.averageText;
         }
+    }
+
+    /**
+     * Fallback Universal: Busca textos de QUALQUER config do sistema
+     * Usado quando a config específica não tem textos preenchidos
+     */
+    private async getFallbackTexts(traitKey: string, scoreRange: string) {
+        console.log(`[FALLBACK] Buscando textos universais para ${traitKey} - ${scoreRange}`);
+
+        const fallbackTexts = await this.prisma.bigFiveInterpretativeText.findMany({
+            where: {
+                traitKey: traitKey,
+                scoreRange: scoreRange
+            },
+            take: 10 // Pega até 10 textos (suficiente para todas as categorias)
+        });
+
+        console.log(`[FALLBACK] Encontrados ${fallbackTexts.length} textos universais`);
+        return fallbackTexts;
     }
 }
