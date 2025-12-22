@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🔄 Iniciando inserção automáticad de textos interpretativos...');
+  console.log('🔄 Iniciando inserção de textos interpretativos...');
 
   // Buscar configurações ativas
   const configs = await prisma.bigFiveConfig.findMany({
@@ -110,7 +110,7 @@ async function main() {
             await prisma.bigFiveInterpretativeText.create({
                 data: {
                     configId: config.id,
-                    traitKey: item.trait, // Assuming keys match schema values (EXTRAVERSION, etc)
+                    traitKey: item.trait,
                     scoreRange: item.range,
                     category: item.category,
                     context: item.context,
@@ -119,8 +119,6 @@ async function main() {
             });
             console.log(`   ✅ Criado: ${item.trait} | ${item.range} | ${item.context}`);
             addedCount++;
-        } else {
-             // console.log(`   . Ignorado (Já existe): ${item.trait} | ${item.range}`);
         }
     }
     console.log(`   > Total de textos inseridos nesta config: ${addedCount}`);
@@ -135,5 +133,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.();
+    await prisma.$disconnect();
   });
