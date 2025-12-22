@@ -50,23 +50,38 @@ export default function AssessmentResultPage() {
 
                 // FIX: Priorizar scores calculados em tempo real (que incluem novos textos interpretativos)
                 if (assignment.calculatedScores && assignment.calculatedScores.scores) {
+                    console.log('[FRONTEND DEBUG] ✅ Usando cálculo em tempo real');
+
                     const baseResult = assignment.result?.data || {};
+
+                    // CORREÇÃO: Mapear campos do backend para o formato esperado pelo BigFiveResults
+                    const mappedTraits = assignment.calculatedScores.scores.map((trait: any) => ({
+                        traitKey: trait.key,           // key → traitKey
+                        traitName: trait.name,         // name → traitName
+                        score: trait.score,
+                        rawScore: trait.rawScore,
+                        level: trait.level,
+                        interpretation: trait.interpretation,
+                        facets: trait.facets,
+                        customTexts: trait.customTexts
+                    }));
+
                     // Garantir estrutura compatível com BigFiveResults
                     const freshResult = {
                         ...baseResult,
-                        traits: assignment.calculatedScores.scores, // Dados frescos (com customTexts)
+                        traits: mappedTraits,  // Usar array mapeado
                         timeSpent: assignment.timeSpent,
                         // Defaults seguros caso baseResult falhe
                         answeredQuestions: baseResult.answeredQuestions || assignment.responses?.length || 0,
                         totalQuestions: baseResult.totalQuestions || 50,
                         completionPercentage: baseResult.completionPercentage || 100,
-                        // Repassar erro de debug se houver
-                        error: assignment.calculatedScores.error,
-                        stack: assignment.calculatedScores.stack,
-                        _debugSource: 'REAL_TIME_CALCULATION'
+                        _debugSource: 'REAL_TIME_CALCULATION',
+                        _debug: assignment.calculatedScores._debug,
+                        _success: assignment.calculatedScores._success,
+                        _textError: assignment.calculatedScores._textError,
+                        _steps: assignment.calculatedScores._steps
                     };
 
-                    console.log('[FRONTEND DEBUG] ✅ Usando cálculo em tempo real');
                     setResult(freshResult);
                     setLoading(false);
                     return;
@@ -167,8 +182,8 @@ export default function AssessmentResultPage() {
             {/* DEBUG: Mostrar fonte dos dados */}
             {result._debugSource && (
                 <div className={`mb-4 p-3 rounded-lg text-sm ${result._debugSource === 'REAL_TIME_CALCULATION'
-                        ? 'bg-green-100 border border-green-300 text-green-800'
-                        : 'bg-yellow-100 border border-yellow-300 text-yellow-800'
+                    ? 'bg-green-100 border border-green-300 text-green-800'
+                    : 'bg-yellow-100 border border-yellow-300 text-yellow-800'
                     }`}>
                     <strong>DEBUG:</strong> {result._debugSource === 'REAL_TIME_CALCULATION' ? '✅ Dados Atualizados' : '⚠️ Dados Antigos (Snapshot)'}
                     {result._warning && <div className="text-xs mt-1">{result._warning}</div>}
