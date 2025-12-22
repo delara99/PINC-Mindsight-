@@ -187,38 +187,70 @@ export class AssessmentController {
      * Helper: Calcular scores reais usando a nova lógica
      */
     private async calculateRealScores(assignmentId: string, fallbackTenantId?: string) {
-        console.log('[calculateRealScores] Iniciando cálculo para assignment:', assignmentId);
-        try {
-            const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
-            console.log('[calculateRealScores] Scores calculados:', Object.keys(scores).length, 'traits');
-            console.log('[calculateRealScores] Config usada:', config?.id, config?.name);
+        console.log('[calculateRealScores] ========== INÍCIO ==========');
+        console.log('[calculateRealScores] Assignment ID:', assignmentId);
+        console.log('[calculateRealScores] Fallback Tenant ID:', fallbackTenantId);
 
-            if (!scores || Object.keys(scores).length === 0) {
-                console.error('[calculateRealScores] Nenhum score foi calculado!');
-                return null;
+        try {
+            // PASSO 1: Calcular scores
+            console.log('[calculateRealScores] PASSO 1: Calculando scores...');
+            let scoreResult;
+            try {
+                scoreResult = await this.scoreCalculation.calculateScores(assignmentId);
+            } catch (scoreError) {
+                console.error('[calculateRealScores] ❌ ERRO NO PASSO 1 (cálculo de scores):', scoreError);
+                return {
+                    _debug: true,
+                    _error: 'SCORE_CALCULATION_FAILED',
+                    _message: scoreError.message,
+                    _step: 1,
+                    _stepName: 'Cálculo de Scores',
+                    scores: []
+                };
             }
 
-            // Buscar report enriquecido com textos customizados
-            let reportTraits: any[] = [];
+            const { scores, config } = scoreResult;
+            console.log('[calculateRealScores] ✅ Scores calculados:', Object.keys(scores).length, 'traits');
+            console.log('[calculateRealScores] ✅ Config:', config?.id, config?.name, config?.tenantId);
 
-            // PROTEÇÃO: Mesmo que a interpretação falhe, retornamos os scores
+            if (!scores || Object.keys(scores).length === 0) {
+                console.error('[calculateRealScores] ❌ Nenhum score retornado!');
+                return {
+                    _debug: true,
+                    _error: 'NO_SCORES_RETURNED',
+                    _message: 'Score calculation returned empty',
+                    _step: 1,
+                    _stepName: 'Cálculo de Scores',
+                    scores: []
+                };
+            }
+
+            // PASSO 2: Buscar textos interpretativos
+            console.log('[calculateRealScores] PASSO 2: Buscando textos interpretativos...');
+            let reportTraits: any[] = [];
+            let textError = null;
+
             try {
                 const effectiveTenantId = config?.tenantId || fallbackTenantId;
+                console.log('[calculateRealScores] TenantID efetivo:', effectiveTenantId);
 
                 if (effectiveTenantId) {
                     const report = await this.interpretation.generateFullReport(assignmentId, effectiveTenantId, config?.id);
                     reportTraits = report.traits || [];
-                    console.log('[calculateRealScores] Textos carregados:', reportTraits.length, 'traits com textos');
+                    console.log('[calculateRealScores] ✅ Textos carregados:', reportTraits.length, 'traits');
                 } else {
-                    console.warn('[calculateRealScores] Sem TenantID para buscar textos. Continuando sem textos interpretativos.');
+                    textError = 'NO_TENANT_ID';
+                    console.warn('[calculateRealScores] ⚠️ Sem TenantID para buscar textos');
                 }
             } catch (interpretError) {
-                console.error('[calculateRealScores] ERRO ao buscar textos (continuando sem eles):', interpretError);
-                // Não interrompe - continua sem textos
+                textError = interpretError.message;
+                console.error('[calculateRealScores] ⚠️ ERRO NO PASSO 2 (interpretação) - continuando:', interpretError);
             }
 
+            // PASSO 3: Montar resultado final
+            console.log('[calculateRealScores] PASSO 3: Montando resultado...');
             const result = {
-                scores: Object.values(scores).map(score => {
+                scores: Object.values(scores).map((score: any) => {
                     const enriched = reportTraits.find((t: any) => t.key === score.traitKey);
                     return {
                         key: score.traitKey,
@@ -228,23 +260,40 @@ export class AssessmentController {
                         level: score.level,
                         interpretation: score.interpretation,
                         facets: score.facets,
-                        customTexts: enriched?.customTexts || null // null se não encontrou textos
+                        customTexts: enriched?.customTexts || null
                     };
                 }),
                 config: {
-                    id: config.id,
-                    name: config.name
+                    id: config?.id,
+                    name: config?.name
+                },
+                _debug: true,
+                _success: true,
+                _textError: textError,
+                _steps: {
+                    scoreCalculation: 'SUCCESS',
+                    interpretation: textError ? 'FAILED' : 'SUCCESS'
                 }
             };
 
-            console.log('[calculateRealScores] ✅ Retornando', result.scores.length, 'scores calculados');
+            console.log('[calculateRealScores] ✅ ========== SUCESSO ==========');
+            console.log('[calculateRealScores] Retornando', result.scores.length, 'scores');
             return result;
+
         } catch (error) {
-            console.error('[calculateRealScores] ERRO CRÍTICO ao calcular scores:', error);
-            console.error('[calculateRealScores] Assignment ID:', assignmentId);
+            console.error('[calculateRealScores] ❌ ========== ERRO CRÍTICO ==========');
+            console.error('[calculateRealScores] Erro:', error);
             console.error('[calculateRealScores] Stack:', error.stack);
-            // Retorna null para que o frontend use o snapshot antigo como fallback
-            return null;
+
+            return {
+                _debug: true,
+                _error: 'CRITICAL_ERROR',
+                _message: error.message,
+                _stack: error.stack,
+                _step: 0,
+                _stepName: 'Inicialização',
+                scores: []
+            };
         }
     }
 

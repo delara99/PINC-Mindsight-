@@ -174,6 +174,29 @@ export default function AssessmentResultPage() {
                     {result._warning && <div className="text-xs mt-1">{result._warning}</div>}
                 </div>
             )}
+
+            {/* Mostrar erros detalhados do backend */}
+            {result._debug && result._error && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg">
+                    <div className="font-bold mb-2">🔴 ERRO NO BACKEND - Paso {result._step}: {result._stepName}</div>
+                    <div className="text-sm mb-2">Tipo: <code className="bg-red-200 px-2 py-1 rounded">{result._error}</code></div>
+                    <div className="text-sm">Mensagem: {result._message}</div>
+                    {result._stack && (
+                        <details className="mt-2">
+                            <summary className="cursor-pointer text-xs">Stack Trace</summary>
+                            <pre className="text-xs mt-1 overflow-auto max-h-40 bg-red-200 p-2 rounded">{result._stack}</pre>
+                        </details>
+                    )}
+                </div>
+            )}
+
+            {/* Mostrar avisos de textos */}
+            {result._debug && result._textError && !result._error && (
+                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-sm">
+                    <strong>⚠️ Aviso:</strong> Scores calculados com sucesso, mas textos interpretativos não foram carregados.
+                    <div className="text-xs mt-1">Motivo: {result._textError}</div>
+                </div>
+            )}
             {result.timeSpent > 0 && (
                 <div className="mb-6 flex justify-end">
                     <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100 shadow-sm">
