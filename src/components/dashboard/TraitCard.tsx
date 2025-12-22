@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sparkles, Briefcase, Lightbulb } from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
 
 interface Facet {
@@ -14,6 +14,12 @@ interface TraitCardProps {
     interpretation: string;
     facets: Facet[];
     defaultExpanded?: boolean;
+    customTexts?: {
+        summary?: string;
+        practicalImpact?: { context: string; text: string }[];
+        expertSynthesis?: string;
+        expertHypothesis?: { type: string; text: string }[];
+    };
 }
 
 export function TraitCard({
@@ -21,7 +27,8 @@ export function TraitCard({
     overallScore,
     interpretation,
     facets,
-    defaultExpanded = true
+    defaultExpanded = true,
+    customTexts
 }: TraitCardProps) {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -58,6 +65,45 @@ export function TraitCard({
             {/* Facets Grid */}
             {isExpanded && facets && facets.length > 0 && (
                 <div className="px-6 pb-6 pt-2 border-t border-gray-100">
+
+                    {/* --- Custom Interpretative Texts (Admin View) --- */}
+                    {customTexts && (
+                        <div className="mb-6 space-y-4 bg-gray-50/50 rounded-lg p-4 border border-gray-100">
+                            {customTexts.summary && (
+                                <div>
+                                    <h4 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+                                        <Sparkles className="w-3 h-3 text-gray-400" /> Resumo
+                                    </h4>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{customTexts.summary}</p>
+                                </div>
+                            )}
+
+                            {customTexts.practicalImpact && customTexts.practicalImpact.length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                                        <Briefcase className="w-3 h-3 text-gray-400" /> Impacto Prático
+                                    </h4>
+                                    <ul className="space-y-2">
+                                        {customTexts.practicalImpact.map((p, idx) => (
+                                            <li key={idx} className="text-sm text-gray-600 pl-2 border-l-2 border-primary/20">
+                                                <strong className="text-primary">{p.context}:</strong> {p.text}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {customTexts.expertSynthesis && (
+                                <div className="mt-4 bg-primary/5 p-3 rounded-md border border-primary/10">
+                                    <h4 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wide mb-1">
+                                        <Lightbulb className="w-3 h-3" /> Síntese
+                                    </h4>
+                                    <p className="text-sm text-gray-800 italic">"{customTexts.expertSynthesis}"</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {facets.map((facet, index) => {
                             const safeRawScore = typeof facet.rawScore === 'number' ? facet.rawScore : 0;

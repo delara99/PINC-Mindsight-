@@ -176,6 +176,7 @@ export default function AssessmentDetailsPage() {
                                                 normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
                                                 rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
                                             })) || []}
+                                            customTexts={trait.customTexts}
                                             defaultExpanded={true}
                                         />
                                     ))}
