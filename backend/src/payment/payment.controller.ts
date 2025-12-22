@@ -242,28 +242,6 @@ export class PaymentController {
         return plans[planId.toLowerCase()] || null;
     }
 
-    private async validateAndApplyCoupon(couponCode: string, planId: string): Promise<number> {
-        // Buscar cupom
-        const coupon = await this.prisma.coupon.findUnique({
-            where: { code: couponCode }
-        });
-
-        if (!coupon || !coupon.isActive) {
-            throw new BadRequestException('Cupom inválido');
-        }
-
-        // Validar planos permitidos
-        if (coupon.allowedPlans && Array.isArray(coupon.allowedPlans) && coupon.allowedPlans.length > 0) {
-            const planMap: any = { starter: 'START', pro: 'PRO', business: 'BUSINESS' };
-            const planEnum = planMap[planId.toLowerCase()];
-            const allowedPlansArray = coupon.allowedPlans as string[];
-            if (!allowedPlansArray.includes(planEnum)) {
-                throw new BadRequestException('Cupom não válido para este plano');
-            }
-        }
-
-        return coupon.discountPercent;
-    }
 
     private async addCreditsToUser(userId: string, planName: string, planId: string) {
         // Buscar quantidade de créditos do plano
