@@ -42,10 +42,13 @@ export class PaymentController {
 
         // Aplicar cupom se fornecido
         let finalAmount = plan.price;
+        /* TEMPORARIAMENTE DESABILITADO - será reativado após deploy
         if (body.couponCode) {
             const discount = await this.validateAndApplyCoupon(body.couponCode, plan.id);
             finalAmount = plan.price * (1 - discount / 100);
         }
+        */
+
 
         // Criar registro de pagamento no banco
         const payment = await this.prisma.payment.create({
