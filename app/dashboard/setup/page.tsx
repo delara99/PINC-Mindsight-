@@ -88,7 +88,7 @@ export default function SetupPage() {
                 <ol className="text-blue-700 space-y-1 list-decimal list-inside">
                     <li>Execute o botão acima para popular os textos</li>
                     <li>Vá para <a href="/dashboard/diagnostic" className="underline">/dashboard/diagnostic</a> e execute o diagnóstico</li>
-                    <li>Verifique se os textos foram criados (deve mostrar número > 0)</li>
+                    <li>Verifique se os textos foram criados (deve mostrar número {'>'} 0)</li>
                     <li>Teste o relatório normal para ver se os textos aparecem</li>
                 </ol>
             </div>
