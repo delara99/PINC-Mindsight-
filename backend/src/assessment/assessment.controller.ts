@@ -239,7 +239,8 @@ export class AssessmentController {
         } catch (error) {
             console.error('[calculateRealScores] ERRO ao calcular scores:', error);
             console.error('[calculateRealScores] Stack:', error.stack);
-            return null;
+            // RETORNAR O ERRO PARA DEBUG NO FRONTEND
+            return { error: error.message || 'Erro desconhecido no cálculo', stack: error.stack };
         }
     }
 
