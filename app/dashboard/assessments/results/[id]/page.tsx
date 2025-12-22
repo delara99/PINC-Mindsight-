@@ -66,6 +66,9 @@ export default function AssessmentResultPage() {
                         customTexts: trait.customTexts
                     }));
 
+                    console.log('[FRONTEND DEBUG] Mapped traits:', mappedTraits.length, 'traits');
+                    console.log('[FRONTEND DEBUG] First trait:', mappedTraits[0]);
+
                     // Garantir estrutura compatível com BigFiveResults
                     const freshResult = {
                         ...baseResult,
@@ -81,6 +84,9 @@ export default function AssessmentResultPage() {
                         _textError: assignment.calculatedScores._textError,
                         _steps: assignment.calculatedScores._steps
                     };
+
+                    console.log('[FRONTEND DEBUG] Final result object:', freshResult);
+                    console.log('[FRONTEND DEBUG] Traits in result:', freshResult.traits?.length);
 
                     setResult(freshResult);
                     setLoading(false);
