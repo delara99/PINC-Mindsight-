@@ -95,14 +95,18 @@ export class ReportsController {
                 reportHeader: config.reportHeader,
                 reportFooter: config.reportFooter
             },
-            traits: Object.values(scores).map(score => ({
-                key: score.traitKey,
-                name: score.traitName,
-                score: score.normalizedScore,
-                level: score.level,
-                interpretation: score.interpretation,
-                facets: score.facets
-            })),
+            traits: Object.values(scores).map(score => {
+                const enriched = report.traits.find((t: any) => t.key === score.traitKey);
+                return {
+                    key: score.traitKey,
+                    name: score.traitName,
+                    score: score.normalizedScore,
+                    level: score.level,
+                    interpretation: score.interpretation,
+                    facets: score.facets,
+                    customTexts: enriched?.customTexts
+                };
+            }),
             report: report
         };
 

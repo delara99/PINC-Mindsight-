@@ -71,6 +71,26 @@ export class PdfService {
             <div class="interpretation-item">
                 <h3>${trait.name} <span style="font-weight:normal; font-size: 0.9em; color:#666;">(${trait.score}/100 - ${levelMap[trait.level]})</span></h3>
                 <p>${trait.interpretation || 'Sem interpretação disponível.'}</p>
+                ${trait.customTexts ? `
+                    <div style="margin-top:15px;background:#f8fafc;padding:15px;border-radius:8px;border:1px solid #e2e8f0;font-size:13px;">
+                        ${trait.customTexts.summary ? `<div style="margin-bottom:8px;"><strong>📝 Resumo:</strong> ${trait.customTexts.summary}</div>` : ''}
+                        ${trait.customTexts.practicalImpact?.length ? `
+                            <div style="margin-top:8px;">
+                                <strong>💼 Impacto Prático:</strong>
+                                <ul style="margin:4px 0 0 0;padding-left:15px;">
+                                    ${trait.customTexts.practicalImpact.map((p: any) => `<li>${p.context ? `<b>${p.context}:</b> ` : ''}${p.text}</li>`).join('')}
+                                </ul>
+                            </div>` : ''}
+                        ${trait.customTexts.expertSynthesis ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1;"><strong>🧠 Síntese:</strong> ${trait.customTexts.expertSynthesis}</div>` : ''}
+                         ${trait.customTexts.expertHypothesis?.length ? `
+                            <div style="margin-top:8px;">
+                                <strong style="color:#b91c1c;">⚠️ Hipóteses:</strong>
+                                <ul style="margin:4px 0 0 0;padding-left:15px;color:#451a03;">
+                                    ${trait.customTexts.expertHypothesis.map((h: any) => `<li>${h.type ? `<b>${h.type}:</b> ` : ''}${h.text}</li>`).join('')}
+                                </ul>
+                            </div>` : ''}
+                    </div>
+                ` : ''}
                 ${trait.facets && trait.facets.length > 0 ? `
                     <div class="facets">
                         <h4>Facetas:</h4>
