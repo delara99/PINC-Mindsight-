@@ -32,7 +32,7 @@ export class AssessmentController {
             // 2. Fallback: Qualquer do Tenant
             if (!bigFiveModel) {
                 bigFiveModel = await this.prisma.assessmentModel.findFirst({
-                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }, orderBy: { createdAt: 'desc' }
                 });
             }
 
@@ -278,7 +278,7 @@ export class AssessmentController {
         if (!assessmentModel) {
             // Fallback: qualquer um do tenant
             assessmentModel = await this.prisma.assessmentModel.findFirst({
-                where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                where: { tenantId: user.tenantId, type: 'BIG_FIVE' }, orderBy: { createdAt: 'desc' }
             });
         }
 
@@ -700,7 +700,7 @@ export class AssessmentController {
 
             if (!bigFiveModel) {
                 bigFiveModel = await this.prisma.assessmentModel.findFirst({
-                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }, orderBy: { createdAt: 'desc' }
                 });
             }
 
@@ -1060,10 +1060,7 @@ export class AssessmentController {
             // Fallback: Se não tiver padrão definido, pega qualquer Big Five do Tenant
             if (!assessmentModel) {
                 assessmentModel = await this.prisma.assessmentModel.findFirst({
-                    where: {
-                        tenantId: assignment.user.tenantId,
-                        type: 'BIG_FIVE'
-                    }
+                    where: { tenantId: assignment.user.tenantId, type: 'BIG_FIVE' }, orderBy: { createdAt: 'desc' }
                 });
             }
 

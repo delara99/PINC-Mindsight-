@@ -1,0 +1,11 @@
+Error: 
+Invalid `prisma.assessmentModel.findMany()` invocation in
+/Users/delara/Desktop/saas - project sued/PINC-Mindsight-/backend/scripts/check-defaults-file.js:8:53
+
+  5 async function run() {
+  6     let output = '';
+  7     try {
+→ 8         const models = await prisma.assessmentModel.findMany(
+Can't reach database server at `localhost:3306`
+
+Please make sure your database server is running at `localhost:3306`.

@@ -138,7 +138,7 @@ export class UserController {
             // Fallback: Primeira encontrada do tenant
             if (!assessmentModel) {
                 assessmentModel = await this.prisma.assessmentModel.findFirst({
-                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }
+                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }, orderBy: { createdAt: 'desc' }
                 });
             }
 
