@@ -93,8 +93,8 @@ export class AssessmentService {
                     await tx.question.create({
                         data: {
                             text: q.text,
-                            traitKey: q.traitKey,
-                            weight: Number(q.weight) || 1,
+                            traitKey: q.traitKey, facetKey: q.facetKey || null,
+                            weight: Number(q.weight) || 1, isReverse: q.isReverse || false,
                             assessmentModelId: id
                         }
                     });
@@ -104,8 +104,8 @@ export class AssessmentService {
                         where: { id: q.id },
                         data: {
                             text: q.text,
-                            traitKey: q.traitKey,
-                            weight: Number(q.weight) || 1
+                            traitKey: q.traitKey, facetKey: q.facetKey || null,
+                            weight: Number(q.weight) || 1, isReverse: q.isReverse || false
                         }
                     });
                 }
