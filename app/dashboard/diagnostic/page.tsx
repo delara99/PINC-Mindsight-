@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { useAuthStore } from '../../../../src/store/auth-store';
-import { API_URL } from '../../../../src/config/api';
+import { useAuthStore } from '../../../src/store/auth-store';
+import { API_URL } from '../../../src/config/api';
 
 export default function DiagnosticPage() {
     const token = useAuthStore((state) => state.token);
@@ -152,8 +152,8 @@ export default function DiagnosticPage() {
                                             </div>
                                         </div>
                                         <div className={`p-4 rounded font-bold text-center ${results.assignment.textsInConfig > 0
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
                                             }`}>
                                             {results.assignment.textsInConfig > 0
                                                 ? `✅ ${results.assignment.textsInConfig} textos disponíveis na config`
