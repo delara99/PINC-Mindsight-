@@ -13,7 +13,7 @@ async function main() {
         create: {
             name: 'Empresa Demo',
             slug: 'empresa-demo',
-            plan: 'ENTERPRISE',
+            plan: 'BUSINESS',
         },
     });
     console.log('✅ Tenant criado:', tenant.name);
