@@ -1228,9 +1228,53 @@ export class AssessmentController {
             description: this.bigFiveCalculator.getTraitDescription(trait.trait, trait.normalizedScore)
         }));
 
+        // ========== ADICIONAR TEXTOS INTERPRETATIVOS ==========
+        // Buscar assignment para pegar configId e tenantId
+        const assignment = await this.prisma.assessmentAssignment.findFirst({
+            where: {
+                assessmentId: assessmentId,
+                userId: user.userId
+            },
+            include: {
+                config: true
+            }
+        });
+
+        let traitsWithTexts = enrichedTraits;
+
+        if (assignment) {
+            try {
+                const effectiveTenantId = assignment.config?.tenantId || user.tenantId;
+                const configId = assignment.configId;
+
+                if (effectiveTenantId) {
+                    console.log('[calculateBigFive] Buscando textos interpretativos...');
+                    const report = await this.interpretation.generateFullReport(
+                        assignment.id,
+                        effectiveTenantId,
+                        configId
+                    );
+
+                    // Mesclar textos nos traits
+                    traitsWithTexts = enrichedTraits.map(trait => {
+                        const enriched = report.traits?.find((t: any) => t.key === trait.trait);
+                        return {
+                            ...trait,
+                            customTexts: enriched?.customTexts || null
+                        };
+                    });
+
+                    console.log('[calculateBigFive] ✅ Textos adicionados aos traits');
+                }
+            } catch (error) {
+                console.error('[calculateBigFive] ⚠️ Erro ao buscar textos (continuando sem eles):', error);
+                // Continua sem os textos
+            }
+        }
+
         return {
             ...result,
-            traits: enrichedTraits,
+            traits: traitsWithTexts,
             recommendations
         };
     }
