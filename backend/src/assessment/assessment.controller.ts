@@ -205,8 +205,9 @@ export class AssessmentController {
                 const effectiveTenantId = config?.tenantId || fallbackTenantId;
 
                 if (effectiveTenantId) {
-                    // gerar report usando o tenant efetivo
-                    const report = await this.interpretation.generateFullReport(assignmentId, effectiveTenantId);
+                    // gerar report usando o tenant efetivo e a CONFIG ESPECÍFICA usada no cálculo
+                    // Isso garante que peguemos os textos da config correta (que foi preenchida pelo seed)
+                    const report = await this.interpretation.generateFullReport(assignmentId, effectiveTenantId, config?.id);
                     reportTraits = report.traits || [];
                 } else {
                     console.warn('[calculateRealScores] Sem TenantID para buscar textos.');

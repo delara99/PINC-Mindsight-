@@ -8,13 +8,15 @@ export class InterpretationService {
     /**
      * Gera relatório completo baseado em scores calculados e config
      */
-    async generateFullReport(assignmentId: string, tenantId: string) {
-        // Buscar configuração ativa
+    async generateFullReport(assignmentId: string, tenantId: string, configId?: string) {
+        // Se configId for fornecido, busca especificamente ela (usada no cálculo)
+        // Se não, busca a configuração ativa do tenant (fallback)
+        const whereClause = configId
+            ? { id: configId }
+            : { tenantId: tenantId, isActive: true };
+
         const config = await this.prisma.bigFiveConfig.findFirst({
-            where: {
-                tenantId: tenantId,
-                isActive: true
-            },
+            where: whereClause,
             include: {
                 interpretativeTexts: true,
                 traits: {
@@ -100,7 +102,7 @@ export class InterpretationService {
                 };
             });
 
-            
+
             // Mapear Level para Enum
             const levelMap: Record<string, string> = {
                 'Muito Baixo': 'VERY_LOW',
@@ -110,13 +112,13 @@ export class InterpretationService {
                 'Muito Alto': 'VERY_HIGH'
             };
             const rangeEnum = levelMap[level] || 'AVERAGE';
-            
+
             // Filtrar textos da config
             // @ts-ignore
-            const relevantTexts = config.interpretativeTexts ? config.interpretativeTexts.filter((t: any) => 
+            const relevantTexts = config.interpretativeTexts ? config.interpretativeTexts.filter((t: any) =>
                 t.traitKey === trait.traitKey && t.scoreRange === rangeEnum
             ) : [];
-    
+
             report.traits.push({
                 key: trait.traitKey,
                 name: trait.name,
@@ -133,7 +135,7 @@ export class InterpretationService {
                     expertSynthesis: relevantTexts.find((t: any) => t.category === 'EXPERT_SYNTHESIS')?.text,
                     expertHypothesis: relevantTexts.filter((t: any) => t.category === 'EXPERT_HYPOTHESIS').map((t: any) => ({ type: t.context, text: t.text }))
                 },
-    
+
             });
         }
 

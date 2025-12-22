@@ -157,20 +157,7 @@ export default function AssessmentResultPage() {
                     </div>
                 </div>
             )}
-            <div className="text-xs text-center text-gray-400 mb-2">DEBUG: v3.0 (Cache Buster Ativo)</div>
-            {result.error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                    <strong className="font-bold">Erro de Cálculo Backend:</strong>
-                    <span className="block sm:inline"> {result.error}</span>
-                    <pre className="text-xs mt-2 overflow-auto max-h-40">{result.stack}</pre>
-                </div>
-            )}
-            {/* Se tivermos scores calculados mas sem textos, avisa */}
-            {result.traits && !result.traits[0]?.customTexts && (
-                <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4 text-xs">
-                    AVISO: Scores carregados, mas Textos Interpretativos não encontrados no objeto.
-                </div>
-            )}
+            {/* Debug visual removido para produção */}
             <BigFiveResults result={result} />
         </div>
     );
