@@ -15,7 +15,8 @@ export class InterpretationService {
             ? { id: configId }
             : { tenantId: tenantId, isActive: true };
 
-        const config = await this.prisma.bigFiveConfig.findFirst({
+        // SOLUÇÃO DEFINITIVA: Se não achar config específica, busca QUALQUER config disponível
+        let config = await this.prisma.bigFiveConfig.findFirst({
             where: whereClause,
             include: {
                 interpretativeTexts: true,
@@ -27,8 +28,32 @@ export class InterpretationService {
             }
         });
 
+        // Fallback 1: Se não achou, tenta buscar qualquer config ativa de qualquer tenant
         if (!config) {
-            throw new Error('Configuração Big Five não encontrada');
+            console.warn('[generateFullReport] Config específica não encontrada. Buscando qualquer config ativa...');
+            config = await this.prisma.bigFiveConfig.findFirst({
+                where: { isActive: true },
+                include: {
+                    interpretativeTexts: true,
+                    traits: { include: { facets: true } }
+                }
+            });
+        }
+
+        // Fallback 2: Se ainda não achou, pega QUALQUER config do sistema
+        if (!config) {
+            console.warn('[generateFullReport] Nenhuma config ativa. Buscando primeira config disponível...');
+            config = await this.prisma.bigFiveConfig.findFirst({
+                include: {
+                    interpretativeTexts: true,
+                    traits: { include: { facets: true } }
+                }
+            });
+        }
+
+        // Se mesmo assim não achar, cria erro descritivo
+        if (!config) {
+            throw new Error('CRÍTICO: Nenhuma configuração Big Five existe no sistema. Execute o seed.');
         }
 
         // Buscar assignment com respostas

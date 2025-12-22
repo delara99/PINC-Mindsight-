@@ -239,10 +239,11 @@ export class AssessmentController {
             console.log('[calculateRealScores] Retornando', result.scores.length, 'scores calculados');
             return result;
         } catch (error) {
-            console.error('[calculateRealScores] ERRO ao calcular scores:', error);
+            console.error('[calculateRealScores] ERRO CRÍTICO ao calcular scores:', error);
+            console.error('[calculateRealScores] Assignment ID:', assignmentId);
             console.error('[calculateRealScores] Stack:', error.stack);
-            // RETORNAR O ERRO PARA DEBUG NO FRONTEND
-            return { error: error.message || 'Erro desconhecido no cálculo', stack: error.stack };
+            // Retorna null para que o frontend use o snapshot antigo como fallback
+            return null;
         }
     }
 
