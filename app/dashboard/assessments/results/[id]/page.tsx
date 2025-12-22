@@ -41,6 +41,13 @@ export default function AssessmentResultPage() {
 
                 const assignment = await assignmentRes.json();
 
+                // ===== DEBUG CRÍTICO =====
+                console.log('[FRONTEND DEBUG] Assignment recebido:', assignment);
+                console.log('[FRONTEND DEBUG] calculatedScores existe?', !!assignment.calculatedScores);
+                console.log('[FRONTEND DEBUG] calculatedScores.scores existe?', !!assignment.calculatedScores?.scores);
+                console.log('[FRONTEND DEBUG] result existe?', !!assignment.result);
+                // ===== FIM DEBUG =====
+
                 // FIX: Priorizar scores calculados em tempo real (que incluem novos textos interpretativos)
                 if (assignment.calculatedScores && assignment.calculatedScores.scores) {
                     const baseResult = assignment.result?.data || {};
@@ -55,9 +62,11 @@ export default function AssessmentResultPage() {
                         completionPercentage: baseResult.completionPercentage || 100,
                         // Repassar erro de debug se houver
                         error: assignment.calculatedScores.error,
-                        stack: assignment.calculatedScores.stack
+                        stack: assignment.calculatedScores.stack,
+                        _debugSource: 'REAL_TIME_CALCULATION'
                     };
 
+                    console.log('[FRONTEND DEBUG] ✅ Usando cálculo em tempo real');
                     setResult(freshResult);
                     setLoading(false);
                     return;
@@ -65,7 +74,13 @@ export default function AssessmentResultPage() {
 
                 // Verificar se já tem resultado calculado (Snapshot Antigo)
                 if (assignment.result && assignment.result.data) {
-                    setResult({ ...assignment.result.data, timeSpent: assignment.timeSpent });
+                    console.log('[FRONTEND DEBUG] ⚠️ Usando SNAPSHOT ANTIGO (calculatedScores não disponível)');
+                    setResult({
+                        ...assignment.result.data,
+                        timeSpent: assignment.timeSpent,
+                        _debugSource: 'OLD_SNAPSHOT',
+                        _warning: 'Dados antigos - calculatedScores não retornado pelo backend'
+                    });
                     setLoading(false);
                     return;
                 }
@@ -149,6 +164,16 @@ export default function AssessmentResultPage() {
 
     return (
         <div className="max-w-6xl mx-auto">
+            {/* DEBUG: Mostrar fonte dos dados */}
+            {result._debugSource && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${result._debugSource === 'REAL_TIME_CALCULATION'
+                        ? 'bg-green-100 border border-green-300 text-green-800'
+                        : 'bg-yellow-100 border border-yellow-300 text-yellow-800'
+                    }`}>
+                    <strong>DEBUG:</strong> {result._debugSource === 'REAL_TIME_CALCULATION' ? '✅ Dados Atualizados' : '⚠️ Dados Antigos (Snapshot)'}
+                    {result._warning && <div className="text-xs mt-1">{result._warning}</div>}
+                </div>
+            )}
             {result.timeSpent > 0 && (
                 <div className="mb-6 flex justify-end">
                     <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100 shadow-sm">
