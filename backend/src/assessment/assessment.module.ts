@@ -14,7 +14,8 @@ import { SetupController } from './setup.controller';
 @Module({
     imports: [PrismaModule, ReportsModule],
     controllers: [AssessmentController, QuestionController, DiagnosticController, SetupController],
-    providers: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService, ScoreCalculationService, DiagnosticController],
+    providers: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService, ScoreCalculationService],
     exports: [AssessmentService, BigFiveCalculatorService, AssessmentTemplateService]
 })
 export class AssessmentModule { }
+
