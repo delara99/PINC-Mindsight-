@@ -5,13 +5,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🔄 Iniciando inserção de textos interpretativos...');
 
-  // Buscar configurações ativas
-  const configs = await prisma.bigFiveConfig.findMany({
-    where: { isActive: true }
-  });
+  let configs = [];
+  
+  if (process.env.TARGET_CONFIG_ID) {
+      console.log(`🎯 Alvo Específico definido: ${process.env.TARGET_CONFIG_ID}`);
+      configs = await prisma.bigFiveConfig.findMany({
+          where: { id: process.env.TARGET_CONFIG_ID }
+      });
+  } else {
+      configs = await prisma.bigFiveConfig.findMany({
+        where: { isActive: true }
+      });
+  }
 
   if (configs.length === 0) {
-    console.log('⚠️ Nenhuma configuração ativa encontrada. Buscando a mais recente...');
+    console.log('⚠️ Nenhuma configuração encontrada nos critérios. Buscando a mais recente...');
     const lastConfig = await prisma.bigFiveConfig.findFirst({ orderBy: { createdAt: 'desc' } });
     if (lastConfig) configs.push(lastConfig);
     else {
@@ -95,7 +103,6 @@ async function main() {
     
     let addedCount = 0;
     for (const item of textsToInsert) {
-        // Verificar duplicidade
         const exists = await prisma.bigFiveInterpretativeText.findFirst({
             where: {
                 configId: config.id,
