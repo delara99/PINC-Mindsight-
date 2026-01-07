@@ -35,7 +35,7 @@ export default function ReportsPage() {
     const { data: reports, isLoading: isLoadingReports } = useQuery<Report[]>({
         queryKey: ['reports'],
         queryFn: async () => {
-             const response = await fetch(`${API_URL}/api/v1/assessments/completed`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/completed`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar relatórios');
@@ -47,7 +47,7 @@ export default function ReportsPage() {
     const { data: deletedReports, isLoading: isLoadingDeleted } = useQuery<Report[]>({
         queryKey: ['deleted-reports'],
         queryFn: async () => {
-             const response = await fetch(`${API_URL}/api/v1/assessments/admin/deleted-list`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/admin/deleted-list`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Erro ao carregar lixeira');
@@ -58,7 +58,7 @@ export default function ReportsPage() {
 
     const markAsViewedMutation = useMutation({
         mutationFn: async (reportId: string) => {
-             const res = await fetch(`${API_URL}/api/v1/users/reports/${reportId}/mark-viewed`, {
+            const res = await fetch(`${API_URL}/api/v1/users/reports/${reportId}/mark-viewed`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -73,7 +73,7 @@ export default function ReportsPage() {
 
     const restoreMutation = useMutation({
         mutationFn: async (id: string) => {
-             const res = await fetch(`${API_URL}/api/v1/assessments/${id}/restore`, {
+            const res = await fetch(`${API_URL}/api/v1/assessments/${id}/restore`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -88,6 +88,24 @@ export default function ReportsPage() {
         onError: () => alert('Erro ao restaurar inventário.')
     });
 
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await fetch(`${API_URL}/api/v1/assessments/${id}/soft-delete`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Falha ao excluir');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reports'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-reports'] });
+            alert('Relatório movido para a lixeira! Você pode restaurá-lo a qualquer momento.');
+        },
+        onError: () => alert('Erro ao excluir relatório.')
+    });
+
+
     const currentData = activeTab === 'active' ? reports : deletedReports;
     const isLoading = activeTab === 'active' ? isLoadingReports : isLoadingDeleted;
 
@@ -97,33 +115,31 @@ export default function ReportsPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
                     <p className="text-gray-500 mt-1">
-                        {activeTab === 'active' 
-                            ? `${reports?.length || 0} avaliações completadas` 
+                        {activeTab === 'active'
+                            ? `${reports?.length || 0} avaliações completadas`
                             : `${deletedReports?.length || 0} avaliações na lixeira`}
                     </p>
                 </div>
-                
+
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                     <button
                         onClick={() => setActiveTab('active')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                            activeTab === 'active' 
-                                ? 'bg-white text-gray-900 shadow-sm' 
-                                : 'text-gray-500 hover:text-gray-900'
-                        }`}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'active'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900'
+                            }`}
                     >
-                       Ativos
+                        Ativos
                     </button>
                     <button
                         onClick={() => setActiveTab('deleted')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${
-                            activeTab === 'deleted' 
-                                ? 'bg-white text-red-600 shadow-sm' 
-                                : 'text-gray-500 hover:text-gray-900'
-                        }`}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === 'deleted'
+                            ? 'bg-white text-red-600 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900'
+                            }`}
                     >
-                       <Trash2 size={16} />
-                       Lixeira
+                        <Trash2 size={16} />
+                        Lixeira
                     </button>
                 </div>
             </div>
@@ -141,8 +157,8 @@ export default function ReportsPage() {
                         {activeTab === 'active' ? 'Nenhum relatório gerado' : 'Lixeira vazia'}
                     </h3>
                     <p className="text-gray-500 max-w-sm mt-2">
-                        {activeTab === 'active' 
-                            ? 'Assim que os candidatos responderem às avaliações, os relatórios aparecerão aqui.' 
+                        {activeTab === 'active'
+                            ? 'Assim que os candidatos responderem às avaliações, os relatórios aparecerão aqui.'
                             : 'Inventários excluídos pelos usuários aparecerão aqui.'}
                     </p>
                 </div>
@@ -153,7 +169,7 @@ export default function ReportsPage() {
                             key={report.id}
                             className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden"
                         >
-                             {activeTab === 'deleted' && (
+                            {activeTab === 'deleted' && (
                                 <div className="absolute top-0 right-0 bg-red-100 text-red-600 px-3 py-1 rounded-bl-xl text-xs font-bold">
                                     EXCLUÍDO
                                 </div>
@@ -184,17 +200,17 @@ export default function ReportsPage() {
 
                                     {report.scores && (
                                         <div className="flex flex-wrap gap-2">
-                                        {Object.entries(report.scores).map(([trait, score]) => (
-                                            <div
-                                                key={trait}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg"
-                                            >
-                                                <Award size={14} className="text-blue-600" />
-                                                <span className="text-xs font-medium text-blue-900">
-                                                    {TRAIT_TRANSLATIONS[trait] || trait}: {typeof score === 'number' ? score.toFixed(1) : score}
-                                                </span>
-                                            </div>
-                                        ))}
+                                            {Object.entries(report.scores).map(([trait, score]) => (
+                                                <div
+                                                    key={trait}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg"
+                                                >
+                                                    <Award size={14} className="text-blue-600" />
+                                                    <span className="text-xs font-medium text-blue-900">
+                                                        {TRAIT_TRANSLATIONS[trait] || trait}: {typeof score === 'number' ? score.toFixed(1) : score}
+                                                    </span>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
@@ -219,11 +235,24 @@ export default function ReportsPage() {
                                                     {markAsViewedMutation.isPending ? 'Marcando...' : 'Visualizado'}
                                                 </button>
                                             )}
+
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('⚠️ Tem certeza que deseja mover este relatório para a lixeira?\n\nVocê poderá restaurá-lo depois se necessário.')) {
+                                                        deleteMutation.mutate(report.id);
+                                                    }
+                                                }}
+                                                disabled={deleteMutation.isPending}
+                                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex items-center justify-center gap-2 disabled:opacity-50"
+                                            >
+                                                <Trash2 size={16} />
+                                                {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                                            </button>
                                         </>
                                     ) : (
                                         <button
                                             onClick={() => {
-                                                if(confirm('Tem certeza que deseja restaurar este inventário? Ele voltará para o cliente.')) {
+                                                if (confirm('Tem certeza que deseja restaurar este inventário? Ele voltará para o cliente.')) {
                                                     restoreMutation.mutate(report.id);
                                                 }
                                             }}

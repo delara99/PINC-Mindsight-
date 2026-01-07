@@ -1458,6 +1458,21 @@ export class AssessmentController {
         return { success: true };
     }
 
+    // Admin Soft Delete (Mover para Lixeira) 
+    @Delete(':id/soft-delete')
+    async softDeleteAssignment(@Param('id') id: string, @Request() req) {
+        const assignment = await this.prisma.assessmentAssignment.findUnique({ where: { id } });
+        if (!assignment) throw new BadRequestException('Assignment not found');
+
+        // Soft Delete
+        await this.prisma.assessmentAssignment.update({
+            where: { id },
+            data: { status: 'DELETED' }
+        });
+
+        return { success: true, message: 'Relatório movido para a lixeira' };
+    }
+
     // Listar Lixeira (ADMIN)
     @Get('admin/deleted-list')
     async getDeletedAssignments(@Request() req) {
