@@ -23,18 +23,18 @@
 ### **Opção 1: Rodar Backend e Frontend Separados** (Recomendado)
 
 ```bash
-# Terminal 1 - Backend
+# Terminal 1 - Backend (porta 3001)
 cd "/Users/delara/Desktop/saas - project sued/PINC-Mindsight-/backend"
 npm run start:dev
 
-# Terminal 2 - Frontend  
+# Terminal 2 - Frontend (porta 3000)
 cd "/Users/delara/Desktop/saas - project sued/PINC-Mindsight-"
 npm run dev
 ```
 
 **Acessar:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3000/api
+- Frontend: http://localhost:3000 ← LOGIN AQUI
+- Backend API: http://localhost:3001
 
 ---
 
@@ -47,7 +47,7 @@ npm run start:dev
 
 **Testar:**
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
 
 ---
@@ -141,7 +141,7 @@ npx prisma studio
 | Item | **PRODUÇÃO** | **LOCAL** |
 |------|--------------|-----------|
 | **Frontend** | Vercel | localhost:3000 |
-| **Backend** | Railway | localhost:3000/api |
+| **Backend** | Railway | localhost:3001 |
 | **DB** | Railway MySQL | Docker MySQL |
 | **Deploy** | Git Push → Auto | Manual |
 | **Testes** | ⚠️ Cuidado! | ✅ Livre |
