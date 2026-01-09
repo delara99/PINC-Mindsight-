@@ -418,9 +418,7 @@ export class InterpretationEngineService {
     ): string {
         let text = this.fixEncoding(template);
 
-        // 1. Processar Condicionais (ANTES de substituir variáveis para aproveitar os nomes originais)
-        // Executar loop até não ter mais condicionais (para suportar aninhamento simples se regex casar)
-        // Mas com o regex acima, ele faz global.
+        // 1. Processar Condicionais
         text = this.processConditionals(text, data.scores);
 
         // Substituir variáveis de scores: {{E_SCORE}}, {{A_SCORE}}, etc
@@ -428,16 +426,24 @@ export class InterpretationEngineService {
             return data.scores[trait as keyof BigFiveScores]?.toFixed(0) || '0';
         });
 
-        // Substituir padrões: {{PATTERN_1}}, {{PATTERN_2}}, etc
-        text = text.replace(/\{\{PATTERN_(\d+)\}\}/g, (_, num) => {
+        // Substituir padrões: {{PATTERN_1}}, {{PATTERN_1_NAME}}, {{PATTERN_1_DESC}}
+        text = text.replace(/\{\{PATTERN_(\d+)(?:_(NAME|DESC))?\}\}/g, (_, num, suffix) => {
             const index = parseInt(num) - 1;
-            return this.fixEncoding(data.patterns[index]?.name || '');
+            const pattern = data.patterns[index];
+            if (!pattern) return '';
+
+            if (suffix === 'DESC') return this.fixEncoding(pattern.description);
+            return this.fixEncoding(pattern.name);
         });
 
-        // Substituir necessidades: {{NEED_1}}, {{NEED_2}}, etc
-        text = text.replace(/\{\{NEED_(\d+)\}\}/g, (_, num) => {
+        // Substituir necessidades: {{NEED_1}}, {{NEED_1_NAME}}, {{NEED_1_DESC}}, etc
+        text = text.replace(/\{\{NEED_(\d+)(?:_(NAME|DESC))?\}\}/g, (_, num, suffix) => {
             const index = parseInt(num) - 1;
-            return this.fixEncoding(data.needs[index]?.name || '');
+            const need = data.needs[index];
+            if (!need) return '';
+
+            if (suffix === 'DESC') return this.fixEncoding(need.specialistDescription); // Default description
+            return this.fixEncoding(need.name);
         });
 
         // Substituir lista de necessidades
