@@ -19,7 +19,7 @@ export class InterpretationEngineService implements OnModuleInit {
             const count = await this.prisma.interpretationSection.count();
             if (count === 0) {
                 console.log('🚀 Auto-seeding essential Interpretation Sections...');
-                const tenant = await this.prisma.adminTenant.findFirst();
+                const tenant = await this.prisma.tenant.findFirst();
                 if (!tenant) return;
 
                 const defaults = [
