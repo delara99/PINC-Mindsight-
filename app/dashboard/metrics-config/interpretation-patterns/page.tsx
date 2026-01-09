@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { API_URL } from '../../../../src/config/api';
+import { useAuthStore } from '../../../../src/store/auth-store';
 
 interface Pattern {
     id: string;
@@ -22,14 +23,15 @@ export default function InterpretationPatternsPage() {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const token = useAuthStore((state) => state.token);
 
     useEffect(() => {
-        loadPatterns();
-    }, []);
+        if (token) loadPatterns();
+    }, [token]);
 
     const loadPatterns = async () => {
         try {
-            const token = localStorage.getItem('token');
+            console.log('DEBUG TOKEN:', token ? `Exists (${token.length} chars)` : 'MISSING');
             console.log('Fetching patterns from:', `${API_URL}/api/v1/interpretation/patterns`);
 
             const res = await fetch(`${API_URL}/api/v1/interpretation/patterns`, {

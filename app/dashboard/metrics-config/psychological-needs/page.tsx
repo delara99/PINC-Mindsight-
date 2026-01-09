@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { API_URL } from '../../../../src/config/api';
+import { useAuthStore } from '../../../../src/store/auth-store';
 
 interface Need {
     id: string;
@@ -26,14 +27,14 @@ export default function PsychologicalNeedsPage() {
     const [needs, setNeeds] = useState<Need[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
+    const token = useAuthStore((state) => state.token);
 
     useEffect(() => {
-        loadNeeds();
-    }, []);
+        if (token) loadNeeds();
+    }, [token]);
 
     const loadNeeds = async () => {
         try {
-            const token = localStorage.getItem('token');
             const res = await fetch(`${API_URL}/api/v1/interpretation/needs`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
