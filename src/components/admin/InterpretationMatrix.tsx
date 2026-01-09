@@ -5,15 +5,36 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interpretationService, InterpretationPattern } from '../../services/interpretation';
 import { Plus, Edit, Trash2, X, PlusCircle, Save } from 'lucide-react';
 
+const CATEGORIES = [
+    { id: 'LOGIC', label: 'Lógica-Sentimento', prefix: 'LOGIC_' },
+    { id: 'ADAPT', label: 'Adaptação-Estrutura', prefix: 'ADAPT_' },
+    { id: 'CONCR', label: 'Concreto-Abstrato', prefix: 'CONCR_' },
+    { id: 'EMOT', label: 'Emoção-Razão', prefix: 'EMOT_' },
+    { id: 'REC', label: 'Recomendações', prefix: 'REC_' },
+    { id: 'OTHER', label: 'Outros', prefix: '' }
+];
+
 export function InterpretationMatrix() {
     const queryClient = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
     const [currentPattern, setCurrentPattern] = useState<Partial<InterpretationPattern>>({});
+    const [activeCategory, setActiveCategory] = useState('LOGIC');
 
     // Lista
     const { data: patterns, isLoading } = useQuery<InterpretationPattern[]>({
         queryKey: ['interpretation-patterns'],
         queryFn: interpretationService.listPatterns
+    });
+
+    const filteredPatterns = patterns?.filter(p => {
+        const cat = CATEGORIES.find(c => c.id === activeCategory);
+        if (!cat) return true;
+
+        if (activeCategory === 'OTHER') {
+            // Mostra se NÃO começa com nenhum dos prefixos das outras categorias
+            return !CATEGORIES.some(c => c.id !== 'OTHER' && p.code.startsWith(c.prefix));
+        }
+        return p.code.startsWith(cat.prefix);
     });
 
     // Mutations
@@ -40,8 +61,18 @@ export function InterpretationMatrix() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['interpretation-patterns'] })
     });
 
+    const handleCreateNew = () => {
+        const cat = CATEGORIES.find(c => c.id === activeCategory);
+        setCurrentPattern({
+            code: cat && cat.id !== 'OTHER' ? cat.prefix : '',
+            conditions: []
+        });
+        setIsEditing(true);
+    };
+
     const handleSave = () => {
         if (!currentPattern.name || !currentPattern.description) return alert('Nome e Descrição obrigatórios');
+        if (!currentPattern.code) return alert('Código é obrigatório');
 
         // Formatar conditions se necessário
         const data = {
@@ -77,6 +108,10 @@ export function InterpretationMatrix() {
         setCurrentPattern({ ...currentPattern, conditions });
     };
 
+    const patternsToDisplay = filteredPatterns || [];
+
+    if (isLoading) return <div className="p-8 text-center text-gray-500">Carregando padrões...</div>;
+
     if (isEditing) {
         return (
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -88,7 +123,7 @@ export function InterpretationMatrix() {
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">Nome DO Padrão</label>
+                            <label className="block text-sm font-medium mb-1">Nome do Padrão</label>
                             <input
                                 className="w-full border rounded p-2"
                                 value={currentPattern.name || ''}
@@ -97,13 +132,16 @@ export function InterpretationMatrix() {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Código (Único)</label>
+                            <label className="block text-sm font-medium mb-1">Código (Prefixo Obrigatório)</label>
                             <input
-                                className="w-full border rounded p-2"
+                                className="w-full border rounded p-2 font-mono text-sm bg-gray-50"
                                 value={currentPattern.code || ''}
                                 onChange={e => setCurrentPattern({ ...currentPattern, code: e.target.value })}
-                                placeholder="Ex: LOGIC_CIC"
+                                placeholder="LOGIC_CIC"
                             />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Prefixo Sugerido: <b>{CATEGORIES.find(c => c.id === activeCategory)?.prefix}</b>
+                            </p>
                         </div>
                     </div>
 
@@ -135,7 +173,7 @@ export function InterpretationMatrix() {
                                         <option value="amabilidade">Amabilidade</option>
                                         <option value="conscienciosidade">Conscienciosidade</option>
                                         <option value="neuroticismo">Neuroticismo</option>
-                                        <option value="abertura">Abertura à Exp.</option>
+                                        <option value="abertura a experiencia">Abertura à Exp.</option>
                                     </select>
                                     <select
                                         className="border rounded p-1 text-sm bg-white w-20"
@@ -176,8 +214,6 @@ export function InterpretationMatrix() {
         );
     }
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500">Carregando padrões...</div>;
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center bg-violet-50 p-4 rounded-xl border border-violet-100">
@@ -186,36 +222,61 @@ export function InterpretationMatrix() {
                     <p className="text-sm text-violet-700">Crie regras combinatórias e defina os textos exatos que aparecem no relatório.</p>
                 </div>
                 <button
-                    onClick={() => { setCurrentPattern({}); setIsEditing(true); }}
+                    onClick={handleCreateNew}
                     className="bg-primary hover:bg-violet-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm"
                 >
                     <Plus size={18} /> Novo Padrão
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {patterns?.map(pattern => (
-                    <div key={pattern.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
-                        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => { setCurrentPattern(pattern); setIsEditing(true); }} className="p-1.5 bg-gray-100 rounded-full hover:bg-blue-100 text-blue-600"><Edit size={14} /></button>
-                            <button onClick={() => { if (confirm('Excluir?')) deleteMutation.mutate(pattern.id) }} className="p-1.5 bg-gray-100 rounded-full hover:bg-red-100 text-red-600"><Trash2 size={14} /></button>
-                        </div>
-
-                        <div className="mb-2">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded tracking-wider">{pattern.code}</span>
-                        </div>
-                        <h3 className="font-bold text-gray-900 mb-2 leading-tight">{pattern.name}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-3 mb-4">{pattern.description}</p>
-
-                        <div className="flex flex-wrap gap-1 mt-auto">
-                            {pattern.conditions?.map((c: any, i: number) => (
-                                <span key={i} className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100">
-                                    {c.trait.substring(0, 3).toUpperCase()} {c.operator === 'lt' ? '<' : '>'} {c.value}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
+            {/* Abas de Categorias */}
+            <div className="flex border-b border-gray-200 overflow-x-auto no-scrollbar gap-1">
+                {CATEGORIES.map(cat => (
+                    <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className={`whitespace-nowrap px-6 py-3 border-b-2 font-medium transition-colors ${activeCategory === cat.id ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        {cat.label}
+                    </button>
                 ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {patternsToDisplay.length > 0 ? (
+                    patternsToDisplay.map(pattern => (
+                        <div key={pattern.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
+                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => { setCurrentPattern(pattern); setIsEditing(true); }} className="p-1.5 bg-gray-100 rounded-full hover:bg-blue-100 text-blue-600"><Edit size={14} /></button>
+                                <button onClick={() => { if (confirm('Excluir?')) deleteMutation.mutate(pattern.id) }} className="p-1.5 bg-gray-100 rounded-full hover:bg-red-100 text-red-600"><Trash2 size={14} /></button>
+                            </div>
+
+                            <div className="mb-2">
+                                <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded tracking-wider">{pattern.code}</span>
+                            </div>
+                            <h3 className="font-bold text-gray-900 mb-2 leading-tight">{pattern.name}</h3>
+                            <p className="text-xs text-gray-500 line-clamp-4 mb-4 whitespace-pre-line">{pattern.description}</p>
+
+                            <div className="flex flex-wrap gap-1 mt-auto">
+                                {pattern.conditions?.map((c: any, i: number) => {
+                                    const traitLabel = c.trait === 'abertura a experiencia' ? 'OPEN' : c.trait.substring(0, 3).toUpperCase();
+                                    return (
+                                        <span key={i} className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100">
+                                            {traitLabel} {c.operator === 'lt' ? '<' : '>'} {c.value}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-full py-16 text-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                        <p className="mb-2">Nenhum padrão encontrado na categoria <b>{CATEGORIES.find(c => c.id === activeCategory)?.label}</b>.</p>
+                        <button onClick={handleCreateNew} className="text-primary font-bold hover:underline">
+                            + Criar o primeiro padrão desta categoria
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
