@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download } from 'lucide-react';
+import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { BigFiveChart } from '../../../../src/components/dashboard/big-five-chart';
 import { TraitCard } from '../../../../src/components/dashboard/TraitCard';
@@ -239,6 +239,29 @@ export default function AssessmentDetailsPage() {
                         return null;
                     })()}
                 </div>
+
+                {/* --- SEÇÕES INTERPRETATIVAS AVANÇADAS (ADMIN VIEW) --- */}
+                {assignment.calculatedScores?.interpretationSections && assignment.calculatedScores.interpretationSections.length > 0 && (
+                    <div className="space-y-6 mt-8 mb-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="bg-gradient-to-br from-violet-600 to-indigo-600 p-2 rounded-lg shadow-sm">
+                                <Sparkles className="w-5 h-5 text-white" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900">Análise Avançada de Padrões</h2>
+                        </div>
+
+                        {assignment.calculatedScores.interpretationSections.map((section: any) => (
+                            <div key={section.code} className="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+                                <div className="flex items-center gap-3 mb-6 border-l-4 border-violet-500 pl-4">
+                                    <h3 className="text-lg font-bold text-gray-900">{section.title}</h3>
+                                </div>
+                                <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                    {section.content}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Gráfico Radar - USANDO DADOS JÁ SALVOS (result.scores) */}
                 {result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (

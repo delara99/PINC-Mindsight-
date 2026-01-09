@@ -352,7 +352,7 @@ export class InterpretationEngineService {
     private fixEncoding(text: string): string {
         if (!text) return text;
         try {
-            // Detecta padrões comuns de erro de encoding (ex: Ãª, Ã£, Ã§)
+            // Detecta padrões comuns de erro de encoding
             if (text.match(/[\u00C0-\u00FF]{2,}/) || text.includes('Ã')) {
                 return Buffer.from(text, 'binary').toString('utf-8');
             }
@@ -360,6 +360,49 @@ export class InterpretationEngineService {
         } catch (e) {
             return text;
         }
+    }
+
+    /**
+     * Avalia condições simples (Ex: E_SCORE > 50)
+     */
+    private evaluateCondition(condition: string, scores: BigFiveScores): boolean {
+        const cond = condition.trim();
+        // Suporta: VAR OP VAL (Ex: E_SCORE > 70)
+        const parts = cond.match(/^([EACON]_SCORE)\s*(>|<|>=|<=|==|!=)\s*(\d+)$/);
+
+        if (!parts) return false;
+
+        const [, varName, operator, valueStr] = parts;
+        const value = parseInt(valueStr, 10);
+
+        // Extrair a letra do traço (E, A, C, O, N)
+        const trait = varName.charAt(0) as keyof BigFiveScores;
+        const score = scores[trait] || 0;
+
+        switch (operator) {
+            case '>': return score > value;
+            case '<': return score < value;
+            case '>=': return score >= value;
+            case '<=': return score <= value;
+            case '==': return score === value;
+            case '!=': return score !== value;
+            default: return false;
+        }
+    }
+
+    /**
+     * Processa condicionais {{#if ...}}...{{else}}...{{/if}}
+     * Suporta aninhamento limitado se rodar recursivamente, mas aqui faremos um passo simples.
+     */
+    private processConditionals(text: string, scores: BigFiveScores): string {
+        const regex = /\{\{#if\s+([^}]+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+
+        // Loop para suportar múltiplos blocos. 
+        // Nota: Não suporta aninhamento profundo com este regex simples, mas resolve o caso plano.
+        return text.replace(regex, (match, condition, ifContent, elseContent) => {
+            const isValid = this.evaluateCondition(condition, scores);
+            return isValid ? ifContent : (elseContent || '');
+        });
     }
 
     /**
@@ -374,6 +417,11 @@ export class InterpretationEngineService {
         }
     ): string {
         let text = this.fixEncoding(template);
+
+        // 1. Processar Condicionais (ANTES de substituir variáveis para aproveitar os nomes originais)
+        // Executar loop até não ter mais condicionais (para suportar aninhamento simples se regex casar)
+        // Mas com o regex acima, ele faz global.
+        text = this.processConditionals(text, data.scores);
 
         // Substituir variáveis de scores: {{E_SCORE}}, {{A_SCORE}}, etc
         text = text.replace(/\{\{([EACON])_SCORE\}\}/g, (_, trait) => {
