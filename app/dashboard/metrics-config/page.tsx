@@ -192,6 +192,97 @@ export default function MetricsConfigPage() {
                     )}
                 </div>
             </div>
+
+            {/* ⭐ NOVA SEÇÃO: Camada Interpretativa Avançada */}
+            <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                    <div className="flex items-center gap-3">
+                        <Wrench className="text-purple-600" size={24} />
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900">Camada Interpretativa Avançada</h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Gerencie padrões, necessidades psicológicas e seções customizadas
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                    {/* Padrões */}
+                    <button
+                        onClick={() => router.push('/dashboard/metrics-config/interpretation-patterns')}
+                        className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 p-6 rounded-lg transition-all border border-blue-200 text-left"
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-blue-500 text-white rounded-lg">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <h4 className="font-semibold text-gray-900 group-hover:text-blue-700">Padrões Interpretativos</h4>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                            Configure combinações de scores que identificam perfis específicos
+                        </p>
+                    </button>
+
+                    {/* Necessidades */}
+                    <button
+                        onClick={() => router.push('/dashboard/metrics-config/psychological-needs')}
+                        className="group bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 p-6 rounded-lg transition-all border border-purple-200 text-left"
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-purple-500 text-white rounded-lg">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                            </div>
+                            <h4 className="font-semibold text-gray-900 group-hover:text-purple-700">Necessidades Psicológicas</h4>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                            Gerenci necessidades identificadas a partir dos padrões
+                        </p>
+                    </button>
+
+                    {/* Seções */}
+                    <button
+                        onClick={() => router.push('/dashboard/metrics-config/interpretation-sections')}
+                        className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 p-6 rounded-lg transition-all border border-green-200 text-left opacity-50 cursor-not-allowed"
+                        disabled
+                        title="Em breve"
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-green-500 text-white rounded-lg">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                </svg>
+                            </div>
+                            <h4 className="font-semibold text-gray-900 group-hover:text-green-700">Seções Interpretativas</h4>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                            Templates de seções customizadas para relatórios (Em breve)
+                        </p>
+                    </button>
+                </div>
+
+                {/* Info Box */}
+                <div className="p-4 bg-indigo-50 border-t border-indigo-100">
+                    <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                            <p className="text-sm font-medium text-indigo-900">
+                                Camada Interpretativa Avançada
+                            </p>
+                            <p className="text-sm text-indigo-700 mt-1">
+                                Esta funcionalidade adiciona análise de padrões comportamentais e necessidades psicológicas aos relatórios,
+                                sem alterar o Big Five tradicional. Pode ser ativada/desativada via variável de ambiente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
