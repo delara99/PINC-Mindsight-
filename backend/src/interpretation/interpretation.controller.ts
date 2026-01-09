@@ -66,15 +66,15 @@ export class InterpretationController {
     }
 
     /**
-     * Cria novo padrão (SUPER_ADMIN)
+     * Cria novo padrão (SUPER_ADMIN ou TENANT_ADMIN)
      */
     @Post('patterns')
     async createPattern(@Body() dto: CreatePatternDto, @Request() req) {
-        if (req.user.role !== 'SUPER_ADMIN') {
-            return {
-                success: false,
-                message: 'Apenas SUPER_ADMIN pode criar padrões'
-            };
+        // Permitir TENANT_ADMIN criar padrões para seu próprio tenant
+        const tenantId = req.user.role === 'SUPER_ADMIN' ? (dto.tenantId || null) : req.user.tenantId;
+
+        if (req.user.role === 'MEMBER') {
+            throw new Error("Acesso negado");
         }
 
         const pattern = await this.prisma.interpretationPattern.create({
@@ -84,7 +84,7 @@ export class InterpretationController {
                 description: dto.description,
                 conditions: dto.conditions as any,
                 priority: dto.priority || 0,
-                tenantId: dto.tenantId || null
+                tenantId: tenantId
             }
         });
 
@@ -92,6 +92,49 @@ export class InterpretationController {
             success: true,
             data: pattern
         };
+    }
+
+    /**
+     * Atualiza padrão existente
+     */
+    @Post('patterns/:id')
+    async updatePattern(@Param('id') id: string, @Body() dto: CreatePatternDto, @Request() req) {
+        // Verificar propriedade
+        const existing = await this.prisma.interpretationPattern.findUnique({ where: { id } });
+        if (!existing) throw new Error("Padrão não encontrado");
+
+        if (req.user.role !== 'SUPER_ADMIN' && existing.tenantId !== req.user.tenantId) {
+            throw new Error("Acesso negado: Você não pode editar este padrão.");
+        }
+
+        const pattern = await this.prisma.interpretationPattern.update({
+            where: { id },
+            data: {
+                code: dto.code,
+                name: dto.name,
+                description: dto.description,
+                conditions: dto.conditions as any,
+                priority: dto.priority
+            }
+        });
+
+        return { success: true, data: pattern };
+    }
+
+    /**
+     * Remove padrão
+     */
+    @Post('patterns/:id/delete')
+    async deletePattern(@Param('id') id: string, @Request() req) {
+        const existing = await this.prisma.interpretationPattern.findUnique({ where: { id } });
+        if (!existing) throw new Error("Padrão não encontrado");
+
+        if (req.user.role !== 'SUPER_ADMIN' && existing.tenantId !== req.user.tenantId) {
+            throw new Error("Acesso negado.");
+        }
+
+        await this.prisma.interpretationPattern.delete({ where: { id } });
+        return { success: true };
     }
 
     /**

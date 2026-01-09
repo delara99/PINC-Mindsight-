@@ -426,10 +426,19 @@ export class InterpretationEngineService {
             return data.scores[trait as keyof BigFiveScores]?.toFixed(0) || '0';
         });
 
-        // Substituir padrões: {{PATTERN_1}}, {{PATTERN_1_NAME}}, {{PATTERN_1_DESC}}
-        text = text.replace(/\{\{PATTERN_(\d+)(?:_(NAME|DESC))?\}\}/g, (_, num, suffix) => {
-            const index = parseInt(num) - 1;
-            const pattern = data.patterns[index];
+        // Substituir padrões: Support both Index based (PATTERN_1) and Code based (PATTERN_LOGIC_CIC)
+        text = text.replace(/\{\{PATTERN_([A-Z0-9_]+)(?:_(NAME|DESC))?\}\}/g, (_, identifier, suffix) => {
+            let pattern: DetectedPattern | undefined;
+
+            if (/^\d+$/.test(identifier)) {
+                // Index based
+                const index = parseInt(identifier) - 1;
+                pattern = data.patterns[index];
+            } else {
+                // Code based
+                pattern = data.patterns.find(p => p.code === identifier);
+            }
+
             if (!pattern) return '';
 
             if (suffix === 'DESC') return this.fixEncoding(pattern.description);
