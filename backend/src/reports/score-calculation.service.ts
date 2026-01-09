@@ -83,11 +83,11 @@ export class ScoreCalculationService {
                 name: 'Fallback Config',
                 veryLowMax: 20, lowMax: 40, averageMax: 60, highMax: 80, veryHighMax: 100,
                 traits: [
-                    { id: 't_ext', traitKey: 'E', name: 'Extroversão', isActive: true, facets: [] },
-                    { id: 't_agr', traitKey: 'A', name: 'Amabilidade', isActive: true, facets: [] },
-                    { id: 't_con', traitKey: 'C', name: 'Conscienciosidade', isActive: true, facets: [] },
-                    { id: 't_neu', traitKey: 'N', name: 'Neuroticismo', isActive: true, facets: [] },
-                    { id: 't_ope', traitKey: 'O', name: 'Abertura', isActive: true, facets: [] }
+                    { id: 't_ext', traitKey: 'extroversao', name: 'Extroversão', isActive: true, facets: [] },
+                    { id: 't_agr', traitKey: 'amabilidade', name: 'Amabilidade', isActive: true, facets: [] },
+                    { id: 't_con', traitKey: 'conscienciosidade', name: 'Conscienciosidade', isActive: true, facets: [] },
+                    { id: 't_neu', traitKey: 'neuroticismo', name: 'Neuroticismo', isActive: true, facets: [] },
+                    { id: 't_ope', traitKey: 'abertura', name: 'Abertura à Experiência', isActive: true, facets: [] }
                 ]
             } as any;
         }
