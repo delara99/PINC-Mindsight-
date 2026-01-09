@@ -87,7 +87,7 @@ export class ScoreCalculationService {
                     { id: 't_agr', traitKey: 'amabilidade', name: 'Amabilidade', isActive: true, facets: [] },
                     { id: 't_con', traitKey: 'conscienciosidade', name: 'Conscienciosidade', isActive: true, facets: [] },
                     { id: 't_neu', traitKey: 'neuroticismo', name: 'Neuroticismo', isActive: true, facets: [] },
-                    { id: 't_ope', traitKey: 'abertura', name: 'Abertura à Experiência', isActive: true, facets: [] }
+                    { id: 't_ope', traitKey: 'abertura a experiencia', name: 'Abertura à Experiência', isActive: true, facets: [] }
                 ]
             } as any;
         }
@@ -160,11 +160,17 @@ export class ScoreCalculationService {
             else {
                 const legacyMap: Record<string, string> = {
                     'amabilidade': 'agreeableness',
+                    'agreeableness': 'amabilidade',
                     'conscienciosidade': 'conscientiousness',
+                    'conscientiousness': 'conscienciosidade',
                     'extroversao': 'extraversion',
+                    'extraversion': 'extroversao',
                     'abertura a experiencia': 'openness',
+                    'openness': 'abertura a experiencia',
+                    'abertura': 'abertura a experiencia',
                     'estabilidade emocional': 'neuroticismo',
-                    'neuroticismo': 'neuroticism'
+                    'neuroticismo': 'neuroticism',
+                    'neuroticism': 'neuroticismo'
                 };
                 const mapped = legacyMap[this.cleanString(parts[0])] || legacyMap[this.cleanString(qTraitKey)];
                 if (mapped && traitLookup.has(this.cleanString(mapped))) {
