@@ -17,7 +17,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configurações
-API_URL="${API_URL:-https://pinc-mindsight-production.up.railway.app}"
+API_URL="${API_URL:-https://pinc-mindsight-production.up.railway.app/api/v1}"
 TOKEN="${ADMIN_TOKEN}"
 
 # Contadores

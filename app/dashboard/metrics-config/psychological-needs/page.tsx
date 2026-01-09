@@ -34,7 +34,7 @@ export default function PsychologicalNeedsPage() {
     const loadNeeds = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/interpretation/needs`, {
+            const res = await fetch(`${API_URL}/api/v1/interpretation/needs`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();

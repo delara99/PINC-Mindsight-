@@ -29,7 +29,7 @@ export default function InterpretationPatternsPage() {
     const loadPatterns = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/interpretation/patterns`, {
+            const res = await fetch(`${API_URL}/api/v1/interpretation/patterns`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
