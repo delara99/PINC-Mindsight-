@@ -91,7 +91,7 @@ export default function InterpretationPatternsPage() {
                         ← Voltar
                     </button>
                     <button
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={() => router.push('/dashboard/metrics-config/interpretation-patterns/new')}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
                     >
                         + Novo Padrão
@@ -209,28 +209,7 @@ export default function InterpretationPatternsPage() {
                 </div>
             </div>
 
-            {/* Create Modal (Simplified - you can enhance this) */}
-            {showCreateModal && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">
-                            Criar Novo Padrão
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                            Esta funcionalidade será implementada em breve.
-                            Por enquanto, use a API diretamente ou o endpoint de criação.
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowCreateModal(false)}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Fechar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 }
