@@ -374,4 +374,237 @@ export class MigrationController {
             };
         }
     }
+
+    /**
+     * Endpoint para aplicar migração da Camada Interpretativa Avançada
+     * SUPER_ADMIN only
+     */
+    @Post('apply-interpretation-layer')
+    async applyInterpretationLayer(@Request() req) {
+        if (req.user.role !== 'SUPER_ADMIN') {
+            return {
+                success: false,
+                message: 'Apenas SUPER_ADMIN pode executar migrações'
+            };
+        }
+
+        const log: string[] = [];
+
+        try {
+            log.push('🚀 Iniciando migração da Camada Interpretativa Avançada...\n');
+
+            // STEP 1: Verificar se as tabelas existem
+            log.push('📋 STEP 1: Verificando estrutura do banco...');
+
+            const tables = [
+                'interpretation_patterns',
+                'psychological_needs',
+                'pattern_needs',
+                'result_needs',
+                'interpretation_sections'
+            ];
+
+            for (const table of tables) {
+                try {
+                    const result = await this.prisma.$queryRaw<any[]>`
+                        SELECT TABLE_NAME 
+                        FROM INFORMATION_SCHEMA.TABLES 
+                        WHERE TABLE_SCHEMA = DATABASE()
+                        AND TABLE_NAME = ${table}
+                    `;
+
+                    if (result.length > 0) {
+                        log.push(`✅ Tabela ${table} existe`);
+                    } else {
+                        log.push(`❌ Tabela ${table} NÃO existe - executando db push necessário`);
+                    }
+                } catch (error: any) {
+                    log.push(`⚠️  Erro ao verificar tabela ${table}: ${error.message}`);
+                }
+            }
+
+            log.push('\n📊 STEP 2: Criando dados iniciais...\n');
+
+            // STEP 2: Criar padrões interpretativos iniciais
+            log.push('🎯 Criando Padrões Interpretativos...');
+
+            const patternsData = [
+                {
+                    code: 'SOCIAL_PROFILE',
+                    name: 'Perfil Social',
+                    description: 'Alta extroversão combinada com alta amabilidade',
+                    conditions: { E: { min: 70 }, A: { min: 70 } },
+                    priority: 100
+                },
+                {
+                    code: 'STRUCTURED_PROFILE',
+                    name: 'Perfil Estruturado',
+                    description: 'Alta conscienciosidade com baixa abertura',
+                    conditions: { C: { min: 80 }, O: { max: 40 } },
+                    priority: 90
+                },
+                {
+                    code: 'EXPLORER_PROFILE',
+                    name: 'Perfil Explorador',
+                    description: 'Alta abertura combinada com alta extroversão',
+                    conditions: { O: { min: 70 }, E: { min: 70 } },
+                    priority: 85
+                },
+                {
+                    code: 'ANALYTICAL_PROFILE',
+                    name: 'Perfil Analítico',
+                    description: 'Baixa extroversão com alta conscienciosidade',
+                    conditions: { E: { max: 40 }, C: { min: 70 } },
+                    priority: 80
+                }
+            ];
+
+            let patternsCreated = 0;
+            const createdPatterns: any[] = [];
+
+            for (const pattern of patternsData) {
+                try {
+                    const exists = await this.prisma.$queryRaw<any[]>`
+                        SELECT id FROM interpretation_patterns WHERE code = ${pattern.code}
+                    `;
+
+                    if (!exists || exists.length === 0) {
+                        await this.prisma.$executeRaw`
+                            INSERT INTO interpretation_patterns 
+                            (id, code, name, description, conditions, priority, active, created_at, updated_at)
+                            VALUES (
+                                UUID(),
+                                ${pattern.code},
+                                ${pattern.name},
+                                ${pattern.description},
+                                ${JSON.stringify(pattern.conditions)},
+                                ${pattern.priority},
+                                1,
+                                NOW(),
+                                NOW()
+                            )
+                        `;
+
+                        createdPatterns.push(pattern);
+                        patternsCreated++;
+                        log.push(`✅ Padrão criado: ${pattern.name}`);
+                    } else {
+                        log.push(`⏭️  Padrão já existe: ${pattern.name}`);
+                    }
+                } catch (error: any) {
+                    log.push(`❌ Erro ao criar padrão ${pattern.name}: ${error.message}`);
+                }
+            }
+
+            log.push(`\n📦 Padrões criados: ${patternsCreated}\n`);
+
+            // STEP 3: Criar necessidades psicológicas
+            log.push('💡 Criando Necessidades Psicológicas...');
+
+            const needsData = [
+                {
+                    code: 'BELONGING',
+                    name: 'Pertencimento',
+                    clientTitle: 'Necessidade de Pertencer',
+                    clientDescription: 'Você precisa sentir que faz parte de um grupo ou comunidade.',
+                    clientImpact: 'Isso afeta sua motivação e bem-estar no trabalho e nas relações.',
+                    specialistTitle: 'Necessidade Psicológica: Pertencimento',
+                    specialistDescription: 'Necessidade fundamental de conexão social e aceitação grupal.',
+                    specialistAnalysis: 'Indivíduos com alta necessidade de pertencimento prosperam em ambientes colaborativos.',
+                    favorableEnvironments: JSON.stringify(['Trabalho em equipe', 'Cultura colaborativa', 'Eventos sociais']),
+                    unfavorableEnvironments: JSON.stringify(['Trabalho isolado', 'Competição agressiva', 'Falta de feedback']),
+                    recommendations: JSON.stringify(['Busque projetos em equipe', 'Participe de grupos de interesse'])
+                },
+                {
+                    code: 'AUTONOMY',
+                    name: 'Autonomia',
+                    clientTitle: 'Necessidade de Autonomia',
+                    clientDescription: 'Você precisa de liberdade para tomar suas próprias decisões.',
+                    clientImpact: 'Microgerenciamento pode afetar negativamente sua performance.',
+                    specialistTitle: 'Necessidade Psicológica: Autonomia',
+                    specialistDescription: 'Necessidade de autodeterminação e controle sobre ações.',
+                    specialistAnalysis: 'Requer ambientes com alto grau de liberdade decisória.',
+                    favorableEnvironments: JSON.stringify(['Home office', 'Projetos independentes', 'Flexibilidade']),
+                    unfavorableEnvironments: JSON.stringify(['Microgerenciamento', 'Regras rígidas', 'Hierarquia vertical']),
+                    recommendations: JSON.stringify(['Negocie flexibilidade', 'Busque projetos com autonomia'])
+                },
+                {
+                    code: 'STRUCTURE',
+                    name: 'Estrutura',
+                    clientTitle: 'Necessidade de Estrutura',
+                    clientDescription: 'Você funciona melhor com processos claros e organizados.',
+                    clientImpact: 'Ambiguidade e caos podem gerar estresse e perda de produtividade.',
+                    specialistTitle: 'Necessidade Psicológica: Estrutura',
+                    specialistDescription: 'Necessidade de previsibilidade, ordem e clareza de expectativas.',
+                    specialistAnalysis: 'Indivíduos orientados a estrutura prosperam com processos definidos.',
+                    favorableEnvironments: JSON.stringify(['Processos claros', 'Metas definidas', 'Rotinas estabelecidas']),
+                    unfavorableEnvironments: JSON.stringify(['Ambiguidade', 'Mudanças frequentes', 'Desorganização']),
+                    recommendations: JSON.stringify(['Crie checklists', 'Defina processos pessoais'])
+                }
+            ];
+
+            let needsCreated = 0;
+
+            for (const need of needsData) {
+                try {
+                    // Escapar aspas para SQL
+                    const escapeSql = (str: string) => str.replace(/'/g, "''");
+
+                    await this.prisma.$executeRaw`
+                        INSERT INTO psychological_needs 
+                        (id, code, name, client_title, client_description, client_impact,
+                         specialist_title, specialist_description, specialist_analysis,
+                         favorable_environments, unfavorable_environments, recommendations,
+                         active, created_at, updated_at)
+                        VALUES (
+                            UUID(),
+                            ${need.code},
+                            ${need.name},
+                            ${need.clientTitle},
+                            ${need.clientDescription},
+                            ${need.clientImpact},
+                            ${need.specialistTitle},
+                            ${need.specialistDescription},
+                            ${need.specialistAnalysis},
+                            ${need.favorableEnvironments},
+                            ${need.unfavorableEnvironments},
+                            ${need.recommendations},
+                            1,
+                            NOW(),
+                            NOW()
+                        )
+                        ON DUPLICATE KEY UPDATE updated_at = NOW()
+                    `;
+
+                    needsCreated++;
+                    log.push(`✅ Necessidade criada: ${need.name}`);
+                } catch (error: any) {
+                    log.push(`⚠️  ${need.name}: ${error.message}`);
+                }
+            }
+
+            log.push(`\n📦 Necessidades criadas: ${needsCreated}\n`);
+
+            log.push('\n✅ Migração da Camada Interpretativa concluída com sucesso!\n');
+
+            return {
+                success: true,
+                message: 'Camada Interpretativa aplicada com sucesso',
+                stats: {
+                    patternsCreated,
+                    needsCreated
+                },
+                log: log
+            };
+
+        } catch (error: any) {
+            log.push(`\n❌ Erro fatal: ${error.message}`);
+            return {
+                success: false,
+                message: 'Erro ao aplicar migração',
+                error: error.message,
+                log: log
+            };
+        }
+    }
 }
