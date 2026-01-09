@@ -12,21 +12,26 @@ datasource db {
 // =======================
 
 model Tenant {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique
-  plan        PlanType @default(START)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  plan      PlanType @default(START)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   users       User[]
   assessments AssessmentModel[]
 
-  invitations Invitation[]
+  invitations         Invitation[]
   creditSolicitations CreditSolicitation[]
-  jobProfiles JobProfile[]
-  siteSettings SiteSettings[]
-  bigFiveConfigs BigFiveConfig[]
+  jobProfiles         JobProfile[]
+  siteSettings        SiteSettings[]
+  bigFiveConfigs      BigFiveConfig[]
+
+  // Camada Interpretativa Avançada
+  interpretationPatterns InterpretationPattern[]
+  psychologicalNeeds     PsychologicalNeed[]
+  interpretationSections InterpretationSection[]
 
   @@map("tenants")
 }
@@ -38,51 +43,51 @@ enum PlanType {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  password    String
-  name        String?
-  role        Role     @default(MEMBER)
-  status      UserStatus @default(pending)
-  plan        PlanType   @default(START)
-  
+  id       String     @id @default(uuid())
+  email    String     @unique
+  password String
+  name     String?
+  role     Role       @default(MEMBER)
+  status   UserStatus @default(pending)
+  plan     PlanType   @default(START)
+
   // Diferenciação PF/PJ
   userType    UserType @default(INDIVIDUAL)
   cpf         String?  @unique
   cnpj        String?  @unique
   companyName String?
   phone       String?
-  
-  tenantId    String?
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
-  
-  assignments AssessmentAssignment[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  assignments   AssessmentAssignment[]
   solicitations CreditSolicitation[]
-  
-  credits     Int      @default(0)
+
+  credits Int @default(0)
 
   // Connection relations
-  connectionsSent     Connection[]         @relation("UserA")
-  connectionsReceived Connection[]         @relation("UserB")
-  cancelledConnections Connection[]        @relation("CancelledBy")
-  
-  requestsSent     ConnectionRequest[] @relation("Sender")
-  requestsReceived ConnectionRequest[] @relation("Receiver")
-  connectionSettings  ConnectionSharingSetting[]
-  connectionMessages  ConnectionMessage[]
-  createdInviteLinks  ConnectionInviteLink[] @relation("InviteLinkCreator")
-  usedInviteLinks     ConnectionInviteLink[] @relation("InviteLinkUsedBy")
+  connectionsSent      Connection[] @relation("UserA")
+  connectionsReceived  Connection[] @relation("UserB")
+  cancelledConnections Connection[] @relation("CancelledBy")
 
-  reportsAsAuthor     CrossProfileReport[]   @relation("ReportAuthor")
-  reportsAsTarget     CrossProfileReport[]   @relation("ReportTarget")
+  requestsSent       ConnectionRequest[]        @relation("Sender")
+  requestsReceived   ConnectionRequest[]        @relation("Receiver")
+  connectionSettings ConnectionSharingSetting[]
+  connectionMessages ConnectionMessage[]
+  createdInviteLinks ConnectionInviteLink[]     @relation("InviteLinkCreator")
+  usedInviteLinks    ConnectionInviteLink[]     @relation("InviteLinkUsedBy")
+
+  reportsAsAuthor CrossProfileReport[] @relation("ReportAuthor")
+  reportsAsTarget CrossProfileReport[] @relation("ReportTarget")
 
   professionalFeedbacks ProfessionalFeedback[]
-  payments                Payment[]
+  payments              Payment[]
 
   viewedByAdmin Boolean @default(false) @map("viewed_by_admin")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   lastActivityAt DateTime? @map("last_activity_at")
 
   @@map("users")
@@ -96,8 +101,8 @@ enum Role {
 }
 
 enum UserType {
-  INDIVIDUAL  // Pessoa Física
-  COMPANY     // Pessoa Jurídica
+  INDIVIDUAL // Pessoa Física
+  COMPANY // Pessoa Jurídica
 }
 
 enum UserStatus {
@@ -111,27 +116,27 @@ enum UserStatus {
 // =======================
 
 model Payment {
-  id            String        @id @default(uuid())
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  
-  planId        String
-  planName      String
-  amount        Float
-  
-  status        PaymentStatus @default(PENDING)
-  
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  planId   String
+  planName String
+  amount   Float
+
+  status PaymentStatus @default(PENDING)
+
   // Dados BTG
-  btgChargeId   String?       @unique
-  pixCopyPaste  String?       @db.Text
-  qrCodeBase64  String?       @db.Text
-  
-  expiresAt     DateTime
-  paidAt        DateTime?
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  btgChargeId  String? @unique
+  pixCopyPaste String? @db.Text
+  qrCodeBase64 String? @db.Text
+
+  expiresAt DateTime
+  paidAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@index([btgChargeId])
   @@index([status])
@@ -146,27 +151,26 @@ enum PaymentStatus {
   REFUNDED
 }
 
-
 // =======================
 // Assessment Domain
 // =======================
 
 model AssessmentModel {
-  id          String   @id @default(uuid())
+  id          String         @id @default(uuid())
   title       String
   description String?
   type        AssessmentType
   isDefault   Boolean        @default(false)
   isTemplate  Boolean        @default(false)
-  
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   questions   Question[]
   assignments AssessmentAssignment[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("assessment_models")
 }
@@ -179,20 +183,20 @@ enum AssessmentType {
 }
 
 model Question {
-  id                String   @id @default(uuid())
+  id                String          @id @default(uuid())
   text              String
   assessmentModelId String
   assessmentModel   AssessmentModel @relation(fields: [assessmentModelId], references: [id])
-  
-  traitKey          String?  // e.g., 'OPENNESS', 'EXTRAVERSION'
-  weight            Float    @default(1.0)
-  
-  isReverse         Boolean  @default(false)
-  isActive          Boolean  @default(true)
-  facetKey          String?
 
-  createdAt         DateTime @default(now())
-  responses         AssessmentResponse[]
+  traitKey String? // e.g., 'OPENNESS', 'EXTRAVERSION'
+  weight   Float   @default(1.0)
+
+  isReverse Boolean @default(false)
+  isActive  Boolean @default(true)
+  facetKey  String?
+
+  createdAt DateTime             @default(now())
+  responses AssessmentResponse[]
 
   @@map("questions")
 }
@@ -208,39 +212,39 @@ model Invitation {
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   token     String   @unique
   expiresAt DateTime
-  
+
   createdAt DateTime @default(now())
-  
+
   @@map("invitations")
 }
 
 // Atribuição de avaliação para usuário
 model AssessmentAssignment {
-  id           String   @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   assessmentId String
   userId       String
-  configId     String?  // ID da configuração BigFive usada (se aplicável)
-  status       String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
-  assignedAt   DateTime @default(now())
+  configId     String? // ID da configuração BigFive usada (se aplicável)
+  status       String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  assignedAt   DateTime  @default(now())
   completedAt  DateTime?
-  timeSpent    Int      @default(0) // Tempo em segundos
-  
-  feedback     String?  @db.Text
-  feedbackAt   DateTime?
+  timeSpent    Int       @default(0) // Tempo em segundos
 
-  assessment AssessmentModel @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  config     BigFiveConfig?  @relation(fields: [configId], references: [id], onDelete: SetNull)
-  responses  AssessmentResponse[]
-  result     AssessmentResult?
+  feedback   String?   @db.Text
+  feedbackAt DateTime?
+
+  assessment           AssessmentModel        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  config               BigFiveConfig?         @relation(fields: [configId], references: [id], onDelete: SetNull)
+  responses            AssessmentResponse[]
+  result               AssessmentResult?
   professionalFeedback ProfessionalFeedback[]
 
   viewedByAdmin Boolean @default(false) @map("viewed_by_admin")
 
-  @@map("assessment_assignments")
   @@index([assessmentId])
   @@index([userId])
+  @@map("assessment_assignments")
 }
 
 // Respostas individuais do usuário
@@ -248,25 +252,28 @@ model AssessmentResponse {
   id           String   @id @default(uuid())
   assignmentId String
   questionId   String
-  answer       Int      // 1-5 (Likert scale)
+  answer       Int // 1-5 (Likert scale)
   createdAt    DateTime @default(now())
 
   assignment AssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   question   Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@map("assessment_responses")
   @@index([assignmentId])
   @@index([questionId])
+  @@map("assessment_responses")
 }
 
 // Resultado calculado da avaliação
 model AssessmentResult {
   id           String   @id @default(uuid())
   assignmentId String   @unique
-  scores       Json     // { "OPENNESS": 4.2, "CONSCIENTIOUSNESS": 3.8, ... }
+  scores       Json // { "OPENNESS": 4.2, "CONSCIENTIOUSNESS": 3.8, ... }
   createdAt    DateTime @default(now())
 
   assignment AssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  // Camada Interpretativa Avançada
+  detectedNeeds ResultNeed[]
 
   @@map("assessment_results")
 }
@@ -277,23 +284,22 @@ enum AssignmentStatus {
 }
 
 model CreditSolicitation {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  status    SolicitationStatus @default(PENDING)
-  
-  planName  String?  @map("plan_name")
-  credits   Int?     @default(0)
+  id     String             @id @default(uuid())
+  userId String
+  user   User               @relation(fields: [userId], references: [id])
+  status SolicitationStatus @default(PENDING)
 
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  planName String? @map("plan_name")
+  credits  Int?    @default(0)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("credit_solicitations")
 }
-
 
 enum SolicitationStatus {
   PENDING
@@ -306,52 +312,52 @@ enum SolicitationStatus {
 // =======================
 
 model JobProfile {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenant      Tenant  @relation(fields: [tenantId], references: [id])
   name        String
   description String?
-  
+
   // JSON: { "OPENNESS": 4.5, "EXTRAVERSION": 4.0 }
   idealScores Json
-  
-  // Margem de tolerância padrão (ex: 0.5)
-  tolerance   Float    @default(0.5)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Margem de tolerância padrão (ex: 0.5)
+  tolerance Float @default(0.5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("job_profiles")
 }
 
 model InterpretationRule {
-  id          String   @id @default(uuid())
-  
-  // Qual traço está sendo analisado (ex: "OPENNESS")
-  traitKey    String
-  
-  // Intervalo de pontuação (ex: 0.0 a 2.5)
-  minScore    Float
-  maxScore    Float
-  
-  // Texto gerado
-  text        String   @db.Text
-  
-  // Categoria da interpretação
-  category    RuleCategory @default(GENERAL)
+  id String @id @default(uuid())
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Qual traço está sendo analisado (ex: "OPENNESS")
+  traitKey String
+
+  // Intervalo de pontuação (ex: 0.0 a 2.5)
+  minScore Float
+  maxScore Float
+
+  // Texto gerado
+  text String @db.Text
+
+  // Categoria da interpretação
+  category RuleCategory @default(GENERAL)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("interpretation_rules")
 }
 
 enum RuleCategory {
-    GENERAL
-    STRENGTH
-    RISK
-    LEADERSHIP_STYLE
-    COMMUNICATION_STYLE
+  GENERAL
+  STRENGTH
+  RISK
+  LEADERSHIP_STYLE
+  COMMUNICATION_STYLE
 }
 
 // =======================
@@ -359,19 +365,19 @@ enum RuleCategory {
 // =======================
 
 model Connection {
-  id        String           @id @default(uuid())
-  userAId   String
-  userBId   String
-  status    ConnectionStatus @default(ACTIVE)
+  id      String           @id @default(uuid())
+  userAId String
+  userBId String
+  status  ConnectionStatus @default(ACTIVE)
 
   // Admin management fields
-  cancelledBy         String?   @map("cancelled_by")
-  cancelledAt         DateTime? @map("cancelled_at")
-  cancellationReason  String?   @map("cancellation_reason")
-  adminNotes          String?   @db.Text @map("admin_notes")
+  cancelledBy        String?   @map("cancelled_by")
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancellationReason String?   @map("cancellation_reason")
+  adminNotes         String?   @map("admin_notes") @db.Text
 
-  userA User @relation("UserA", fields: [userAId], references: [id])
-  userB User @relation("UserB", fields: [userBId], references: [id])
+  userA           User  @relation("UserA", fields: [userAId], references: [id])
+  userB           User  @relation("UserB", fields: [userBId], references: [id])
   cancelledByUser User? @relation("CancelledBy", fields: [cancelledBy], references: [id])
 
   messages        ConnectionMessage[]
@@ -387,33 +393,33 @@ model Connection {
 }
 
 model CrossProfileReport {
-  id            String   @id @default(uuid())
-  connectionId  String   // Vínculo com a conexão existente
-  authorId      String   // Quem solicitou/pagou (User A)
-  targetId      String   // Quem está sendo comparado (User B)
-  
-  // Armazenamos o snapshot dos dados calculados para não recalcular sempre
-  scoreGap      Json     // Diferenças numéricas por traço { "OPENNESS": {"gap": 15, "level": "MODERATE"}, ... }
-  matchLevel    String   // HIGH_SIMILARITY, MODERATE, COMPLEMENTARY, HIGH_DISSONANCE (Geral)
-  
-  createdAt     DateTime @default(now())
-  
-  connection    Connection @relation(fields: [connectionId], references: [id])
-  author        User       @relation("ReportAuthor", fields: [authorId], references: [id])
-  target        User       @relation("ReportTarget", fields: [targetId], references: [id])
+  id           String @id @default(uuid())
+  connectionId String // Vínculo com a conexão existente
+  authorId     String // Quem solicitou/pagou (User A)
+  targetId     String // Quem está sendo comparado (User B)
 
-  @@map("cross_profile_reports")
+  // Armazenamos o snapshot dos dados calculados para não recalcular sempre
+  scoreGap   Json // Diferenças numéricas por traço { "OPENNESS": {"gap": 15, "level": "MODERATE"}, ... }
+  matchLevel String // HIGH_SIMILARITY, MODERATE, COMPLEMENTARY, HIGH_DISSONANCE (Geral)
+
+  createdAt DateTime @default(now())
+
+  connection Connection @relation(fields: [connectionId], references: [id])
+  author     User       @relation("ReportAuthor", fields: [authorId], references: [id])
+  target     User       @relation("ReportTarget", fields: [targetId], references: [id])
+
   @@index([connectionId])
+  @@map("cross_profile_reports")
 }
 
 model ConnectionRequest {
-  id         String        @id @default(uuid())
-  senderId   String
-  receiverId String
-  status     RequestStatus @default(PENDING)
-  message    String?       @db.Text
-  requiresAdminApproval Boolean @default(false)
-  approvedByAdminId String?
+  id                    String        @id @default(uuid())
+  senderId              String
+  receiverId            String
+  status                RequestStatus @default(PENDING)
+  message               String?       @db.Text
+  requiresAdminApproval Boolean       @default(false)
+  approvedByAdminId     String?
 
   sender   User @relation("Sender", fields: [senderId], references: [id])
   receiver User @relation("Receiver", fields: [receiverId], references: [id])
@@ -508,9 +514,9 @@ enum MessageType {
 // =======================
 
 model SiteSettings {
-  id        String   @id @default(uuid())
-  tenantId  String?  @map("tenant_id")
-  
+  id       String  @id @default(uuid())
+  tenantId String? @map("tenant_id")
+
   // Hero Section
   heroTitle       String  @default("Descubra os Talentos Ocultos") @map("hero_title") @db.VarChar(200)
   heroSubtitle    String  @default("na Sua Equipe") @map("hero_subtitle") @db.VarChar(200)
@@ -518,52 +524,52 @@ model SiteSettings {
   heroBadge       String? @default("NOVA VERSÃO 2.0") @map("hero_badge") @db.VarChar(100)
   heroBgColor     String  @default("#8F088F") @map("hero_bg_color") @db.VarChar(20)
   heroTextColor   String  @default("#FFFFFF") @map("hero_text_color") @db.VarChar(20)
-  
+
   // CTA Buttons
-  primaryButtonText String  @default("Ver Demonstração") @map("primary_button_text") @db.VarChar(100)
-  primaryButtonLink String  @default("/demo") @map("primary_button_link") @db.VarChar(200)
+  primaryButtonText   String  @default("Ver Demonstração") @map("primary_button_text") @db.VarChar(100)
+  primaryButtonLink   String  @default("/demo") @map("primary_button_link") @db.VarChar(200)
   secondaryButtonText String? @default("Conhecer Recursos") @map("secondary_button_text") @db.VarChar(100)
   secondaryButtonLink String? @default("/features") @map("secondary_button_link") @db.VarChar(200)
-  
+
   // Theme
   primaryColor   String @default("#8F088F") @map("primary_color") @db.VarChar(20)
   secondaryColor String @default("#F7F7F7") @map("secondary_color") @db.VarChar(20)
   accentColor    String @default("#FFC107") @map("accent_color") @db.VarChar(20)
-  
+
   // Features (JSON Array)
   features Json @default("[]")
-  
+
   // Pricing Plans (JSON Array)
   pricingPlans Json @default("[]") @map("pricing_plans")
-  
+
   // Visibility Flags
   showFeatures Boolean @default(true) @map("show_features")
   showPricing  Boolean @default(true) @map("show_pricing")
   showAbout    Boolean @default(true) @map("show_about")
 
   // About Section
-  aboutTitle     String?  @default("Sobre Nossa Empresa") @map("about_title") @db.VarChar(200)
-  aboutContent   String?  @map("about_content") @db.Text
-  
+  aboutTitle   String? @default("Sobre Nossa Empresa") @map("about_title") @db.VarChar(200)
+  aboutContent String? @map("about_content") @db.Text
+
   // Business Page (B2B)
   businessHeroTitle       String  @default("Impulsione o seu Capital Humano") @map("business_hero_title") @db.VarChar(200)
   businessHeroSubtitle    String  @default("com Inteligência Comportamental") @map("business_hero_subtitle") @db.VarChar(200)
   businessHeroDescription String? @map("business_hero_description") @db.Text
   businessHeroBadge       String? @default("Solução Corporativa") @map("business_hero_badge") @db.VarChar(100)
   businessLogo            String? @map("business_logo") @db.LongText
-  
+
   // Business Page Styling
-  businessHeroBgColor     String  @default("#F0F9FF") @map("business_hero_bg_color") @db.VarChar(20)
-  businessHeroTextColor   String  @default("#111827") @map("business_hero_text_color") @db.VarChar(20)
+  businessHeroBgColor   String @default("#F0F9FF") @map("business_hero_bg_color") @db.VarChar(20)
+  businessHeroTextColor String @default("#111827") @map("business_hero_text_color") @db.VarChar(20)
 
   // Business Page Content
-  businessFeatures        Json    @default("[]") @map("business_features")
-  
+  businessFeatures Json @default("[]") @map("business_features")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
+
   tenant Tenant? @relation(fields: [tenantId], references: [id])
-  
+
   @@map("site_settings")
 }
 
@@ -572,18 +578,18 @@ model SiteSettings {
 // =======================
 
 model BigFiveConfig {
-  id        String   @id @default(uuid())
-  tenantId  String
-  isActive  Boolean  @default(true)
-  name      String   @default("Configuração Padrão")
-  
+  id       String  @id @default(uuid())
+  tenantId String
+  isActive Boolean @default(true)
+  name     String  @default("Configuração Padrão")
+
   // Interpretação de Scores (faixas)
-  veryLowMax     Int  @default(20)   // 0-20 = Muito Baixo
-  lowMax         Int  @default(40)   // 21-40 = Baixo
-  averageMax     Int  @default(60)   // 41-60 = Médio
-  highMax        Int  @default(80)   // 61-80 = Alto
+  veryLowMax Int @default(20) // 0-20 = Muito Baixo
+  lowMax     Int @default(40) // 21-40 = Baixo
+  averageMax Int @default(60) // 41-60 = Médio
+  highMax    Int @default(80) // 61-80 = Alto
   // 81-100 = Muito Alto
-  
+
   // Labels das Faixas (Customizáveis)
   veryLowLabel  String @default("Muito Baixo")
   lowLabel      String @default("Baixo")
@@ -592,64 +598,64 @@ model BigFiveConfig {
   veryHighLabel String @default("Muito Alto")
 
   // Branding do Relatório
-  companyLogo     String?  @db.Text
-  reportHeader    String?  @db.Text
-  reportFooter    String?  @db.Text
-  primaryColor    String   @default("#d11c9e")
-  
+  companyLogo  String? @db.Text
+  reportHeader String? @db.Text
+  reportFooter String? @db.Text
+  primaryColor String  @default("#d11c9e")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  traits      BigFiveTraitConfig[]
+
+  tenant              Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  traits              BigFiveTraitConfig[]
   interpretativeTexts BigFiveInterpretativeText[]
-  assignments AssessmentAssignment[]
-  
+  assignments         AssessmentAssignment[]
+
   @@map("bigfive_configs")
 }
 
 model BigFiveTraitConfig {
   id       String @id @default(uuid())
   configId String
-  
-  traitKey   String
-  name       String
-  icon       String
-  weight     Float   @default(1.0)
-  isActive   Boolean @default(true)
-  
+
+  traitKey String
+  name     String
+  icon     String
+  weight   Float   @default(1.0)
+  isActive Boolean @default(true)
+
   description  String @db.Text
   veryLowText  String @db.Text
   lowText      String @db.Text
   averageText  String @db.Text
   highText     String @db.Text
   veryHighText String @db.Text
-  
-  config BigFiveConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  config BigFiveConfig        @relation(fields: [configId], references: [id], onDelete: Cascade)
   facets BigFiveFacetConfig[]
-  
+
   @@map("bigfive_trait_configs")
 }
 
 model BigFiveFacetConfig {
-  id       String @id @default(uuid())
-  traitId  String
-  
+  id      String @id @default(uuid())
+  traitId String
+
   facetKey    String
   name        String
   weight      Float   @default(1.0)
   isActive    Boolean @default(true)
   description String  @db.Text
-  
+
   // Textos interpretativos da faceta (Opcionais, mas solicitados)
   veryLowText  String? @db.Text
   lowText      String? @db.Text
   averageText  String? @db.Text
   highText     String? @db.Text
   veryHighText String? @db.Text
-  
+
   trait BigFiveTraitConfig @relation(fields: [traitId], references: [id], onDelete: Cascade)
-  
+
   @@map("bigfive_facet_configs")
 }
 
@@ -657,47 +663,47 @@ model BigFiveRecommendation {
   id       String @id @default(uuid())
   configId String
   traitKey String
-  
+
   scoreRange  String
   title       String
   description String @db.Text
   icon        String
-  order       Int     @default(0)
-  
+  order       Int    @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("bigfive_recommendations")
 }
 
 model Coupon {
-  id             String    @id @default(uuid())
-  code           String    @unique
+  id              String    @id @default(uuid())
+  code            String    @unique
   discountPercent Int       @map("discount_percent")
-  isActive       Boolean   @default(true) @map("is_active")
-  usageLimit     Int?      @map("usage_limit")
-  usageCount     Int       @default(0) @map("usage_count")
-  expiresAt      DateTime? @map("expires_at")
-  allowedPlans   Json      @default("[]") @map("allowed_plans")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  isActive        Boolean   @default(true) @map("is_active")
+  usageLimit      Int?      @map("usage_limit")
+  usageCount      Int       @default(0) @map("usage_count")
+  expiresAt       DateTime? @map("expires_at")
+  allowedPlans    Json      @default("[]") @map("allowed_plans")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("coupons")
 }
 
 model ProfessionalFeedback {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  user            User      @relation(fields: [userId], references: [id])
-  assignmentId    String    @map("assignment_id")
-  assignment      AssessmentAssignment @relation(fields: [assignmentId], references: [id])
-  status          FeedbackStatus @default(PENDING)
-  phone           String?
-  scheduledAt     DateTime? @map("scheduled_at")
-  completedAt     DateTime? @map("completed_at")
-  notes           String?   @db.Text
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id           String               @id @default(uuid())
+  userId       String               @map("user_id")
+  user         User                 @relation(fields: [userId], references: [id])
+  assignmentId String               @map("assignment_id")
+  assignment   AssessmentAssignment @relation(fields: [assignmentId], references: [id])
+  status       FeedbackStatus       @default(PENDING)
+  phone        String?
+  scheduledAt  DateTime?            @map("scheduled_at")
+  completedAt  DateTime?            @map("completed_at")
+  notes        String?              @db.Text
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
 
   @@map("professional_feedbacks")
 }
@@ -710,21 +716,129 @@ enum FeedbackStatus {
 }
 
 model BigFiveInterpretativeText {
-  id        String   @id @default(uuid())
-  configId  String
-  
-  traitKey    String
-  scoreRange  String
-  category    String   // SUMMARY, PRACTICAL_IMPACT, EXPERT_SYNTHESIS, EXPERT_HYPOTHESIS
-  context     String?  // Opcional: COMMUNICATION, DECISION_MAKING, etc.
-  
-  text        String   @db.Text
+  id       String @id @default(uuid())
+  configId String
+
+  traitKey   String
+  scoreRange String
+  category   String // SUMMARY, PRACTICAL_IMPACT, EXPERT_SYNTHESIS, EXPERT_HYPOTHESIS
+  context    String? // Opcional: COMMUNICATION, DECISION_MAKING, etc.
+
+  text String @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   config BigFiveConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
-  
-  @@map("bigfive_interpretative_texts")
+
   @@index([configId, traitKey, category])
+  @@map("bigfive_interpretative_texts")
+}
+
+// ============================================
+// CAMADA INTERPRETATIVA AVANÇADA (TalkingTo-Like)
+// Adicionado em: 09/01/2026
+// ============================================
+
+// 1. PADRÕES INTERPRETATIVOS
+model InterpretationPattern {
+  id       String  @id @default(uuid())
+  tenantId String? @map("tenant_id")
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code        String  @unique
+  name        String
+  description String  @db.Text
+  conditions  Json
+  priority    Int     @default(0)
+  active      Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  patternNeeds PatternNeed[]
+
+  @@index([tenantId, active])
+  @@map("interpretation_patterns")
+}
+
+// 2. NECESSIDADES PSICOLÓGICAS
+model PsychologicalNeed {
+  id       String  @id @default(uuid())
+  tenantId String? @map("tenant_id")
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code                    String  @unique
+  name                    String
+  clientTitle             String  @map("client_title")
+  clientDescription       String  @map("client_description") @db.Text
+  clientImpact            String  @map("client_impact") @db.Text
+  specialistTitle         String  @map("specialist_title")
+  specialistDescription   String  @map("specialist_description") @db.Text
+  specialistAnalysis      String  @map("specialist_analysis") @db.Text
+  favorableEnvironments   String  @map("favorable_environments") @db.Text
+  unfavorableEnvironments String  @map("unfavorable_environments") @db.Text
+  recommendations         String  @db.Text
+  active                  Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  patternNeeds PatternNeed[]
+  resultNeeds  ResultNeed[]
+
+  @@index([tenantId, active])
+  @@map("psychological_needs")
+}
+
+// 3. RELAÇÃO Padrão → Necessidade
+model PatternNeed {
+  id        String                @id @default(uuid())
+  patternId String                @map("pattern_id")
+  pattern   InterpretationPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+  needId    String                @map("need_id")
+  need      PsychologicalNeed     @relation(fields: [needId], references: [id], onDelete: Cascade)
+  intensity Int                   @default(100)
+  createdAt DateTime              @default(now()) @map("created_at")
+
+  @@unique([patternId, needId])
+  @@map("pattern_needs")
+}
+
+// 4. NECESSIDADES em Resultado
+model ResultNeed {
+  id            String            @id @default(uuid())
+  resultId      String            @map("result_id")
+  result        AssessmentResult  @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  needId        String            @map("need_id")
+  need          PsychologicalNeed @relation(fields: [needId], references: [id])
+  intensity     Int
+  sourcePattern String            @map("source_pattern")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  @@unique([resultId, needId])
+  @@map("result_needs")
+}
+
+// 5. SEÇÕES INTERPRETATIVAS
+model InterpretationSection {
+  id           String       @id @default(uuid())
+  tenantId     String?      @map("tenant_id")
+  tenant       Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code         String
+  title        String
+  template     String       @db.Text
+  audience     AudienceType
+  displayOrder Int          @default(0) @map("display_order")
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@unique([code, audience, tenantId])
+  @@map("interpretation_sections")
+}
+
+enum AudienceType {
+  CLIENT
+  SPECIALIST
 }
