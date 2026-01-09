@@ -33,6 +33,7 @@ interface BigFiveResultProps {
         completionPercentage: number;
         traits: TraitScore[];
         recommendations: string[];
+        interpretationSections?: { code: string; title: string; content: string; order: number }[];
         timestamp: Date;
     };
 }
@@ -360,28 +361,64 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
                 })}
             </div>
 
-            {/* Recommendations */}
-            {result.recommendations && result.recommendations.length > 0 && (
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                            <TrendingUp className="text-white" size={20} />
-                        </div>
-                        <h2 className="text-xl font-bold text-gray-800">Recomendações de Desenvolvimento</h2>
-                    </div>
-                    <p className="text-gray-600 mb-6">Baseado no seu perfil, sugerimos as seguintes ações:</p>
-                    <div className="space-y-3">
-                        {result.recommendations.map((rec, index) => (
-                            <div key={index} className="flex items-start gap-3 bg-white rounded-lg p-4 border border-blue-200">
-                                <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                                    {index + 1}
-                                </div>
-                                <p className="text-gray-700">{rec}</p>
+
+            {/* Advanced Interpretation Sections */}
+            {
+                result.interpretationSections && result.interpretationSections.length > 0 && (
+                    <div className="space-y-6 mt-8">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                                <Sparkles className="text-white" size={20} />
                             </div>
-                        ))}
+                            <h2 className="text-2xl font-bold text-gray-900">Análise Avançada de Padrões</h2>
+                        </div>
+
+                        <div className="grid gap-8">
+                            {result.interpretationSections?.map((section: any, idx: number) => (
+                                <div key={idx} className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden transition-all hover:shadow-xl">
+                                    <div className="bg-gradient-to-r from-gray-50 to-white px-8 py-5 border-b border-gray-100 flex items-center gap-3">
+                                        <div className="h-6 w-1 bg-purple-500 rounded-full"></div>
+                                        <h3 className="text-xl font-bold text-gray-800">
+                                            {section.title}
+                                        </h3>
+                                    </div>
+                                    <div className="p-8">
+                                        <div
+                                            className="prose prose-lg prose-indigo max-w-none text-gray-600 leading-relaxed"
+                                            dangerouslySetInnerHTML={{ __html: section.content }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Recommendations */}
+            {
+                result.recommendations && result.recommendations.length > 0 && (
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <TrendingUp className="text-white" size={20} />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-800">Recomendações de Desenvolvimento</h2>
+                        </div>
+                        <p className="text-gray-600 mb-6">Baseado no seu perfil, sugerimos as seguintes ações:</p>
+                        <div className="space-y-3">
+                            {result.recommendations.map((rec, index) => (
+                                <div key={index} className="flex items-start gap-3 bg-white rounded-lg p-4 border border-blue-200">
+                                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                                        {index + 1}
+                                    </div>
+                                    <p className="text-gray-700">{rec}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Disclaimer */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-sm text-gray-600">

@@ -373,4 +373,84 @@ export class InterpretationEngineService {
 
         return text;
     }
+
+    /**
+     * Gera seções interpretativas a partir de scores brutos (para PDF/Preview)
+     * Sem salvar no banco de dados.
+     */
+    async generateAdvancedSections(scoresInput: any): Promise<GeneratedSection[]> {
+        // Converter scores se necessário
+        let scores: BigFiveScores;
+        if (scoresInput.E !== undefined) {
+            scores = scoresInput; // Já está no formato certo
+        } else {
+            scores = this.extractBigFiveScores(scoresInput); // Converter
+        }
+
+        // 1. Buscar padrões ativos (Globais ou de todos tenants por enquanto)
+        const patterns = await this.prisma.interpretationPattern.findMany({
+            where: { active: true },
+            include: {
+                patternNeeds: {
+                    include: { need: true }
+                }
+            },
+            orderBy: { priority: 'desc' }
+        });
+
+        // 2. Detectar
+        const detectedPatterns = this.detectPatterns(scores, patterns);
+
+        // 3. Extrair necessidades
+        const needs = this.extractNeeds(detectedPatterns);
+
+        // 4. Buscar templates de seções
+        const sections = await this.prisma.interpretationSection.findMany({
+            where: {
+                active: true,
+                audience: 'CLIENT' // Default para PDF/Web
+            },
+            orderBy: { displayOrder: 'asc' }
+        });
+
+        // 5. Gerar conteúdo
+        const generated: GeneratedSection[] = [];
+        for (const section of sections) {
+            const content = this.fillTemplate(section.template, {
+                scores,
+                patterns: detectedPatterns,
+                needs
+            });
+
+            generated.push({
+                code: section.code,
+                title: section.title,
+                content,
+                order: section.displayOrder
+            });
+        }
+
+        // Se após tudo isso, não tivermos seções mas tivermos padrões detectados,
+        // vamos gerar uma seção genérica de "Padrões Detectados" para não ficar vazio.
+        if (generated.length === 0 && detectedPatterns.length > 0) {
+            generated.push({
+                code: 'AUTO_PATTERNS',
+                title: 'Padrões Comportamentais Detectados',
+                content: '<ul>' + detectedPatterns.map(p => `<li><strong>${p.name}</strong>: ${p.description}</li>`).join('') + '</ul>',
+                order: 999
+            });
+        }
+
+        // Se tiver necessidades, adicionar
+        if (generated.length === 0 && needs.length > 0) {
+            generated.push({
+                code: 'AUTO_NEEDS',
+                title: 'Necessidades Psicológicas',
+                content: '<ul>' + needs.map(n => `<li><strong>${n.name}</strong> (${n.intensity}%): ${n.clientDescription}</li>`).join('') + '</ul>',
+                order: 1000
+            });
+        }
+
+        return generated;
+    }
 }

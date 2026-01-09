@@ -6,6 +6,7 @@ import { AssessmentTemplateService } from './assessment-template.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
 import { InterpretationService } from '../reports/interpretation.service';
+import { InterpretationEngineService } from '../interpretation/interpretation-engine.service';
 
 @Controller('assessments')
 @UseGuards(AuthGuard('jwt'))
@@ -16,7 +17,8 @@ export class AssessmentController {
         private templateService: AssessmentTemplateService,
         private prisma: PrismaService,
         private scoreCalculation: ScoreCalculationService,
-        private interpretation: InterpretationService
+        private interpretation: InterpretationService,
+        private interpretationEngine: InterpretationEngineService
     ) { }
 
     @Get('my-assignments-list')
@@ -247,9 +249,24 @@ export class AssessmentController {
                 console.error('[calculateRealScores] ⚠️ ERRO NO PASSO 2 (interpretação) - continuando:', interpretError);
             }
 
+            // PASSO 2.5: Interpretação Avançada
+            console.log('[calculateRealScores] PASSO 2.5: Gerando interpretação avançada...');
+            let advancedSections: any[] = [];
+            if (process.env.ENABLE_ADVANCED_INTERPRETATION === 'true') {
+                try {
+                    advancedSections = await this.interpretationEngine.generateAdvancedSections(scores);
+                    console.log(`[calculateRealScores] ✅ Geradas ${advancedSections.length} seções avançadas`);
+                } catch (e) {
+                    console.error('[calculateRealScores] ⚠️ Erro na interpretação avançada:', e);
+                }
+            } else {
+                console.log('[calculateRealScores] ⏭️ Interpretação Avançada desativada (Feature Flag)');
+            }
+
             // PASSO 3: Montar resultado final
             console.log('[calculateRealScores] PASSO 3: Montando resultado...');
             const result = {
+                interpretationSections: advancedSections,
                 scores: Object.values(scores).map((score: any) => {
                     const enriched = reportTraits.find((t: any) => t.key === score.traitKey);
                     return {
@@ -272,7 +289,8 @@ export class AssessmentController {
                 _textError: textError,
                 _steps: {
                     scoreCalculation: 'SUCCESS',
-                    interpretation: textError ? 'FAILED' : 'SUCCESS'
+                    interpretation: textError ? 'FAILED' : 'SUCCESS',
+                    advancedInterpretation: advancedSections.length > 0 ? 'SUCCESS' : 'SKIPPED'
                 }
             };
 
