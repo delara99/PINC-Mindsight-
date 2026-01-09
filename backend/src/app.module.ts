@@ -17,6 +17,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { MigrationModule } from './migration/migration.module';
 import { FixModule } from './fix/fix.module';
 import { PaymentModule } from './payment/payment.module';
+import { InterpretationModule } from './interpretation/interpretation.module';
 
 @Module({
     imports: [
@@ -35,7 +36,8 @@ import { PaymentModule } from './payment/payment.module';
         NotificationsModule,
         MigrationModule,
         FixModule,
-        PaymentModule
+        PaymentModule,
+        InterpretationModule
     ],
     controllers: [],
     providers: [],

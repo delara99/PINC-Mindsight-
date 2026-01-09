@@ -1,0 +1,228 @@
+import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { InterpretationEngineService } from './interpretation-engine.service';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+    CreatePatternDto,
+    CreateNeedDto,
+    LinkPatternNeedDto,
+    CreateSectionDto
+} from './interpretation.dto';
+
+@Controller('interpretation')
+@UseGuards(AuthGuard('jwt'))
+export class InterpretationController {
+    constructor(
+        private interpretationEngine: InterpretationEngineService,
+        private prisma: PrismaService
+    ) { }
+
+    /**
+     * Analisa um resultado e retorna interpretação avançada
+     * Endpoint de teste - depois será integrado ao fluxo de relatórios
+     */
+    @Get('analyze/:resultId')
+    async analyzeResult(@Param('resultId') resultId: string) {
+        try {
+            const analysis = await this.interpretationEngine.analyzeResult(resultId);
+            return {
+                success: true,
+                data: analysis
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.message
+            };
+        }
+    }
+
+    /**
+     * Lista todos os padrões (Admin)
+     */
+    @Get('patterns')
+    async listPatterns(@Request() req) {
+        const patterns = await this.prisma.interpretationPattern.findMany({
+            where: {
+                OR: [
+                    { tenantId: req.user.tenantId },
+                    { tenantId: null }
+                ]
+            },
+            include: {
+                patternNeeds: {
+                    include: {
+                        need: true
+                    }
+                }
+            },
+            orderBy: { priority: 'desc' }
+        });
+
+        return {
+            success: true,
+            data: patterns
+        };
+    }
+
+    /**
+     * Cria novo padrão (SUPER_ADMIN)
+     */
+    @Post('patterns')
+    async createPattern(@Body() dto: CreatePatternDto, @Request() req) {
+        if (req.user.role !== 'SUPER_ADMIN') {
+            return {
+                success: false,
+                message: 'Apenas SUPER_ADMIN pode criar padrões'
+            };
+        }
+
+        const pattern = await this.prisma.interpretationPattern.create({
+            data: {
+                code: dto.code,
+                name: dto.name,
+                description: dto.description,
+                conditions: dto.conditions as any,
+                priority: dto.priority || 0,
+                tenantId: dto.tenantId || null
+            }
+        });
+
+        return {
+            success: true,
+            data: pattern
+        };
+    }
+
+    /**
+     * Lista todas as necessidades (Admin)
+     */
+    @Get('needs')
+    async listNeeds(@Request() req) {
+        const needs = await this.prisma.psychologicalNeed.findMany({
+            where: {
+                OR: [
+                    { tenantId: req.user.tenantId },
+                    { tenantId: null }
+                ]
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        return {
+            success: true,
+            data: needs
+        };
+    }
+
+    /**
+     * Cria nova necessidade (SUPER_ADMIN)
+     */
+    @Post('needs')
+    async createNeed(@Body() dto: CreateNeedDto, @Request() req) {
+        if (req.user.role !== 'SUPER_ADMIN') {
+            return {
+                success: false,
+                message: 'Apenas SUPER_ADMIN pode criar necessidades'
+            };
+        }
+
+        const need = await this.prisma.psychologicalNeed.create({
+            data: {
+                code: dto.code,
+                name: dto.name,
+                clientTitle: dto.clientTitle,
+                clientDescription: dto.clientDescription,
+                clientImpact: dto.clientImpact,
+                specialistTitle: dto.specialistTitle,
+                specialistDescription: dto.specialistDescription,
+                specialistAnalysis: dto.specialistAnalysis,
+                favorableEnvironments: JSON.stringify(dto.favorableEnvironments),
+                unfavorableEnvironments: JSON.stringify(dto.unfavorableEnvironments),
+                recommendations: JSON.stringify(dto.recommendations),
+                tenantId: dto.tenantId || null
+            }
+        });
+
+        return {
+            success: true,
+            data: need
+        };
+    }
+
+    /**
+     * Vincula padrão a necessidade (SUPER_ADMIN)
+     */
+    @Post('pattern-needs')
+    async linkPatternNeed(@Body() dto: LinkPatternNeedDto, @Request() req) {
+        if (req.user.role !== 'SUPER_ADMIN') {
+            return {
+                success: false,
+                message: 'Apenas SUPER_ADMIN pode vincular padrões'
+            };
+        }
+
+        const link = await this.prisma.patternNeed.create({
+            data: {
+                patternId: dto.patternId,
+                needId: dto.needId,
+                intensity: dto.intensity
+            }
+        });
+
+        return {
+            success: true,
+            data: link
+        };
+    }
+
+    /**
+     * Lista seções interpretativas (Admin)
+     */
+    @Get('sections')
+    async listSections(@Request() req) {
+        const sections = await this.prisma.interpretationSection.findMany({
+            where: {
+                OR: [
+                    { tenantId: req.user.tenantId },
+                    { tenantId: null }
+                ]
+            },
+            orderBy: { displayOrder: 'asc' }
+        });
+
+        return {
+            success: true,
+            data: sections
+        };
+    }
+
+    /**
+     * Cria nova seção (SUPER_ADMIN)
+     */
+    @Post('sections')
+    async createSection(@Body() dto: CreateSectionDto, @Request() req) {
+        if (req.user.role !== 'SUPER_ADMIN') {
+            return {
+                success: false,
+                message: 'Apenas SUPER_ADMIN pode criar seções'
+            };
+        }
+
+        const section = await this.prisma.interpretationSection.create({
+            data: {
+                code: dto.code,
+                title: dto.title,
+                template: dto.template,
+                audience: dto.audience,
+                displayOrder: dto.displayOrder || 0,
+                tenantId: dto.tenantId || null
+            }
+        });
+
+        return {
+            success: true,
+            data: section
+        };
+    }
+}
