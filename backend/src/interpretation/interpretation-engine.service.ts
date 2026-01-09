@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
     InterpretationAnalysis,
@@ -10,8 +10,45 @@ import {
 } from './interpretation.dto';
 
 @Injectable()
-export class InterpretationEngineService {
+export class InterpretationEngineService implements OnModuleInit {
     constructor(private prisma: PrismaService) { }
+
+    async onModuleInit() {
+        try {
+            // Auto-seed: Se não houver seções, cria as padrões para facilitar a vida do admin
+            const count = await this.prisma.interpretationSection.count();
+            if (count === 0) {
+                console.log('🚀 Auto-seeding essential Interpretation Sections...');
+                const tenant = await this.prisma.adminTenant.findFirst();
+                if (!tenant) return;
+
+                const defaults = [
+                    { code: 'SEC_LOGIC', title: 'Dimensão Lógica vs Sentimento', template: '{{CATEGORY_LOGIC}}', displayOrder: 10 },
+                    { code: 'SEC_ADAPT', title: 'Dimensão Adaptação vs Estrutura', template: '{{CATEGORY_ADAPT}}', displayOrder: 11 },
+                    { code: 'SEC_CONCR', title: 'Dimensão Concreto vs Abstrato', template: '{{CATEGORY_CONCR}}', displayOrder: 12 },
+                    { code: 'SEC_EMOT', title: 'Dimensão Emoção vs Razão', template: '{{CATEGORY_EMOT}}', displayOrder: 13 },
+                    { code: 'SEC_REC', title: 'Recomendações e Plano de Ação', template: '### Plano de Ação Personalizado\n\n{{CATEGORY_REC}}', displayOrder: 20 },
+                ];
+
+                for (const d of defaults) {
+                    await this.prisma.interpretationSection.create({
+                        data: {
+                            code: d.code,
+                            title: d.title,
+                            template: d.template,
+                            displayOrder: d.displayOrder,
+                            audience: 'CLIENT', // Prisma converte string para Enum automaticamente se coincidir
+                            active: true,
+                            tenantId: tenant.id
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            // Ignora erro de seed silenciosamente para não travar boot
+            console.warn('Auto-seed warning:', e instanceof Error ? e.message : e);
+        }
+    }
 
     /**
      * Analisa resultado Big Five e aplica camada interpretativa
@@ -500,6 +537,20 @@ export class InterpretationEngineService {
             return data.needs
                 .map((n, i) => `${i + 1}. ${this.fixEncoding(n.name)} (${n.intensity}%)`)
                 .join('\n');
+        });
+
+        // Substituir Categoria Vencedora: {{CATEGORY_LOGIC}} -> Texto do melhor padrão LOGIC_...
+        text = text.replace(/\{\{CATEGORY_([A-Z0-9_]+)\}\}/g, (_, prefix) => {
+            // Se o prefixo for LOGIC, busca padrões que começam com LOGIC_
+            // data.patterns já está ordenado por prioridade/matchScore
+            const targetPrefix = prefix.endsWith('_') ? prefix : prefix + '_';
+            const winner = data.patterns.find(p => p.code.startsWith(targetPrefix));
+
+            if (winner) {
+                return this.fixEncoding(winner.description);
+            }
+            // Se não encontrar, retorna string vazia para não quebrar layout
+            return '';
         });
 
         return text;
