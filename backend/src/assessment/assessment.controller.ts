@@ -1263,18 +1263,18 @@ export class AssessmentController {
 
         if (assignment) {
             try {
+                // ... (Lógica existente de Textos) ...
                 const effectiveTenantId = assignment.config?.tenantId || user.tenantId;
                 const configId = assignment.configId;
 
                 if (effectiveTenantId) {
-                    console.log('[calculateBigFive] Buscando textos interpretativos...');
+                    // ... (Buscar textos) ...
                     const report = await this.interpretation.generateFullReport(
                         assignment.id,
                         effectiveTenantId,
                         configId
                     );
 
-                    // Mesclar textos nos traits
                     traitsWithTexts = enrichedTraits.map(trait => {
                         const enriched = report.traits?.find((t: any) => t.key === trait.trait);
                         return {
@@ -1282,19 +1282,37 @@ export class AssessmentController {
                             customTexts: enriched?.customTexts || null
                         };
                     });
-
-                    console.log('[calculateBigFive] ✅ Textos adicionados aos traits');
                 }
             } catch (error) {
-                console.error('[calculateBigFive] ⚠️ Erro ao buscar textos (continuando sem eles):', error);
-                // Continua sem os textos
+                console.error('[calculateBigFive] ⚠️ Erro ao buscar textos:', error);
+            }
+        }
+
+        // ========== INTERPRETAÇÃO AVANÇADA (NOVO) ==========
+        let advancedSections: any[] = [];
+        if (process.env.ENABLE_ADVANCED_INTERPRETATION !== 'false') {
+            try {
+                // Converter traits array para Objeto de Scores (engineScores)
+                const engineScores: any = {};
+                traitsWithTexts.forEach(t => {
+                    // t.trait geralmente é 'extroversao', 'amabilidade', etc.
+                    engineScores[t.trait] = t.normalizedScore;
+                    // Adicionar fallback para maiúsculas se necessário, mas o engine já trata isso
+                });
+
+                console.log('[calculateBigFive] Gerando seções avançadas para:', Object.keys(engineScores));
+                advancedSections = await this.interpretationEngine.generateAdvancedSections(engineScores);
+                console.log(`[calculateBigFive] ✅ Geradas ${advancedSections.length} seções avançadas`);
+            } catch (e) {
+                console.error('[calculateBigFive] ⚠️ Erro na interpretação avançada:', e);
             }
         }
 
         return {
             ...result,
             traits: traitsWithTexts,
-            recommendations
+            recommendations,
+            interpretationSections: advancedSections
         };
     }
 
