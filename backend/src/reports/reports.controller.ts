@@ -87,19 +87,20 @@ export class ReportsController {
         // Calcular scores reais
         const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
 
-        // ⭐ CAMADA INTERPRETATIVA AVANÇADA (Feature Flag)
-        const ENABLE_ADVANCED_INTERPRETATION = process.env.ENABLE_ADVANCED_INTERPRETATION === 'true';
-        let advancedInterpretation = null;
+        // ⭐ CAMADA INTERPRETATIVA AVANÇADA (Habilitado por padrão)
+        const isAdvancedEnabled = process.env.ENABLE_ADVANCED_INTERPRETATION !== 'false';
+        let advancedSections: any[] = [];
 
-        if (ENABLE_ADVANCED_INTERPRETATION && assignment.result) {
+        if (isAdvancedEnabled) {
             try {
-                advancedInterpretation = await this.interpretationEngine.analyzeResult(
-                    assignment.result.id
-                );
+                // Usar geração em memória baseada nos scores calculados agora (garante dado fresco)
+                advancedSections = await this.interpretationEngine.generateAdvancedSections(scores);
+                console.log(`[ReportsController] ✅ Geradas ${advancedSections.length} seções para PDF`);
             } catch (error) {
-                console.error('Erro na análise interpretativa avançada:', error);
-                // Continuar sem análise avançada se houver erro
+                console.error('[ReportsController] ⚠️ Erro na análise interpretativa avançada:', error);
             }
+        } else {
+            console.log('[ReportsController] ⏭️ Interpretação Avançada EXPLICITAMENTE desativada');
         }
 
         // Preparar dados para PDF
@@ -126,8 +127,8 @@ export class ReportsController {
                 };
             }),
             report: report,
-            // ⭐ Adicionar interpretação avançada se disponível
-            advancedInterpretation: advancedInterpretation
+            // ⭐ Adicionar seções avançadas para o PdfService renderizar
+            interpretationSections: advancedSections
         };
 
         // Gerar PDF

@@ -252,7 +252,8 @@ export class AssessmentController {
             // PASSO 2.5: Interpretação Avançada
             console.log('[calculateRealScores] PASSO 2.5: Gerando interpretação avançada...');
             let advancedSections: any[] = [];
-            if (process.env.ENABLE_ADVANCED_INTERPRETATION === 'true') {
+            // FORÇAR HABILITADO POR PADRÃO (fallback para true se undefined)
+            if (process.env.ENABLE_ADVANCED_INTERPRETATION !== 'false') {
                 try {
                     advancedSections = await this.interpretationEngine.generateAdvancedSections(scores);
                     console.log(`[calculateRealScores] ✅ Geradas ${advancedSections.length} seções avançadas`);
@@ -260,7 +261,7 @@ export class AssessmentController {
                     console.error('[calculateRealScores] ⚠️ Erro na interpretação avançada:', e);
                 }
             } else {
-                console.log('[calculateRealScores] ⏭️ Interpretação Avançada desativada (Feature Flag)');
+                console.log('[calculateRealScores] ⏭️ Interpretação Avançada EXPLICITAMENTE desativada');
             }
 
             // PASSO 3: Montar resultado final
