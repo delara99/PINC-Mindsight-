@@ -83,11 +83,61 @@ export class ScoreCalculationService {
                 name: 'Fallback Config',
                 veryLowMax: 20, lowMax: 40, averageMax: 60, highMax: 80, veryHighMax: 100,
                 traits: [
-                    { id: 't_ext', traitKey: 'extroversao', name: 'Extroversão', isActive: true, facets: [] },
-                    { id: 't_agr', traitKey: 'amabilidade', name: 'Amabilidade', isActive: true, facets: [] },
-                    { id: 't_con', traitKey: 'conscienciosidade', name: 'Conscienciosidade', isActive: true, facets: [] },
-                    { id: 't_neu', traitKey: 'neuroticismo', name: 'Neuroticismo', isActive: true, facets: [] },
-                    { id: 't_ope', traitKey: 'abertura a experiencia', name: 'Abertura à Experiência', isActive: true, facets: [] }
+                    {
+                        id: 't_ext', traitKey: 'extroversao', name: 'Extroversão', isActive: true,
+                        facets: [
+                            { id: 'f_ext_1', facetKey: 'EXTRAVERSION_F1', name: 'Acolhimento', isActive: true, weight: 1 },
+                            { id: 'f_ext_2', facetKey: 'EXTRAVERSION_F2', name: 'Sociabilidade', isActive: true, weight: 1 },
+                            { id: 'f_ext_3', facetKey: 'EXTRAVERSION_F3', name: 'Assertividade', isActive: true, weight: 1 },
+                            { id: 'f_ext_4', facetKey: 'EXTRAVERSION_F4', name: 'Atividade', isActive: true, weight: 1 },
+                            { id: 'f_ext_5', facetKey: 'EXTRAVERSION_F5', name: 'Busca de Emoções', isActive: true, weight: 1 },
+                            { id: 'f_ext_6', facetKey: 'EXTRAVERSION_F6', name: 'Emoções Positivas', isActive: true, weight: 1 }
+                        ]
+                    },
+                    {
+                        id: 't_agr', traitKey: 'amabilidade', name: 'Amabilidade', isActive: true,
+                        facets: [
+                            { id: 'f_agr_1', facetKey: 'AGREEABLENESS_F1', name: 'Confiança', isActive: true, weight: 1 },
+                            { id: 'f_agr_2', facetKey: 'AGREEABLENESS_F2', name: 'Franqueza', isActive: true, weight: 1 },
+                            { id: 'f_agr_3', facetKey: 'AGREEABLENESS_F3', name: 'Altruísmo', isActive: true, weight: 1 },
+                            { id: 'f_agr_4', facetKey: 'AGREEABLENESS_F4', name: 'Complacência', isActive: true, weight: 1 },
+                            { id: 'f_agr_5', facetKey: 'AGREEABLENESS_F5', name: 'Modéstia', isActive: true, weight: 1 },
+                            { id: 'f_agr_6', facetKey: 'AGREEABLENESS_F6', name: 'Sensibilidade', isActive: true, weight: 1 }
+                        ]
+                    },
+                    {
+                        id: 't_con', traitKey: 'conscienciosidade', name: 'Conscienciosidade', isActive: true,
+                        facets: [
+                            { id: 'f_con_1', facetKey: 'CONSCIENTIOUSNESS_F1', name: 'Competência', isActive: true, weight: 1 },
+                            { id: 'f_con_2', facetKey: 'CONSCIENTIOUSNESS_F2', name: 'Ordem', isActive: true, weight: 1 },
+                            { id: 'f_con_3', facetKey: 'CONSCIENTIOUSNESS_F3', name: 'Dutifulness', isActive: true, weight: 1 },
+                            { id: 'f_con_4', facetKey: 'CONSCIENTIOUSNESS_F4', name: 'Esforço por Realização', isActive: true, weight: 1 },
+                            { id: 'f_con_5', facetKey: 'CONSCIENTIOUSNESS_F5', name: 'Autodisciplina', isActive: true, weight: 1 },
+                            { id: 'f_con_6', facetKey: 'CONSCIENTIOUSNESS_F6', name: 'Deliberação', isActive: true, weight: 1 }
+                        ]
+                    },
+                    {
+                        id: 't_neu', traitKey: 'neuroticismo', name: 'Neuroticismo', isActive: true,
+                        facets: [
+                            { id: 'f_neu_1', facetKey: 'NEUROTICISM_F1', name: 'Ansiedade', isActive: true, weight: 1 },
+                            { id: 'f_neu_2', facetKey: 'NEUROTICISM_F2', name: 'Hostilidade', isActive: true, weight: 1 },
+                            { id: 'f_neu_3', facetKey: 'NEUROTICISM_F3', name: 'Depressão', isActive: true, weight: 1 },
+                            { id: 'f_neu_4', facetKey: 'NEUROTICISM_F4', name: 'Autoconsciência', isActive: true, weight: 1 },
+                            { id: 'f_neu_5', facetKey: 'NEUROTICISM_F5', name: 'Impulsividade', isActive: true, weight: 1 },
+                            { id: 'f_neu_6', facetKey: 'NEUROTICISM_F6', name: 'Vulnerabilidade', isActive: true, weight: 1 }
+                        ]
+                    },
+                    {
+                        id: 't_ope', traitKey: 'abertura a experiencia', name: 'Abertura à Experiência', isActive: true,
+                        facets: [
+                            { id: 'f_ope_1', facetKey: 'OPENNESS_F1', name: 'Fantasia', isActive: true, weight: 1 },
+                            { id: 'f_ope_2', facetKey: 'OPENNESS_F2', name: 'Estética', isActive: true, weight: 1 },
+                            { id: 'f_ope_3', facetKey: 'OPENNESS_F3', name: 'Sentimentos', isActive: true, weight: 1 },
+                            { id: 'f_ope_4', facetKey: 'OPENNESS_F4', name: 'Ações', isActive: true, weight: 1 },
+                            { id: 'f_ope_5', facetKey: 'OPENNESS_F5', name: 'Ideias', isActive: true, weight: 1 },
+                            { id: 'f_ope_6', facetKey: 'OPENNESS_F6', name: 'Valores', isActive: true, weight: 1 }
+                        ]
+                    }
                 ]
             } as any;
         }
