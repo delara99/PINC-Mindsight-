@@ -160,6 +160,18 @@ export class PdfService {
                     ${interpretations}
                 </div>
             </div>
+
+            ${data.interpretationSections && data.interpretationSections.length > 0 ? `
+                <div class="section" style="margin-top: 40px; page-break-before: always;">
+                    <h2>Análise de Padrões e Necessidades</h2>
+                    ${data.interpretationSections.map((section: any) => `
+                        <div class="advanced-section" style="margin-bottom: 30px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                            <h3 style="color: ${data.config?.primaryColor || '#2563eb'}; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-top: 0;">${section.title}</h3>
+                            <div class="content" style="color: #334155; line-height: 1.8;">${section.content}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
             
             <div class="footer">
                 ${data.config?.reportFooter || 'PINC Mindsight - Análise de Perfil Comportamental'}
