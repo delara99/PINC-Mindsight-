@@ -105,12 +105,24 @@ export class InterpretationEngineService {
         // O formato pode variar, vamos tentar extrair
         const scores: any = typeof scoresJson === 'string' ? JSON.parse(scoresJson) : scoresJson;
 
+        const getVal = (keys: string[]) => {
+            for (const key of keys) {
+                const val = scores[key] || scores[key.toUpperCase()] || scores[key.toLowerCase()];
+                if (val !== undefined && val !== null) {
+                    if (typeof val === 'object' && val.normalizedScore !== undefined) return val.normalizedScore;
+                    if (typeof val === 'object' && val.score !== undefined) return val.score;
+                    if (typeof val === 'number') return val;
+                }
+            }
+            return 50; // Default fallback
+        };
+
         return {
-            E: this.normalizeScore(scores.EXTRAVERSION || scores.E || scores.extroversao || 50),
-            A: this.normalizeScore(scores.AGREEABLENESS || scores.A || scores.amabilidade || 50),
-            C: this.normalizeScore(scores.CONSCIENTIOUSNESS || scores.C || scores.conscienciosidade || 50),
-            O: this.normalizeScore(scores.OPENNESS || scores.O || scores.abertura || 50),
-            N: this.normalizeScore(scores.NEUROTICISM || scores.N || scores.neuroticismo || 50)
+            E: this.normalizeScore(getVal(['E', 'extroversao', 'extraversion'])),
+            A: this.normalizeScore(getVal(['A', 'amabilidade', 'agreeableness'])),
+            C: this.normalizeScore(getVal(['C', 'conscienciosidade', 'conscientiousness'])),
+            O: this.normalizeScore(getVal(['O', 'abertura', 'abertura a experiencia', 'openness'])),
+            N: this.normalizeScore(getVal(['N', 'neuroticismo', 'neuroticism', 'estabilidade emocional']))
         };
     }
 
