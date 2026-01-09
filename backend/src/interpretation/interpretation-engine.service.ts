@@ -347,6 +347,22 @@ export class InterpretationEngineService {
     }
 
     /**
+     * Corrige problemas de encoding (UTF-8 interpretado como Latin-1)
+     */
+    private fixEncoding(text: string): string {
+        if (!text) return text;
+        try {
+            // Detecta padrões comuns de erro de encoding (ex: Ãª, Ã£, Ã§)
+            if (text.match(/[\u00C0-\u00FF]{2,}/) || text.includes('Ã')) {
+                return Buffer.from(text, 'binary').toString('utf-8');
+            }
+            return text;
+        } catch (e) {
+            return text;
+        }
+    }
+
+    /**
      * Preenche template com dados
      */
     private fillTemplate(
@@ -357,7 +373,7 @@ export class InterpretationEngineService {
             needs: NeedWithIntensity[];
         }
     ): string {
-        let text = template;
+        let text = this.fixEncoding(template);
 
         // Substituir variáveis de scores: {{E_SCORE}}, {{A_SCORE}}, etc
         text = text.replace(/\{\{([EACON])_SCORE\}\}/g, (_, trait) => {
@@ -367,19 +383,19 @@ export class InterpretationEngineService {
         // Substituir padrões: {{PATTERN_1}}, {{PATTERN_2}}, etc
         text = text.replace(/\{\{PATTERN_(\d+)\}\}/g, (_, num) => {
             const index = parseInt(num) - 1;
-            return data.patterns[index]?.name || '';
+            return this.fixEncoding(data.patterns[index]?.name || '');
         });
 
         // Substituir necessidades: {{NEED_1}}, {{NEED_2}}, etc
         text = text.replace(/\{\{NEED_(\d+)\}\}/g, (_, num) => {
             const index = parseInt(num) - 1;
-            return data.needs[index]?.name || '';
+            return this.fixEncoding(data.needs[index]?.name || '');
         });
 
         // Substituir lista de necessidades
         text = text.replace(/\{\{NEEDS_LIST\}\}/g, () => {
             return data.needs
-                .map((n, i) => `${i + 1}. ${n.name} (${n.intensity}%)`)
+                .map((n, i) => `${i + 1}. ${this.fixEncoding(n.name)} (${n.intensity}%)`)
                 .join('\n');
         });
 

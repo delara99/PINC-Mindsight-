@@ -34,11 +34,18 @@ export function TraitCard({
 
     const safeOverallScore = typeof overallScore === 'number' ? overallScore : 0;
 
+    const normalized = safeOverallScore > 5 ? safeOverallScore : (safeOverallScore / 5) * 100;
+
     const getInterpretationColor = () => {
-        const normalized = (safeOverallScore / 5) * 100;
         if (normalized < 40) return 'bg-red-100 text-red-700 border-red-200';
         if (normalized < 70) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
         return 'bg-green-100 text-green-700 border-green-200';
+    };
+
+    const getBarColor = () => {
+        if (normalized < 40) return 'bg-red-500';
+        if (normalized < 70) return 'bg-yellow-500';
+        return 'bg-green-500';
     };
 
     return (
@@ -46,19 +53,30 @@ export function TraitCard({
             {/* Header */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors gap-4"
             >
-                <div className="flex items-center gap-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{traitName}</h3>
-                    <span className="text-2xl font-bold text-gray-900">{safeOverallScore.toFixed(1)}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getInterpretationColor()}`}>
-                        {interpretation}
-                    </span>
+                <div className="flex items-center gap-4 flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 w-32 md:w-48 truncate text-left">{traitName}</h3>
+
+                    {/* Visual Progress Bar (Desktop) */}
+                    <div className="hidden md:block flex-1 h-2 bg-gray-100 rounded-full overflow-hidden max-w-[200px]">
+                        <div
+                            className={`h-full rounded-full transition-all duration-500 ${getBarColor()}`}
+                            style={{ width: `${normalized}%` }}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-gray-900">{safeOverallScore.toFixed(1)}</span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getInterpretationColor()}`}>
+                            {interpretation}
+                        </span>
+                    </div>
                 </div>
                 {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 )}
             </button>
 
