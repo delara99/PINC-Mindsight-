@@ -247,9 +247,7 @@ export default function MetricsConfigPage() {
                     {/* Seções */}
                     <button
                         onClick={() => router.push('/dashboard/metrics-config/interpretation-sections')}
-                        className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 p-6 rounded-lg transition-all border border-green-200 text-left opacity-50 cursor-not-allowed"
-                        disabled
-                        title="Em breve"
+                        className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 p-6 rounded-lg transition-all border border-green-200 text-left"
                     >
                         <div className="flex items-center gap-3 mb-3">
                             <div className="p-2 bg-green-500 text-white rounded-lg">
