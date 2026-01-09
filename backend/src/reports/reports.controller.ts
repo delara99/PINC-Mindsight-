@@ -7,6 +7,7 @@ import { InterpretationService } from './interpretation.service';
 import { PdfService } from './pdf.service';
 import { ScoreCalculationService } from './score-calculation.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { InterpretationEngineService } from '../interpretation/interpretation-engine.service';
 
 @Controller('reports')
 @UseGuards(AuthGuard('jwt'))
@@ -16,7 +17,8 @@ export class ReportsController {
         private interpretation: InterpretationService,
         private pdf: PdfService,
         private scoreCalculation: ScoreCalculationService,
-        private prisma: PrismaService
+        private prisma: PrismaService,
+        private interpretationEngine: InterpretationEngineService
     ) { }
 
     // @Get('interpretation')
@@ -59,7 +61,8 @@ export class ReportsController {
                         tenantId: true
                     }
                 },
-                assessment: true
+                assessment: true,
+                result: true // ⭐ Incluir resultado para análise avançada
             }
         });
 
@@ -84,6 +87,21 @@ export class ReportsController {
         // Calcular scores reais
         const { scores, config } = await this.scoreCalculation.calculateScores(assignmentId);
 
+        // ⭐ CAMADA INTERPRETATIVA AVANÇADA (Feature Flag)
+        const ENABLE_ADVANCED_INTERPRETATION = process.env.ENABLE_ADVANCED_INTERPRETATION === 'true';
+        let advancedInterpretation = null;
+
+        if (ENABLE_ADVANCED_INTERPRETATION && assignment.result) {
+            try {
+                advancedInterpretation = await this.interpretationEngine.analyzeResult(
+                    assignment.result.id
+                );
+            } catch (error) {
+                console.error('Erro na análise interpretativa avançada:', error);
+                // Continuar sem análise avançada se houver erro
+            }
+        }
+
         // Preparar dados para PDF
         const pdfData = {
             userName: assignment.user.name || assignment.user.email,
@@ -107,7 +125,9 @@ export class ReportsController {
                     customTexts: enriched?.customTexts
                 };
             }),
-            report: report
+            report: report,
+            // ⭐ Adicionar interpretação avançada se disponível
+            advancedInterpretation: advancedInterpretation
         };
 
         // Gerar PDF

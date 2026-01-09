@@ -7,6 +7,7 @@ import { ScoreCalculationService } from './score-calculation.service';
 import { ReportsController } from './reports.controller';
 import { DebugReportsController } from './debug.controller';
 import { PrismaService } from '../prisma/prisma.service';
+import { InterpretationEngineService } from '../interpretation/interpretation-engine.service';
 
 @Module({
     controllers: [ReportsController, DebugReportsController],
@@ -15,8 +16,9 @@ import { PrismaService } from '../prisma/prisma.service';
         InterpretationService,
         PdfService,
         ScoreCalculationService,
-        PrismaService
+        PrismaService,
+        InterpretationEngineService
     ],
-    exports: [AnalyticsService, InterpretationService, PdfService, ScoreCalculationService]
+    exports: [AnalyticsService, InterpretationService, PdfService, ScoreCalculationService, InterpretationEngineService]
 })
 export class ReportsModule { }
