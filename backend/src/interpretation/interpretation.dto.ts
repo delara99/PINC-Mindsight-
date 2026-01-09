@@ -91,6 +91,7 @@ export interface BigFiveScores {
     C: number;  // Conscienciosidade
     O: number;  // Abertura
     N: number;  // Neuroticismo
+    [key: string]: number; // Permitir chaves de facetas dinâmicas
 }
 
 /**

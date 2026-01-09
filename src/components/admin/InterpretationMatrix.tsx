@@ -14,6 +14,48 @@ const CATEGORIES = [
     { id: 'OTHER', label: 'Outros', prefix: '' }
 ];
 
+const TRAIT_OPTIONS = [
+    { value: 'extroversao', label: 'EXTROVERSÃO (Geral)' },
+    { value: 'facet_acolhimento', label: 'Ext: Acolhimento' },
+    { value: 'facet_gregarismo', label: 'Ext: Gregarismo' },
+    { value: 'facet_assertividade', label: 'Ext: Assertividade' },
+    { value: 'facet_atividade', label: 'Ext: Nível de Atividade' },
+    { value: 'facet_busca_excitacao', label: 'Ext: Busca de Excitação' },
+    { value: 'facet_emo_positivas', label: 'Ext: Emoções Positivas' },
+
+    { value: 'amabilidade', label: 'AMABILIDADE (Geral)' },
+    { value: 'facet_confianca', label: 'Amb: Confiança' },
+    { value: 'facet_franqueza', label: 'Amb: Franqueza' },
+    { value: 'facet_altruismo', label: 'Amb: Altruísmo' },
+    { value: 'facet_complacencia', label: 'Amb: Complacência' },
+    { value: 'facet_modestia', label: 'Amb: Modéstia' },
+    { value: 'facet_sensibilidade', label: 'Amb: Sensibilidade' },
+
+    { value: 'conscienciosidade', label: 'CONSCIENCIOSIDADE (Geral)' },
+    { value: 'facet_competencia', label: 'Con: Competência' },
+    { value: 'facet_ordem', label: 'Con: Ordem/Organização' },
+    { value: 'facet_senso_dever', label: 'Con: Senso de Dever' },
+    { value: 'facet_esforco_realizacao', label: 'Con: Esforço de Realização' },
+    { value: 'facet_autodisciplina', label: 'Con: Autodisciplina' },
+    { value: 'facet_deliberacao', label: 'Con: Deliberação' },
+
+    { value: 'neuroticismo', label: 'NEUROTICISMO (Geral)' },
+    { value: 'facet_ansiedade', label: 'Neu: Ansiedade' },
+    { value: 'facet_raiva_hostilidade', label: 'Neu: Raiva/Hostilidade' },
+    { value: 'facet_depressao', label: 'Neu: Depressão' },
+    { value: 'facet_autoconsciencia', label: 'Neu: Autoconsciência' },
+    { value: 'facet_impulsividade', label: 'Neu: Impulsividade' },
+    { value: 'facet_vulnerabilidade', label: 'Neu: Vulnerabilidade' },
+
+    { value: 'abertura', label: 'ABERTURA (Geral)' },
+    { value: 'facet_fantasia', label: 'Abe: Fantasia' },
+    { value: 'facet_estetica', label: 'Abe: Estética' },
+    { value: 'facet_sentimentos', label: 'Abe: Sentimentos' },
+    { value: 'facet_acoes', label: 'Abe: Ações' },
+    { value: 'facet_ideias', label: 'Abe: Ideias' },
+    { value: 'facet_valores', label: 'Abe: Valores' },
+];
+
 export function InterpretationMatrix() {
     const queryClient = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
@@ -31,7 +73,6 @@ export function InterpretationMatrix() {
         if (!cat) return true;
 
         if (activeCategory === 'OTHER') {
-            // Mostra se NÃO começa com nenhum dos prefixos das outras categorias
             return !CATEGORIES.some(c => c.id !== 'OTHER' && p.code.startsWith(c.prefix));
         }
         return p.code.startsWith(cat.prefix);
@@ -109,6 +150,7 @@ export function InterpretationMatrix() {
     };
 
     const patternsToDisplay = filteredPatterns || [];
+    const getTraitLabel = (val: string) => TRAIT_OPTIONS.find(t => t.value === val)?.label || val;
 
     if (isLoading) return <div className="p-8 text-center text-gray-500">Carregando padrões...</div>;
 
@@ -163,20 +205,18 @@ export function InterpretationMatrix() {
 
                         <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
                             {currentPattern.conditions?.map((cond: any, idx: number) => (
-                                <div key={idx} className="flex gap-2 items-center">
+                                <div key={idx} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
                                     <select
-                                        className="border rounded p-1 text-sm bg-white flex-1"
+                                        className="border rounded p-2 text-sm bg-white flex-1 min-w-[200px]"
                                         value={cond.trait}
                                         onChange={e => updateCondition(idx, 'trait', e.target.value)}
                                     >
-                                        <option value="extroversao">Extroversão</option>
-                                        <option value="amabilidade">Amabilidade</option>
-                                        <option value="conscienciosidade">Conscienciosidade</option>
-                                        <option value="neuroticismo">Neuroticismo</option>
-                                        <option value="abertura a experiencia">Abertura à Exp.</option>
+                                        {TRAIT_OPTIONS.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
                                     </select>
                                     <select
-                                        className="border rounded p-1 text-sm bg-white w-20"
+                                        className="border rounded p-2 text-sm bg-white w-20"
                                         value={cond.operator}
                                         onChange={e => updateCondition(idx, 'operator', e.target.value)}
                                     >
@@ -186,7 +226,7 @@ export function InterpretationMatrix() {
                                     </select>
                                     <input
                                         type="number"
-                                        className="border rounded p-1 text-sm w-16"
+                                        className="border rounded p-2 text-sm w-20"
                                         value={cond.value}
                                         onChange={e => updateCondition(idx, 'value', Number(e.target.value))}
                                     />
@@ -259,10 +299,11 @@ export function InterpretationMatrix() {
 
                             <div className="flex flex-wrap gap-1 mt-auto">
                                 {pattern.conditions?.map((c: any, i: number) => {
-                                    const traitLabel = c.trait === 'abertura a experiencia' ? 'OPEN' : c.trait.substring(0, 3).toUpperCase();
+                                    // Tenta achar label amigável, senão mostra raw
+                                    const niceLabel = getTraitLabel(c.trait).split(':')[1] || getTraitLabel(c.trait).substring(0, 10);
                                     return (
-                                        <span key={i} className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100">
-                                            {traitLabel} {c.operator === 'lt' ? '<' : '>'} {c.value}
+                                        <span key={i} className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100" title={getTraitLabel(c.trait)}>
+                                            {niceLabel.trim()} {c.operator === 'lt' ? '<' : '>'} {c.value}
                                         </span>
                                     );
                                 })}

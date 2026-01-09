@@ -117,13 +117,44 @@ export class InterpretationEngineService {
             return 50; // Default fallback
         };
 
-        return {
+        const result: BigFiveScores = {
             E: this.normalizeScore(getVal(['E', 'extroversao', 'extraversion'])),
             A: this.normalizeScore(getVal(['A', 'amabilidade', 'agreeableness'])),
             C: this.normalizeScore(getVal(['C', 'conscienciosidade', 'conscientiousness'])),
             O: this.normalizeScore(getVal(['O', 'abertura', 'abertura a experiencia', 'openness'])),
             N: this.normalizeScore(getVal(['N', 'neuroticismo', 'neuroticism', 'estabilidade emocional']))
         };
+
+        // Extrair Facetas (se disponíveis)
+        try {
+            if (scores && typeof scores === 'object') {
+                Object.values(scores).forEach((val: any) => {
+                    if (val && Array.isArray(val.facets)) {
+                        val.facets.forEach((f: any) => {
+                            const rawKey = f.facetKey || f.traitKey || f.name || '';
+                            if (rawKey && typeof f.normalizedScore === 'number') {
+                                const key = 'facet_' + this.cleanString(rawKey);
+                                result[key] = f.normalizedScore;
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error extracting facets:', e);
+        }
+
+        return result;
+    }
+
+    private cleanString(str: string): string {
+        if (!str) return '';
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]/g, '_'); // Só alfanumerico vira underscore
     }
 
     /**
@@ -363,21 +394,30 @@ export class InterpretationEngineService {
     }
 
     /**
-     * Avalia condições simples (Ex: E_SCORE > 50)
+     * Avalia condições simples (Ex: E_SCORE > 50 ou facet_ansiedade > 60)
      */
     private evaluateCondition(condition: string, scores: BigFiveScores): boolean {
         const cond = condition.trim();
-        // Suporta: VAR OP VAL (Ex: E_SCORE > 70)
-        const parts = cond.match(/^([EACON]_SCORE)\s*(>|<|>=|<=|==|!=)\s*(\d+)$/);
+        // Suporta: VAR OP VAL (Ex: E_SCORE > 70, facet_ansiedade < 30)
+        // Regex mais permissiva para capturar qualquer chave alfanumérica + underscore
+        const parts = cond.match(/^([a-zA-Z0-9_]+)\s*(>|<|>=|<=|==|!=)\s*(\d+)$/);
 
         if (!parts) return false;
 
         const [, varName, operator, valueStr] = parts;
         const value = parseInt(valueStr, 10);
 
-        // Extrair a letra do traço (E, A, C, O, N)
-        const trait = varName.charAt(0) as keyof BigFiveScores;
-        const score = scores[trait] || 0;
+        // Busca valor no objeto de scores (pode ser E, A, C..., ou facet_xyz)
+        // Tenta buscar direto, senão tenta mapear E->E_SCORE se necessário (legacy)
+        let score = scores[varName];
+
+        // Fallback para legacy E_SCORE -> E
+        if (score === undefined && varName.endsWith('_SCORE')) {
+            const key = varName.replace('_SCORE', '');
+            score = scores[key];
+        }
+
+        if (score === undefined) return false; // Score não encontrado
 
         switch (operator) {
             case '>': return score > value;
