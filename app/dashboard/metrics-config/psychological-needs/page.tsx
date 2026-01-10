@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Edit, Save, Trash2, X, AlertCircle } from 'lucide-react';
 
 import { API_URL } from '../../../../src/config/api';
 import { useAuthStore } from '../../../../src/store/auth-store';
@@ -10,16 +11,16 @@ interface Need {
     id: string;
     code: string;
     name: string;
+    active: boolean;
     clientTitle: string;
     clientDescription: string;
     clientImpact: string;
     specialistTitle: string;
     specialistDescription: string;
     specialistAnalysis: string;
-    favorableEnvironments: string;
+    favorableEnvironments: string; // JSON string or array
     unfavorableEnvironments: string;
     recommendations: string;
-    active: boolean;
 }
 
 export default function PsychologicalNeedsPage() {
@@ -27,6 +28,11 @@ export default function PsychologicalNeedsPage() {
     const [needs, setNeeds] = useState<Need[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Estado do formulário de edição
+    const [editForm, setEditForm] = useState<Partial<Need>>({});
+
     const token = useAuthStore((state) => state.token);
 
     useEffect(() => {
@@ -35,6 +41,7 @@ export default function PsychologicalNeedsPage() {
 
     const loadNeeds = async () => {
         try {
+            setLoading(true);
             const res = await fetch(`${API_URL}/api/v1/interpretation/needs`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -49,235 +56,264 @@ export default function PsychologicalNeedsPage() {
         }
     };
 
-    const parseJsonArray = (jsonString: string): string[] => {
+    const handleSelectNeed = (need: Need) => {
+        setSelectedNeed(need);
+        setEditForm({ ...need }); // Copia para edição
+    };
+
+    const handleSave = async () => {
+        if (!selectedNeed || !editForm) return;
+
         try {
-            const parsed = JSON.parse(jsonString);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch {
-            return [];
+            setIsSaving(true);
+
+            // Helpers para formatar JSON array
+            const formatArray = (val: string | any[]) => {
+                if (Array.isArray(val)) return val;
+                if (!val) return [];
+                // Se for string JSON parseável
+                try {
+                    const parsed = JSON.parse(val);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch (e) { }
+                // Se for string pura (separada por linhas)
+                return val.split('\n').filter(line => line.trim().length > 0);
+            };
+
+            const payload = {
+                ...editForm,
+                favorableEnvironments: formatArray(editForm.favorableEnvironments || []),
+                unfavorableEnvironments: formatArray(editForm.unfavorableEnvironments || []),
+                recommendations: formatArray(editForm.recommendations || [])
+            };
+
+            const res = await fetch(`${API_URL}/api/v1/interpretation/needs/${selectedNeed.id}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+
+            if (json.success) {
+                alert('Definições salvas com sucesso!');
+                loadNeeds();
+                setSelectedNeed(null);
+            } else {
+                alert('Erro ao salvar: ' + (json.message || 'Erro desconhecido'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão ao salvar.');
+        } finally {
+            setIsSaving(false);
         }
+    };
+
+    // Helper para exibir array no textarea (join por \n)
+    const arrayToText = (val: string | any[]): string => {
+        if (Array.isArray(val)) return val.join('\n');
+        try {
+            const parsed = JSON.parse(val as string);
+            if (Array.isArray(parsed)) return parsed.join('\n');
+        } catch (e) { }
+        return val as string || '';
     };
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Carregando necessidades...</p>
-                </div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="md:flex md:items-center md:justify-between mb-8">
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Necessidades Psicológicas
-                    </h1>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Gerencie as necessidades identificadas a partir dos padrões
-                    </p>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Necessidades</h1>
+                    <p className="text-sm text-gray-600 mt-1">Edite os textos, definições e recomendações que aparecem nos relatórios.</p>
                 </div>
-                <div className="mt-4 flex md:mt-0 md:ml-4">
-                    <button
-                        onClick={() => router.push('/dashboard/metrics-config')}
-                        className="mr-3 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        ← Voltar
-                    </button>
-                </div>
+                <button
+                    onClick={() => router.push('/dashboard/metrics-config')}
+                    className="px-4 py-2 border rounded-md shadow-sm text-sm text-gray-700 bg-white hover:bg-gray-50"
+                >
+                    Voltar
+                </button>
             </div>
 
-            {/* Needs Grid */}
-            {needs.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg shadow">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma necessidade encontrada</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Execute a migração para popular as necessidades iniciais
-                    </p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {needs.map((need) => (
-                        <div
-                            key={need.id}
-                            className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
-                            onClick={() => setSelectedNeed(need)}
-                        >
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        {need.name}
-                                    </h3>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${need.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {need.active ? 'Ativa' : 'Inativa'}
-                                    </span>
-                                </div>
-
-                                <p className="text-sm font-mono text-gray-500 mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {needs.map((need) => (
+                    <div
+                        key={need.id}
+                        className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer overflow-hidden group"
+                        onClick={() => handleSelectNeed(need)}
+                    >
+                        <div className="p-5">
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-lg text-gray-900">{need.name}</h3>
+                                <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-mono">
                                     {need.code}
-                                </p>
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-500 line-clamp-3 mb-4">{need.clientDescription}</p>
+                            <div className="text-indigo-600 text-sm font-medium flex items-center gap-1 group-hover:underline">
+                                <Edit size={14} /> Editar Definições
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-                                <div className="space-y-3">
-                                    <div>
-                                        <h4 className="text-xs font-semibold text-gray-700 uppercase mb-1">
-                                            Para Cliente:
-                                        </h4>
-                                        <p className="text-sm text-gray-600 line-clamp-2">
-                                            {need.clientDescription}
-                                        </p>
+            {/* Modal de Edição Full Screen / Large */}
+            {selectedNeed && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
+                        {/* Header Modal */}
+                        <div className="flex justify-between items-center px-6 py-4 border-b">
+                            <div>
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    Editando: {selectedNeed.name}
+                                </h2>
+                                <p className="text-xs text-red-500 flex items-center gap-1">
+                                    <AlertCircle size={12} /> Atenção: Alterações aqui impactam diretamente a geração de novos relatórios.
+                                </p>
+                            </div>
+                            <button onClick={() => setSelectedNeed(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Body Scrollable */}
+                        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Coluna Esquerda: Dados Básicos e Cliente */}
+                                <div className="space-y-6">
+                                    <div className="bg-white p-5 rounded-lg border shadow-sm">
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Identificação</h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 mb-1">Nome</label>
+                                                <input
+                                                    className="w-full border rounded p-2 text-sm"
+                                                    value={editForm.name || ''}
+                                                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 mb-1">Código (Não alterar)</label>
+                                                <input
+                                                    className="w-full border rounded p-2 text-sm bg-gray-100 text-gray-500"
+                                                    value={editForm.code || ''}
+                                                    disabled
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <h4 className="text-xs font-semibold text-gray-700 uppercase mb-1">
-                                            Ambientes Favoráveis:
-                                        </h4>
-                                        <div className="flex flex-wrap gap-1">
-                                            {parseJsonArray(need.favorableEnvironments).slice(0, 2).map((env, idx) => (
-                                                <span key={idx} className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-green-100 text-green-800">
-                                                    {env}
-                                                </span>
-                                            ))}
-                                            {parseJsonArray(need.favorableEnvironments).length > 2 && (
-                                                <span className="text-xs text-gray-500">
-                                                    +{parseJsonArray(need.favorableEnvironments).length - 2} mais
-                                                </span>
-                                            )}
+                                    <div className="bg-white p-5 rounded-lg border shadow-sm border-l-4 border-l-blue-500">
+                                        <h3 className="font-bold text-blue-900 mb-4 border-b pb-2">Visão do Cliente (Relatório)</h3>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 mb-1">Título Amigável</label>
+                                                <input
+                                                    className="w-full border rounded p-2 text-sm"
+                                                    value={editForm.clientTitle || ''}
+                                                    onChange={e => setEditForm({ ...editForm, clientTitle: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 mb-1">Descrição para o Cliente</label>
+                                                <textarea
+                                                    className="w-full border rounded p-2 text-sm h-32"
+                                                    value={editForm.clientDescription || ''}
+                                                    onChange={e => setEditForm({ ...editForm, clientDescription: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 mb-1">Impacto (Texto de Apoio)</label>
+                                                <textarea
+                                                    className="w-full border rounded p-2 text-sm h-24"
+                                                    value={editForm.clientImpact || ''}
+                                                    onChange={e => setEditForm({ ...editForm, clientImpact: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedNeed(need);
-                                    }}
-                                    className="mt-4 w-full text-center text-sm font-medium text-indigo-600 hover:text-indigo-900"
-                                >
-                                    Ver Detalhes →
-                                </button>
+                                {/* Coluna Direita: Especialista e Técnicos */}
+                                <div className="space-y-6">
+                                    <div className="bg-white p-5 rounded-lg border shadow-sm border-l-4 border-l-purple-500">
+                                        <h3 className="font-bold text-purple-900 mb-4 border-b pb-2">Visão do Especialista</h3>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 mb-1">Análise Técnica</label>
+                                                <textarea
+                                                    className="w-full border rounded p-2 text-sm h-32"
+                                                    value={editForm.specialistAnalysis || ''}
+                                                    onChange={e => setEditForm({ ...editForm, specialistAnalysis: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white p-5 rounded-lg border shadow-sm">
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Ambientes e Recomendações (Listas)</h3>
+                                        <p className="text-xs text-gray-400 mb-2">Digite um item por linha.</p>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-green-700 mb-1">Ambientes Favoráveis</label>
+                                                <textarea
+                                                    className="w-full border rounded p-2 text-sm h-24 bg-green-50"
+                                                    value={arrayToText(editForm.favorableEnvironments || [])}
+                                                    onChange={e => setEditForm({ ...editForm, favorableEnvironments: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-red-700 mb-1">Ambientes Desfavoráveis</label>
+                                                <textarea
+                                                    className="w-full border rounded p-2 text-sm h-24 bg-red-50"
+                                                    value={arrayToText(editForm.unfavorableEnvironments || [])}
+                                                    onChange={e => setEditForm({ ...editForm, unfavorableEnvironments: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-yellow-700 mb-1">Recomendações</label>
+                                                <textarea
+                                                    className="w-full border rounded p-2 text-sm h-24 bg-yellow-50"
+                                                    value={arrayToText(editForm.recommendations || [])}
+                                                    onChange={e => setEditForm({ ...editForm, recommendations: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    ))}
-                </div>
-            )}
 
-            {/* Detail Modal */}
-            {selectedNeed && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-bold text-gray-900">
-                                    {selectedNeed.name}
-                                </h2>
-                                <button
-                                    onClick={() => setSelectedNeed(null)}
-                                    className="text-gray-400 hover:text-gray-500"
-                                >
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <p className="mt-1 text-sm font-mono text-gray-500">{selectedNeed.code}</p>
-                        </div>
-
-                        <div className="p-6 space-y-6">
-                            {/* Cliente Section */}
-                            <div className="bg-blue-50 rounded-lg p-4">
-                                <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                                    📱 Versão para Cliente
-                                </h3>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-blue-800">Título:</h4>
-                                        <p className="text-sm text-blue-700">{selectedNeed.clientTitle}</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-blue-800">Descrição:</h4>
-                                        <p className="text-sm text-blue-700">{selectedNeed.clientDescription}</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-blue-800">Impacto:</h4>
-                                        <p className="text-sm text-blue-700">{selectedNeed.clientImpact}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Specialist Section */}
-                            <div className="bg-purple-50 rounded-lg p-4">
-                                <h3 className="text-lg font-semibold text-purple-900 mb-3">
-                                    🎓 Versão para Especialista
-                                </h3>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-purple-800">Título:</h4>
-                                        <p className="text-sm text-purple-700">{selectedNeed.specialistTitle}</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-purple-800">Descrição:</h4>
-                                        <p className="text-sm text-purple-700">{selectedNeed.specialistDescription}</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-purple-800">Análise:</h4>
-                                        <p className="text-sm text-purple-700">{selectedNeed.specialistAnalysis}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Environments */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-green-50 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-green-900 mb-2">
-                                        ✅ Ambientes Favoráveis
-                                    </h4>
-                                    <ul className="space-y-1">
-                                        {parseJsonArray(selectedNeed.favorableEnvironments).map((env, idx) => (
-                                            <li key={idx} className="text-sm text-green-700 flex items-start">
-                                                <span className="mr-2">•</span>
-                                                <span>{env}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                <div className="bg-red-50 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-red-900 mb-2">
-                                        ❌ Ambientes Desfavoráveis
-                                    </h4>
-                                    <ul className="space-y-1">
-                                        {parseJsonArray(selectedNeed.unfavorableEnvironments).map((env, idx) => (
-                                            <li key={idx} className="text-sm text-red-700 flex items-start">
-                                                <span className="mr-2">•</span>
-                                                <span>{env}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* Recommendations */}
-                            <div className="bg-yellow-50 rounded-lg p-4">
-                                <h4 className="text-sm font-semibold text-yellow-900 mb-2">
-                                    💡 Recomendações
-                                </h4>
-                                <ul className="space-y-1">
-                                    {parseJsonArray(selectedNeed.recommendations).map((rec, idx) => (
-                                        <li key={idx} className="text-sm text-yellow-700 flex items-start">
-                                            <span className="mr-2">•</span>
-                                            <span>{rec}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                        {/* Footer Actions */}
+                        <div className="border-t px-6 py-4 flex justify-end gap-3 bg-gray-50">
+                            <button
+                                onClick={() => setSelectedNeed(null)}
+                                className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="px-6 py-2 bg-primary text-white rounded font-medium flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                {isSaving ? 'Salvando...' : <><Save size={18} /> Salvar Alterações</>}
+                            </button>
                         </div>
                     </div>
                 </div>

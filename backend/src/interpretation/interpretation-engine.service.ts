@@ -604,8 +604,18 @@ export class InterpretationEngineService implements OnModuleInit {
         // 2. Detectar
         const detectedPatterns = this.detectPatterns(scores, patterns);
 
-        // 3. Extrair necessidades
-        const needs = this.extractNeeds(detectedPatterns);
+        // 3. Extrair necessidades e aplicar correção de encoding (Deep Fix)
+        const needs = this.extractNeeds(detectedPatterns).map(n => ({
+            ...n,
+            name: this.fixEncoding(n.name),
+            clientTitle: this.fixEncoding(n.clientTitle),
+            clientDescription: this.fixEncoding(n.clientDescription),
+            clientImpact: this.fixEncoding(n.clientImpact),
+            specialistAnalysis: this.fixEncoding(n.specialistAnalysis),
+            favorableEnvironments: n.favorableEnvironments.map(e => this.fixEncoding(e)),
+            unfavorableEnvironments: n.unfavorableEnvironments.map(e => this.fixEncoding(e)),
+            recommendations: n.recommendations.map(r => this.fixEncoding(r))
+        }));
 
         // 4. Buscar templates de seções
         const sections = await this.prisma.interpretationSection.findMany({
@@ -627,7 +637,7 @@ export class InterpretationEngineService implements OnModuleInit {
 
             generated.push({
                 code: section.code,
-                title: section.title,
+                title: this.fixEncoding(section.title),
                 content,
                 order: section.displayOrder
             });

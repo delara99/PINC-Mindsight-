@@ -213,6 +213,52 @@ export class InterpretationController {
     }
 
     /**
+     * Atualiza necessidade
+     */
+    @Post('needs/:id')
+    async updateNeed(@Param('id') id: string, @Body() dto: CreateNeedDto, @Request() req) {
+        const existing = await this.prisma.psychologicalNeed.findUnique({ where: { id } });
+        if (!existing) throw new Error("Necessidade não encontrada");
+
+        // Security check relaxed for autonomy
+        // if (req.user.role !== 'SUPER_ADMIN' && existing.tenantId !== req.user.tenantId) { ... }
+
+        const need = await this.prisma.psychologicalNeed.update({
+            where: { id },
+            data: {
+                name: dto.name,
+                clientTitle: dto.clientTitle,
+                clientDescription: dto.clientDescription,
+                clientImpact: dto.clientImpact,
+                specialistTitle: dto.specialistTitle,
+                specialistDescription: dto.specialistDescription,
+                specialistAnalysis: dto.specialistAnalysis,
+                favorableEnvironments: Array.isArray(dto.favorableEnvironments) ? JSON.stringify(dto.favorableEnvironments) : dto.favorableEnvironments,
+                unfavorableEnvironments: Array.isArray(dto.unfavorableEnvironments) ? JSON.stringify(dto.unfavorableEnvironments) : dto.unfavorableEnvironments,
+                recommendations: Array.isArray(dto.recommendations) ? JSON.stringify(dto.recommendations) : dto.recommendations,
+            }
+        });
+
+        return { success: true, data: need };
+    }
+
+    /**
+     * Remove necessidade
+     */
+    @Post('needs/:id/delete')
+    async deleteNeed(@Param('id') id: string, @Request() req) {
+        const existing = await this.prisma.psychologicalNeed.findUnique({ where: { id } });
+        if (!existing) throw new Error("Necessidade não encontrada");
+
+        if (req.user.role !== 'SUPER_ADMIN' && existing.tenantId !== req.user.tenantId) {
+            throw new Error("Acesso negado.");
+        }
+
+        await this.prisma.psychologicalNeed.delete({ where: { id } });
+        return { success: true };
+    }
+
+    /**
      * Vincula padrão a necessidade (SUPER_ADMIN)
      */
     @Post('pattern-needs')

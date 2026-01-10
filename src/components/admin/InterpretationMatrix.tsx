@@ -227,8 +227,19 @@ export function InterpretationMatrix() {
 
                     {/* NECESSIDADES PSICOLÓGICAS */}
                     <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                        <label className="block text-sm font-bold text-orange-900 mb-2">Necessidades Psicológicas Geradas</label>
-                        <p className="text-xs text-orange-700 mb-4">Quais necessidades este padrão desperta ou satisfaz?</p>
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <label className="block text-sm font-bold text-orange-900">Necessidades Psicológicas Geradas</label>
+                                <p className="text-xs text-orange-700">Quais necessidades este padrão desperta ou satisfaz?</p>
+                            </div>
+                            <a
+                                href="/dashboard/metrics-config/psychological-needs"
+                                target="_blank"
+                                className="text-[10px] bg-orange-100 text-orange-800 px-2 py-1 rounded border border-orange-200 hover:bg-orange-200 flex items-center gap-1"
+                            >
+                                <Edit size={10} /> Editar Definições
+                            </a>
+                        </div>
 
                         <div className="flex gap-2 mb-4">
                             <select
