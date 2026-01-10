@@ -185,17 +185,12 @@ export function InterpretationMatrix() {
     // Renderização do Modo de Edição
     if (isEditing) {
         return (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                {/* GUIA DO EDITOR */}
+            <div className="space-y-6">
                 <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex gap-3">
                     <Info className="text-indigo-600 flex-shrink-0" size={20} />
                     <div className="text-sm text-indigo-900">
-                        <strong>Editor de Padrões:</strong>
-                        <ul className="list-disc pl-4 mt-1 space-y-1 opacity-90">
-                            <li><strong>Nome:</strong> Identificação amigável para você (ex: "Líder Natural").</li>
-                            <li><strong>Código:</strong> Identificador do sistema (ex: <code>LOGIC_NAT</code>). Use este código nos templates como <code>{`{{CATEGORY_LOGIC_NAT}}`}</code>.</li>
-                            <li><strong>Condições:</strong> A regra mágica. O padrão só ativa se o candidato atender a <em>todas</em> as condições listadas abaixo.</li>
-                        </ul>
+                        <strong>Editor de Padrões</strong>
+                        <p className="mt-1 opacity-90">Defina aqui as regras e textos do padrão.</p>
                     </div>
                 </div>
 
