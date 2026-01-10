@@ -405,7 +405,7 @@ export class InterpretationEngineService implements OnModuleInit {
 
             generated.push({
                 code: section.code,
-                title: section.title,
+                title: this.fixEncoding(section.title),
                 content,
                 order: section.displayOrder
             });
