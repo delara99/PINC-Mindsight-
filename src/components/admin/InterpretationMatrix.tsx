@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interpretationService, InterpretationPattern } from '../../services/interpretation';
-import { Plus, Edit, Trash2, X, PlusCircle, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, X, PlusCircle, Save, Info, Sparkles } from 'lucide-react';
 
 const CATEGORIES = [
     { id: 'LOGIC', label: 'Lógica-Sentimento', prefix: 'LOGIC_' },
@@ -182,6 +182,7 @@ export function InterpretationMatrix() {
         setCurrentPattern({ ...currentPattern, needs } as any);
     };
 
+    // Renderização do Modo de Edição
     if (isEditing) {
         return (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
