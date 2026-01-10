@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { API_URL } from '../../../../src/config/api';
+import { Edit, Trash2, Plus, GripVertical, Save, X, Info } from 'lucide-react';
 
 interface InterpretationSection {
     id: string;
-    position: number;
+    displayOrder: number; // Mapeado do DB
     title: string;
-    description: string;
-    type: string;
+    template: string; // Conteúdo do DB
+    code: string;
     active: boolean;
+    audience: string;
 }
 
 export default function InterpretationSectionsPage() {
@@ -19,49 +21,18 @@ export default function InterpretationSectionsPage() {
     const token = useAuthStore((state) => state.token);
     const [sections, setSections] = useState<InterpretationSection[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [newSection, setNewSection] = useState({ title: '', code: '', description: '', position: 0 });
-    const [creating, setCreating] = useState(false);
+
+    // Edição / Criação
+    const [editingSection, setEditingSection] = useState<Partial<InterpretationSection> | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (token) loadSections();
     }, [token]);
 
-    const handleCreate = async () => {
-        setCreating(true);
-        try {
-            const res = await fetch(`${API_URL}/api/v1/interpretation/sections`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    title: newSection.title,
-                    code: newSection.code,
-                    template: newSection.description,
-                    audience: 'CLIENT',
-                    displayOrder: Number(newSection.position)
-                })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                setShowCreateModal(false);
-                loadSections();
-                setNewSection({ title: '', code: '', description: '', position: 0 });
-            } else {
-                alert(data.message || 'Erro ao criar');
-            }
-        } catch (e) {
-            alert('Erro ao criar seção');
-        } finally {
-            setCreating(false);
-        }
-    };
-
     const loadSections = async () => {
         try {
+            setLoading(true);
             const res = await fetch(`${API_URL}/api/v1/interpretation/sections`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -79,138 +50,199 @@ export default function InterpretationSectionsPage() {
         }
     };
 
-    if (loading) {
-        return <div className="p-8 text-center">Carregando seções...</div>;
-    }
+    const handleSave = async () => {
+        if (!editingSection) return;
+        setIsSaving(true);
+        try {
+            const isNew = !editingSection.id;
+            const url = isNew
+                ? `${API_URL}/api/v1/interpretation/sections`
+                : `${API_URL}/api/v1/interpretation/sections/${editingSection.id}`;
+
+            const payload = {
+                title: editingSection.title,
+                code: editingSection.code,
+                template: editingSection.template,
+                audience: editingSection.audience || 'CLIENT',
+                displayOrder: Number(editingSection.displayOrder || 0)
+            };
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setEditingSection(null);
+                loadSections();
+                alert('Seção salva com sucesso!');
+            } else {
+                alert(data.message || 'Erro ao salvar');
+            }
+        } catch (e) {
+            alert('Erro de conexão');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Tem certeza que deseja remover esta seção? Isso afetará todos os relatórios futuros.')) return;
+        try {
+            const res = await fetch(`${API_URL}/api/v1/interpretation/sections/${id}/delete`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) loadSections();
+        } catch (e) {
+            alert('Erro ao remover');
+        }
+    };
+
+    if (loading) return <div className="p-8 text-center text-gray-500">Carregando seções...</div>;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="md:flex md:items-center md:justify-between mb-8">
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Seções Interpretativas
-                    </h1>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Seções Interpretativas</h1>
                     <p className="mt-2 text-sm text-gray-600">
-                        Gerencie os blocos de conteúdo do relatório avançado
+                        Blocos de conteúdo que compõem o relatório final.
+                        Ordene e edite os templates dinâmicos.
                     </p>
                 </div>
-                <div className="mt-4 flex md:mt-0 md:ml-4">
+                <div className="flex gap-2">
                     <button
                         onClick={() => router.push('/dashboard/metrics-config')}
-                        className="mr-3 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="px-4 py-2 border rounded-md shadow-sm text-sm text-gray-700 bg-white hover:bg-gray-50"
                     >
-                        ← Voltar
+                        Voltar
                     </button>
                     <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                        onClick={() => setEditingSection({ title: '', code: 'SEC_NEW', template: '', displayOrder: sections.length + 10, audience: 'CLIENT' })}
+                        className="px-4 py-2 bg-primary text-white rounded-md shadow-sm text-sm font-medium flex items-center gap-2 hover:bg-indigo-700"
                     >
-                        + Nova Seção
+                        <Plus size={16} /> Nova Seção
                     </button>
                 </div>
             </div>
 
-            {sections.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg shadow">
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma seção encontrada</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Verifique se a migração das seções foi executada corretamente.
-                    </p>
-                </div>
-            ) : (
-                <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                    <ul className="divide-y divide-gray-200">
-                        {sections.map((section) => (
-                            <li key={section.id}>
-                                <div className="px-4 py-4 sm:px-6 hover:bg-gray-50 transition cursor-pointer">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center">
-                                            <span className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-800 font-bold text-xs">
-                                                {section.position}
-                                            </span>
-                                            <p className="ml-4 text-sm font-medium text-indigo-600 truncate">
-                                                {section.title}
-                                            </p>
-                                        </div>
-                                        <div className="ml-2 flex-shrink-0 flex">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${section.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                {section.active ? 'Ativo' : 'Inativo'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-2 sm:flex sm:justify-between">
-                                        <div className="sm:flex">
-                                            <p className="flex items-center text-sm text-gray-500">
-                                                Tipo: {section.type}
-                                            </p>
-                                        </div>
-                                        <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                            <p className="line-clamp-1">{section.description}</p>
-                                        </div>
+            <div className="space-y-4">
+                {sections.map((section) => (
+                    <div key={section.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                        <div className="text-gray-400 cursor-move">
+                            <GripVertical size={20} />
+                        </div>
+                        <div className="w-12 text-center font-mono text-sm font-bold text-gray-500 bg-gray-100 rounded px-1">
+                            {section.displayOrder}
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-gray-900">{section.title}</h3>
+                            <div className="flex gap-2 text-xs text-gray-500 mt-1">
+                                <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{section.code}</span>
+                                {section.template && (
+                                    <span className="truncate max-w-[300px] italic opacity-70">
+                                        Template: {section.template.substring(0, 50)}...
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setEditingSection(section)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            >
+                                <Edit size={18} />
+                            </button>
+                            <button
+                                onClick={() => handleDelete(section.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Modal Editor */}
+            {editingSection && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl">
+                        <div className="flex justify-between items-center px-6 py-4 border-b">
+                            <h2 className="text-xl font-bold">
+                                {editingSection.id ? 'Editar Seção' : 'Nova Seção'}
+                            </h2>
+                            <button onClick={() => setEditingSection(null)}><X className="text-gray-400" /></button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <div className="grid grid-cols-6 gap-4">
+                                <div className="col-span-4">
+                                    <label className="block text-sm font-medium mb-1">Título da Seção (Cabeçalho no Relatório)</label>
+                                    <input
+                                        className="w-full border rounded p-2"
+                                        value={editingSection.title || ''}
+                                        onChange={e => setEditingSection({ ...editingSection, title: e.target.value })}
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-sm font-medium mb-1">Ordem</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border rounded p-2"
+                                        value={editingSection.displayOrder || 0}
+                                        onChange={e => setEditingSection({ ...editingSection, displayOrder: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-sm font-medium mb-1">Código</label>
+                                    <input
+                                        className="w-full border rounded p-2 font-mono text-xs bg-gray-50"
+                                        value={editingSection.code || ''}
+                                        onChange={e => setEditingSection({ ...editingSection, code: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex-1">
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium">Template de Conteúdo</label>
+                                    <div className="text-xs text-blue-600 flex gap-1 items-center bg-blue-50 px-2 py-1 rounded">
+                                        <Info size={12} />
+                                        Variáveis: {`{{CATEGORY_xxx}}, {{NEEDS_LIST}}, {{E_SCORE}}`}
                                     </div>
                                 </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {/* Create Modal */}
-            {showCreateModal && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                        <h3 className="text-lg font-bold mb-4">Nova Seção</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Título</label>
-                                <input
-                                    className="w-full border p-2 rounded mt-1"
-                                    value={newSection.title}
-                                    onChange={e => setNewSection({ ...newSection, title: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Código (ex: OVERVIEW)</label>
-                                <input
-                                    className="w-full border p-2 rounded mt-1"
-                                    value={newSection.code}
-                                    onChange={e => setNewSection({ ...newSection, code: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Posição</label>
-                                <input
-                                    type="number"
-                                    className="w-full border p-2 rounded mt-1"
-                                    value={newSection.position}
-                                    onChange={e => setNewSection({ ...newSection, position: Number(e.target.value) })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Texto/Template</label>
                                 <textarea
-                                    className="w-full border p-2 rounded mt-1"
-                                    rows={4}
-                                    value={newSection.description}
-                                    onChange={e => setNewSection({ ...newSection, description: e.target.value })}
+                                    className="w-full h-[300px] border rounded p-4 font-mono text-sm bg-slate-50 leading-relaxed"
+                                    value={editingSection.template || ''}
+                                    onChange={e => setEditingSection({ ...editingSection, template: e.target.value })}
+                                    placeholder="Ex: Nesta seção, analisamos sua lógica. {{CATEGORY_LOGIC}}"
                                 />
+                                <div className="mt-2 text-xs text-gray-500 space-y-1 bg-gray-50 p-3 rounded">
+                                    <p><b>Tags Inteligentes Disponíveis:</b></p>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        <li><code>{`{{CATEGORY_LOGIC}}`}</code>: Insere o texto do melhor padrão da cat. Lógica.</li>
+                                        <li><code>{`{{CATEGORY_ADAPT}}`}</code>: Adaptação. <code>{`{{CATEGORY_CONCR}}`}</code>: Concreto.</li>
+                                        <li><code>{`{{CATEGORY_EMOT}}`}</code>: Emoção. <code>{`{{CATEGORY_REC}}`}</code>: Recomendações.</li>
+                                        <li><code>{`{{NEEDS_LIST}}`}</code>: Lista de necessidades psicológicas identificadas.</li>
+                                        <li><code>{`{{AUTO_PATTERNS}}`}</code>: Lista simples de todos padrões.</li>
+                                        <li><code>{`{{E_SCORE}}`}</code>, <code>{`{{A_SCORE}}`}</code>...: Pontuação numérica (0-100).</li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div className="flex justify-end gap-2 pt-4">
-                                <button
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleCreate}
-                                    disabled={creating}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                                >
-                                    {creating ? 'Salvando...' : 'Salvar'}
-                                </button>
-                            </div>
+                        </div>
+
+                        <div className="border-t px-6 py-4 flex justify-end gap-3 bg-gray-50">
+                            <button onClick={() => setEditingSection(null)} className="px-4 py-2 border rounded">Cancelar</button>
+                            <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded flex items-center gap-2">
+                                <Save size={16} /> Salvar Seção
+                            </button>
                         </div>
                     </div>
                 </div>
