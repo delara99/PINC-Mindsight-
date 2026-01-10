@@ -206,15 +206,31 @@ export function InterpretationMatrix() {
                         <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
                             {currentPattern.conditions?.map((cond: any, idx: number) => (
                                 <div key={idx} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
-                                    <select
-                                        className="border rounded p-2 text-sm bg-white flex-1 min-w-[200px]"
-                                        value={cond.trait}
-                                        onChange={e => updateCondition(idx, 'trait', e.target.value)}
-                                    >
-                                        {TRAIT_OPTIONS.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex-1 min-w-[200px] flex gap-1">
+                                        <select
+                                            className="border rounded p-2 text-sm bg-white flex-1"
+                                            value={TRAIT_OPTIONS.some(t => t.value === cond.trait) ? cond.trait : 'custom'}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val === 'custom') updateCondition(idx, 'trait', '');
+                                                else updateCondition(idx, 'trait', val);
+                                            }}
+                                        >
+                                            {TRAIT_OPTIONS.map(opt => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                            <option value="custom">-- Outra / Personalizada --</option>
+                                        </select>
+                                        {!TRAIT_OPTIONS.some(t => t.value === cond.trait) && (
+                                            <input
+                                                className="border rounded p-2 text-sm w-32 bg-yellow-50 placeholder-gray-400"
+                                                placeholder="ex: facet_resiliencia"
+                                                value={cond.trait}
+                                                onChange={e => updateCondition(idx, 'trait', e.target.value)}
+                                                title="Digite a chave da faceta (ex: facet_nome_da_faceta)"
+                                            />
+                                        )}
+                                    </div>
                                     <select
                                         className="border rounded p-2 text-sm bg-white w-20"
                                         value={cond.operator}

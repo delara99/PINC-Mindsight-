@@ -415,19 +415,40 @@ export class InterpretationEngineService implements OnModuleInit {
     }
 
     /**
-     * Corrige problemas de encoding (UTF-8 interpretado como Latin-1)
+     * Corrige problemas de encoding (UTF-8 interpretado como Latin-1) e Mojibake comum.
      */
     private fixEncoding(text: string): string {
         if (!text) return text;
+
+        let result = text;
+
         try {
-            // Detecta padrões comuns de erro de encoding
-            if (text.match(/[\u00C0-\u00FF]{2,}/) || text.includes('Ã')) {
-                return Buffer.from(text, 'binary').toString('utf-8');
+            // Tenta correção padrão via Buffer se detectar sequências UTF-8 quebradas
+            if (result.match(/[\u00C0-\u00FF]{2,}/)) {
+                result = Buffer.from(result, 'binary').toString('utf-8');
             }
-            return text;
         } catch (e) {
-            return text;
+            // Falha silenciosa no buffer, tenta replacements manuais comuns
         }
+
+        // Tabela de correções manuais para garantir 100% de limpeza visual
+        // Isso resolve casos onde o Buffer não pega (dupla conversão específica)
+        const replacements: Record<string, string> = {
+            'Ã¢': 'â', 'Ã¡': 'á', 'Ã©': 'é', 'Ã': 'í', 'Ã´': 'ô', 'Ãº': 'ú',
+            'Ã£': 'ã', 'Ãµ': 'õ', 'Ã§': 'ç', 'Ãª': 'ê', 'Ã ': 'à',
+            'Ã\x82': 'Â', 'Ã\x81': 'Á', 'Ã\x89': 'É', 'Ã\x8D': 'Í', 'Ã\x94': 'Ô', 'Ã\x9A': 'Ú',
+            'Ã\x83': 'Ã', 'Ã\x95': 'Õ', 'Ã\x87': 'Ç', 'Ã\x8A': 'Ê',
+            'vocÃª': 'você', 'VocÃª': 'Você',
+            'padrÃ£o': 'padrão', 'funcionaÂ': 'funciona',
+            'nÃ£o': 'não', 'sÃ£o': 'são', 'trÃªs': 'três'
+        };
+
+        for (const [key, val] of Object.entries(replacements)) {
+            // Replace global
+            result = result.split(key).join(val);
+        }
+
+        return result;
     }
 
     /**
