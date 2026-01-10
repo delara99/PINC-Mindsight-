@@ -172,11 +172,16 @@ export default function AssessmentDetailsPage() {
                                                 'VERY_LOW': 'Muito Baixo'
                                             })[trait.level as string] || trait.level))}
                                             facets={trait.facets?.map((f: any) => ({
-                                                facet: f.facetName,
+                                                facet: f.name, // Ajustado de f.facetName para f.name conforme retorno do service
                                                 normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
                                                 rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
                                             })) || []}
-                                            customTexts={trait.customTexts}
+                                            customTexts={{
+                                                summary: trait.customTexts?.summary || trait.interpretation, // Use Backend Description (Config Ativa) as fallback
+                                                practicalImpact: trait.customTexts?.practicalImpact,
+                                                expertSynthesis: trait.customTexts?.expertSynthesis,
+                                                expertHypothesis: trait.customTexts?.expertHypothesis
+                                            }}
                                             defaultExpanded={true}
                                         />
                                     ))}
