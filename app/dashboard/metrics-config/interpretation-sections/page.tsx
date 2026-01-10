@@ -108,24 +108,50 @@ export default function InterpretationSectionsPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-8">
+            {/* GUIA EDUCACIONAL */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100 shadow-sm mb-8 space-y-4">
+                <div className="flex items-start gap-4">
+                    <div className="p-3 bg-purple-100 rounded-lg text-purple-700">
+                        <Info size={32} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-purple-900">Arquitetura do Relatório</h2>
+                        <p className="text-purple-800 mt-1 max-w-4xl text-sm leading-relaxed">
+                            Aqui você define a "espinha dorsal" do relatório <strong>Análise Avançada de Padrões</strong>.
+                            Cada seção é um bloco (capítulo) que será renderizado se estiver ativo.
+                            Dentro de cada seção, você usa <strong>Templates</strong> para injetar o conteúdo dinâmico (os textos dos padrões que o candidato "ativou").
+                        </p>
+                    </div>
+                </div>
+                <div className="flex gap-4 text-xs mt-2 pl-[60px]">
+                    <div className="bg-white/60 p-2 px-3 rounded border border-purple-100 flex items-center gap-2">
+                        <span className="font-mono bg-purple-100 text-purple-800 px-1 rounded">{`{{CATEGORY_LOGIC}}`}</span>
+                        <span>Injeta o texto do padrão da categoria "Lógica"</span>
+                    </div>
+                    <div className="bg-white/60 p-2 px-3 rounded border border-purple-100 flex items-center gap-2">
+                        <span className="font-mono bg-purple-100 text-purple-800 px-1 rounded">{`{{NEEDS_LIST}}`}</span>
+                        <span>Injeta a lista de necessidades psicológicas detectadas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Seções Interpretativas</h1>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Blocos de conteúdo que compõem o relatório final.
-                        Ordene e edite os templates dinâmicos.
+                    <h1 className="text-lg font-bold text-gray-900">Gerenciar Seções</h1>
+                    <p className="mt-1 text-xs text-gray-500">
+                        Arraste para reordenar (edite a ordem numérica) ou clique em editar para mudar o template.
                     </p>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={() => router.push('/dashboard/metrics-config')}
-                        className="px-4 py-2 border rounded-md shadow-sm text-sm text-gray-700 bg-white hover:bg-gray-50"
+                        className="px-4 py-2 border rounded-md shadow-sm text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                     >
                         Voltar
                     </button>
                     <button
                         onClick={() => setEditingSection({ title: '', code: 'SEC_NEW', template: '', displayOrder: sections.length + 10, audience: 'CLIENT' })}
-                        className="px-4 py-2 bg-primary text-white rounded-md shadow-sm text-sm font-medium flex items-center gap-2 hover:bg-indigo-700"
+                        className="px-4 py-2 bg-primary text-white rounded-md shadow-sm text-sm font-medium flex items-center gap-2 hover:bg-indigo-700 transition-colors"
                     >
                         <Plus size={16} /> Nova Seção
                     </button>

@@ -133,16 +133,42 @@ export default function PsychologicalNeedsPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-8">
+            {/* GUIA EDUCACIONAL */}
+            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 p-6 rounded-xl border border-teal-100 shadow-sm mb-8 space-y-4">
+                <div className="flex items-start gap-4">
+                    <div className="p-3 bg-teal-100 rounded-lg text-teal-700">
+                        <AlertCircle size={32} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-teal-900">Dicionário de Necessidades Psicológicas</h2>
+                        <p className="text-teal-800 mt-1 max-w-4xl text-sm leading-relaxed">
+                            As <strong>Necessidades</strong> representam o "motor interno" do indivíduo. Elas não são traços de personalidade, mas sim <em>o que a pessoa busca</em> no ambiente para se sentir motivada.
+                            Um padrão (ex: Líder) gera essas necessidades (ex: Autonomia). Aqui você define o texto que explica cada necessidade.
+                        </p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-4">
+                    <div className="bg-white/60 p-3 rounded border border-teal-100">
+                        <strong className="block text-teal-900 mb-1">👀 Visão Cliente (Candidato)</strong>
+                        Focada em autoconhecimento. Use linguagem empática e direta ("Você valoriza...").
+                    </div>
+                    <div className="bg-white/60 p-3 rounded border border-teal-100">
+                        <strong className="block text-teal-900 mb-1">🔬 Visão Especialista (RH)</strong>
+                        Focada em gestão e análise técnica. Use termos comportamentais ("Requer feedback constante...").
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Necessidades</h1>
-                    <p className="text-sm text-gray-600 mt-1">Edite os textos, definições e recomendações que aparecem nos relatórios.</p>
+                    <h1 className="text-xl font-bold text-gray-900">Lista de Definições</h1>
+                    <p className="text-xs text-gray-500">Clique em uma necessidade para editar todos os seus textos.</p>
                 </div>
                 <button
                     onClick={() => router.push('/dashboard/metrics-config')}
-                    className="px-4 py-2 border rounded-md shadow-sm text-sm text-gray-700 bg-white hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                 >
-                    Voltar
+                    Voltar para Configurações
                 </button>
             </div>
 
