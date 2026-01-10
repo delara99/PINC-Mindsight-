@@ -104,6 +104,7 @@ export interface CreatePatternDto {
     conditions: PatternCondition;
     priority?: number;
     tenantId?: string;
+    needs?: { needId: string; intensity: number }[];
 }
 
 /**

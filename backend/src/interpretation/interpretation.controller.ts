@@ -84,8 +84,15 @@ export class InterpretationController {
                 description: dto.description,
                 conditions: dto.conditions as any,
                 priority: dto.priority || 0,
-                tenantId: tenantId
-            }
+                tenantId: tenantId,
+                patternNeeds: {
+                    create: dto.needs?.map(n => ({
+                        needId: n.needId,
+                        intensity: n.intensity
+                    }))
+                }
+            },
+            include: { patternNeeds: true }
         });
 
         return {
@@ -107,18 +114,32 @@ export class InterpretationController {
             throw new Error("Acesso negado: Você não pode editar este padrão.");
         }
 
-        const pattern = await this.prisma.interpretationPattern.update({
-            where: { id },
-            data: {
-                code: dto.code,
-                name: dto.name,
-                description: dto.description,
-                conditions: dto.conditions as any,
-                priority: dto.priority
-            }
-        });
+        // Update Pattern logic with transaction for needs
+        const [updatedPattern] = await this.prisma.$transaction([
+            this.prisma.interpretationPattern.update({
+                where: { id },
+                data: {
+                    code: dto.code,
+                    name: dto.name,
+                    description: dto.description,
+                    conditions: dto.conditions as any,
+                    priority: dto.priority
+                }
+            }),
+            // If needs provided, replace them
+            ...(dto.needs ? [
+                this.prisma.patternNeed.deleteMany({ where: { patternId: id } }),
+                this.prisma.patternNeed.createMany({
+                    data: dto.needs.map(n => ({
+                        patternId: id,
+                        needId: n.needId,
+                        intensity: n.intensity
+                    }))
+                })
+            ] : [])
+        ]);
 
-        return { success: true, data: pattern };
+        return { success: true, data: updatedPattern };
     }
 
     /**
@@ -163,12 +184,10 @@ export class InterpretationController {
      */
     @Post('needs')
     async createNeed(@Body() dto: CreateNeedDto, @Request() req) {
-        if (req.user.role !== 'SUPER_ADMIN') {
-            return {
-                success: false,
-                message: 'Apenas SUPER_ADMIN pode criar necessidades'
-            };
-        }
+        // Permitir criação por TENANT_ADMIN para seu próprio uso
+        const tenantId = req.user.role === 'SUPER_ADMIN' ? (dto.tenantId || null) : req.user.tenantId;
+
+        if (req.user.role === 'MEMBER') throw new Error("Acesso negado");
 
         const need = await this.prisma.psychologicalNeed.create({
             data: {
@@ -183,7 +202,7 @@ export class InterpretationController {
                 favorableEnvironments: JSON.stringify(dto.favorableEnvironments),
                 unfavorableEnvironments: JSON.stringify(dto.unfavorableEnvironments),
                 recommendations: JSON.stringify(dto.recommendations),
-                tenantId: dto.tenantId || null
+                tenantId: tenantId
             }
         });
 

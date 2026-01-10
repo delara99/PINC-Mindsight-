@@ -68,6 +68,11 @@ export function InterpretationMatrix() {
         queryFn: interpretationService.listPatterns
     });
 
+    const { data: availableNeeds } = useQuery<any[]>({
+        queryKey: ['interpretation-needs'],
+        queryFn: interpretationService.listNeeds
+    });
+
     const filteredPatterns = patterns?.filter(p => {
         const cat = CATEGORIES.find(c => c.id === activeCategory);
         if (!cat) return true;
@@ -154,15 +159,38 @@ export function InterpretationMatrix() {
 
     if (isLoading) return <div className="p-8 text-center text-gray-500">Carregando padrões...</div>;
 
+    const addNeed = (needId: string) => {
+        if (!needId) return;
+        const currentNeeds = (currentPattern as any).needs || [];
+        if (currentNeeds.some((n: any) => n.needId === needId)) return;
+
+        setCurrentPattern({
+            ...currentPattern,
+            needs: [...currentNeeds, { needId, intensity: 100 }]
+        } as any);
+    };
+
+    const removeNeed = (index: number) => {
+        const needs = [...((currentPattern as any).needs || [])];
+        needs.splice(index, 1);
+        setCurrentPattern({ ...currentPattern, needs } as any);
+    };
+
+    const updateNeedIntensity = (index: number, intensity: number) => {
+        const needs = [...((currentPattern as any).needs || [])];
+        needs[index] = { ...needs[index], intensity };
+        setCurrentPattern({ ...currentPattern, needs } as any);
+    };
+
     if (isEditing) {
         return (
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                 <div className="flex justify-between mb-6">
-                    <h2 className="text-xl font-bold">{currentPattern.id ? 'Editar Padrão' : 'Novo Padrão'}</h2>
+                    <h2 className="text-xl font-bold">{currentPattern.id ? (currentPattern.name || 'Editar Padrão') : 'Novo Padrão'}</h2>
                     <button onClick={() => setIsEditing(false)}><X className="text-gray-500" /></button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Nome do Padrão</label>
@@ -190,11 +218,57 @@ export function InterpretationMatrix() {
                     <div>
                         <label className="block text-sm font-medium mb-1">Texto Descritivo (Interpretação Completa)</label>
                         <textarea
-                            className="w-full border rounded p-2 min-h-[200px]"
+                            className="w-full border rounded p-2 min-h-[150px]"
                             value={currentPattern.description || ''}
                             onChange={e => setCurrentPattern({ ...currentPattern, description: e.target.value })}
                             placeholder="Cole o texto da planilha aqui..."
                         />
+                    </div>
+
+                    {/* NECESSIDADES PSICOLÓGICAS */}
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                        <label className="block text-sm font-bold text-orange-900 mb-2">Necessidades Psicológicas Geradas</label>
+                        <p className="text-xs text-orange-700 mb-4">Quais necessidades este padrão desperta ou satisfaz?</p>
+
+                        <div className="flex gap-2 mb-4">
+                            <select
+                                className="flex-1 border rounded p-2 text-sm"
+                                onChange={(e) => {
+                                    addNeed(e.target.value);
+                                    e.target.value = '';
+                                }}
+                            >
+                                <option value="">+ Vincular Necessidade...</option>
+                                {availableNeeds?.map(n => (
+                                    <option key={n.id} value={n.id}>{n.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            {((currentPattern as any).needs || []).map((lnk: any, idx: number) => {
+                                const needName = availableNeeds?.find(n => n.id === lnk.needId)?.name || 'Desconhecida';
+                                return (
+                                    <div key={idx} className="flex justify-between items-center bg-white p-2 rounded border shadow-sm">
+                                        <span className="font-medium text-sm text-gray-700">{needName}</span>
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-xs text-gray-500">Intensidade:</label>
+                                            <input
+                                                type="range" min="0" max="100"
+                                                value={lnk.intensity}
+                                                onChange={e => updateNeedIntensity(idx, Number(e.target.value))}
+                                                className="w-24"
+                                            />
+                                            <span className="text-xs font-bold w-8">{lnk.intensity}%</span>
+                                            <button onClick={() => removeNeed(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 size={14} /></button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {((currentPattern as any).needs || []).length === 0 && (
+                                <p className="text-xs text-gray-400 italic text-center">Nenhuma necessidade vinculada.</p>
+                            )}
+                        </div>
                     </div>
 
                     <div>
@@ -303,7 +377,13 @@ export function InterpretationMatrix() {
                     patternsToDisplay.map(pattern => (
                         <div key={pattern.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setCurrentPattern(pattern); setIsEditing(true); }} className="p-1.5 bg-gray-100 rounded-full hover:bg-blue-100 text-blue-600"><Edit size={14} /></button>
+                                <button onClick={() => {
+                                    setCurrentPattern({
+                                        ...pattern,
+                                        needs: pattern.patternNeeds?.map(pn => ({ needId: pn.needId, intensity: pn.intensity })) || []
+                                    } as any);
+                                    setIsEditing(true);
+                                }} className="p-1.5 bg-gray-100 rounded-full hover:bg-blue-100 text-blue-600"><Edit size={14} /></button>
                                 <button onClick={() => { if (confirm('Excluir?')) deleteMutation.mutate(pattern.id) }} className="p-1.5 bg-gray-100 rounded-full hover:bg-red-100 text-red-600"><Trash2 size={14} /></button>
                             </div>
 

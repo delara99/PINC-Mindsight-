@@ -9,6 +9,7 @@ export interface InterpretationPattern {
     description: string;
     conditions: any[];
     priority: number;
+    patternNeeds?: { needId: string; intensity: number; need?: { name: string } }[];
 }
 
 export const interpretationService = {
@@ -58,5 +59,14 @@ export const interpretationService = {
         });
         if (!res.ok) throw new Error('Falha ao remover padrão');
         return await res.json();
+    },
+
+    listNeeds: async () => {
+        const res = await fetch(`${API_URL}/api/v1/interpretation/needs`, {
+            headers: interpretationService.getHeaders()
+        });
+        if (!res.ok) throw new Error('Falha ao listar necessidades');
+        const json = await res.json();
+        return json.data;
     }
 };
