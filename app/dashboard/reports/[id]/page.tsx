@@ -172,7 +172,7 @@ export default function AssessmentDetailsPage() {
                                                 'VERY_LOW': 'Muito Baixo'
                                             })[trait.level as string] || trait.level))}
                                             facets={trait.facets?.map((f: any) => ({
-                                                facet: f.name, // Ajustado de f.facetName para f.name conforme retorno do service
+                                                facet: f.name || f.facetName || f.facet, // Fallback robusto para nome da faceta
                                                 normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
                                                 rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
                                             })) || []}
