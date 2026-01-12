@@ -416,6 +416,7 @@ export class InterpretationEngineService implements OnModuleInit {
 
     /**
      * Corrige problemas de encoding (UTF-8 interpretado como Latin-1) e Mojibake comum.
+     * Inclui dicionário de recuperação para palavras corrompidas por perda de bytes.
      */
     private fixEncoding(text: string): string {
         if (!text) return text;
@@ -428,24 +429,41 @@ export class InterpretationEngineService implements OnModuleInit {
                 result = Buffer.from(result, 'binary').toString('utf-8');
             }
         } catch (e) {
-            // Falha silenciosa no buffer, tenta replacements manuais comuns
+            // Falha silenciosa
         }
 
-        // Tabela de correções manuais para garantir 100% de limpeza visual
-        // Isso resolve casos onde o Buffer não pega (dupla conversão específica)
+        // Tabela de correções manuais expandida para casos de perda de caractere (Sued Project)
         const replacements: Record<string, string> = {
+            // Casos UTF-8 -> Latin1 comuns
             'Ã¢': 'â', 'Ã¡': 'á', 'Ã©': 'é', 'Ã': 'í', 'Ã´': 'ô', 'Ãº': 'ú',
             'Ã£': 'ã', 'Ãµ': 'õ', 'Ã§': 'ç', 'Ãª': 'ê', 'Ã ': 'à',
             'Ã\x82': 'Â', 'Ã\x81': 'Á', 'Ã\x89': 'É', 'Ã\x8D': 'Í', 'Ã\x94': 'Ô', 'Ã\x9A': 'Ú',
             'Ã\x83': 'Ã', 'Ã\x95': 'Õ', 'Ã\x87': 'Ç', 'Ã\x8A': 'Ê',
-            'vocÃª': 'você', 'VocÃª': 'Você',
-            'padrÃ£o': 'padrão', 'funcionaÂ': 'funciona',
-            'nÃ£o': 'não', 'sÃ£o': 'são', 'trÃªs': 'três'
+            // Casos de perda de caractere observados (Mojibake irreversível sem dicionário)
+            'Recomendaies': 'Recomendações',
+            'recomendaies': 'recomendações',
+            'Validao': 'Validação',
+            'validao': 'validação',
+            'Aao': 'Ação',
+            'aao': 'ação',
+            'Voc ': 'Você ',
+            'Voc?': 'Você',
+            'Descriao': 'Descrição',
+            'descriao': 'descrição',
+            'Seo': 'Seção',
+            'Informaies': 'Informações',
+            'informaies': 'informações',
+            'padrÃ£o': 'padrão',
+            'funcionaÂ': 'funciona',
+            'nÃ£o': 'não',
+            'sÃ£o': 'são',
+            'trÃªs': 'três'
         };
 
         for (const [key, val] of Object.entries(replacements)) {
-            // Replace global
-            result = result.split(key).join(val);
+            // Regex global segura
+            const reg = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            result = result.replace(reg, val);
         }
 
         return result;
@@ -573,6 +591,9 @@ export class InterpretationEngineService implements OnModuleInit {
             // Se não encontrar, retorna string vazia para não quebrar layout
             return '';
         });
+
+        // Limpeza final: Remover parênteses vazios gerados por variáveis ausentes
+        text = text.replace(/\(\s*\)/g, '');
 
         return text;
     }
