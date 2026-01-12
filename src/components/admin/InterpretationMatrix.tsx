@@ -279,8 +279,20 @@ export function InterpretationMatrix() {
                         <div>
                             <div className="flex justify-between items-center mb-2">
                                 <label className="block text-sm font-medium">Condições (Gatilhos)</label>
-                                <button onClick={addCondition} className="text-xs flex items-center gap-1 text-primary"><PlusCircle size={14} /> Adicionar Regra</button>
+                                <button onClick={addCondition} className="text-xs flex items-center gap-1 text-primary hover:underline"><PlusCircle size={14} /> Adicionar Regra</button>
                             </div>
+
+                            {/* Educational Legend for Params */}
+                            <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded mb-3 border border-blue-100">
+                                <strong>💡 Como definir os valores (Escala 0-100):</strong>
+                                <ul className="mt-1 list-disc list-inside space-y-1 text-blue-700/80">
+                                    <li>Utilize sempre o <strong>Percentil</strong> (0 a 100) e não a nota bruta (1 a 5).</li>
+                                    <li><strong>Baixo (1 ou 2):</strong> Use <code>&lt; 35</code> (Abaixo de 35%).</li>
+                                    <li><strong>Alto (4 ou 5):</strong> Use <code>&gt; 65</code> (Acima de 65%).</li>
+                                    <li>O sistema aceita decimais (ex: <code>33.5</code>). Use ponto ou vírgula conforme seu computador.</li>
+                                </ul>
+                            </div>
+
                             <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
                                 {currentPattern.conditions?.map((cond: any, idx: number) => (
                                     <div key={idx} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
