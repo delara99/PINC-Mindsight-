@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { API_URL } from '../../../../src/config/api';
-import { Edit, Trash2, Plus, GripVertical, Save, X, Info } from 'lucide-react';
+import { Edit, Trash2, Plus, GripVertical, Save, X, Info, Sparkles } from 'lucide-react';
 
 interface InterpretationSection {
     id: string;
@@ -239,9 +239,54 @@ export default function InterpretationSectionsPage() {
                             <div className="flex-1">
                                 <div className="flex justify-between items-center mb-1">
                                     <label className="block text-sm font-medium">Template de Conteúdo</label>
-                                    <div className="text-xs text-blue-600 flex gap-1 items-center bg-blue-50 px-2 py-1 rounded">
-                                        <Info size={12} />
-                                        Variáveis: {`{{CATEGORY_xxx}}, {{NEEDS_LIST}}, {{E_SCORE}}`}
+
+                                    {/* Smart Blocks Toolbar */}
+                                    <div className="flex flex-wrap gap-2 my-2 bg-indigo-50 p-2 rounded border border-indigo-100 items-center">
+                                        <div className="text-xs font-bold text-indigo-800 mr-2 flex items-center gap-1"><Sparkles size={12} /> Inserir Rápido:</div>
+
+                                        {/* Score Logic Builder */}
+                                        <select
+                                            className="text-xs border rounded px-2 py-1 bg-white hover:border-indigo-500 cursor-pointer"
+                                            onChange={(e) => {
+                                                const trait = e.target.value;
+                                                if (!trait) return;
+                                                const code = `{{#if ${trait}_SCORE > 50}} ALTO {{else}} BAIXO {{/if}}`; // Simple template
+                                                setEditingSection(prev => ({ ...prev, template: (prev?.template || '') + code }));
+                                                e.target.value = '';
+                                            }}
+                                        >
+                                            <option value="">📊 Pontuação + Lógica...</option>
+                                            <option value="E">Se Extroversão (E)...</option>
+                                            <option value="A">Se Amabilidade (A)...</option>
+                                            <option value="C">Se Conscienciosidade (C)...</option>
+                                            <option value="N">Se Neuroticismo (N)...</option>
+                                            <option value="O">Se Abertura (O)...</option>
+                                        </select>
+
+                                        {/* Pattern Tags */}
+                                        <select
+                                            className="text-xs border rounded px-2 py-1 bg-white hover:border-indigo-500 cursor-pointer"
+                                            onChange={(e) => {
+                                                const tag = e.target.value;
+                                                if (!tag) return;
+                                                setEditingSection(prev => ({ ...prev, template: (prev?.template || '') + tag }));
+                                                e.target.value = '';
+                                            }}
+                                        >
+                                            <option value="">🧩 Padrão Detectado...</option>
+                                            <option value="{{CATEGORY_LOGIC}}">Lógica vs Sentimento</option>
+                                            <option value="{{CATEGORY_ADAPT}}">Adaptação vs Estrutura</option>
+                                            <option value="{{CATEGORY_CONCR}}">Concreto vs Abstrato</option>
+                                            <option value="{{CATEGORY_EMOT}}">Emoção vs Razão</option>
+                                        </select>
+
+                                        {/* Simple Vars */}
+                                        <button
+                                            className="text-xs bg-white border px-2 py-1 rounded hover:bg-gray-50"
+                                            onClick={() => setEditingSection(prev => ({ ...prev, template: (prev?.template || '') + '{{NEEDS_LIST}}' }))}
+                                        >
+                                            🎯 Necessidades
+                                        </button>
                                     </div>
                                 </div>
                                 <textarea
