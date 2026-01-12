@@ -89,6 +89,11 @@ export function InterpretationMatrix() {
             queryClient.invalidateQueries({ queryKey: ['interpretation-patterns'] });
             setIsEditing(false);
             setCurrentPattern({});
+            // alert('Padrão criado com sucesso!'); // Optional: toast
+        },
+        onError: (error: any) => {
+            console.error(error);
+            alert(`Erro ao criar padrão: ${error.message}`);
         }
     });
 
@@ -98,6 +103,10 @@ export function InterpretationMatrix() {
             queryClient.invalidateQueries({ queryKey: ['interpretation-patterns'] });
             setIsEditing(false);
             setCurrentPattern({});
+        },
+        onError: (error: any) => {
+            console.error(error);
+            alert(`Erro ao atualizar padrão: ${error.message}`);
         }
     });
 
