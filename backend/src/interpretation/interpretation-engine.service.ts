@@ -361,6 +361,9 @@ export class InterpretationEngineService implements OnModuleInit {
         if (!key) return '';
         if (['E', 'A', 'C', 'O', 'N'].includes(key)) return key;
 
+        // Limpeza prévia: remove " (Geral)" e espaços extras
+        const cleanKey = key.toLowerCase().replace(/\s*\(geral\)$/, '').trim();
+
         // Mapeamentos comuns
         const map: Record<string, string> = {
             'extroversao': 'E', 'extraversion': 'E',
@@ -370,15 +373,14 @@ export class InterpretationEngineService implements OnModuleInit {
             'abertura': 'O', 'abertura a experiencia': 'O', 'openness': 'O'
         };
 
-        if (map[key.toLowerCase()]) return map[key.toLowerCase()];
+        if (map[cleanKey]) return map[cleanKey];
 
         // Se parece chave de faceta mas não começa com facet_, tenta prefixar
         // O extractBigFiveScores gera chaves como 'facet_acolhimento'
         // Se o user digitou 'acolhimento', vira 'facet_acolhimento'
         if (!key.startsWith('facet_')) {
-            // Tenta ver se é uma das chaves Big5 antes de assumir faceta
-            // Mas já checamos map.
-            return 'facet_' + key.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            // Usa o cleanKey para gerar o nome da faceta também, removendo caracteres especiais
+            return 'facet_' + cleanKey.replace(/[^a-z0-9]/g, '_');
         }
 
         return key;
