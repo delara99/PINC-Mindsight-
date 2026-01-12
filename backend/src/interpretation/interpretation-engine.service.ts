@@ -247,12 +247,41 @@ export class InterpretationEngineService implements OnModuleInit {
 
     /**
      * Verifica se scores atendem condições do padrão
+     * Suporta formato Legacy (Objeto) e Novo (Array de Regras)
      */
     private matchesPattern(
         scores: BigFiveScores,
-        conditions: PatternCondition
+        conditions: any
     ): boolean {
-        for (const [trait, rules] of Object.entries(conditions)) {
+        if (!conditions) return false;
+
+        // Formato Novo: Array de Regras [{ trait, operator, value }] (AND logic)
+        if (Array.isArray(conditions)) {
+            if (conditions.length === 0) return false; // Array vazio não deve ativar padrão
+
+            for (const rule of conditions) {
+                // Normaliza chave do traço
+                const traitKey = this.normalizeTraitKey(rule.trait);
+                const score = (scores as any)[traitKey];
+
+                if (score === undefined) return false; // Score não encontrado
+
+                const limit = Number(rule.value);
+
+                switch (rule.operator) {
+                    case 'lt': if (!(score < limit)) return false; break;
+                    case 'gt': if (!(score > limit)) return false; break;
+                    case 'lte': if (!(score <= limit)) return false; break; // Suporte futuro
+                    case 'gte': if (!(score >= limit)) return false; break; // Suporte futuro
+                    case 'eq': if (Math.abs(score - limit) > 0.5) return false; break;
+                    default: return false;
+                }
+            }
+            return true;
+        }
+
+        // Formato Legacy: Objeto { trait: { min, max } }
+        for (const [trait, rules] of Object.entries(conditions as PatternCondition)) {
             const score = scores[trait as keyof BigFiveScores];
             if (score === undefined) continue;
 
@@ -268,16 +297,51 @@ export class InterpretationEngineService implements OnModuleInit {
      */
     private calculateMatchScore(
         scores: BigFiveScores,
-        conditions: PatternCondition
+        conditions: any
     ): number {
         let totalFit = 0;
         let count = 0;
 
-        for (const [trait, rules] of Object.entries(conditions)) {
+        // Formato Novo (Array)
+        if (Array.isArray(conditions)) {
+            for (const rule of conditions) {
+                const traitKey = this.normalizeTraitKey(rule.trait);
+                const score = (scores as any)[traitKey];
+                if (score === undefined) continue;
+
+                const limit = Number(rule.value);
+                let fit = 0;
+
+                // Match Score heuristic: Distância do limiar
+                // Se regra é > 50 e score é 80, fit alto. Se score é 51, fit baixo (limítrofe)?
+                // Ou fit binário 100? Vamos usar distanciamento simples.
+                // Para simplificar: Se passou, 100%. Ou refinar depois.
+                // Vamos manter calculo de distância se possível.
+
+                // Heurística simples: Score exato = 100% fit se for EQ.
+                // Se for GT/LT, quanto mais longe do limiar na direção certa, melhor?
+                // Ex: >50. Score 90 é "mais" >50 que 51.
+                const diff = Math.abs(score - limit);
+
+                if (rule.operator === 'eq') {
+                    fit = Math.max(0, 100 - diff * 2); // +/- 50 tolerance?
+                } else {
+                    // Para > ou <, vamos considerar quão "seguro" é o match. Cap em 100.
+                    fit = Math.min(100, 50 + diff); // Base 50 + excedente
+                }
+
+                totalFit += fit;
+                count++;
+            }
+            return count > 0 ? Math.round(totalFit / count) : 0;
+        }
+
+        // Formato Legacy
+        const rulesObj = conditions as PatternCondition;
+        for (const [trait, rules] of Object.entries(rulesObj)) {
             const score = scores[trait as keyof BigFiveScores];
             if (score === undefined) continue;
 
-            // Quanto mais próximo do centro da faixa, maior o fit
             const minValue = rules.min ?? 0;
             const maxValue = rules.max ?? 100;
             const center = (minValue + maxValue) / 2;
@@ -290,6 +354,34 @@ export class InterpretationEngineService implements OnModuleInit {
         }
 
         return count > 0 ? Math.round(totalFit / count) : 0;
+    }
+
+    // Helper para normalizar chaves de lookup (E_SCORE -> E, Facet -> facet_...)
+    private normalizeTraitKey(key: string): string {
+        if (!key) return '';
+        if (['E', 'A', 'C', 'O', 'N'].includes(key)) return key;
+
+        // Mapeamentos comuns
+        const map: Record<string, string> = {
+            'extroversao': 'E', 'extraversion': 'E',
+            'amabilidade': 'A', 'agreeableness': 'A',
+            'conscienciosidade': 'C', 'conscientiousness': 'C',
+            'neuroticismo': 'N', 'neuroticism': 'N', 'estabilidade emocional': 'N',
+            'abertura': 'O', 'abertura a experiencia': 'O', 'openness': 'O'
+        };
+
+        if (map[key.toLowerCase()]) return map[key.toLowerCase()];
+
+        // Se parece chave de faceta mas não começa com facet_, tenta prefixar
+        // O extractBigFiveScores gera chaves como 'facet_acolhimento'
+        // Se o user digitou 'acolhimento', vira 'facet_acolhimento'
+        if (!key.startsWith('facet_')) {
+            // Tenta ver se é uma das chaves Big5 antes de assumir faceta
+            // Mas já checamos map.
+            return 'facet_' + key.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        }
+
+        return key;
     }
 
     /**
