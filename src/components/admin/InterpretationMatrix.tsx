@@ -330,13 +330,34 @@ export function InterpretationMatrix() {
                                             <option value="gt">{'>'}</option>
                                             <option value="eq">{'='}</option>
                                         </select>
-                                        <input
-                                            type="number"
-                                            className="border rounded p-2 text-sm w-20"
-                                            value={cond.value}
-                                            onChange={e => updateCondition(idx, 'value', Number(e.target.value))}
-                                        />
-                                        <button onClick={() => removeCondition(idx)} className="text-red-500"><Trash2 size={16} /></button>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                className="border rounded p-2 text-sm w-20"
+                                                value={cond.value}
+                                                onChange={e => updateCondition(idx, 'value', Number(e.target.value))}
+                                                placeholder="0-100"
+                                            />
+                                            {/* Smart Preset Selector */}
+                                            <select
+                                                className="border rounded p-2 text-xs bg-blue-50 text-blue-800 font-medium cursor-pointer max-w-[120px]"
+                                                onChange={(e) => {
+                                                    const [op, val] = e.target.value.split(':');
+                                                    if (op && val) {
+                                                        updateCondition(idx, 'operator', op);
+                                                        updateCondition(idx, 'value', Number(val));
+                                                    }
+                                                }}
+                                                value=""
+                                            >
+                                                <option value="" disabled>⚡ Nível rápido...</option>
+                                                <option value="lt:25">Nota 1 (Mto Baixo)</option>
+                                                <option value="lt:45">Nota 2 (Baixo)</option>
+                                                <option value="gt:55">Nota 4 (Alto)</option>
+                                                <option value="gt:75">Nota 5 (Mto Alto)</option>
+                                            </select>
+                                        </div>
+                                        <button onClick={() => removeCondition(idx)} className="text-red-500 hover:bg-red-50 p-2 rounded"><Trash2 size={16} /></button>
                                     </div>
                                 ))}
                                 {(!currentPattern.conditions || currentPattern.conditions.length === 0) && (
