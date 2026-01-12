@@ -327,7 +327,9 @@ export function InterpretationMatrix() {
                                             onChange={e => updateCondition(idx, 'operator', e.target.value)}
                                         >
                                             <option value="lt">{'<'}</option>
+                                            <option value="lte">{'<='}</option>
                                             <option value="gt">{'>'}</option>
+                                            <option value="gte">{'>='}</option>
                                             <option value="eq">{'='}</option>
                                         </select>
                                         <div className="flex items-center gap-2">
@@ -351,10 +353,10 @@ export function InterpretationMatrix() {
                                                 value=""
                                             >
                                                 <option value="" disabled>⚡ Nível rápido...</option>
-                                                <option value="lt:25">Nota 1 (Mto Baixo)</option>
-                                                <option value="lt:45">Nota 2 (Baixo)</option>
-                                                <option value="gt:55">Nota 4 (Alto)</option>
-                                                <option value="gt:75">Nota 5 (Mto Alto)</option>
+                                                <option value="lte:25">Nota 1 (Mto Baixo)</option>
+                                                <option value="lte:45">Nota 2 (Baixo)</option>
+                                                <option value="gte:55">Nota 4 (Alto)</option>
+                                                <option value="gte:75">Nota 5 (Mto Alto)</option>
                                             </select>
                                         </div>
                                         <button onClick={() => removeCondition(idx)} className="text-red-500 hover:bg-red-50 p-2 rounded"><Trash2 size={16} /></button>

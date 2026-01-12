@@ -271,8 +271,8 @@ export class InterpretationEngineService implements OnModuleInit {
                 switch (rule.operator) {
                     case 'lt': if (!(score < limit)) return false; break;
                     case 'gt': if (!(score > limit)) return false; break;
-                    case 'lte': if (!(score <= limit)) return false; break; // Suporte futuro
-                    case 'gte': if (!(score >= limit)) return false; break; // Suporte futuro
+                    case 'lte': if (!(score <= limit)) return false; break;
+                    case 'gte': if (!(score >= limit)) return false; break;
                     case 'eq': if (Math.abs(score - limit) > 0.5) return false; break;
                     default: return false;
                 }
