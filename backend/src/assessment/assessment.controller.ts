@@ -1223,36 +1223,7 @@ export class AssessmentController {
     ) {
         const user = req.user;
 
-        // Verificar se a avaliação existe e é do tipo BIG_FIVE
-        const assessment = await this.prisma.assessmentModel.findUnique({
-            where: { id: assessmentId }
-        });
-
-        if (!assessment) {
-            throw new BadRequestException('Avaliação não encontrada');
-        }
-
-        if (assessment.type !== 'BIG_FIVE') {
-            throw new BadRequestException('Este endpoint é apenas para avaliações Big Five');
-        }
-
-        // Calcular scores
-        const result = await this.bigFiveCalculator.calculateBigFiveScores(
-            assessmentId,
-            body.responses
-        );
-
-        // Gerar recomendações
-        const recommendations = this.bigFiveCalculator.generateDevelopmentRecommendations(result);
-
-        // Adicionar descrições detalhadas
-        const enrichedTraits = result.traits.map(trait => ({
-            ...trait,
-            description: this.bigFiveCalculator.getTraitDescription(trait.trait, trait.normalizedScore)
-        }));
-
-        // ========== ADICIONAR TEXTOS INTERPRETATIVOS ==========
-        // Buscar assignment para pegar configId e tenantId
+        // 1. Encontrar o Assignment associado (Contexto do Usuário)
         const assignment = await this.prisma.assessmentAssignment.findFirst({
             where: {
                 assessmentId: assessmentId,
@@ -1263,49 +1234,93 @@ export class AssessmentController {
             }
         });
 
-        let traitsWithTexts = enrichedTraits;
+        if (!assignment) {
+            throw new BadRequestException('Avaliação iniciada não encontrada para este usuário');
+        }
 
-        if (assignment) {
-            try {
-                // ... (Lógica existente de Textos) ...
-                const effectiveTenantId = assignment.config?.tenantId || user.tenantId;
-                const configId = assignment.configId;
+        // 2. Calcular Scores usando o NOVO ScoreCalculationService (que suporta TalkingTo/Subtraços)
+        let scoreResult;
+        try {
+            // Nota: ScoreCalculationService lê as respostas do banco. 
+            // Se as respostas no Body forem mais recentes que o banco, deveríamos salvar antes?
+            // O frontend (QuestionnaireEngine) costuma salvar passo a passo. 
+            // Assumimos que o banco está atualizado ou que o 'assignmentId' é suficiente.
+            scoreResult = await this.scoreCalculation.calculateScores(assignment.id);
+        } catch (e) {
+            console.error('Erro no cálculo de scores:', e);
+            throw new BadRequestException('Falha ao calcular scores: ' + e.message);
+        }
 
-                if (effectiveTenantId) {
-                    // ... (Buscar textos) ...
-                    const report = await this.interpretation.generateFullReport(
-                        assignment.id,
-                        effectiveTenantId,
-                        configId
+        const { scores, conceptScores, subtraitScores, dichotomyScores } = scoreResult;
+
+        // 3. Converter Formato (Map -> Array) para o Frontend
+        const traitsArray = Object.values(scores).map((s: any) => ({
+            trait: s.traitName, // Mapeia "Extroversão"
+            traitKey: s.traitKey,
+            normalizedScore: s.normalizedScore,
+            rawScore: s.score,
+            level: s.level,
+            interpretation: s.interpretation || s.levelLabel,
+            facets: s.facets?.map((f: any) => ({
+                facet: f.facetName,
+                score: f.normalizedScore, // Frontend espera 0-100 ou 0-5? BigFiveResults usa normalizedScore (0-100) geralmente.
+                rawScore: f.rawScore
+            })) || []
+        }));
+
+        // 4. Buscar Textos Interpretativos (Enriquecimento)
+        let enrichedTraits = traitsArray;
+        try {
+            const effectiveTenantId = assignment.config?.tenantId || user.tenantId;
+            const configId = assignment.configId;
+
+            if (effectiveTenantId) {
+                const report = await this.interpretation.generateFullReport(
+                    assignment.id,
+                    effectiveTenantId,
+                    configId
+                );
+
+                enrichedTraits = traitsArray.map(trait => {
+                    // Match por Key ou Name
+                    const reportTrait = report.traits?.find((t: any) =>
+                        t.key === trait.traitKey || t.name === trait.trait
                     );
 
-                    traitsWithTexts = enrichedTraits.map(trait => {
-                        const enriched = report.traits?.find((t: any) => t.key === trait.trait);
-                        return {
-                            ...trait,
-                            customTexts: enriched?.customTexts || null
-                        };
-                    });
-                }
-            } catch (error) {
-                console.error('[calculateBigFive] ⚠️ Erro ao buscar textos:', error);
+                    return {
+                        ...trait,
+                        description: reportTrait?.description || 'Descrição não disponível.',
+                        customTexts: reportTrait?.customTexts || null
+                    };
+                });
             }
+        } catch (error) {
+            console.error('[calculateBigFive] ⚠️ Erro ao buscar textos:', error);
+            // Fallback para descrições básicas se houver
         }
 
         // ========== INTERPRETAÇÃO AVANÇADA (NOVO) ==========
         let advancedSections: any[] = [];
+        let recommendations: string[] = [];
+
         if (process.env.ENABLE_ADVANCED_INTERPRETATION !== 'false') {
             try {
-                // Converter traits array para Objeto de Scores (engineScores)
+                // Converter traits array para Objeto de Scores (engineScores) para o motor legado/híbrido
                 const engineScores: any = {};
-                traitsWithTexts.forEach(t => {
-                    // t.trait geralmente é 'extroversao', 'amabilidade', etc.
+                enrichedTraits.forEach(t => {
                     engineScores[t.trait] = t.normalizedScore;
-                    // Adicionar fallback para maiúsculas se necessário, mas o engine já trata isso
                 });
 
-                console.log('[calculateBigFive] Gerando seções avançadas para:', Object.keys(engineScores));
-                advancedSections = await this.interpretationEngine.generateAdvancedSections(engineScores);
+                // Gerar Recomendações (usando o calculator antigo por enquanto, adaptando o input)
+                const mockLegacyResult = { traits: enrichedTraits, timestamp: new Date() };
+                recommendations = this.bigFiveCalculator.generateDevelopmentRecommendations(mockLegacyResult as any);
+
+                console.log('[calculateBigFive] Gerando seções avançadas com Concept Scores...');
+                advancedSections = await this.interpretationEngine.generateAdvancedSections(engineScores, {
+                    conceptScores,
+                    subtraitScores,
+                    dichotomyScores
+                });
                 console.log(`[calculateBigFive] ✅ Geradas ${advancedSections.length} seções avançadas`);
             } catch (e) {
                 console.error('[calculateBigFive] ⚠️ Erro na interpretação avançada:', e);
@@ -1313,10 +1328,16 @@ export class AssessmentController {
         }
 
         return {
-            ...result,
-            traits: traitsWithTexts,
-            recommendations,
-            interpretationSections: advancedSections
+            traits: enrichedTraits,
+            recommendations: recommendations || [],
+            interpretationSections: advancedSections,
+            calculatedScores: { // Add full structure just in case
+                scores: traitsArray,
+                conceptScores,
+                subtraitScores,
+                dichotomyScores
+            },
+            timestamp: new Date()
         };
     }
 
