@@ -323,6 +323,14 @@ export default function AssessmentDetailsPage() {
                             : Object.values(assignment.calculatedScores.scores);
 
                         scoresList.forEach((trait: any) => {
+                            // DEBUG: Log do trait completo
+                            console.log('[Report] Processing trait:', {
+                                traitKey: trait.traitKey,
+                                traitName: trait.traitName,
+                                name: trait.name,
+                                facetsCount: trait.facets?.length || 0
+                            });
+
                             // SEMPRE traduzir usando a chave inglesa primeiro, depois o nome
                             let traitNamePT = traitTranslation[trait.traitKey];
 
@@ -331,10 +339,23 @@ export default function AssessmentDetailsPage() {
                                 traitNamePT = traitTranslation[trait.traitName];
                             }
 
-                            // Se ainda não encontrou, usar o nome original como último recurso
+                            // Se ainda não encontrou, tentar por trait.name
                             if (!traitNamePT) {
-                                traitNamePT = trait.traitName || trait.traitKey;
+                                traitNamePT = traitTranslation[trait.name];
                             }
+
+                            // Se ainda não encontrou, usar o valor original (mas garantir que não seja undefined)
+                            if (!traitNamePT) {
+                                traitNamePT = trait.traitName || trait.name || trait.traitKey || 'Traço Desconhecido';
+                            }
+
+                            // VALIDAÇÃO FINAL: Se ainda for undefined/null, pular este trait
+                            if (!traitNamePT || traitNamePT === 'undefined' || traitNamePT === 'null') {
+                                console.warn('[Report] ⚠️ Pulando trait com nome inválido:', trait);
+                                return; // Pular este trait
+                            }
+
+                            console.log('[Report] ✅ Using trait name:', traitNamePT);
 
                             if (trait.facets && trait.facets.length > 0) {
                                 trait.facets.forEach((facet: any) => {
@@ -345,7 +366,10 @@ export default function AssessmentDetailsPage() {
                                     let val = typeof facet.score === 'number' ? facet.score : 0;
                                     if (val > 5) val = val / 20;
 
-                                    chartData[`${traitNamePT}::${facet.name || facet.facetName}`] = val;
+                                    const facetNameFinal = facet.name || facet.facetName || 'Faceta Desconhecida';
+
+                                    console.log('[Report] Adding to chart:', `${traitNamePT}::${facetNameFinal} = ${val}`);
+                                    chartData[`${traitNamePT}::${facetNameFinal}`] = val;
                                 });
                             }
                         });

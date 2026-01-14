@@ -30,13 +30,31 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
     Object.entries(scores).forEach(([key, value]) => {
         const parts = key.split('::');
         if (parts.length === 2) {
-            const [traitNameRaw, facetName] = parts;
+            const [traitNameRaw, facetNameRaw] = parts;
             const score = typeof value === 'number' ? value : parseFloat(value as string) || 0;
-            const traitName = (traitNameRaw || '').trim(); // Garantir que não seja undefined
+            const traitName = (traitNameRaw || '').trim();
+            const facetName = (facetNameRaw || '').trim();
 
-            // FILTRO: Ignorar se traitName ou facetName estiverem vazios/undefined
-            if (!traitName || !facetName || traitName === 'undefined' || facetName === 'undefined') {
-                console.warn('[BigFiveChart] Ignorando entrada inválida:', { traitName, facetName });
+            // FILTRO: Ignorar apenas se realmente inválidos
+            // Permite nomes como "Traço Desconhecido" mas bloqueia undefined/null
+            const isInvalidTrait = !traitName ||
+                traitName === 'undefined' ||
+                traitName === 'null' ||
+                traitName.length === 0;
+
+            const isInvalidFacet = !facetName ||
+                facetName === 'undefined' ||
+                facetName === 'null' ||
+                facetName.length === 0;
+
+            if (isInvalidTrait || isInvalidFacet) {
+                console.warn('[BigFiveChart] Ignorando entrada inválida:', {
+                    original: key,
+                    traitName,
+                    facetName,
+                    isInvalidTrait,
+                    isInvalidFacet
+                });
                 return; // Pular esta entrada
             }
 
