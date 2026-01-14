@@ -423,9 +423,23 @@ export class ScoreCalculationService {
     }
 
     private normalizeScore(rawScore: number): number {
+        // PROTEÇÃO ANTI-NaN
+        if (typeof rawScore !== 'number' || isNaN(rawScore) || !isFinite(rawScore)) {
+            console.warn('[normalizeScore] Valor inválido recebido:', rawScore, '- Retornando 0');
+            return 0;
+        }
+
         if (rawScore < 1) return 0;
         const norm = ((rawScore - 1) / 4) * 100;
-        return Math.min(100, Math.max(0, Math.round(norm)));
+        const result = Math.min(100, Math.max(0, Math.round(norm)));
+
+        // VALIDAÇÃO FINAL
+        if (isNaN(result) || !isFinite(result)) {
+            console.error('[normalizeScore] Resultado NaN detectado! rawScore:', rawScore);
+            return 0;
+        }
+
+        return result;
     }
 
     private determineLevel(score: number, config: any): 'VERY_LOW' | 'LOW' | 'AVERAGE' | 'HIGH' | 'VERY_HIGH' {

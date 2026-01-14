@@ -197,6 +197,22 @@ export class InterpretationService {
                 }))
             });
 
+            // Montar customTexts
+            const customTexts = {
+                summary: relevantTexts.find((t: any) => t.category === 'SUMMARY')?.text,
+                practicalImpact: relevantTexts.filter((t: any) => t.category === 'PRACTICAL_IMPACT').map((t: any) => ({ context: t.context, text: t.text })),
+                expertSynthesis: relevantTexts.find((t: any) => t.category === 'EXPERT_SYNTHESIS')?.text,
+                expertHypothesis: relevantTexts.filter((t: any) => t.category === 'EXPERT_HYPOTHESIS').map((t: any) => ({ type: t.context, text: t.text }))
+            };
+
+            // LOG dos customTexts gerados
+            console.log(`[InterpretationService] 📄 CustomTexts gerados para ${trait.traitKey}:`, {
+                summary: customTexts.summary ? `${customTexts.summary.substring(0, 60)}...` : 'UNDEFINED',
+                practicalImpactCount: customTexts.practicalImpact.length,
+                expertSynthesis: customTexts.expertSynthesis ? `${customTexts.expertSynthesis.substring(0, 60)}...` : 'UNDEFINED',
+                expertHypothesisCount: customTexts.expertHypothesis.length
+            });
+
             report.traits.push({
                 key: trait.traitKey,
                 name: trait.name,
@@ -206,14 +222,7 @@ export class InterpretationService {
                 level: level,
                 interpretation: interpretation,
                 facets: facets,
-
-                customTexts: {
-                    summary: relevantTexts.find((t: any) => t.category === 'SUMMARY')?.text,
-                    practicalImpact: relevantTexts.filter((t: any) => t.category === 'PRACTICAL_IMPACT').map((t: any) => ({ context: t.context, text: t.text })),
-                    expertSynthesis: relevantTexts.find((t: any) => t.category === 'EXPERT_SYNTHESIS')?.text,
-                    expertHypothesis: relevantTexts.filter((t: any) => t.category === 'EXPERT_HYPOTHESIS').map((t: any) => ({ type: t.context, text: t.text }))
-                },
-
+                customTexts: customTexts,
             });
         }
 
