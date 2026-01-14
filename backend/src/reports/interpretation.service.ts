@@ -146,7 +146,7 @@ export class InterpretationService {
 
             // FALLBACK 1: Se não achou textos na config atual, busca de QUALQUER config do MESMO TENANT
             if (!relevantTexts || relevantTexts.length === 0) {
-                console.warn(`[generateFullReport] Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}. Tentando fallback do tenant...`); \n
+                console.warn(`[generateFullReport] Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}. Tentando fallback do tenant...`);
                 // Buscar qualquer config ativa do tenant que tenha esses textos
                 const tenantConfig = await this.prisma.bigFiveConfig.findFirst({
                     where: {
