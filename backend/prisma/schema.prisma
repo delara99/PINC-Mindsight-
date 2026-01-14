@@ -759,6 +759,7 @@ model InterpretationPattern {
   conditions  Json
   priority    Int     @default(0)
   active      Boolean @default(true)
+  category    String? // e.g. 'Lógica-Sentimento', 'Adaptação-Estrutura'
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interpretationService, InterpretationPattern } from '../../services/interpretation';
 import { Plus, Edit, Trash2, X, PlusCircle, Save, Info, Sparkles } from 'lucide-react';
+import { QUESTION_TAXONOMY } from '../../data/question-taxonomy';
 
 const CATEGORIES = [
+    { id: 'INTRO', label: 'Introversão-Extroversão', prefix: 'INTRO_' },
     { id: 'LOGIC', label: 'Lógica-Sentimento', prefix: 'LOGIC_' },
     { id: 'ADAPT', label: 'Adaptação-Estrutura', prefix: 'ADAPT_' },
     { id: 'CONCR', label: 'Concreto-Abstrato', prefix: 'CONCR_' },
@@ -53,13 +55,31 @@ const TRAIT_OPTIONS = [
     { value: 'facet_acoes', label: 'Abe: Ações' },
     { value: 'facet_ideias', label: 'Abe: Ideias' },
     { value: 'facet_valores', label: 'Abe: Valores' },
+    { value: 'facet_valores', label: 'Abe: Valores' },
 ];
+
+// Gerar Opções de Subtraços dinamicamente (TalkingTo)
+const SUBTRAIT_OPTIONS: { value: string, label: string }[] = [];
+Object.values(QUESTION_TAXONOMY).forEach((trait: any) => {
+    trait.dichotomies.forEach((dic: any) => {
+        dic.subtraits.forEach((sub: any) => {
+            sub.options.forEach((opt: string) => {
+                const clean = opt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+                SUBTRAIT_OPTIONS.push({
+                    value: `S_${clean}_SCORE`,
+                    label: `Subtraço: ${opt} (Score)`
+                });
+            });
+        });
+    });
+});
+const ALL_TRAIT_OPTIONS = [...TRAIT_OPTIONS, ...SUBTRAIT_OPTIONS];
 
 export function InterpretationMatrix() {
     const queryClient = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
-    const [currentPattern, setCurrentPattern] = useState<Partial<InterpretationPattern>>({});
-    const [activeCategory, setActiveCategory] = useState('LOGIC');
+    const [currentPattern, setCurrentPattern] = useState<Partial<InterpretationPattern> & { category?: string }>({});
+    const [activeCategory, setActiveCategory] = useState('INTRO');
 
     // Lista
     const { data: patterns, isLoading } = useQuery<InterpretationPattern[]>({
@@ -76,6 +96,15 @@ export function InterpretationMatrix() {
         const cat = CATEGORIES.find(c => c.id === activeCategory);
         if (!cat) return true;
 
+        // Se tiver categoria explícita salva no banco, usa ela
+        if (p.category) {
+            // Mapeia ids de categoria para labels se necessário, ou armazena o ID no DB? 
+            // Vamos assumir que armazenamos o LABEL da categoria no DB para ser legível (ex: 'Lógica-Sentimento').
+            // Mas o filtro aqui usa activeCategory (ID: 'LOGIC').
+            return p.category === cat.label;
+        }
+
+        // Fallback: Prefixo
         if (activeCategory === 'OTHER') {
             return !CATEGORIES.some(c => c.id !== 'OTHER' && p.code.startsWith(c.prefix));
         }
@@ -231,6 +260,23 @@ export function InterpretationMatrix() {
                             </div>
                         </div>
 
+                        {/* Category Selector */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Categoria (Aba)</label>
+                            <select
+                                className="w-full border rounded p-2"
+                                value={currentPattern.category || ''}
+                                onChange={e => setCurrentPattern({ ...currentPattern, category: e.target.value })}
+                            >
+                                <option value="">-- Automática (Baseada no Code) --</option>
+                                {CATEGORIES.filter(c => c.id !== 'OTHER').map(c => (
+                                    <option key={c.id} value={c.label}>{c.label}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-400 mt-1">Define em qual aba esse padrão aparecerá.</p>
+                        </div>
+
+
                         <div>
                             <label className="block text-sm font-medium mb-1">Texto Descritivo (Interpretação Completa)</label>
                             <textarea
@@ -308,19 +354,19 @@ export function InterpretationMatrix() {
                                         <div className="flex-1 min-w-[200px] flex gap-1">
                                             <select
                                                 className="border rounded p-2 text-sm bg-white flex-1"
-                                                value={TRAIT_OPTIONS.some(t => t.value === cond.trait) ? cond.trait : 'custom'}
+                                                value={ALL_TRAIT_OPTIONS.some(t => t.value === cond.trait) ? cond.trait : 'custom'}
                                                 onChange={e => {
                                                     const val = e.target.value;
                                                     if (val === 'custom') updateCondition(idx, 'trait', '');
                                                     else updateCondition(idx, 'trait', val);
                                                 }}
                                             >
-                                                {TRAIT_OPTIONS.map(opt => (
+                                                {ALL_TRAIT_OPTIONS.map(opt => (
                                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                 ))}
                                                 <option value="custom">-- Outra / Personalizada --</option>
                                             </select>
-                                            {!TRAIT_OPTIONS.some(t => t.value === cond.trait) && (
+                                            {!ALL_TRAIT_OPTIONS.some(t => t.value === cond.trait) && (
                                                 <input
                                                     className="border rounded p-2 text-sm w-32 bg-yellow-50 placeholder-gray-400"
                                                     placeholder="ex: facet_resiliencia"

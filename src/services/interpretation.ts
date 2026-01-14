@@ -9,6 +9,8 @@ export interface InterpretationPattern {
     description: string;
     conditions: any[];
     priority: number;
+    active: boolean;
+    category?: string;
     patternNeeds?: { needId: string; intensity: number; need?: { name: string } }[];
 }
 
