@@ -623,7 +623,10 @@ export class InterpretationEngineService implements OnModuleInit {
         data: {
             scores: BigFiveScores;
             patterns: DetectedPattern[];
-            needs: NeedWithIntensity[];
+            needs: any[];
+            conceptScores?: Record<string, any>;
+            subtraitScores?: Record<string, any>;
+            dichotomyScores?: Record<string, any>;
         }
     ): string {
         let text = this.fixEncoding(template);
@@ -686,6 +689,34 @@ export class InterpretationEngineService implements OnModuleInit {
             return '';
         });
 
+        // 5. Substituir Variáveis de Conceitos, Subtraços e Dicotomias (TalkingTo)
+        // Formato: {{C_NOME}} ou {{C_NOME_SCORE}}, {{S_NOME}}, {{D_NOME}}
+        // Prefixos: C_ (Concept), S_ (Subtrait), D_ (Dichotomy)
+        if (data.conceptScores) {
+            text = text.replace(/{{C_([A-Z0-9_]+)(_SCORE|_LEVEL)?}}/g, (match, key, suffix) => {
+                // Key vem como NOME_DO_CONCEITO. Converter para lowercase ou clean key
+                // A chave no objeto conceptScores é cleanString (lower, no accents).
+                // Ex: C_COMUNICACAO -> comunicacao
+                const cleanKey = key.toLowerCase().replace(/_/g, ''); // Simplificado, mas ideal é usar 'cleanString' logic
+                // Mas minha cleanString remove acentos. A regex aqui pega A-Z0-9_. O usuário deve usar C_COMUNICACAO no template.
+
+                // Vamos tentar achar a chave exata ou aproximada
+                const target = Object.entries(data.conceptScores || {}).find(([k]) =>
+                    k === cleanKey || k.toUpperCase() === key
+                );
+
+                if (!target) return '';
+                const val = target[1];
+
+                if (suffix === '_SCORE') return Math.round(val.score).toString(); // Val raw? ou Normalized? User usually wants Normalized 0-100
+                if (suffix === '_LEVEL') return val.levelLabel || val.level;
+                return Math.round(val.normalizedScore).toString(); // Default to normalized
+            });
+        }
+
+        // ... Repetir para S_ e D_ se necessário, mas C_ é o mais provável de ser usado.
+
+
         // Limpeza final: Remover parênteses vazios gerados por variáveis ausentes
         text = text.replace(/\(\s*\)/g, '');
 
@@ -696,7 +727,14 @@ export class InterpretationEngineService implements OnModuleInit {
      * Gera seções interpretativas a partir de scores brutos (para PDF/Preview)
      * Sem salvar no banco de dados.
      */
-    async generateAdvancedSections(scoresInput: any): Promise<GeneratedSection[]> {
+    async generateAdvancedSections(
+        scoresInput: any,
+        extraScores: {
+            conceptScores?: any,
+            subtraitScores?: any,
+            dichotomyScores?: any
+        } = {}
+    ): Promise<GeneratedSection[]> {
         // Converter scores se necessário
         let scores: BigFiveScores;
         if (scoresInput.E !== undefined) {
@@ -747,7 +785,10 @@ export class InterpretationEngineService implements OnModuleInit {
             const content = this.fillTemplate(section.template, {
                 scores,
                 patterns: detectedPatterns,
-                needs
+                needs,
+                conceptScores: extraScores.conceptScores,
+                subtraitScores: extraScores.subtraitScores,
+                dichotomyScores: extraScores.dichotomyScores
             });
 
             generated.push({

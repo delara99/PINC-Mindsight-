@@ -195,6 +195,13 @@ model Question {
   isActive  Boolean @default(true)
   facetKey  String?
 
+  // New Classification Fields (TalkingTo Model)
+  dichotomy         String?  // e.g., 'Introversão-Extroversão'
+  questionTrait     String?  // e.g., 'EXTROVERTIDO'
+  subtraitDichotomy String?  // e.g., 'ouvinte-falante'
+  subtrait          String?  // e.g., 'falante'
+  concept           String?  // e.g., 'comunicação'
+
   createdAt DateTime             @default(now())
   responses AssessmentResponse[]
 

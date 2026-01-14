@@ -255,7 +255,11 @@ export class AssessmentController {
             // FORÇAR HABILITADO POR PADRÃO (fallback para true se undefined)
             if (process.env.ENABLE_ADVANCED_INTERPRETATION !== 'false') {
                 try {
-                    advancedSections = await this.interpretationEngine.generateAdvancedSections(scores);
+                    advancedSections = await this.interpretationEngine.generateAdvancedSections(scores, {
+                        conceptScores: scoreResult['conceptScores'],
+                        subtraitScores: scoreResult['subtraitScores'],
+                        dichotomyScores: scoreResult['dichotomyScores']
+                    });
                     console.log(`[calculateRealScores] ✅ Geradas ${advancedSections.length} seções avançadas`);
                 } catch (e) {
                     console.error('[calculateRealScores] ⚠️ Erro na interpretação avançada:', e);

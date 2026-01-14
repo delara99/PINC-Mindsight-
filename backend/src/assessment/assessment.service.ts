@@ -51,7 +51,7 @@ export class AssessmentService {
 
         // Se não tiver questions, atualiza só o básico
         if (!questions) {
-             return this.prisma.assessmentModel.update({
+            return this.prisma.assessmentModel.update({
                 where: { id },
                 data: assessmentData,
                 include: { questions: true }
@@ -67,14 +67,14 @@ export class AssessmentService {
             });
 
             // 2. Gerenciar Questões
-            const existingQuestions = await tx.question.findMany({ 
+            const existingQuestions = await tx.question.findMany({
                 where: { assessmentModelId: id },
                 select: { id: true }
             });
             const existingIds = existingQuestions.map(q => q.id);
-            
+
             // Identificar IDs que chegaram no payload (ignorando 'temp-')
-             const incomingIds = questions
+            const incomingIds = questions
                 .filter((q: any) => q.id && !q.id.toString().startsWith('temp-'))
                 .map((q: any) => q.id);
 
@@ -95,6 +95,11 @@ export class AssessmentService {
                             text: q.text,
                             traitKey: q.traitKey, facetKey: q.facetKey || null,
                             weight: Number(q.weight) || 1, isReverse: q.isReverse || false,
+                            dichotomy: q.dichotomy || null,
+                            questionTrait: q.questionTrait || null,
+                            subtraitDichotomy: q.subtraitDichotomy || null,
+                            subtrait: q.subtrait || null,
+                            concept: q.concept || null,
                             assessmentModelId: id
                         }
                     });
@@ -105,7 +110,12 @@ export class AssessmentService {
                         data: {
                             text: q.text,
                             traitKey: q.traitKey, facetKey: q.facetKey || null,
-                            weight: Number(q.weight) || 1, isReverse: q.isReverse || false
+                            weight: Number(q.weight) || 1, isReverse: q.isReverse || false,
+                            dichotomy: q.dichotomy || null,
+                            questionTrait: q.questionTrait || null,
+                            subtraitDichotomy: q.subtraitDichotomy || null,
+                            subtrait: q.subtrait || null,
+                            concept: q.concept || null,
                         }
                     });
                 }

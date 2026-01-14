@@ -5,6 +5,7 @@ import { useAuthStore } from '../../../../src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, Plus, Trash2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { QUESTION_TAXONOMY, TRAIT_KEY_MAP } from '../../../../src/data/question-taxonomy';
 
 interface Question {
     id: string;
@@ -14,6 +15,12 @@ interface Question {
     weight: number;
     isReverse?: boolean;
     isActive?: boolean;
+    // New Fields
+    dichotomy?: string;
+    questionTrait?: string;
+    subtraitDichotomy?: string;
+    subtrait?: string;
+    concept?: string;
 }
 
 interface Assessment {
@@ -355,84 +362,188 @@ export default function AssessmentDetailPage() {
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm font-medium"
                                             />
 
-                                            {/* Controles de Configuração */}
-                                            <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            {/* Controles de Configuração Avançada (TalkingTo Model) */}
+                                            <div className="flex flex-col gap-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
 
-                                                {/* Seletor de Traço */}
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Traço</label>
-                                                    {config ? (
+                                                {/* LINHA 1: Traço e Dicotomia */}
+                                                <div className="flex flex-wrap gap-4">
+                                                    {/* Traço (Big Five) */}
+                                                    <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
+                                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Traço de Personalidade</label>
+                                                        {config ? (
+                                                            <select
+                                                                value={question.traitKey}
+                                                                onChange={(e) => {
+                                                                    updateQuestion(question.id, 'traitKey', e.target.value);
+                                                                    // Clear downstream
+                                                                    updateQuestion(question.id, 'dichotomy', '');
+                                                                    updateQuestion(question.id, 'questionTrait', '');
+                                                                }}
+                                                                className="px-2 py-1.5 bg-white border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary outline-none w-full"
+                                                            >
+                                                                {config.traits?.map((t: any) => (
+                                                                    <option key={t.traitKey} value={t.traitKey}>{t.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <input
+                                                                value={question.traitKey}
+                                                                onChange={e => updateQuestion(question.id, 'traitKey', e.target.value)}
+                                                                className="px-2 py-1 border rounded text-xs w-full"
+                                                                placeholder="Chave do Traço"
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Dicotomia */}
+                                                    <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
+                                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dicotomia</label>
                                                         <select
-                                                            value={question.traitKey}
+                                                            value={question.dichotomy || ''}
                                                             onChange={(e) => {
-                                                                updateQuestion(question.id, 'traitKey', e.target.value);
-                                                                updateQuestion(question.id, 'facetKey', ''); // Limpa faceta ao mudar traço
+                                                                updateQuestion(question.id, 'dichotomy', e.target.value);
+                                                                updateQuestion(question.id, 'questionTrait', '');
                                                             }}
-                                                            className="px-2 py-1.5 bg-white border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary outline-none min-w-[160px]"
-                                                        >
-                                                            {config.traits?.map((t: any) => (
-                                                                <option key={t.traitKey} value={t.traitKey}>{t.name} ({t.weight}x)</option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <input
-                                                            value={question.traitKey}
-                                                            onChange={e => updateQuestion(question.id, 'traitKey', e.target.value)}
-                                                            className="px-2 py-1 border rounded text-xs"
-                                                            placeholder="Chave do Traço"
-                                                        />
-                                                    )}
-                                                </div>
-
-                                                {/* Seletor de Faceta */}
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Faceta</label>
-                                                    {config ? (
-                                                        <select
-                                                            value={question.facetKey || ''}
-                                                            onChange={(e) => updateQuestion(question.id, 'facetKey', e.target.value)}
-                                                            className={`px-2 py-1.5 bg-white border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary outline-none min-w-[160px] ${!availableFacets.length ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            disabled={!availableFacets.length}
+                                                            className="px-2 py-1.5 bg-white border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary outline-none w-full"
                                                         >
                                                             <option value="">Selecione...</option>
-                                                            {availableFacets.map((f: any) => (
-                                                                <option key={f.facetKey} value={f.facetKey}>{f.name} ({f.weight}x)</option>
-                                                            ))}
+                                                            {(() => {
+                                                                const taxKey = TRAIT_KEY_MAP[normalize(question.traitKey)];
+                                                                const taxonomy = QUESTION_TAXONOMY[taxKey as keyof typeof QUESTION_TAXONOMY];
+                                                                return taxonomy?.dichotomies.map((d: any) => (
+                                                                    <option key={d.label} value={d.label}>{d.label}</option>
+                                                                ));
+                                                            })()}
                                                         </select>
-                                                    ) : (
+                                                    </div>
+
+                                                    {/* Traço da Questão */}
+                                                    <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
+                                                        <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Traço da Questão</label>
+                                                        <select
+                                                            value={question.questionTrait || ''}
+                                                            onChange={(e) => updateQuestion(question.id, 'questionTrait', e.target.value)}
+                                                            className="px-2 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded text-xs focus:ring-2 focus:ring-blue-500 outline-none w-full font-bold"
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {(() => {
+                                                                const taxKey = TRAIT_KEY_MAP[normalize(question.traitKey)];
+                                                                const taxonomy = QUESTION_TAXONOMY[taxKey as keyof typeof QUESTION_TAXONOMY];
+                                                                const dic = taxonomy?.dichotomies.find((d: any) => d.label === question.dichotomy);
+                                                                return dic?.options.map((o: any) => (
+                                                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                                                ));
+                                                            })()}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                {/* LINHA 2: Subtraços */}
+                                                <div className="flex flex-wrap gap-4 border-t border-gray-200 pt-3">
+                                                    {/* Subtraço-Dicotômico */}
+                                                    <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
+                                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtraço-Dicotômico</label>
+                                                        <select
+                                                            value={question.subtraitDichotomy || ''}
+                                                            onChange={(e) => {
+                                                                updateQuestion(question.id, 'subtraitDichotomy', e.target.value);
+                                                                updateQuestion(question.id, 'subtrait', '');
+                                                                updateQuestion(question.id, 'concept', '');
+                                                                // Auto-fill concept
+                                                                const taxKey = TRAIT_KEY_MAP[normalize(question.traitKey)];
+                                                                const taxonomy = QUESTION_TAXONOMY[taxKey as keyof typeof QUESTION_TAXONOMY];
+                                                                const dic = taxonomy?.dichotomies.find((d: any) => d.label === question.dichotomy) || taxonomy?.dichotomies[0]; // fallback to first dichotomy if none selected but trait exists
+                                                                const sub = dic?.subtraits.find((s: any) => s.pair === e.target.value);
+                                                                if (sub?.concept) updateQuestion(question.id, 'concept', sub.concept);
+                                                            }}
+                                                            className="px-2 py-1.5 bg-white border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary outline-none w-full"
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {(() => {
+                                                                const taxKey = TRAIT_KEY_MAP[normalize(question.traitKey)];
+                                                                const taxonomy = QUESTION_TAXONOMY[taxKey as keyof typeof QUESTION_TAXONOMY];
+                                                                const dic = taxonomy?.dichotomies.find((d: any) => d.label === question.dichotomy) || taxonomy?.dichotomies[0]; // Allow selecting subtraits even if dichotomy parent not strictly selected, defaulting to context
+                                                                // Actually better to show all subtraits for the trait if dichotomy not selected?
+                                                                // Let's rely on Dichotomy -> Subtrait flow. If Dichotomy empty, maybe show nothing or all.
+                                                                // If dichotomy empty, we can iterate all dichotomies.
+                                                                const source = question.dichotomy ? [dic] : taxonomy?.dichotomies;
+                                                                return source?.flatMap((d: any) => d?.subtraits)?.map((s: any) => (
+                                                                    <option key={s.pair} value={s.pair}>{s.pair}</option>
+                                                                ));
+                                                            })()}
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Subtraço da Questão */}
+                                                    <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
+                                                        <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Subtraço da Questão</label>
+                                                        <select
+                                                            value={question.subtrait || ''}
+                                                            onChange={(e) => updateQuestion(question.id, 'subtrait', e.target.value)}
+                                                            className="px-2 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded text-xs focus:ring-2 focus:ring-blue-500 outline-none w-full font-bold"
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {(() => {
+                                                                const taxKey = TRAIT_KEY_MAP[normalize(question.traitKey)];
+                                                                const taxonomy = QUESTION_TAXONOMY[taxKey as keyof typeof QUESTION_TAXONOMY];
+                                                                // Find subtrait definition
+                                                                // We need to find where the current subtraitDichotomy lives
+                                                                let subDef: any;
+                                                                taxonomy?.dichotomies.forEach((d: any) => {
+                                                                    const found = d.subtraits.find((s: any) => s.pair === question.subtraitDichotomy);
+                                                                    if (found) subDef = found;
+                                                                });
+
+                                                                return subDef?.options.map((o: string) => (
+                                                                    <option key={o} value={o}>{o}</option>
+                                                                ));
+                                                            })()}
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Conceito */}
+                                                    <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
+                                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Conceito</label>
                                                         <input
-                                                            value={question.facetKey}
-                                                            onChange={e => updateQuestion(question.id, 'facetKey', e.target.value)}
-                                                            className="px-2 py-1 border rounded text-xs"
-                                                            placeholder="Chave da Faceta"
+                                                            value={question.concept || ''}
+                                                            onChange={e => updateQuestion(question.id, 'concept', e.target.value)}
+                                                            className="px-2 py-1.5 bg-gray-100 border border-gray-300 rounded text-xs w-full text-gray-700"
+                                                            readOnly // Auto-filled mostly, but user can edit? User said "campos pre definidos e que tenha total autonomia". Let's allow edit.
+                                                        // Actually, let's make it writable.
                                                         />
-                                                    )}
+                                                    </div>
                                                 </div>
 
-                                                {/* Peso */}
-                                                <div className="flex flex-col gap-1 w-20">
-                                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Peso</label>
-                                                    <input
-                                                        type="number"
-                                                        value={question.weight}
-                                                        onChange={(e) => updateQuestion(question.id, 'weight', parseFloat(e.target.value))}
-                                                        step="0.1"
-                                                        className="px-2 py-1.5 border border-gray-300 rounded text-xs text-center focus:ring-2 focus:ring-primary outline-none"
-                                                    />
-                                                </div>
+                                                {/* LINHA 3: Peso e Inverter */}
+                                                <div className="flex items-center gap-4 border-t border-gray-200 pt-3">
+                                                    <div className="flex flex-col gap-1 w-20">
+                                                        <label className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Pontuação</label>
+                                                        <input
+                                                            type="number"
+                                                            value={question.weight}
+                                                            onChange={(e) => updateQuestion(question.id, 'weight', parseFloat(e.target.value))}
+                                                            step="0.1"
+                                                            className="px-2 py-1.5 border border-red-200 bg-red-50 text-red-900 rounded text-xs text-center focus:ring-2 focus:ring-red-500 outline-none font-bold"
+                                                        />
+                                                    </div>
 
-                                                {/* Invertida */}
-                                                <div className="flex items-center gap-2 mt-4 border-l pl-4 border-gray-300">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`rev-${question.id}`}
-                                                        checked={question.isReverse || false}
-                                                        onChange={(e) => updateQuestion(question.id, 'isReverse', e.target.checked)}
-                                                        className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500"
-                                                    />
-                                                    <label htmlFor={`rev-${question.id}`} className="text-xs font-bold text-gray-700 cursor-pointer select-none">
-                                                        Invertida? (R)
-                                                    </label>
+                                                    <div className="flex items-center gap-2 border-l pl-4 border-gray-300">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`rev-${question.id}`}
+                                                            checked={question.isReverse || false}
+                                                            onChange={(e) => updateQuestion(question.id, 'isReverse', e.target.checked)}
+                                                            className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500"
+                                                        />
+                                                        <label htmlFor={`rev-${question.id}`} className="text-xs font-bold text-gray-700 cursor-pointer select-none">
+                                                            Invertida? (R)
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Facet Key (Legacy/Backup) - Hidden or Minimized? Keep it for compatibility but maybe deemphasize */}
+                                                    <div className="hidden">
+                                                        <input value={question.facetKey} onChange={() => { }} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

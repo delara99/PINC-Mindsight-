@@ -23,6 +23,9 @@ export class ScoreCalculationService {
 
     async calculateScores(assignmentId: string): Promise<{
         scores: Record<string, ScoreResult>;
+        conceptScores: Record<string, any>;
+        subtraitScores: Record<string, any>;
+        dichotomyScores: Record<string, any>;
         config: any;
     }> {
         const assignment = await this.prisma.assessmentAssignment.findUnique({
@@ -144,6 +147,9 @@ export class ScoreCalculationService {
 
         console.log('[Score Calc] ✅ Config:', config.name);
         const scores: Record<string, ScoreResult> = {};
+        const conceptMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
+        const subtraitMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
+        const dichotomyMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
 
         // 1. Agrupar Respostas (Itens) por Traço e Faceta
         // Mapa: TraitKey -> FacetKey -> { sum: number, weightSum: number, count: number }
@@ -262,6 +268,40 @@ export class ScoreCalculationService {
                 tData.weightSum += weight;
                 tData.count++;
             }
+
+            // --- NOVO: Cálculo para Conceitos, Subtraços e Dicotomias (TalkingTo) ---
+            // Usamos 'any' no cast pois o Prisma retorna o objeto Question atualizado, mas o TS pode não ter pego o type ainda
+            const qAny = q as any;
+
+            // 1. Conceito
+            if (qAny.concept) {
+                const key = this.cleanString(qAny.concept);
+                if (!conceptMap.has(key)) conceptMap.set(key, { sum: 0, weightSum: 0, count: 0, originalName: qAny.concept });
+                const c = conceptMap.get(key);
+                c.sum += finalValue * (weight || 1); // Upscale weight? User said "Points". Let's use weight.
+                c.weightSum += (weight || 1);
+                c.count++;
+            }
+
+            // 2. Subtraço
+            if (qAny.subtrait) {
+                const key = this.cleanString(qAny.subtrait);
+                if (!subtraitMap.has(key)) subtraitMap.set(key, { sum: 0, weightSum: 0, count: 0, originalName: qAny.subtrait });
+                const s = subtraitMap.get(key);
+                s.sum += finalValue * (weight || 1);
+                s.weightSum += (weight || 1);
+                s.count++;
+            }
+
+            // 3. Dicotomia
+            if (qAny.dichotomy) {
+                const key = this.cleanString(qAny.dichotomy);
+                if (!dichotomyMap.has(key)) dichotomyMap.set(key, { sum: 0, weightSum: 0, count: 0, originalName: qAny.dichotomy });
+                const d = dichotomyMap.get(key);
+                d.sum += finalValue * (weight || 1);
+                d.weightSum += (weight || 1);
+                d.count++;
+            }
         }
 
         // 3. Calcular Média das Facetas e do Traço Final
@@ -354,7 +394,41 @@ export class ScoreCalculationService {
             };
         }
 
-        return { scores, config };
+        // 4. Finalizar Cálculos Extras
+        const conceptScores: Record<string, any> = {};
+        conceptMap.forEach((v, k) => {
+            const raw = v.sum / v.weightSum;
+            conceptScores[k] = {
+                name: v.originalName,
+                score: raw,
+                normalizedScore: this.normalizeScore(raw),
+                level: this.determineLevel(this.normalizeScore(raw), config)
+            };
+        });
+
+        const subtraitScores: Record<string, any> = {};
+        subtraitMap.forEach((v, k) => {
+            const raw = v.sum / v.weightSum;
+            subtraitScores[k] = {
+                name: v.originalName,
+                score: raw,
+                normalizedScore: this.normalizeScore(raw),
+                level: this.determineLevel(this.normalizeScore(raw), config)
+            };
+        });
+
+        const dichotomyScores: Record<string, any> = {};
+        dichotomyMap.forEach((v, k) => {
+            const raw = v.sum / v.weightSum;
+            dichotomyScores[k] = {
+                name: v.originalName,
+                score: raw,
+                normalizedScore: this.normalizeScore(raw),
+                level: this.determineLevel(this.normalizeScore(raw), config)
+            };
+        });
+
+        return { scores, conceptScores, subtraitScores, dichotomyScores, config };
     }
 
     private cleanString(str: string): string {
