@@ -268,10 +268,8 @@ export default function AssessmentDetailsPage() {
                     </div>
                 )}
 
-                {/* Gráfico Radar - USANDO DADOS JÁ SALVOS (result.scores) */}
-                {result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
-                    <BigFiveChart scores={result.scores} />
-                ) : assignment.calculatedScores?.scores ? (
+                {/* Gráfico Radar - Priorizar Calculated Scores (Tempo Real) */}
+                {assignment.calculatedScores?.scores ? (
                     (() => {
                         // Preparar dados achatados para o gráfico (Formato "Trait::Facet": score 0-5)
                         const chartData: Record<string, number> = {};
@@ -298,8 +296,13 @@ export default function AssessmentDetailsPage() {
                             if (trait.facets && trait.facets.length > 0) {
                                 trait.facets.forEach((facet: any) => {
                                     // O gráfico espera score 0-5
-                                    // facet.score vem 0-100 agora
-                                    chartData[`${traitNamePT}::${facet.facetName}`] = (typeof facet.score === 'number' ? facet.score : 0) / 20;
+                                    // facet.score vem 0-100 agora (do service v2)
+                                    // Se vier rawScore (0-5), usar direto? Não, o service retorna score=0-100.
+                                    // Mas vamos garantir: se for > 5, assume 0-100 e divide por 20.
+                                    let val = typeof facet.score === 'number' ? facet.score : 0;
+                                    if (val > 5) val = val / 20;
+
+                                    chartData[`${traitNamePT}::${facet.name || facet.facetName}`] = val;
                                 });
                             }
                         });
@@ -307,11 +310,18 @@ export default function AssessmentDetailsPage() {
                         return Object.keys(chartData).length > 0 ? (
                             <BigFiveChart scores={chartData} />
                         ) : (
-                            <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
-                                <p className="text-yellow-800 font-medium">⚠️ Dados de facetas insuficientes para o gráfico.</p>
-                            </div>
+                            // Fallback para tentar result.scores se o calculated score falhou nas facetas (ex: config antiga)
+                            result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
+                                <BigFiveChart scores={result.scores} />
+                            ) : (
+                                <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
+                                    <p className="text-yellow-800 font-medium">⚠️ Nenhuma faceta encontrada nos dados calculados.</p>
+                                </div>
+                            )
                         );
                     })()
+                ) : result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
+                    <BigFiveChart scores={result.scores} />
                 ) : (
                     <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
                         <p className="text-yellow-800 font-medium">⚠️ Aguardando cálculo de scores...</p>
