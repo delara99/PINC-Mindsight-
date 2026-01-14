@@ -116,7 +116,7 @@ export class ScoreCalculationService {
         const scores: Record<string, ScoreResult> = {};
         const configKeyMap: Record<string, string> = {};
 
-        // Novo: Mapa para acumular scores de facetas
+        // Novo: Mapa para acumular scores de facetas via KEY explicita ou Mapeamento
         const facetScores: Record<string, {
             score: number;
             total: number;
@@ -126,6 +126,9 @@ export class ScoreCalculationService {
             traitKey: string
         }> = {};
         const facetNameMap: Record<string, string> = {};
+
+        // Novo: Mapa Concept -> Trait (para fallback definitivo)
+        const conceptTraitMap = new Map<string, string>();
 
         if (config.traits) {
             config.traits.forEach(t => {
@@ -151,7 +154,7 @@ export class ScoreCalculationService {
                             name: f.name,
                             traitKey: t.traitKey
                         };
-                        // Mapear nome normalizado da faceta para key (para fallback do TalkingTo)
+                        // Mapear nome -> key
                         const cleanName = cleanString(f.name);
                         if (cleanName) facetNameMap[cleanName] = f.facetKey;
                         facetNameMap[cleanString(f.facetKey)] = f.facetKey;
@@ -188,20 +191,24 @@ export class ScoreCalculationService {
                 if (inferred && configKeyMap[inferred]) targetKey = configKeyMap[inferred];
             }
 
-            if (targetKey && scores[targetKey]) {
-                scores[targetKey].score += finalValue * weight;
-                traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
+            if (targetKey) {
+                if (scores[targetKey]) {
+                    scores[targetKey].score += finalValue * weight;
+                    traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
+                }
+                // Track Concept -> Trait association
+                if (q.concept) {
+                    conceptTraitMap.set(cleanString(q.concept), targetKey);
+                }
+                if (q.subtrait) {
+                    conceptTraitMap.set(cleanString(q.subtrait), targetKey);
+                }
             }
 
-            // --- Facets Logic (Added) ---
+            // --- Facets Logic (Explicit & Name Match) ---
             let fKey: string | null = q.facetKey || null;
-            // Fallback: se não tiver facetKey mas tiver subtrait/concept que bata com nome de faceta
-            if (!fKey && q.subtrait) {
-                fKey = facetNameMap[cleanString(q.subtrait)] || null;
-            }
-            if (!fKey && q.concept) {
-                fKey = facetNameMap[cleanString(q.concept)] || null;
-            }
+            if (!fKey && q.subtrait) fKey = facetNameMap[cleanString(q.subtrait)] || null;
+            if (!fKey && q.concept) fKey = facetNameMap[cleanString(q.concept)] || null;
 
             if (fKey && facetScores[fKey]) {
                 facetScores[fKey].score += finalValue * weight;
@@ -210,7 +217,7 @@ export class ScoreCalculationService {
                 facetScores[fKey].count++;
             }
 
-            // --- TalkingTo Extra ---
+            // --- TalkingTo Accumulators ---
             const accumulate = (map: Map<string, any>, key: string, name: string) => {
                 if (!key) return;
                 const k = cleanString(key);
@@ -253,7 +260,7 @@ export class ScoreCalculationService {
             }
             scores[key].levelLabel = levelLabel;
 
-            // --- Populate Facets inside Trait ---
+            // --- Populate Facets from Accumulator ---
             if (traitConfig && traitConfig.facets) {
                 traitConfig.facets.forEach(f => {
                     const fData = facetScores[f.facetKey];
@@ -270,6 +277,45 @@ export class ScoreCalculationService {
                         });
                     }
                 });
+            }
+        });
+
+        // 7. SAFETY NET: Inject Concepts as Facets if Facets are empty (TalkingTo Fallback Coverage)
+        // This ensures the Chart has data even if Facet Names in config didn't match Subtraits
+        conceptMap.forEach((val, k) => {
+            // Find which Trait this concept belongs to override
+            const traitKey = conceptTraitMap.get(k);
+            if (traitKey && scores[traitKey]) {
+                const s = scores[traitKey];
+                if (!s.facets) s.facets = [];
+
+                // Check if this concept is already covered by an existing Facet
+                const existing = s.facets.find(f => cleanString(f.facetName) === k || cleanString(f.facetKey) === k);
+
+                // If existing has valid score, skip. 
+                // If existing has 0 score (because implicit mapping failed), UPDATE IT.
+                // If not existing, ADD IT as a pseudo-facet.
+
+                const avg = val.weightSum > 0 ? val.sum / val.weightSum : 0;
+                const norm = this.normalizeScore(avg);
+                const raw = avg;
+
+                if (existing) {
+                    if (existing.score === 0 && existing.rawScore === 0 && val.weightSum > 0) {
+                        existing.score = norm;
+                        existing.rawScore = raw;
+                    }
+                } else {
+                    // Only add if we need to fill gaps. 
+                    // To prevent duplicates if names are slightly different, strict check above.
+                    // If the Chart needs points, adding Concepts as Facets is better than empty.
+                    s.facets.push({
+                        facetKey: `concept_${k}`,
+                        facetName: val.originalName,
+                        score: norm,
+                        rawScore: raw
+                    });
+                }
             }
         });
 
