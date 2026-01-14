@@ -323,7 +323,18 @@ export default function AssessmentDetailsPage() {
                             : Object.values(assignment.calculatedScores.scores);
 
                         scoresList.forEach((trait: any) => {
-                            const traitNamePT = traitTranslation[trait.traitKey] || traitTranslation[trait.traitName] || trait.traitName;
+                            // SEMPRE traduzir usando a chave inglesa primeiro, depois o nome
+                            let traitNamePT = traitTranslation[trait.traitKey];
+
+                            // Se não encontrou pela chave, tentar pelo nome
+                            if (!traitNamePT) {
+                                traitNamePT = traitTranslation[trait.traitName];
+                            }
+
+                            // Se ainda não encontrou, usar o nome original como último recurso
+                            if (!traitNamePT) {
+                                traitNamePT = trait.traitName || trait.traitKey;
+                            }
 
                             if (trait.facets && trait.facets.length > 0) {
                                 trait.facets.forEach((facet: any) => {

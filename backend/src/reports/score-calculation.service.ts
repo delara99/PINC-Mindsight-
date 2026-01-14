@@ -158,13 +158,22 @@ export class ScoreCalculationService {
             });
         }
 
+        // TRADUÇÃO DOS NOMES DE TRAÇOS PARA PORTUGUÊS
+        const traitNameTranslation: Record<string, string> = {
+            'EXTRAVERSION': 'Extroversão',
+            'AGREEABLENESS': 'Amabilidade',
+            'CONSCIENTIOUSNESS': 'Conscienciosidade',
+            'OPENNESS': 'Abertura à Experiência',
+            'NEUROTICISM': 'Estabilidade Emocional'
+        };
+
         // ENSURE ALL BIG 5 KEYS EXIST (Fallback if config improperly incomplete)
         ['EXTRAVERSION', 'AGREEABLENESS', 'CONSCIENTIOUSNESS', 'OPENNESS', 'NEUROTICISM'].forEach(stdKey => {
             if (!configKeyMap[stdKey]) {
-                // If missing, add it to 'scores' using standard key
+                // If missing, add it to 'scores' using standard key but with Portuguese name
                 scores[stdKey] = {
                     traitKey: stdKey,
-                    traitName: stdKey, // Ideally translate but English is minimal safety
+                    traitName: traitNameTranslation[stdKey] || stdKey,
                     score: 0,
                     normalizedScore: 0,
                     level: 'AVERAGE',
