@@ -144,10 +144,38 @@ export class InterpretationService {
                 t.traitKey === trait.traitKey && t.scoreRange === rangeEnum
             ) : [];
 
-            // FALLBACK UNIVERSAL: Se não achou textos na config específica, busca de qualquer config
+            // FALLBACK 1: Se não achou textos na config atual, busca de QUALQUER config do MESMO TENANT
             if (!relevantTexts || relevantTexts.length === 0) {
-                console.warn(`[generateFullReport] Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}. Usando fallback universal.`);
-                relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
+                console.warn(`[generateFullReport] Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}. Tentando fallback do tenant...`); \n
+                // Buscar qualquer config ativa do tenant que tenha esses textos
+                const tenantConfig = await this.prisma.bigFiveConfig.findFirst({
+                    where: {
+                        tenantId: tenantId,
+                        interpretativeTexts: {
+                            some: {
+                                traitKey: trait.traitKey,
+                                scoreRange: rangeEnum
+                            }
+                        }
+                    },
+                    include: {
+                        interpretativeTexts: {
+                            where: {
+                                traitKey: trait.traitKey,
+                                scoreRange: rangeEnum
+                            }
+                        }
+                    }
+                });
+
+                if (tenantConfig && tenantConfig.interpretativeTexts) {
+                    relevantTexts = tenantConfig.interpretativeTexts;
+                    console.log(`[generateFullReport] ✅ Encontrados ${relevantTexts.length} textos no tenant`);
+                } else {
+                    // FALLBACK 2: Busca universal de qualquer config
+                    console.warn(`[generateFullReport] Nenhum texto no tenant. Usando fallback universal.`);
+                    relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
+                }
             }
 
             report.traits.push({

@@ -32,7 +32,13 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
         if (parts.length === 2) {
             const [traitNameRaw, facetName] = parts;
             const score = typeof value === 'number' ? value : parseFloat(value as string) || 0;
-            const traitName = traitNameRaw.trim(); // Usar o nome exato que vem do backend (configurado pelo usuário)
+            const traitName = (traitNameRaw || '').trim(); // Garantir que não seja undefined
+
+            // FILTRO: Ignorar se traitName ou facetName estiverem vazios/undefined
+            if (!traitName || !facetName || traitName === 'undefined' || facetName === 'undefined') {
+                console.warn('[BigFiveChart] Ignorando entrada inválida:', { traitName, facetName });
+                return; // Pular esta entrada
+            }
 
             // Inicializar grupo do traço se não existir
             if (!traitsData[traitName]) {
@@ -277,7 +283,10 @@ export function BigFiveChart({ scores }: RadarChartProfessionalProps) {
             {/* Legenda dos traços */}
             <div className="mt-8 flex flex-wrap justify-center gap-4">
                 {Object.entries(traitsData)
-                    .filter(([_, data]) => data.facets.length > 0)
+                    .filter(([traitName, data]) => {
+                        // Filtrar traços vazios, undefined ou inválidos
+                        return data.facets.length > 0 && traitName && traitName !== 'undefined';
+                    })
                     .map(([traitName, data]) => (
                         <div key={traitName} className="flex items-center gap-2">
                             <div
