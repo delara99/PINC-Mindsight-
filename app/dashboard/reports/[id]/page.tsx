@@ -252,11 +252,15 @@ export default function AssessmentDetailsPage() {
                                                     traitName={displayName}
                                                     overallScore={normalizedAvg}
                                                     interpretation={interpretation}
-                                                    facets={data.facets.map(f => ({
-                                                        facet: f.name,
-                                                        normalizedScore: f.score * 20,
-                                                        rawScore: f.score
-                                                    }))}
+                                                    facets={data.facets.map(f => {
+                                                        // Backend retorna 0-100, não precisa multiplicar
+                                                        const scoreValue = typeof f.score === 'number' ? f.score : 0;
+                                                        return {
+                                                            facet: f.name,
+                                                            normalizedScore: Math.round(Math.max(0, Math.min(100, scoreValue))),
+                                                            rawScore: scoreValue / 20 // Converter 0-100 para 0-5
+                                                        };
+                                                    })}
                                                     defaultExpanded={true}
                                                 />
                                             );
