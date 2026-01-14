@@ -339,20 +339,29 @@ export default function BigFiveResults({ result }: BigFiveResultProps) {
 
                                     <h4 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Facetas Detalhadas</h4>
                                     <div className="grid md:grid-cols-2 gap-4">
-                                        {trait.facets.map(facet => (
-                                            <div key={facet.facet} className="bg-white rounded-lg p-4 border border-gray-200">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm font-semibold text-gray-700">{facet.facet}</span>
-                                                    <span className="text-lg font-bold text-primary">{Math.round(facet.normalizedScore)}</span>
+                                        {trait.facets.map(facet => {
+                                            // PROTEÇÃO ANTI-NaN
+                                            const score = typeof facet.normalizedScore === 'number' &&
+                                                !isNaN(facet.normalizedScore) &&
+                                                isFinite(facet.normalizedScore)
+                                                ? facet.normalizedScore
+                                                : 0;
+
+                                            return (
+                                                <div key={facet.facet} className="bg-white rounded-lg p-4 border border-gray-200">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-sm font-semibold text-gray-700">{facet.facet}</span>
+                                                        <span className="text-lg font-bold text-primary">{Math.round(score)}</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                                        <div
+                                                            className="bg-gradient-to-r from-primary to-pink-600 h-2 rounded-full transition-all"
+                                                            style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className="bg-gradient-to-r from-primary to-pink-600 h-2 rounded-full transition-all"
-                                                        style={{ width: `${facet.normalizedScore}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
