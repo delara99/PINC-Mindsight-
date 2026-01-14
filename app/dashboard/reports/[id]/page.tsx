@@ -155,11 +155,15 @@ export default function AssessmentDetailsPage() {
                     {/* Detalhes por Traço - Processar dados salvos */}
                     {(() => {
                         // Tentar usar calculatedScores primeiro, senão processar result.scores
-                        if (assignment.calculatedScores?.scores?.length > 0) {
+                        const calcScores = assignment.calculatedScores?.scores;
+                        const hasCalcScores = calcScores && (Array.isArray(calcScores) ? calcScores.length > 0 : Object.keys(calcScores).length > 0);
+
+                        if (hasCalcScores) {
+                            const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
                             return (
                                 <div className="mt-6 space-y-4">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
-                                    {assignment.calculatedScores.scores.map((trait: any, index: number) => (
+                                    {scoresList.map((trait: any, index: number) => (
                                         <TraitCard
                                             key={index}
                                             traitName={trait.name}
