@@ -162,33 +162,45 @@ export default function AssessmentDetailsPage() {
                             const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
                             return (
                                 <div className="mt-6 space-y-4">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
-                                    {scoresList.map((trait: any, index: number) => (
-                                        <TraitCard
-                                            key={index}
-                                            traitName={trait.name}
-                                            overallScore={trait.score}
-                                            interpretation={((({
-                                                'HIGH': 'Alto',
-                                                'AVERAGE': 'Médio',
-                                                'LOW': 'Baixo',
-                                                'VERY_HIGH': 'Muito Alto',
-                                                'VERY_LOW': 'Muito Baixo'
-                                            })[trait.level as string] || trait.level))}
-                                            facets={trait.facets?.map((f: any) => ({
-                                                facet: f.name || f.facetName || f.facet, // Fallback robusto para nome da faceta
-                                                normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
-                                                rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
-                                            })) || []}
-                                            customTexts={{
-                                                summary: trait.customTexts?.summary || trait.interpretation, // Use Backend Description (Config Ativa) as fallback
-                                                practicalImpact: trait.customTexts?.practicalImpact,
-                                                expertSynthesis: trait.customTexts?.expertSynthesis,
-                                                expertHypothesis: trait.customTexts?.expertHypothesis
-                                            }}
-                                            defaultExpanded={true}
-                                        />
-                                    ))}
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Análise por Traço de Personalidade</h3>
+                                    {scoresList.map((trait: any, index: number) => {
+                                        // Tradução dos nomes de traços para português
+                                        const traitTranslation: Record<string, string> = {
+                                            'OPENNESS': 'Abertura à Experiência',
+                                            'CONSCIENTIOUSNESS': 'Conscienciosidade',
+                                            'EXTRAVERSION': 'Extroversão',
+                                            'AGREEABLENESS': 'Amabilidade',
+                                            'NEUROTICISM': 'Estabilidade Emocional'
+                                        };
+                                        const displayName = traitTranslation[trait.traitKey] || trait.traitName || trait.name;
+
+                                        return (
+                                            <TraitCard
+                                                key={index}
+                                                traitName={displayName}
+                                                overallScore={trait.score}
+                                                interpretation={((({
+                                                    'HIGH': 'Alto',
+                                                    'AVERAGE': 'Médio',
+                                                    'LOW': 'Baixo',
+                                                    'VERY_HIGH': 'Muito Alto',
+                                                    'VERY_LOW': 'Muito Baixo'
+                                                })[trait.level as string] || trait.level))}
+                                                facets={trait.facets?.map((f: any) => ({
+                                                    facet: f.name || f.facetName || f.facet, // Fallback robusto para nome da faceta
+                                                    normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
+                                                    rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
+                                                })) || []}
+                                                customTexts={{
+                                                    summary: trait.customTexts?.summary || trait.interpretation, // Use Backend Description (Config Ativa) as fallback
+                                                    practicalImpact: trait.customTexts?.practicalImpact,
+                                                    expertSynthesis: trait.customTexts?.expertSynthesis,
+                                                    expertHypothesis: trait.customTexts?.expertHypothesis
+                                                }}
+                                                defaultExpanded={true}
+                                            />
+                                        )
+                                    })}
                                 </div>
                             );
                         }
@@ -213,8 +225,17 @@ export default function AssessmentDetailsPage() {
                             if (Object.keys(scoresByTrait).length > 0) {
                                 return (
                                     <div className="mt-6 space-y-4">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Gráfico de Competências</h3>
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Análise por Traço de Personalidade</h3>
                                         {Object.entries(scoresByTrait).map(([traitName, data]) => {
+                                            // Tradução dos nomes de traços para português
+                                            const traitTranslation: Record<string, string> = {
+                                                'OPENNESS': 'Abertura à Experiência',
+                                                'CONSCIENTIOUSNESS': 'Conscienciosidade',
+                                                'EXTRAVERSION': 'Extroversão',
+                                                'AGREEABLENESS': 'Amabilidade',
+                                                'NEUROTICISM': 'Estabilidade Emocional'
+                                            };
+                                            const displayName = traitTranslation[traitName] || traitName;
                                             const avgScore = data.facets.reduce((sum, f) => sum + f.score, 0) / data.facets.length;
                                             const normalizedAvg = avgScore * 20; // Converter 0-5 para 0-100
 
@@ -228,7 +249,7 @@ export default function AssessmentDetailsPage() {
                                             return (
                                                 <TraitCard
                                                     key={traitName}
-                                                    traitName={traitName}
+                                                    traitName={displayName}
                                                     overallScore={normalizedAvg}
                                                     interpretation={interpretation}
                                                     facets={data.facets.map(f => ({
@@ -278,15 +299,22 @@ export default function AssessmentDetailsPage() {
                         // Preparar dados achatados para o gráfico (Formato "Trait::Facet": score 0-5)
                         const chartData: Record<string, number> = {};
 
-                        // Mapeamento de chaves EN para PT para o gráfico (nomes devem bater com os do BigFiveChart)
+                        // Mapeamento completo de chaves EN para PT para o gráfico
                         const traitTranslation: Record<string, string> = {
                             'OPENNESS': 'Abertura à Experiência',
                             'CONSCIENTIOUSNESS': 'Conscienciosidade',
                             'EXTRAVERSION': 'Extroversão',
                             'AGREEABLENESS': 'Amabilidade',
                             'NEUROTICISM': 'Estabilidade Emocional',
-                            // Fallbacks
-                            'Abertura a Experiências': 'Abertura à Experiência'
+                            // Variações e Fallbacks
+                            'Openness': 'Abertura à Experiência',
+                            'Conscientiousness': 'Conscienciosidade',
+                            'Extraversion': 'Extroversão',
+                            'Agreeableness': 'Amabilidade',
+                            'Neuroticism': 'Estabilidade Emocional',
+                            'Abertura a Experiências': 'Abertura à Experiência',
+                            'Abertura': 'Abertura à Experiência',
+                            'Estabilidade': 'Estabilidade Emocional'
                         };
 
                         // Garantir que scores seja iterável (pode ser array ou objeto)
