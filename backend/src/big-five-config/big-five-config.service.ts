@@ -593,19 +593,107 @@ export class BigFiveConfigService {
      * Cria novo texto interpretativo
      */
     async createInterpretativeText(data: any) {
-        return this.prisma.bigFiveInterpretativeText.create({
+        // 1. Criar o texto principal
+        const created = await this.prisma.bigFiveInterpretativeText.create({
             data
         });
+
+        // 2. SINCRONIZAÇÃO AUTOMÁTICA
+        const syncConfigs = [
+            'b8d11272-fb89-4284-b51d-991486e05a45', // Big Five - Configuração Completa
+            'ae20b456-7a25-4ee2-aac0-f373af106d3e'  // Configuração Big Five (relatório)
+        ];
+
+        // Se pertence a uma das configs principais, sincronizar com a outra
+        if (syncConfigs.includes(created.configId)) {
+            const targetConfigId = syncConfigs.find(id => id !== created.configId);
+
+            if (targetConfigId) {
+                // Criar na config de destino
+                await this.prisma.bigFiveInterpretativeText.create({
+                    data: {
+                        configId: targetConfigId,
+                        traitKey: created.traitKey,
+                        scoreRange: created.scoreRange,
+                        category: created.category,
+                        context: created.context,
+                        text: created.text
+                    }
+                });
+                console.log(`[SYNC] Novo texto criado em ambas as configs`);
+            }
+        }
+
+        return created;
     }
 
     /**
      * Atualiza texto interpretativo
      */
     async updateInterpretativeText(id: string, data: any) {
-        return this.prisma.bigFiveInterpretativeText.update({
+        // 1. Atualizar o texto principal
+        const updated = await this.prisma.bigFiveInterpretativeText.update({
             where: { id },
             data
         });
+
+        // 2. SINCRONIZAÇÃO AUTOMÁTICA
+        // Buscar a config deste texto
+        const sourceConfig = await this.prisma.bigFiveConfig.findUnique({
+            where: { id: updated.configId }
+        });
+
+        if (sourceConfig) {
+            // IDs das configs principais que devem ser sincronizadas
+            const syncConfigs = [
+                'b8d11272-fb89-4284-b51d-991486e05a45', // Big Five - Configuração Completa
+                'ae20b456-7a25-4ee2-aac0-f373af106d3e'  // Configuração Big Five (relatório)
+            ];
+
+            // Se este texto pertence a uma das configs principais, sincronizar com a outra
+            if (syncConfigs.includes(updated.configId)) {
+                const targetConfigId = syncConfigs.find(id => id !== updated.configId);
+
+                if (targetConfigId) {
+                    // Buscar se já existe um texto equivalente na config de destino
+                    const existing = await this.prisma.bigFiveInterpretativeText.findFirst({
+                        where: {
+                            configId: targetConfigId,
+                            traitKey: updated.traitKey,
+                            scoreRange: updated.scoreRange,
+                            category: updated.category
+                        }
+                    });
+
+                    if (existing) {
+                        // Atualizar texto existente
+                        await this.prisma.bigFiveInterpretativeText.update({
+                            where: { id: existing.id },
+                            data: {
+                                text: updated.text,
+                                context: updated.context
+                            }
+                        });
+                        console.log(`[SYNC] Texto atualizado na config ${targetConfigId}`);
+                    } else {
+                        // Criar novo texto na config de destino
+                        await this.prisma.bigFiveInterpretativeText.create({
+                            data: {
+                                configId: targetConfigId,
+                                traitKey: updated.traitKey,
+                                scoreRange: updated.scoreRange,
+                                category: updated.category,
+                                context: updated.context,
+                                text: updated.text
+                            }
+                        });
+                        console.log(`[SYNC] Novo texto criado na config ${targetConfigId}`);
+                    }
+                }
+            }
+        }
+
+        return updated;
     }
 
     /**
