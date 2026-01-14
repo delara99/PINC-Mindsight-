@@ -114,9 +114,8 @@ export class ScoreCalculationService {
 
         // 4. Initialize Accumulators
         const scores: Record<string, ScoreResult> = {};
-        const configKeyMap: Record<string, string> = {};
+        const configKeyMap: Record<string, string> = {}; // Normalized -> Runtime Key
 
-        // Novo: Mapa para acumular scores de facetas via KEY explicita ou Mapeamento
         const facetScores: Record<string, {
             score: number;
             total: number;
@@ -127,9 +126,7 @@ export class ScoreCalculationService {
         }> = {};
         const facetNameMap: Record<string, string> = {};
 
-        // Novo: Mapa Concept -> Trait (para fallback definitivo)
-        const conceptTraitMap = new Map<string, string>();
-
+        // INITIALIZE SCORES FROM CONFIG
         if (config.traits) {
             config.traits.forEach(t => {
                 scores[t.traitKey] = {
@@ -143,7 +140,6 @@ export class ScoreCalculationService {
                 };
                 configKeyMap[normalizeKey(t.traitKey)] = t.traitKey;
 
-                // Inicializar facetas
                 if (t.facets) {
                     t.facets.forEach(f => {
                         facetScores[f.facetKey] = {
@@ -154,7 +150,6 @@ export class ScoreCalculationService {
                             name: f.name,
                             traitKey: t.traitKey
                         };
-                        // Mapear nome -> key
                         const cleanName = cleanString(f.name);
                         if (cleanName) facetNameMap[cleanName] = f.facetKey;
                         facetNameMap[cleanString(f.facetKey)] = f.facetKey;
@@ -162,6 +157,74 @@ export class ScoreCalculationService {
                 }
             });
         }
+
+        // ENSURE ALL BIG 5 KEYS EXIST (Fallback if config improperly incomplete)
+        ['EXTRAVERSION', 'AGREEABLENESS', 'CONSCIENTIOUSNESS', 'OPENNESS', 'NEUROTICISM'].forEach(stdKey => {
+            if (!configKeyMap[stdKey]) {
+                // If missing, add it to 'scores' using standard key
+                scores[stdKey] = {
+                    traitKey: stdKey,
+                    traitName: stdKey, // Ideally translate but English is minimal safety
+                    score: 0,
+                    normalizedScore: 0,
+                    level: 'AVERAGE',
+                    interpretation: 'Médio',
+                    facets: []
+                };
+                configKeyMap[stdKey] = stdKey;
+            }
+        });
+
+        // 4.1 Concept Mapping Setup
+        const conceptTraitMap = new Map<string, string>(); // CleanConcept -> NormalizedTrait
+
+        // Static Mapping for TalkingTo
+        const STATIC_CONCEPT_MAP: Record<string, string> = {
+            'comunicacao': 'EXTRAVERSION',
+            'interacao social': 'EXTRAVERSION',
+            'autoridade': 'EXTRAVERSION',
+            'orientacao para acao': 'EXTRAVERSION',
+            'ouvinte-falante': 'EXTRAVERSION',
+            'seletivo-sociavel': 'EXTRAVERSION',
+            'contido-afirmativo': 'EXTRAVERSION',
+            'reflexivo-ativo': 'EXTRAVERSION',
+
+            'logica': 'AGREEABLENESS',
+            'independencia pessoal': 'AGREEABLENESS',
+            'competitividade': 'AGREEABLENESS',
+            'critico-tolerante': 'AGREEABLENESS',
+            'independente-conectado': 'AGREEABLENESS',
+            'competitivo-colaborativo': 'AGREEABLENESS',
+
+            'estilo de planejamento': 'CONSCIENTIOUSNESS',
+            'disciplina': 'CONSCIENTIOUSNESS',
+            'persistencia': 'CONSCIENTIOUSNESS',
+            'aventureiro-planejado': 'CONSCIENTIOUSNESS',
+            'espontaneo-disciplinado': 'CONSCIENTIOUSNESS',
+            'flexivel-persistente': 'CONSCIENTIOUSNESS',
+
+            'imaginacao': 'OPENNESS',
+            'intelectualidade': 'OPENNESS',
+            'abertura ao novo': 'OPENNESS',
+            'realista-imaginativo': 'OPENNESS',
+            'pratico-conceitual': 'OPENNESS',
+            'conservador-aberto': 'OPENNESS',
+
+            'confianca': 'NEUROTICISM',
+            'autoconfianca': 'NEUROTICISM',
+            'temperamento': 'NEUROTICISM',
+            'controlado': 'NEUROTICISM',
+            'inquieto-despreocupado': 'NEUROTICISM',
+            'inseguro-autoconfiante': 'NEUROTICISM',
+            'irritavel-paciente': 'NEUROTICISM',
+            'reativo-controlado': 'NEUROTICISM'
+        };
+
+        // Populate map from Static
+        Object.entries(STATIC_CONCEPT_MAP).forEach(([k, v]) => {
+            conceptTraitMap.set(k, v);
+        });
+
 
         const conceptMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
         const subtraitMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
@@ -180,7 +243,7 @@ export class ScoreCalculationService {
             const finalValue = q.isReverse ? (6 - rawVal) : rawVal;
             const weight = q.weight || 1;
 
-            // --- Big Five Traits ---
+            // --- Determine Trait ---
             let targetKey: string | null = null;
             if (q.traitKey) {
                 const norm = normalizeKey(q.traitKey);
@@ -191,21 +254,29 @@ export class ScoreCalculationService {
                 if (inferred && configKeyMap[inferred]) targetKey = configKeyMap[inferred];
             }
 
+            // Fallback via Concept/Subtrait Map
+            if (!targetKey) {
+                if (q.concept) {
+                    const norm = conceptTraitMap.get(cleanString(q.concept));
+                    if (norm && configKeyMap[norm]) targetKey = configKeyMap[norm];
+                }
+                if (!targetKey && q.subtrait) {
+                    const norm = conceptTraitMap.get(cleanString(q.subtrait));
+                    if (norm && configKeyMap[norm]) targetKey = configKeyMap[norm];
+                }
+            }
+
             if (targetKey) {
                 if (scores[targetKey]) {
                     scores[targetKey].score += finalValue * weight;
                     traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
                 }
-                // Track Concept -> Trait association
-                if (q.concept) {
-                    conceptTraitMap.set(cleanString(q.concept), targetKey);
-                }
-                if (q.subtrait) {
-                    conceptTraitMap.set(cleanString(q.subtrait), targetKey);
-                }
+                // Dynamic Learning (if question has traitKey, reinforce map)
+                // Note: We prioritize Static map for safety, but can add if missing
+                // ...
             }
 
-            // --- Facets Logic (Explicit & Name Match) ---
+            // --- Facets Logic ---
             let fKey: string | null = q.facetKey || null;
             if (!fKey && q.subtrait) fKey = facetNameMap[cleanString(q.subtrait)] || null;
             if (!fKey && q.concept) fKey = facetNameMap[cleanString(q.concept)] || null;
@@ -217,7 +288,7 @@ export class ScoreCalculationService {
                 facetScores[fKey].count++;
             }
 
-            // --- TalkingTo Accumulators ---
+            // --- TalkingTo Accumulation ---
             const accumulate = (map: Map<string, any>, key: string, name: string) => {
                 if (!key) return;
                 const k = cleanString(key);
@@ -244,12 +315,10 @@ export class ScoreCalculationService {
             scores[key].level = this.determineLevel(percent, config);
 
             // Text Interpretation
-            const traitConfig = config.traits?.find(t => t.traitKey === key);
-            scores[key].interpretation = this.getInterpretation(scores[key].level, traitConfig || {
-                veryLowText: 'Muito Baixo', lowText: 'Baixo', averageText: 'Médio', highText: 'Alto', veryHighText: 'Muito Alto'
-            });
+            const traitConfig = config.traits?.find(t => t.traitKey === key) || {};
+            scores[key].interpretation = this.getInterpretation(scores[key].level, traitConfig);
 
-            // Set Label
+            // Label
             let levelLabel = '';
             switch (scores[key].level) {
                 case 'VERY_LOW': levelLabel = config.veryLowLabel || 'Muito Baixo'; break;
@@ -261,60 +330,62 @@ export class ScoreCalculationService {
             scores[key].levelLabel = levelLabel;
 
             // --- Populate Facets from Accumulator ---
-            if (traitConfig && traitConfig.facets) {
-                traitConfig.facets.forEach(f => {
+            // If explicit facets existed
+            const facets = scores[key].facets || [];
+            // Try to find matching config trait
+            const tConf = config.traits?.find(t => t.traitKey === key);
+            if (tConf && tConf.facets) {
+                tConf.facets.forEach(f => {
                     const fData = facetScores[f.facetKey];
                     if (fData) {
-                        let fPct = fData.total > 0 ? (fData.score / fData.total) * 100 : 0;
-                        fPct = Math.round(Math.max(0, Math.min(100, fPct)));
-                        const fRaw = fData.count > 0 ? (fData.rawScoreSum / fData.count) : 0;
-
-                        scores[key].facets?.push({
-                            facetKey: f.facetKey,
-                            facetName: f.name,
-                            score: fPct,
-                            rawScore: fRaw
-                        });
+                        // Check if already in list (it shouldn't be yet)
+                        if (!facets.find(x => x.facetKey === f.facetKey)) {
+                            let fPct = fData.total > 0 ? (fData.score / fData.total) * 100 : 0;
+                            fPct = Math.round(Math.max(0, Math.min(100, fPct)));
+                            const fRaw = fData.count > 0 ? (fData.rawScoreSum / fData.count) : 0;
+                            facets.push({
+                                facetKey: f.facetKey,
+                                facetName: f.name,
+                                score: fPct,
+                                rawScore: fRaw
+                            });
+                        }
                     }
                 });
             }
+            scores[key].facets = facets;
         });
 
-        // 7. SAFETY NET: Inject Concepts as Facets if Facets are empty (TalkingTo Fallback Coverage)
-        // This ensures the Chart has data even if Facet Names in config didn't match Subtraits
+        // 7. SAFETY NET: Inject Concepts as Facets
         conceptMap.forEach((val, k) => {
-            // Find which Trait this concept belongs to override
-            const traitKey = conceptTraitMap.get(k);
-            if (traitKey && scores[traitKey]) {
-                const s = scores[traitKey];
-                if (!s.facets) s.facets = [];
+            // Find Normalized Trait for this concept
+            const normTrait = conceptTraitMap.get(k);
+            if (normTrait) {
+                // Find Runtime Trait
+                const targetKey = configKeyMap[normTrait];
+                if (targetKey && scores[targetKey]) {
+                    const s = scores[targetKey];
+                    if (!s.facets) s.facets = [];
 
-                // Check if this concept is already covered by an existing Facet
-                const existing = s.facets.find(f => cleanString(f.facetName) === k || cleanString(f.facetKey) === k);
+                    const existing = s.facets.find(f => cleanString(f.facetName) === k || cleanString(f.facetKey) === k);
 
-                // If existing has valid score, skip. 
-                // If existing has 0 score (because implicit mapping failed), UPDATE IT.
-                // If not existing, ADD IT as a pseudo-facet.
+                    const avg = val.weightSum > 0 ? val.sum / val.weightSum : 0;
+                    const norm = this.normalizeScore(avg);
+                    const raw = avg;
 
-                const avg = val.weightSum > 0 ? val.sum / val.weightSum : 0;
-                const norm = this.normalizeScore(avg);
-                const raw = avg;
-
-                if (existing) {
-                    if (existing.score === 0 && existing.rawScore === 0 && val.weightSum > 0) {
-                        existing.score = norm;
-                        existing.rawScore = raw;
+                    if (existing) {
+                        if (existing.score === 0 && existing.rawScore === 0) {
+                            existing.score = norm;
+                            existing.rawScore = raw;
+                        }
+                    } else {
+                        s.facets.push({
+                            facetKey: `concept_${k}`,
+                            facetName: val.originalName,
+                            score: norm,
+                            rawScore: raw
+                        });
                     }
-                } else {
-                    // Only add if we need to fill gaps. 
-                    // To prevent duplicates if names are slightly different, strict check above.
-                    // If the Chart needs points, adding Concepts as Facets is better than empty.
-                    s.facets.push({
-                        facetKey: `concept_${k}`,
-                        facetName: val.originalName,
-                        score: norm,
-                        rawScore: raw
-                    });
                 }
             }
         });
