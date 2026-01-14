@@ -144,9 +144,16 @@ export class InterpretationService {
                 t.traitKey === trait.traitKey && t.scoreRange === rangeEnum
             ) : [];
 
+            console.log(`[InterpretationService] Buscando textos para ${trait.traitKey} - ${rangeEnum}`);
+            console.log(`[InterpretationService] Config ID: ${config.id}, Tenant: ${tenantId}`);
+            console.log(`[InterpretationService] Textos na config: ${config.interpretativeTexts?.length || 0}`);
+            console.log(`[InterpretationService] Textos relevantes encontrados: ${relevantTexts.length}`);
+
             // FALLBACK 1: Se não achou textos na config atual, busca de QUALQUER config do MESMO TENANT
             if (!relevantTexts || relevantTexts.length === 0) {
-                console.warn(`[generateFullReport] Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}. Tentando fallback do tenant...`);
+                console.warn(`[InterpretationService] ⚠️ Config ${config.id} não tem textos para ${trait.traitKey} - ${rangeEnum}`);
+                console.log(`[InterpretationService] Tentando buscar de qualquer config do tenant ${tenantId}...`);
+
                 // Buscar qualquer config ativa do tenant que tenha esses textos
                 const tenantConfig = await this.prisma.bigFiveConfig.findFirst({
                     where: {
@@ -170,13 +177,25 @@ export class InterpretationService {
 
                 if (tenantConfig && tenantConfig.interpretativeTexts) {
                     relevantTexts = tenantConfig.interpretativeTexts;
-                    console.log(`[generateFullReport] ✅ Encontrados ${relevantTexts.length} textos no tenant`);
+                    console.log(`[InterpretationService] ✅ Encontrados ${relevantTexts.length} textos no tenant (Config: ${tenantConfig.id})`);
                 } else {
                     // FALLBACK 2: Busca universal de qualquer config
-                    console.warn(`[generateFullReport] Nenhum texto no tenant. Usando fallback universal.`);
+                    console.warn(`[InterpretationService] ⚠️ Nenhum texto no tenant ${tenantId}`);
+                    console.log(`[InterpretationService] Tentando fallback universal...`);
                     relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
+                    console.log(`[InterpretationService] Fallback retornou ${relevantTexts.length} textos`);
                 }
             }
+
+            // LOG FINAL dos textos encontrados
+            console.log(`[InterpretationService] 📝 Textos finais para ${trait.traitKey}:`, {
+                total: relevantTexts.length,
+                categories: relevantTexts.map((t: any) => t.category),
+                preview: relevantTexts.map((t: any) => ({
+                    category: t.category,
+                    textPreview: t.text?.substring(0, 50) + '...'
+                }))
+            });
 
             report.traits.push({
                 key: trait.traitKey,
