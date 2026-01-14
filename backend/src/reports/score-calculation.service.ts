@@ -28,6 +28,7 @@ export class ScoreCalculationService {
         dichotomyScores: Record<string, any>;
         config: any;
     }> {
+        // 1. Fetch Data
         const assignment = await this.prisma.assessmentAssignment.findUnique({
             where: { id: assignmentId },
             include: {
@@ -41,408 +42,197 @@ export class ScoreCalculationService {
                         }
                     }
                 },
-                user: { select: { tenantId: true } } // Necessário para buscar config fallback
+                user: { select: { tenantId: true } }
             }
         });
 
         if (!assignment) throw new Error('Assignment não encontrado');
 
-        // Configuração Ativa
+        // 2. Resolve Config (Fallback Logic)
         let config = assignment.config;
         if (!config) {
             config = await this.prisma.bigFiveConfig.findFirst({
-                where: {
-                    tenantId: assignment.user.tenantId,
-                    isActive: true
-                },
-                include: {
-                    traits: {
-                        include: { facets: true }
-                    }
-                }
+                where: { tenantId: assignment.user.tenantId, isActive: true },
+                include: { traits: { include: { facets: true } } }
             });
 
-            // FALLBACK: se não tiver ativa, pega QUALQUER config do tenant
             if (!config) {
                 config = await this.prisma.bigFiveConfig.findFirst({
-                    where: {
-                        tenantId: assignment.user.tenantId
-                    },
-                    include: {
-                        traits: {
-                            include: { facets: true }
-                        }
-                    },
+                    where: { tenantId: assignment.user.tenantId },
+                    include: { traits: { include: { facets: true } } },
                     orderBy: { createdAt: 'desc' }
                 });
             }
         }
 
-        // FALLBACK FINAL: Se ainda não tiver config, cria uma config dummy para não quebrar o teste
         if (!config) {
-            console.warn('[Score Calc] ⚠️ Configuração não encontrada no banco. Usando FALLBACK EM MEMÓRIA.');
+            console.warn('[Score Calc] ⚠️ Configuração não encontrada. Usando FALLBACK.');
             config = {
                 id: 'fallback',
                 name: 'Fallback Config',
                 veryLowMax: 20, lowMax: 40, averageMax: 60, highMax: 80, veryHighMax: 100,
-                traits: [
-                    {
-                        id: 't_ext', traitKey: 'extroversao', name: 'Extroversão', isActive: true,
-                        facets: [
-                            { id: 'f_ext_1', facetKey: 'EXTRAVERSION_F1', name: 'Acolhimento', isActive: true, weight: 1 },
-                            { id: 'f_ext_2', facetKey: 'EXTRAVERSION_F2', name: 'Sociabilidade', isActive: true, weight: 1 },
-                            { id: 'f_ext_3', facetKey: 'EXTRAVERSION_F3', name: 'Assertividade', isActive: true, weight: 1 },
-                            { id: 'f_ext_4', facetKey: 'EXTRAVERSION_F4', name: 'Atividade', isActive: true, weight: 1 },
-                            { id: 'f_ext_5', facetKey: 'EXTRAVERSION_F5', name: 'Busca de Emoções', isActive: true, weight: 1 },
-                            { id: 'f_ext_6', facetKey: 'EXTRAVERSION_F6', name: 'Emoções Positivas', isActive: true, weight: 1 }
-                        ]
-                    },
-                    {
-                        id: 't_agr', traitKey: 'amabilidade', name: 'Amabilidade', isActive: true,
-                        facets: [
-                            { id: 'f_agr_1', facetKey: 'AGREEABLENESS_F1', name: 'Confiança', isActive: true, weight: 1 },
-                            { id: 'f_agr_2', facetKey: 'AGREEABLENESS_F2', name: 'Franqueza', isActive: true, weight: 1 },
-                            { id: 'f_agr_3', facetKey: 'AGREEABLENESS_F3', name: 'Altruísmo', isActive: true, weight: 1 },
-                            { id: 'f_agr_4', facetKey: 'AGREEABLENESS_F4', name: 'Complacência', isActive: true, weight: 1 },
-                            { id: 'f_agr_5', facetKey: 'AGREEABLENESS_F5', name: 'Modéstia', isActive: true, weight: 1 },
-                            { id: 'f_agr_6', facetKey: 'AGREEABLENESS_F6', name: 'Sensibilidade', isActive: true, weight: 1 }
-                        ]
-                    },
-                    {
-                        id: 't_con', traitKey: 'conscienciosidade', name: 'Conscienciosidade', isActive: true,
-                        facets: [
-                            { id: 'f_con_1', facetKey: 'CONSCIENTIOUSNESS_F1', name: 'Competência', isActive: true, weight: 1 },
-                            { id: 'f_con_2', facetKey: 'CONSCIENTIOUSNESS_F2', name: 'Ordem', isActive: true, weight: 1 },
-                            { id: 'f_con_3', facetKey: 'CONSCIENTIOUSNESS_F3', name: 'Dutifulness', isActive: true, weight: 1 },
-                            { id: 'f_con_4', facetKey: 'CONSCIENTIOUSNESS_F4', name: 'Esforço por Realização', isActive: true, weight: 1 },
-                            { id: 'f_con_5', facetKey: 'CONSCIENTIOUSNESS_F5', name: 'Autodisciplina', isActive: true, weight: 1 },
-                            { id: 'f_con_6', facetKey: 'CONSCIENTIOUSNESS_F6', name: 'Deliberação', isActive: true, weight: 1 }
-                        ]
-                    },
-                    {
-                        id: 't_neu', traitKey: 'neuroticismo', name: 'Neuroticismo', isActive: true,
-                        facets: [
-                            { id: 'f_neu_1', facetKey: 'NEUROTICISM_F1', name: 'Ansiedade', isActive: true, weight: 1 },
-                            { id: 'f_neu_2', facetKey: 'NEUROTICISM_F2', name: 'Hostilidade', isActive: true, weight: 1 },
-                            { id: 'f_neu_3', facetKey: 'NEUROTICISM_F3', name: 'Depressão', isActive: true, weight: 1 },
-                            { id: 'f_neu_4', facetKey: 'NEUROTICISM_F4', name: 'Autoconsciência', isActive: true, weight: 1 },
-                            { id: 'f_neu_5', facetKey: 'NEUROTICISM_F5', name: 'Impulsividade', isActive: true, weight: 1 },
-                            { id: 'f_neu_6', facetKey: 'NEUROTICISM_F6', name: 'Vulnerabilidade', isActive: true, weight: 1 }
-                        ]
-                    },
-                    {
-                        id: 't_ope', traitKey: 'abertura a experiencia', name: 'Abertura à Experiência', isActive: true,
-                        facets: [
-                            { id: 'f_ope_1', facetKey: 'OPENNESS_F1', name: 'Fantasia', isActive: true, weight: 1 },
-                            { id: 'f_ope_2', facetKey: 'OPENNESS_F2', name: 'Estética', isActive: true, weight: 1 },
-                            { id: 'f_ope_3', facetKey: 'OPENNESS_F3', name: 'Sentimentos', isActive: true, weight: 1 },
-                            { id: 'f_ope_4', facetKey: 'OPENNESS_F4', name: 'Ações', isActive: true, weight: 1 },
-                            { id: 'f_ope_5', facetKey: 'OPENNESS_F5', name: 'Ideias', isActive: true, weight: 1 },
-                            { id: 'f_ope_6', facetKey: 'OPENNESS_F6', name: 'Valores', isActive: true, weight: 1 }
-                        ]
-                    }
-                ]
+                traits: []
             } as any;
         }
 
-        console.log('[Score Calc] ✅ Config:', config.name);
+        // 3. Setup Helpers & Constants
+        const normalizeKey = (k: string): string => {
+            if (!k) return '';
+            const upper = k.toUpperCase().trim();
+            const mapping: Record<string, string> = {
+                'EXTROVERSAO': 'EXTRAVERSION',
+                'EXTROVERSÃO': 'EXTRAVERSION',
+                'AMABILIDADE': 'AGREEABLENESS',
+                'CONSCIENCIOSIDADE': 'CONSCIENTIOUSNESS',
+                'ESTRUTURA': 'CONSCIENTIOUSNESS',
+                'ABERTURA': 'OPENNESS',
+                'ABERTURA A EXPERIENCIAS': 'OPENNESS',
+                'ABERTURA À EXPERIÊNCIA': 'OPENNESS',
+                'NEUROTICISMO': 'NEUROTICISM',
+                'ESTABILIDADE': 'NEUROTICISM',
+                'ESTABILIDADE EMOCIONAL': 'NEUROTICISM',
+                'EMOCIONAL': 'NEUROTICISM'
+            };
+            return mapping[upper] || upper;
+        };
+
+        const mapQuestionTraitToKey = (qt: string, dic: string): string | null => {
+            if (!qt && !dic) return null;
+            const context = (qt + ' ' + dic).toUpperCase();
+            if (context.includes('EXTROVER') || context.includes('INTROVER')) return 'EXTRAVERSION';
+            if (context.includes('LOGICO') || context.includes('SENTIMENTAL') || context.includes('COMPETITIV') || context.includes('COLAB')) return 'AGREEABLENESS';
+            if (context.includes('ADAPT') || context.includes('ESTRUT') || context.includes('PLAN')) return 'CONSCIENTIOUSNESS';
+            if (context.includes('CONCRETO') || context.includes('ABSTRATO') || context.includes('IMAGIN')) return 'OPENNESS';
+            if (context.includes('EMOC') || context.includes('RACIONAL') || context.includes('INSTAV') || context.includes('ESTAV')) return 'NEUROTICISM';
+            return null;
+        };
+
+        const cleanString = (str: string): string => {
+            if (!str) return '';
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[()%]/g, "").toLowerCase().trim();
+        };
+
+        // 4. Initialize Accumulators
         const scores: Record<string, ScoreResult> = {};
+        const configKeyMap: Record<string, string> = {};
+
+        if (config.traits) {
+            config.traits.forEach(t => {
+                scores[t.traitKey] = {
+                    traitKey: t.traitKey,
+                    traitName: t.name,
+                    score: 0,
+                    normalizedScore: 0,
+                    level: 'AVERAGE',
+                    interpretation: 'Médio',
+                    facets: []
+                };
+                configKeyMap[normalizeKey(t.traitKey)] = t.traitKey;
+            });
+        }
+
         const conceptMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
         const subtraitMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
         const dichotomyMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
+        const traitTotalPossible: Record<string, number> = {};
 
-        // 1. Agrupar Respostas (Itens) por Traço e Faceta
-        // Mapa: TraitKey -> FacetKey -> { sum: number, weightSum: number, count: number }
-        const calculationMap = new Map<string, Map<string, { sum: number, weightSum: number, count: number }>>();
+        // 5. Process Responses
+        assignment.responses.forEach(r => {
+            const q = r.question as any;
+            if (!q) return;
 
-        // Mapa temporário para itens sem faceta (diretos no traço)
-        const directTraitItems = new Map<string, { sum: number, weightSum: number, count: number }>();
+            let rawVal = (r as any).answer || (r as any).value || 0;
+            rawVal = Number(rawVal);
+            if (isNaN(rawVal)) rawVal = 3;
 
-        // Pré-processar Traits para facilitar lookup
-        const activeTraits = config.traits.filter(t => t.isActive !== false); // Default true
-        const traitLookup = new Map<string, any>(); // Key/Name -> TraitConfig
+            const finalValue = q.isReverse ? (6 - rawVal) : rawVal;
+            const weight = q.weight || 1;
 
-        for (const t of activeTraits) {
-            const cleanKey = this.cleanString(t.traitKey);
-            traitLookup.set(cleanKey, t);
-            traitLookup.set(this.cleanString(t.name), t);
-
-            // Inicializar mapas
-            calculationMap.set(t.id, new Map<string, any>());
-            directTraitItems.set(t.id, { sum: 0, weightSum: 0, count: 0 });
-
-            // Inicializar facetas
-            if (t.facets) {
-                for (const f of t.facets) {
-                    if (f.isActive === false) continue;
-                    calculationMap.get(t.id).set(f.id, { sum: 0, weightSum: 0, count: 0 });
-                }
+            // --- Big Five ---
+            let targetKey: string | null = null;
+            if (q.traitKey) {
+                const norm = normalizeKey(q.traitKey);
+                if (configKeyMap[norm]) targetKey = configKeyMap[norm];
             }
-        }
+            if (!targetKey && (q.questionTrait || q.dichotomy)) {
+                const inferred = mapQuestionTraitToKey(q.questionTrait || '', q.dichotomy || '');
+                if (inferred && configKeyMap[inferred]) targetKey = configKeyMap[inferred];
+            }
 
-        // 2. Processar Respostas
-        console.log('[Score Calc] Processando respostas. Amostra (3 primeiras):');
-        assignment.responses.slice(0, 3).forEach((r, i) => {
-            console.log(`[Score Calc]   ${i + 1}. traitKey: "${r.question.traitKey}" | facetKey: "${r.question.facetKey || 'N/A'}" | answer: ${r.answer}`);
+            if (targetKey && scores[targetKey]) {
+                scores[targetKey].score += finalValue * weight;
+                traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
+            }
+
+            // --- TalkingTo ---
+            const accumulate = (map: Map<string, any>, key: string, name: string) => {
+                if (!key) return;
+                const k = cleanString(key);
+                if (!map.has(k)) map.set(k, { sum: 0, weightSum: 0, count: 0, originalName: name });
+                const entry = map.get(k);
+                entry.sum += finalValue * weight;
+                entry.weightSum += weight;
+                entry.count++;
+            };
+
+            if (q.concept) accumulate(conceptMap, q.concept, q.concept);
+            if (q.subtrait) accumulate(subtraitMap, q.subtrait, q.subtrait);
+            if (q.dichotomy) accumulate(dichotomyMap, q.dichotomy, q.dichotomy);
+            // Optionally map questionTrait to dichotomy or subtrait if needed
         });
 
-        for (const response of assignment.responses) {
-            const q = response.question;
-            const answer = typeof response.answer === 'number' ? response.answer : Number(response.answer) || 3;
+        // 6. Finalize & Normalize
+        Object.keys(scores).forEach(key => {
+            const totalPossible = traitTotalPossible[key] || 1;
+            const accumulated = scores[key].score;
+            let percent = (accumulated / totalPossible) * 100;
+            percent = Math.min(100, Math.max(0, percent));
 
-            // Inversão e Peso (Lógica do Painel)
-            // Se isReverse for true, inverte escala 1-5 (1->5, 2->4, 3->3, 4->2, 5->1)
-            // Fórmula: 6 - answer
-            const finalValue = (q.isReverse) ? (6 - answer) : answer;
-            const weight = q.weight || 1.0;
+            scores[key].normalizedScore = Math.round(percent);
+            scores[key].level = this.determineLevel(percent, config);
 
-            // Identificar Traço e Faceta
-            // Tenta match explícito (facetKey) primeiro, depois traitKey
-            let targetTrait: any = null;
-            let targetFacet: any = null;
+            // Text Interpretation
+            const traitConfig = config.traits?.find(t => t.traitKey === key);
+            scores[key].interpretation = this.getInterpretation(scores[key].level, traitConfig || {
+                veryLowText: 'Muito Baixo', lowText: 'Baixo', averageText: 'Médio', highText: 'Alto', veryHighText: 'Muito Alto'
+            });
 
-            // Match via facetKey na questão (novo campo) ou traitKey composto "Trait::Facet"
-            const qTraitKey = q.traitKey || '';
-            const qFacetKey = q.facetKey || '';
-            const parts = qTraitKey.split('::');
-
-            // Tentar identificar o Traço
-            if (traitLookup.has(this.cleanString(parts[0]))) {
-                targetTrait = traitLookup.get(this.cleanString(parts[0]));
-            } else if (traitLookup.has(this.cleanString(qTraitKey))) {
-                targetTrait = traitLookup.get(this.cleanString(qTraitKey));
-            }
-            // Fallback Legacy (Amabilidade no DB vs agreeableness na pergunta)
-            else {
-                const legacyMap: Record<string, string> = {
-                    'amabilidade': 'agreeableness',
-                    'agreeableness': 'amabilidade',
-                    'conscienciosidade': 'conscientiousness',
-                    'conscientiousness': 'conscienciosidade',
-                    'extroversao': 'extraversion',
-                    'extraversion': 'extroversao',
-                    'abertura a experiencia': 'openness',
-                    'openness': 'abertura a experiencia',
-                    'abertura': 'abertura a experiencia',
-                    'estabilidade emocional': 'neuroticismo',
-                    'neuroticismo': 'neuroticism',
-                    'neuroticism': 'neuroticismo'
-                };
-                const mapped = legacyMap[this.cleanString(parts[0])] || legacyMap[this.cleanString(qTraitKey)];
-                if (mapped && traitLookup.has(this.cleanString(mapped))) {
-                    targetTrait = traitLookup.get(this.cleanString(mapped));
-                }
-            }
-
-            if (!targetTrait) continue; // Item órfão ou traço inativo
-
-            // Tentar identificar a Faceta dentro do Traço encontrado
-            if (targetTrait.facets && targetTrait.facets.length > 0) {
-                const facets = targetTrait.facets;
-                // 1. Match exato facetKey
-                targetFacet = facets.find(f => f.isActive !== false && (
-                    this.cleanString(f.facetKey) === this.cleanString(qFacetKey) ||
-                    this.cleanString(f.facetKey) === this.cleanString(parts[1]) ||
-                    this.cleanString(f.name) === this.cleanString(parts[1])
-                ));
-
-                // 2. Match Fuzzy (Aliases) se não achou
-                if (!targetFacet && parts.length > 1) {
-                    // Usar aliases hardcoded APENAS como fallback seguro
-                    // ... (Manter lógica de aliases existente se necessário)
-                }
-            }
-
-            // Acumular valores
-            if (targetFacet) {
-                const fData = calculationMap.get(targetTrait.id).get(targetFacet.id);
-                if (fData) {
-                    fData.sum += finalValue * weight;
-                    fData.weightSum += weight;
-                    fData.count++;
-                }
-            } else {
-                // Item do Traço sem Faceta específica
-                const tData = directTraitItems.get(targetTrait.id);
-                tData.sum += finalValue * weight;
-                tData.weightSum += weight;
-                tData.count++;
-            }
-
-            // --- NOVO: Cálculo para Conceitos, Subtraços e Dicotomias (TalkingTo) ---
-            // Usamos 'any' no cast pois o Prisma retorna o objeto Question atualizado, mas o TS pode não ter pego o type ainda
-            const qAny = q as any;
-
-            // 1. Conceito
-            if (qAny.concept) {
-                const key = this.cleanString(qAny.concept);
-                if (!conceptMap.has(key)) conceptMap.set(key, { sum: 0, weightSum: 0, count: 0, originalName: qAny.concept });
-                const c = conceptMap.get(key);
-                c.sum += finalValue * (weight || 1); // Upscale weight? User said "Points". Let's use weight.
-                c.weightSum += (weight || 1);
-                c.count++;
-            }
-
-            // 2. Subtraço
-            if (qAny.subtrait) {
-                const key = this.cleanString(qAny.subtrait);
-                if (!subtraitMap.has(key)) subtraitMap.set(key, { sum: 0, weightSum: 0, count: 0, originalName: qAny.subtrait });
-                const s = subtraitMap.get(key);
-                s.sum += finalValue * (weight || 1);
-                s.weightSum += (weight || 1);
-                s.count++;
-            }
-
-            // 3. Dicotomia
-            if (qAny.dichotomy) {
-                const key = this.cleanString(qAny.dichotomy);
-                if (!dichotomyMap.has(key)) dichotomyMap.set(key, { sum: 0, weightSum: 0, count: 0, originalName: qAny.dichotomy });
-                const d = dichotomyMap.get(key);
-                d.sum += finalValue * (weight || 1);
-                d.weightSum += (weight || 1);
-                d.count++;
-            }
-        }
-
-        // 3. Calcular Média das Facetas e do Traço Final
-        for (const trait of activeTraits) {
-            const facetsData = calculationMap.get(trait.id);
-            const directData = directTraitItems.get(trait.id);
-
-            const facetResults = [];
-            let traitSum = 0;
-            let traitWeightSum = 0;
-
-            // Calcular score de cada Faceta e somar ao Traço
-            if (trait.facets) {
-                for (const facet of trait.facets) {
-                    if (facet.isActive === false) continue;
-
-                    const fData = facetsData.get(facet.id);
-                    let fScoreRaw = 0;
-
-                    if (fData && fData.weightSum > 0) {
-                        fScoreRaw = fData.sum / fData.weightSum;
-                    }
-
-                    // Score Normalizado da Faceta (0-100)
-                    const fScoreNorm = this.normalizeScore(fScoreRaw);
-
-                    // Adicionar ao resultado
-                    facetResults.push({
-                        facetKey: facet.facetKey,
-                        facetName: facet.name,
-                        score: fScoreNorm,
-                        rawScore: fScoreRaw
-                    });
-
-                    // Ponderar a Faceta para o Traço
-                    // "Traço = média ponderada das facetas"
-                    // Se a faceta não teve respostas (score 0), ela entra na média?? 
-                    // Em Big Five rigoroso: Sim, puxa pra baixo. 
-                    // Em SaaS resiliente: Ignora? 
-                    // Vou incluir se tiver facet.weight > 0.
-                    // ATENÇÃO: Se fScoreRaw for 0 pq nao teve perguntas, é injusto baixar o traço.
-                    // Vou considerar apenas facetas que tiveram itens OU assumir score neutro (3)?
-                    // Melhor: Ignorar facetas sem dados para não distorcer.
-                    if (fData && fData.count > 0) {
-                        traitSum += fScoreRaw * (facet.weight || 1.0);
-                        traitWeightSum += (facet.weight || 1.0);
-                    }
-                }
-            }
-
-            // Considerar Itens Diretos (sem Faceta) no cálculo do Traço
-            // Tratamos o conjunto de itens diretos como uma "Faceta Virtual"
-            if (directData && directData.count > 0) {
-                const directScore = directData.sum / directData.weightSum;
-                // Peso dessa parte? Arbitrário ou proporcional? 
-                // Vamos dar peso 1.0 para o "resto" das perguntas.
-                traitSum += directScore * 1.0;
-                traitWeightSum += 1.0;
-            }
-
-            // Score Final do Traço
-            let traitFinalRaw = 0;
-            if (traitWeightSum > 0) {
-                traitFinalRaw = traitSum / traitWeightSum;
-            }
-
-            const normalizedScore = this.normalizeScore(traitFinalRaw);
-            const level = this.determineLevel(normalizedScore, config);
-            const interpretation = this.getInterpretation(level, trait);
-
-            // Labels Customizados (Config)
+            // Set Label
             let levelLabel = '';
-            switch (level) {
+            switch (scores[key].level) {
                 case 'VERY_LOW': levelLabel = config.veryLowLabel || 'Muito Baixo'; break;
                 case 'LOW': levelLabel = config.lowLabel || 'Baixo'; break;
                 case 'AVERAGE': levelLabel = config.averageLabel || 'Médio'; break;
                 case 'HIGH': levelLabel = config.highLabel || 'Alto'; break;
                 case 'VERY_HIGH': levelLabel = config.veryHighLabel || 'Muito Alto'; break;
             }
-
-            scores[trait.traitKey] = {
-                traitKey: trait.traitKey,
-                traitName: trait.name,
-                score: traitFinalRaw,
-                normalizedScore: normalizedScore,
-                level: level,
-                levelLabel: levelLabel, // Novo campo (adicionar na Interface ScoreResult se TS reclamar, mas como é JS runtime passa, depois ajusto interface)
-                interpretation: interpretation,
-                facets: facetResults
-            };
-        }
-
-        // 4. Finalizar Cálculos Extras
-        const conceptScores: Record<string, any> = {};
-        conceptMap.forEach((v, k) => {
-            const raw = v.sum / v.weightSum;
-            conceptScores[k] = {
-                name: v.originalName,
-                score: raw,
-                normalizedScore: this.normalizeScore(raw),
-                level: this.determineLevel(this.normalizeScore(raw), config)
-            };
+            scores[key].levelLabel = levelLabel;
         });
 
-        const subtraitScores: Record<string, any> = {};
-        subtraitMap.forEach((v, k) => {
-            const raw = v.sum / v.weightSum;
-            subtraitScores[k] = {
-                name: v.originalName,
-                score: raw,
-                normalizedScore: this.normalizeScore(raw),
-                level: this.determineLevel(this.normalizeScore(raw), config)
-            };
-        });
+        const processMap = (map: Map<string, any>) => {
+            const out: Record<string, any> = {};
+            map.forEach((v, k) => {
+                const avg = v.weightSum > 0 ? (v.sum / v.weightSum) : 0;
+                out[k] = {
+                    name: v.originalName,
+                    score: avg,
+                    normalizedScore: this.normalizeScore(avg),
+                    level: this.determineLevel(this.normalizeScore(avg), config)
+                };
+            });
+            return out;
+        };
 
-        const dichotomyScores: Record<string, any> = {};
-        dichotomyMap.forEach((v, k) => {
-            const raw = v.sum / v.weightSum;
-            dichotomyScores[k] = {
-                name: v.originalName,
-                score: raw,
-                normalizedScore: this.normalizeScore(raw),
-                level: this.determineLevel(this.normalizeScore(raw), config)
-            };
-        });
-
-        return { scores, conceptScores, subtraitScores, dichotomyScores, config };
-    }
-
-    private cleanString(str: string): string {
-        if (!str) return '';
-        return str
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-            .replace(/[()%]/g, "") // Remove parênteses e porcentagem
-            .toLowerCase()
-            .trim();
+        return {
+            scores,
+            conceptScores: processMap(conceptMap),
+            subtraitScores: processMap(subtraitMap),
+            dichotomyScores: processMap(dichotomyMap),
+            config
+        };
     }
 
     private normalizeScore(rawScore: number): number {
-        // Escala 1 a 5 -> 0 a 100
         if (rawScore < 1) return 0;
         const norm = ((rawScore - 1) / 4) * 100;
         return Math.min(100, Math.max(0, Math.round(norm)));
@@ -458,12 +248,12 @@ export class ScoreCalculationService {
 
     private getInterpretation(level: string, trait: any): string {
         switch (level) {
-            case 'VERY_LOW': return trait.veryLowText;
-            case 'LOW': return trait.lowText;
-            case 'AVERAGE': return trait.averageText;
-            case 'HIGH': return trait.highText;
-            case 'VERY_HIGH': return trait.veryHighText;
-            default: return trait.averageText;
+            case 'VERY_LOW': return trait.veryLowText || 'Muito Baixo';
+            case 'LOW': return trait.lowText || 'Baixo';
+            case 'AVERAGE': return trait.averageText || 'Médio';
+            case 'HIGH': return trait.highText || 'Alto';
+            case 'VERY_HIGH': return trait.veryHighText || 'Muito Alto';
+            default: return trait.averageText || 'Médio';
         }
     }
 }
