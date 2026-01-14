@@ -179,11 +179,30 @@ export class InterpretationService {
                     relevantTexts = tenantConfig.interpretativeTexts;
                     console.log(`[InterpretationService] ✅ Encontrados ${relevantTexts.length} textos no tenant (Config: ${tenantConfig.id})`);
                 } else {
-                    // FALLBACK 2: Busca universal de qualquer config
+                    // FALLBACK 2: BUSCA EMERGENCIAL - Buscar DIRETAMENTE no banco sem filtro de tenant/config
                     console.warn(`[InterpretationService] ⚠️ Nenhum texto no tenant ${tenantId}`);
-                    console.log(`[InterpretationService] Tentando fallback universal...`);
-                    relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
-                    console.log(`[InterpretationService] Fallback retornou ${relevantTexts.length} textos`);
+                    console.log(`[InterpretationService] 🚨 BUSCA EMERGENCIAL: Procurando QUALQUER texto no banco...`);
+
+                    relevantTexts = await this.prisma.bigFiveInterpretativeText.findMany({
+                        where: {
+                            traitKey: trait.traitKey,
+                            scoreRange: rangeEnum
+                        },
+                        orderBy: {
+                            createdAt: 'desc'
+                        },
+                        take: 10
+                    });
+
+                    console.log(`[InterpretationService] 🚨 Busca emergencial retornou ${relevantTexts.length} textos`);
+
+                    if (!relevantTexts || relevantTexts.length === 0) {
+                        // FALLBACK 3: Universal (seed/padrão)
+                        console.warn(`[InterpretationService] ⚠️ NENHUM texto encontrado no banco!`);
+                        console.log(`[InterpretationService] Usando fallback universal (seed)...`);
+                        relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
+                        console.log(`[InterpretationService] Fallback retornou ${relevantTexts.length} textos`);
+                    }
                 }
             }
 

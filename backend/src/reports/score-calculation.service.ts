@@ -247,10 +247,19 @@ export class ScoreCalculationService {
 
             let rawVal = (r as any).answer || (r as any).value || 0;
             rawVal = Number(rawVal);
-            if (isNaN(rawVal)) rawVal = 3;
+            if (isNaN(rawVal) || !isFinite(rawVal)) {
+                console.warn('[calculateScores] rawVal inválido, usando 3:', rawVal);
+                rawVal = 3;
+            }
 
             const finalValue = q.isReverse ? (6 - rawVal) : rawVal;
             const weight = q.weight || 1;
+
+            // PROTEÇÃO: Garantir que finalValue é número válido
+            if (isNaN(finalValue) || !isFinite(finalValue)) {
+                console.error('[calculateScores] finalValue NaN detectado! rawVal:', rawVal, 'isReverse:', q.isReverse);
+                return; // Pular esta resposta
+            }
 
             // --- Determine Trait ---
             let targetKey: string | null = null;
@@ -316,8 +325,23 @@ export class ScoreCalculationService {
         // 6. Finalize & Normalize
         Object.keys(scores).forEach(key => {
             const totalPossible = traitTotalPossible[key] || 1;
-            const accumulated = scores[key].score;
-            let percent = (accumulated / totalPossible) * 100;
+            const accumulated = scores[key].score || 0;
+
+            // PROTEÇÃO ANTI-NaN
+            if (isNaN(accumulated) || !isFinite(accumulated)) {
+                console.error('[calculateScores] accumulated NaN para trait:', key);
+                scores[key].score = 0;
+                scores[key].normalizedScore = 0;
+                return;
+            }
+
+            let percent = totalPossible > 0 ? (accumulated / totalPossible) * 100 : 0;
+
+            // VALIDAÇÃO DO RESULTADO
+            if (isNaN(percent) || !isFinite(percent)) {
+                console.error('[calculateScores] percent NaN! accumulated:', accumulated, 'totalPossible:', totalPossible);
+                percent = 0;
+            }
             percent = Math.min(100, Math.max(0, percent));
 
             scores[key].normalizedScore = Math.round(percent);
@@ -379,6 +403,13 @@ export class ScoreCalculationService {
                     const existing = s.facets.find(f => cleanString(f.facetName) === k || cleanString(f.facetKey) === k);
 
                     const avg = val.weightSum > 0 ? val.sum / val.weightSum : 0;
+
+                    // PROTEÇÃO ANTI-NaN
+                    if (isNaN(avg) || !isFinite(avg)) {
+                        console.error('[calculateScores] avg NaN para concept:', k, 'val:', val);
+                        return; // Pular este conceito
+                    }
+
                     const norm = this.normalizeScore(avg);
                     const raw = avg;
 
