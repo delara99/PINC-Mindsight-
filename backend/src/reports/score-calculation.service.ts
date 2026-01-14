@@ -116,6 +116,17 @@ export class ScoreCalculationService {
         const scores: Record<string, ScoreResult> = {};
         const configKeyMap: Record<string, string> = {};
 
+        // Novo: Mapa para acumular scores de facetas
+        const facetScores: Record<string, {
+            score: number;
+            total: number;
+            rawScoreSum: number;
+            count: number;
+            name: string;
+            traitKey: string
+        }> = {};
+        const facetNameMap: Record<string, string> = {};
+
         if (config.traits) {
             config.traits.forEach(t => {
                 scores[t.traitKey] = {
@@ -128,6 +139,24 @@ export class ScoreCalculationService {
                     facets: []
                 };
                 configKeyMap[normalizeKey(t.traitKey)] = t.traitKey;
+
+                // Inicializar facetas
+                if (t.facets) {
+                    t.facets.forEach(f => {
+                        facetScores[f.facetKey] = {
+                            score: 0,
+                            total: 0,
+                            rawScoreSum: 0,
+                            count: 0,
+                            name: f.name,
+                            traitKey: t.traitKey
+                        };
+                        // Mapear nome normalizado da faceta para key (para fallback do TalkingTo)
+                        const cleanName = cleanString(f.name);
+                        if (cleanName) facetNameMap[cleanName] = f.facetKey;
+                        facetNameMap[cleanString(f.facetKey)] = f.facetKey;
+                    });
+                }
             });
         }
 
@@ -148,7 +177,7 @@ export class ScoreCalculationService {
             const finalValue = q.isReverse ? (6 - rawVal) : rawVal;
             const weight = q.weight || 1;
 
-            // --- Big Five ---
+            // --- Big Five Traits ---
             let targetKey: string | null = null;
             if (q.traitKey) {
                 const norm = normalizeKey(q.traitKey);
@@ -164,7 +193,24 @@ export class ScoreCalculationService {
                 traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
             }
 
-            // --- TalkingTo ---
+            // --- Facets Logic (Added) ---
+            let fKey: string | null = q.facetKey || null;
+            // Fallback: se não tiver facetKey mas tiver subtrait/concept que bata com nome de faceta
+            if (!fKey && q.subtrait) {
+                fKey = facetNameMap[cleanString(q.subtrait)] || null;
+            }
+            if (!fKey && q.concept) {
+                fKey = facetNameMap[cleanString(q.concept)] || null;
+            }
+
+            if (fKey && facetScores[fKey]) {
+                facetScores[fKey].score += finalValue * weight;
+                facetScores[fKey].total += (5 * weight);
+                facetScores[fKey].rawScoreSum += finalValue;
+                facetScores[fKey].count++;
+            }
+
+            // --- TalkingTo Extra ---
             const accumulate = (map: Map<string, any>, key: string, name: string) => {
                 if (!key) return;
                 const k = cleanString(key);
@@ -178,7 +224,6 @@ export class ScoreCalculationService {
             if (q.concept) accumulate(conceptMap, q.concept, q.concept);
             if (q.subtrait) accumulate(subtraitMap, q.subtrait, q.subtrait);
             if (q.dichotomy) accumulate(dichotomyMap, q.dichotomy, q.dichotomy);
-            // Optionally map questionTrait to dichotomy or subtrait if needed
         });
 
         // 6. Finalize & Normalize
@@ -207,6 +252,25 @@ export class ScoreCalculationService {
                 case 'VERY_HIGH': levelLabel = config.veryHighLabel || 'Muito Alto'; break;
             }
             scores[key].levelLabel = levelLabel;
+
+            // --- Populate Facets inside Trait ---
+            if (traitConfig && traitConfig.facets) {
+                traitConfig.facets.forEach(f => {
+                    const fData = facetScores[f.facetKey];
+                    if (fData) {
+                        let fPct = fData.total > 0 ? (fData.score / fData.total) * 100 : 0;
+                        fPct = Math.round(Math.max(0, Math.min(100, fPct)));
+                        const fRaw = fData.count > 0 ? (fData.rawScoreSum / fData.count) : 0;
+
+                        scores[key].facets?.push({
+                            facetKey: f.facetKey,
+                            facetName: f.name,
+                            score: fPct,
+                            rawScore: fRaw
+                        });
+                    }
+                });
+            }
         });
 
         const processMap = (map: Map<string, any>) => {
