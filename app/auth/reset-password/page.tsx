@@ -67,11 +67,12 @@ export default function ResetPasswordPage() {
 
     return (
         <main className="min-h-screen flex">
-            {/* Left Side - Security Branding */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#2A0E61] to-[#7B1FA2] p-12 flex-col justify-between text-white">
-                <Link href="/" className="flex items-center gap-3">
-                    <img src="/logo.png" alt="PINC" className="h-12 brightness-0 invert" />
-                </Link>
+                <div>
+                    <Link href="/" className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-all py-2.5 px-5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 font-medium text-sm group">
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Voltar para o Site
+                    </Link>
+                </div>
                 <div className="max-w-md">
                     <div className="bg-white/10 w-fit p-3 rounded-2xl mb-6 backdrop-blur-sm border border-white/10">
                         <ShieldCheck size={32} className="text-green-400" />
