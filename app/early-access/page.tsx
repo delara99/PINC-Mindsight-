@@ -95,12 +95,12 @@ export default function EarlyAccessPage() {
             `}</style>
 
             {/* Navbar Minimal */}
-            <nav className="fixed top-0 w-full z-50 bg-[#0A0A0B]/80 backdrop-blur-md border-b border-white/5">
+            <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <img src="/logo-pinc.png" alt="PINC Mindsight" className="h-12 w-auto brightness-0 invert" />
+                        <img src="/logo-pinc.png" alt="PINC Mindsight" className="h-12 w-auto" />
                     </div>
-                    <a href="#join" className="hidden md:block px-5 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-sm font-medium transition-all">
+                    <a href="#join" className="hidden md:block px-5 py-2 bg-black text-white hover:bg-gray-800 rounded-full text-sm font-medium transition-all shadow-lg shadow-gray-200/50">
                         Participar do Beta
                     </a>
                 </div>
