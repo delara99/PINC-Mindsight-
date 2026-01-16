@@ -330,7 +330,7 @@ export class UserController {
 
             // 3. Remover Mensagens enviadas e recebidas
             await tx.connectionMessage.deleteMany({
-                where: { OR: [{ senderId: id }, { userId: id }] } // UserID é o link, Sender é quem mandou
+                where: { senderId: id }
             });
             // NOTA DO DEBUG: Validar campos do model ConnectionMessage. Se senderId não existir, pode ser apenas userId na relação
 
@@ -396,7 +396,8 @@ export class UserController {
                 cnpj: true,
                 companyName: true,
                 phone: true,
-                plan: true
+                plan: true,
+                mustChangePassword: true
             }
         });
         return user;

@@ -44,8 +44,19 @@ function LoginForm() {
 
             const userData = await userResponse.json();
 
+            // Garantir flag se vier do login payload também
+            if (data.user?.mustChangePassword) {
+                userData.mustChangePassword = true;
+            }
+
             // Salvar no store
             login(data.access_token, userData);
+
+            // Redirecionamento Prioritário de Segurança
+            if (userData.mustChangePassword) {
+                router.push('/auth/force-change-password');
+                return;
+            }
 
             // Redirecionar para URL de redirect ou dashboard padrão
             const redirectTo = searchParams.get('redirect') || '/dashboard';
