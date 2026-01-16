@@ -690,35 +690,102 @@ export default function ClientsPage() {
             {isEditModalOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
                     <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-200">
-                        <h3 className="text-xl font-bold mb-6">Editar Cliente</h3>
-                        <div className="space-y-4">
+                        <div className="flex justify-between items-start mb-6">
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome / Razão Social</label>
-                                <input type="text" value={editData.name || editData.companyName} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary" />
+                                <h3 className="text-xl font-bold">Editar Cliente</h3>
+                                <p className="text-sm text-gray-500">
+                                    {editingClient?.userType === 'COMPANY' ? 'Pessoa Jurídica (B2B)' : 'Pessoa Física (B2C)'}
+                                </p>
                             </div>
-                            {/* Campos condicionais de doc */}
+                            <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Email (Readonly) */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email de Acesso (Não editável)</label>
+                                <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed">
+                                    <Mail size={16} />
+                                    {editingClient?.email}
+                                </div>
+                            </div>
+
+                            {/* Nome / Razão Social */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                    {editingClient?.userType === 'COMPANY' ? 'Razão Social' : 'Nome Completo'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editingClient?.userType === 'COMPANY' ? editData.companyName : editData.name}
+                                    onChange={e => editingClient?.userType === 'COMPANY' ? setEditData({ ...editData, companyName: e.target.value }) : setEditData({ ...editData, name: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                                />
+                            </div>
+
+                            {/* Nome Fantasia (Apenas B2B) */}
+                            {editingClient?.userType === 'COMPANY' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Fantasia</label>
+                                    <input
+                                        type="text"
+                                        value={editData.name} // No modelo atual, 'name' é usado como fantasia para PJ visualmente em alguns lugares, ou vice-versa. Ajuste conforme seu backend.
+                                        onChange={e => setEditData({ ...editData, name: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                        placeholder="Nome comercial da empresa"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Documento e Telefone */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{editData.cpf ? 'CPF' : 'CNPJ'}</label>
-                                    <input type="text" value={editData.cpf || editData.cnpj} onChange={e => editData.cpf ? setEditData({ ...editData, cpf: e.target.value }) : setEditData({ ...editData, cnpj: e.target.value })} className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary" />
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                        {editingClient?.userType === 'COMPANY' ? 'CNPJ' : 'CPF'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editingClient?.userType === 'COMPANY' ? editData.cnpj : editData.cpf}
+                                        onChange={e => editingClient?.userType === 'COMPANY' ? setEditData({ ...editData, cnpj: e.target.value }) : setEditData({ ...editData, cpf: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary font-mono"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefone</label>
-                                    <input type="text" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary" />
+                                    <input
+                                        type="text"
+                                        value={editData.phone}
+                                        onChange={e => setEditData({ ...editData, phone: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                    />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Plano</label>
-                                <select value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value as any })} className="w-full px-4 py-2 border rounded-lg bg-white outline-none focus:border-primary">
-                                    <option value="START">Start</option>
-                                    <option value="PRO">Pro</option>
-                                    <option value="BUSINESS">Business</option>
-                                </select>
+
+                            {/* Plano e Status (Opcional) */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Plano de Acesso</label>
+                                    <select value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value as any })} className="w-full px-4 py-2 border rounded-lg bg-white outline-none focus:border-primary cursor-pointer hover:border-gray-400 transition-colors">
+                                        <option value="START">Start</option>
+                                        <option value="PRO">Pro</option>
+                                        <option value="BUSINESS">Business</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status da Conta</label>
+                                    <div className="px-4 py-2 bg-gray-50 border rounded-lg text-gray-500 text-sm flex items-center justify-between">
+                                        <span>{editingClient?.status === 'active' ? 'Ativo' : 'Inativo'}</span>
+                                        {/* Status geralmente requer endpoint específico para ativar/desativar, mantido como display por enquanto ou adicione select se o update suportar */}
+                                        <div className={`w-2 h-2 rounded-full ${editingClient?.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
-                            <button onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancelar</button>
-                            <button onClick={handleUpdateClient} disabled={updateClientMutation.isPending} className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover">Salvar</button>
+                        <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+                            <button onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
+                            <button onClick={handleUpdateClient} disabled={updateClientMutation.isPending} className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+                                {updateClientMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <><Check size={18} /> Salvar Alterações</>}
+                            </button>
                         </div>
                     </div>
                 </div>
