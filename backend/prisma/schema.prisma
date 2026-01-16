@@ -573,12 +573,25 @@ model SiteSettings {
   // Business Page Content
   businessFeatures Json @default("[]") @map("business_features")
 
+  // Early Access / Beta Config
+  enableEarlyAccess Boolean @default(false) @map("enable_early_access")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   tenant Tenant? @relation(fields: [tenantId], references: [id])
 
   @@map("site_settings")
+}
+
+model EarlyAccessLead {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  interest  String?  @map("interest_type") // Autoconhecimento, Profissional, Relacionamentos, Pesquisa
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("early_access_leads")
 }
 
 // =======================

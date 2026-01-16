@@ -38,4 +38,10 @@ export class SiteSettingsController {
     async resetSettings(@Request() req) {
         return this.service.resetToDefaults(req.user.userId);
     }
+
+    // Public endpoint - register lead
+    @Post('leads')
+    async registerLead(@Body() data: { name: string; email: string; interest?: string }) {
+        return this.service.registerLead(data);
+    }
 }

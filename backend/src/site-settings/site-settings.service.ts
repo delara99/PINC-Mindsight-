@@ -148,4 +148,26 @@ export class SiteSettingsService {
 
         return this.getSettings(tenantId);
     }
+    // Register Early Access Lead
+    async registerLead(data: { name: string; email: string; interest?: string }) {
+        // Validate if email exists
+        const existing = await this.prisma.earlyAccessLead.findUnique({
+            where: { email: data.email }
+        });
+
+        if (existing) {
+            return this.prisma.earlyAccessLead.update({
+                where: { id: existing.id },
+                data: { interest: data.interest || existing.interest }
+            });
+        }
+
+        return this.prisma.earlyAccessLead.create({
+            data: {
+                name: data.name,
+                email: data.email,
+                interest: data.interest
+            }
+        });
+    }
 }

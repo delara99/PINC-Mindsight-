@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/auth-store';
-import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Building, Upload } from 'lucide-react';
+import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Building, Upload, Rocket } from 'lucide-react';
 import { API_URL } from '../../../src/config/api';
 
 export default function SettingsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme' | 'about' | 'business'>('hero');
+    const [activeTab, setActiveTab] = useState<'hero' | 'features' | 'pricing' | 'theme' | 'about' | 'business' | 'early-access'>('hero');
 
     // Fetch settings
     const { data: settings, isLoading } = useQuery({
@@ -178,15 +178,13 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-500 mt-1">Edite textos, cores e conteúdo sem mexer no código</p>
                 </div>
 
-                {/* Tabs */}
                 <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
-                    {['hero', 'features', 'pricing', 'about', 'theme', 'business'].map((tab) => (
+                    {['hero', 'features', 'pricing', 'about', 'theme', 'business', 'early-access'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`flex-1 min-w-[100px] py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition whitespace-nowrap ${
-                                activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`flex-1 min-w-[100px] py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition whitespace-nowrap ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             {tab === 'hero' && <><Sparkles size={16} /> Hero Section</>}
                             {tab === 'features' && <><FileText size={16} /> Features</>}
@@ -194,6 +192,7 @@ export default function SettingsPage() {
                             {tab === 'theme' && <><Palette size={16} /> Tema</>}
                             {tab === 'about' && <><Info size={16} /> Sobre</>}
                             {tab === 'business' && <><Building size={16} /> Empresas (B2B)</>}
+                            {tab === 'early-access' && <><Rocket size={16} /> Amostra (Beta)</>}
                         </button>
                     ))}
                 </div>
@@ -311,13 +310,13 @@ export default function SettingsPage() {
                                                     type="checkbox"
                                                     checked={!!feat.highlighted}
                                                     onChange={(e) => updateFeature(index, 'highlighted', String(e.target.checked))} // O backend salva como JSON, o frontend casta na leitura se necessario, mas aqui o state é any.
-                                                    // Melhor: updateFeature espera value: string. O ideal seria value: any.
-                                                    // Checando updateFeature: const updateFeature = (index: number, field: string, value: string) => { ... }
-                                                    // OPA! O updateFeature original está tipado como string value. Preciso ajustar o updateFeature OU passar string 'true'/'false'.
-                                                    // Vou ajustar o updateFeature na próxima call se precisar, mas aqui vou assumir que posso passar any no JS ou ajustar a assinatura.
-                                                    // Espera, vi o codigo: updateFeature = (index: number, field: string, value: string) .
-                                                    // Vou MUDAR a assinatura do updateFeature para `value: any` primeiro, ou hackear aqui.
-                                                    // Melhor change: vou alterar o `updateFeature` signature na linha 89 para aceitar any.
+                                                // Melhor: updateFeature espera value: string. O ideal seria value: any.
+                                                // Checando updateFeature: const updateFeature = (index: number, field: string, value: string) => { ... }
+                                                // OPA! O updateFeature original está tipado como string value. Preciso ajustar o updateFeature OU passar string 'true'/'false'.
+                                                // Vou ajustar o updateFeature na próxima call se precisar, mas aqui vou assumir que posso passar any no JS ou ajustar a assinatura.
+                                                // Espera, vi o codigo: updateFeature = (index: number, field: string, value: string) .
+                                                // Vou MUDAR a assinatura do updateFeature para `value: any` primeiro, ou hackear aqui.
+                                                // Melhor change: vou alterar o `updateFeature` signature na linha 89 para aceitar any.
                                                 />
                                                 <Star size={12} className={feat.highlighted ? "text-yellow-500 fill-yellow-500" : "text-gray-400"} />
                                                 Destaque
@@ -513,7 +512,7 @@ export default function SettingsPage() {
                                             {formData.businessLogo && (
                                                 <div className="h-16 w-16 relative border rounded-lg p-2 bg-gray-50 flex items-center justify-center">
                                                     <img src={formData.businessLogo} alt="Logo B2B" className="max-h-full max-w-full object-contain" />
-                                                    <button 
+                                                    <button
                                                         onClick={() => setFormData({ ...formData, businessLogo: null })}
                                                         className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow border border-gray-200 hover:bg-gray-50"
                                                     >
@@ -524,10 +523,10 @@ export default function SettingsPage() {
                                             <label className="flex items-center gap-2 cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
                                                 <Upload size={16} />
                                                 Upload Logo
-                                                <input 
-                                                    type="file" 
-                                                    accept="image/*" 
-                                                    className="hidden" 
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
                                                     onChange={(e) => {
                                                         const file = e.target.files?.[0];
                                                         if (file) {
@@ -543,9 +542,9 @@ export default function SettingsPage() {
                                         </div>
                                         <p className="text-xs text-gray-400 mt-2">Recomendado: PNG transparente, max 2MB.</p>
                                     </div>
-                                    
+
                                     <div className="space-y-4">
-                                         <div>
+                                        <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Cor de Fundo (Hero)</label>
                                             <input
                                                 type="color"
@@ -654,6 +653,51 @@ export default function SettingsPage() {
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                 <p className="text-sm text-gray-600">💡 <strong>Dica:</strong> As cores do tema afetam botões, links e elementos de destaque em toda a aplicação.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Early Access Tab */}
+                    {activeTab === 'early-access' && (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between bg-indigo-50 p-6 rounded-xl border border-indigo-100">
+                                <div>
+                                    <h4 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
+                                        <Rocket size={20} /> Página de Coleta de Amostras (Beta)
+                                    </h4>
+                                    <p className="text-sm text-indigo-700 mt-1 max-w-lg">
+                                        Ative esta landing page especial para coletar leads qualificados e validar o método antes do lançamento oficial.
+                                        A página estará acessível em <strong>/early-access</strong>.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={formData.enableEarlyAccess || false}
+                                        onChange={(e) => setFormData({ ...formData, enableEarlyAccess: e.target.checked })}
+                                    />
+                                    <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-5 border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+                                    <h4 className="font-bold text-gray-800 mb-2">Visualizar Página</h4>
+                                    <p className="text-sm text-gray-500 mb-4">Veja como a página está ficando em tempo real.</p>
+                                    <a
+                                        href="/early-access"
+                                        target="_blank"
+                                        className="inline-flex items-center gap-2 text-primary font-bold hover:underline"
+                                    >
+                                        Acessar /early-access ↗
+                                    </a>
+                                </div>
+                                <div className="p-5 border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+                                    <h4 className="font-bold text-gray-800 mb-2">Coleta de Leads</h4>
+                                    <p className="text-sm text-gray-500 mb-4">Os leads capturados serão salvos no banco de dados.</p>
+                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Em desenvolvimento: Tabela de Leads</span>
+                                </div>
                             </div>
                         </div>
                     )}
