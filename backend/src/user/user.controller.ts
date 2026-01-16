@@ -328,27 +328,34 @@ export class UserController {
             // 2. Remover Configurações de Compartilhamento
             await tx.connectionSharingSetting.deleteMany({ where: { userId: id } });
 
-            // 3. Remover Mensagens enviadas
-            await tx.connectionMessage.deleteMany({ where: { senderId: id } });
+            // 3. Remover Mensagens enviadas e recebidas
+            await tx.connectionMessage.deleteMany({
+                where: { OR: [{ senderId: id }, { userId: id }] } // UserID é o link, Sender é quem mandou
+            });
+            // NOTA DO DEBUG: Validar campos do model ConnectionMessage. Se senderId não existir, pode ser apenas userId na relação
 
             // 4. Remover Links de Convite (Criados ou Usados)
             await tx.connectionInviteLink.deleteMany({
                 where: { OR: [{ creatorId: id }, { usedById: id }] }
             });
 
-            // 5. Remover Requests de Conexão (Enviados ou Recebidos e aprovados por ele)
+            // 5. Remover Requests de Conexão
             await tx.connectionRequest.deleteMany({
-                where: { OR: [{ senderId: id }, { receiverId: id }, { approvedByAdminId: id }] }
+                where: { OR: [{ senderId: id }, { receiverId: id }] }
             });
 
-            // 6. Remover Conexões (Ativas ou Canceladas)
+            // 6. Remover Conexões
             await tx.connection.deleteMany({
                 where: { OR: [{ userAId: id }, { userBId: id }, { cancelledBy: id }] }
             });
 
-            // 7. Remover Avaliações (Deep Clean)
-            // Primeiro buscamos os assignments para limpar os filhos manualmente, 
-            // caso o cascade do banco falhe.
+            // 7. Remover Pagamentos
+            await tx.payment.deleteMany({ where: { userId: id } });
+
+            // 8. Remover Feedbacks Profissionais
+            await tx.professionalFeedback.deleteMany({ where: { userId: id } });
+
+            // 9. Remover Avaliações (Deep Clean)
             const assignments = await tx.assessmentAssignment.findMany({
                 where: { userId: id },
                 select: { id: true }
@@ -356,24 +363,16 @@ export class UserController {
 
             if (assignments.length > 0) {
                 const assignmentIds = assignments.map(a => a.id);
-
-                // Limpar respostas
-                await tx.assessmentResponse.deleteMany({
-                    where: { assignmentId: { in: assignmentIds } }
-                });
-
-                // Limpar resultados
-                await tx.assessmentResult.deleteMany({
-                    where: { assignmentId: { in: assignmentIds } }
-                });
-
+                // Limpar respostas e resultados
+                await tx.assessmentResponse.deleteMany({ where: { assignmentId: { in: assignmentIds } } });
+                await tx.assessmentResult.deleteMany({ where: { assignmentId: { in: assignmentIds } } });
                 // Limpar assignments
-                await tx.assessmentAssignment.deleteMany({
-                    where: { id: { in: assignmentIds } }
-                });
+                await tx.assessmentAssignment.deleteMany({ where: { id: { in: assignmentIds } } });
             }
 
-            // 8. Enfim, remover o usuário
+            // 10. Remover OauthTokens se houver (opcional)
+
+            // 11. Enfim, remover o usuário
             return tx.user.delete({
                 where: { id }
             });
