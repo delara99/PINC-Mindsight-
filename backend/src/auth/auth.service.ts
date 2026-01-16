@@ -312,11 +312,12 @@ export class AuthService {
         return result;
     }
 
-    // Reset de senha com validação de dados cadastrais
+    // Reset de senha com validação de dados cadastrais (Camada Extra de Segurança)
     async resetPassword(data: {
         email: string;
         name: string;
-        phone?: string;
+        phone: string;
+        cpf?: string;
         cnpj?: string;
         newPassword: string;
     }) {
@@ -326,26 +327,44 @@ export class AuthService {
         });
 
         if (!user) {
-            throw new BadRequestException('❌ Email não encontrado em nosso sistema');
+            // Retorna erro genérico ou específico. Por segurança, as vezes é bom ser genérico, mas aqui queremos UX.
+            throw new BadRequestException('❌ Dados incorretos. Verifique as informações.');
         }
 
-        // 2. Validar nome completo (case insensitive, ignora espaços extras)
+        // 2. Validar nome completo
         const userNameNormalized = user.name?.toLowerCase().trim().replace(/\s+/g, ' ');
         const providedNameNormalized = data.name.toLowerCase().trim().replace(/\s+/g, ' ');
 
         if (userNameNormalized !== providedNameNormalized) {
-            throw new BadRequestException('❌ Nome completo incorreto');
+            throw new BadRequestException('❌ Nome completo incorreto.');
         }
 
-        // 3. Validar telefone OU CNPJ (precisa acertar pelo menos um)
-        const phoneMatch = data.phone && user.phone &&
-            user.phone.replace(/\D/g, '') === data.phone.replace(/\D/g, '');
+        // 3. Validação Dupla Obrigatória: Telefone E Documento
 
-        const cnpjMatch = data.cnpj && user.cnpj &&
-            user.cnpj.replace(/\D/g, '') === data.cnpj.replace(/\D/g, '');
+        // 3.1 Validar Telefone
+        if (!data.phone || !user.phone) {
+            throw new BadRequestException('❌ Telefone é obrigatório para validação.');
+        }
+        const phoneMatch = user.phone.replace(/\D/g, '') === data.phone.replace(/\D/g, '');
+        if (!phoneMatch) {
+            throw new BadRequestException('❌ O telefone informado não confere com o cadastro.');
+        }
 
-        if (!phoneMatch && !cnpjMatch) {
-            throw new BadRequestException('❌ Telefone ou CNPJ incorreto');
+        // 3.2 Validar Documento (CPF ou CNPJ)
+        const suppliedDoc = (data.cpf || data.cnpj || '').replace(/\D/g, '');
+
+        if (!suppliedDoc) {
+            throw new BadRequestException('❌ CPF ou CNPJ obrigatórios para segurança extra.');
+        }
+
+        const userCpf = user.cpf?.replace(/\D/g, '');
+        const userCnpj = user.cnpj?.replace(/\D/g, '');
+
+        // Verifica se o documento fornecido bate com CPF ou CNPJ do usuário
+        const docMatch = (userCpf && userCpf === suppliedDoc) || (userCnpj && userCnpj === suppliedDoc);
+
+        if (!docMatch) {
+            throw new BadRequestException('❌ O CPF/CNPJ informado não confere.');
         }
 
         // 4. Tudo OK! Atualizar senha
