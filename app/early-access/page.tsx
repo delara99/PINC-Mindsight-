@@ -95,7 +95,7 @@ export default function EarlyAccessPage() {
             `}</style>
 
             {/* Navbar Minimal */}
-            <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
+            <nav className="fixed top-0 w-full z-50 bg-[#FFFFFF] border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <img src="/logo-pinc.png" alt="PINC Mindsight" className="h-12 w-auto" />
@@ -411,16 +411,15 @@ export default function EarlyAccessPage() {
             </section>
 
             {/* 8. FOOTER */}
-            <footer className="py-12 border-t border-white/5 bg-[#050505]">
+            <footer className="py-12 border-t border-gray-100 bg-[#FFFFFF]">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-left">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-6 h-6 bg-gradient-to-br from-purple-600 to-pink-500 rounded flex items-center justify-center text-white font-bold text-[10px]">P</div>
-                            <span className="font-bold text-lg tracking-tight text-white">PINC <span className="font-light text-gray-500">Mindsight</span></span>
+                        <div className="flex items-center gap-2 mb-4">
+                            <img src="/logo-pinc.png" alt="PINC Mindsight" className="h-10 w-auto" />
                         </div>
-                        <p className="text-xs text-gray-600">© 2025 Sued Inc. Todos os direitos reservados.</p>
+                        <p className="text-xs text-gray-500">© 2025 Sued Inc. Todos os direitos reservados.</p>
                     </div>
-                    <div className="text-xs text-gray-600 max-w-md text-center md:text-right">
+                    <div className="text-xs text-gray-500 max-w-md text-center md:text-right">
                         O PINC é uma ferramenta de autoconhecimento e desenvolvimento. Os relatórios gerados não substituem avaliações psicológicas clínicas ou acompanhamento profissional especializado quando necessário.
                     </div>
                 </div>
