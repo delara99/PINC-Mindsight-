@@ -44,4 +44,11 @@ export class SiteSettingsController {
     async registerLead(@Body() data: { name: string; email: string; interest?: string }) {
         return this.service.registerLead(data);
     }
+
+    // Admin endpoint - list leads
+    @Get('leads')
+    @UseGuards(AuthGuard('jwt'))
+    async getLeads(@Request() req) {
+        return this.service.getLeads(req.user.userId);
+    }
 }

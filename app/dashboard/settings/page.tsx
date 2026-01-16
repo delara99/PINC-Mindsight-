@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/auth-store';
-import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Building, Upload, Rocket } from 'lucide-react';
+import { Save, RotateCcw, Palette, FileText, DollarSign, Sparkles, Plus, Trash2, Loader2, Star, Info, Building, Upload, Rocket, UserPlus, Mail, Calendar } from 'lucide-react';
 import { API_URL } from '../../../src/config/api';
 
 export default function SettingsPage() {
@@ -41,7 +41,6 @@ export default function SettingsPage() {
         }
     });
 
-    // Reset mutation
     const resetMutation = useMutation({
         mutationFn: async () => {
             const res = await fetch(`${API_URL}/api/v1/site-settings/reset`, {
@@ -53,6 +52,51 @@ export default function SettingsPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['site-settings-admin'] });
             alert('🔄 Configurações restauradas para o padrão!');
+        }
+    });
+
+    // Fetch Leads
+    const { data: leads, refetch: refetchLeads, isLoading: isLoadingLeads } = useQuery({
+        queryKey: ['early-access-leads'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/site-settings/leads`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao carregar leads');
+            return res.json();
+        },
+        enabled: activeTab === 'early-access'
+    });
+
+    // Convert Lead Mutation
+    const convertLeadMutation = useMutation({
+        mutationFn: async (lead: any) => {
+            const res = await fetch(`${API_URL}/api/v1/users`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name: lead.name,
+                    email: lead.email,
+                    password: 'PincUser2025!',
+                    role: 'MEMBER',
+                    userType: 'INDIVIDUAL',
+                    status: 'active'
+                })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Erro ao criar usuário');
+            }
+            return res.json();
+        },
+        onSuccess: () => {
+            alert('✅ Cliente cadastrado com sucesso!\nSenha inicial: PincUser2025!');
+        },
+        onError: (err: any) => {
+            alert(`Erro ao cadastrar: ${err.message}`);
         }
     });
 
@@ -693,10 +737,76 @@ export default function SettingsPage() {
                                         Acessar /early-access ↗
                                     </a>
                                 </div>
-                                <div className="p-5 border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
-                                    <h4 className="font-bold text-gray-800 mb-2">Coleta de Leads</h4>
-                                    <p className="text-sm text-gray-500 mb-4">Os leads capturados serão salvos no banco de dados.</p>
-                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Em desenvolvimento: Tabela de Leads</span>
+                                <div className="p-5 border border-gray-100 rounded-xl bg-white shadow-sm col-span-1 md:col-span-2">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div>
+                                            <h4 className="font-bold text-gray-800">Leads Capturados</h4>
+                                            <p className="text-sm text-gray-500">Lista de interessados cadastrados na landing page.</p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchLeads()}
+                                            className="text-primary text-sm hover:underline"
+                                        >
+                                            Atualizar
+                                        </button>
+                                    </div>
+
+                                    {isLoadingLeads ? (
+                                        <div className="flex justify-center p-8"><Loader2 className="animate-spin text-gray-400" /></div>
+                                    ) : leads && leads.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="text-xs text-gray-500 uppercase bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-3">Data</th>
+                                                        <th className="px-4 py-3">Nome / Email</th>
+                                                        <th className="px-4 py-3">Interesse</th>
+                                                        <th className="px-4 py-3 text-right">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {leads.map((lead: any) => (
+                                                        <tr key={lead.id} className="hover:bg-gray-50/50">
+                                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Calendar size={12} />
+                                                                    {new Date(lead.createdAt).toLocaleDateString()}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <div className="font-medium text-gray-900">{lead.name}</div>
+                                                                <div className="text-gray-500 text-xs flex items-center gap-1">
+                                                                    <Mail size={10} /> {lead.email}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                                                                    {lead.interest || 'Geral'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (confirm(`Deseja cadastrar ${lead.name} como cliente?\nUma conta será criada com a senha padrão 'PincUser2025!'.`)) {
+                                                                            convertLeadMutation.mutate(lead);
+                                                                        }
+                                                                    }}
+                                                                    disabled={convertLeadMutation.isPending}
+                                                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-medium transition-colors border border-green-200"
+                                                                >
+                                                                    <UserPlus size={14} /> Cadastrar
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                            <p>Nenhum lead capturado ainda.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

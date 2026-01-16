@@ -170,4 +170,21 @@ export class SiteSettingsService {
             }
         });
     }
+
+    // Get Leads (admin only)
+    async getLeads(adminId: string) {
+        // Verify admin permissions
+        const admin = await this.prisma.user.findUnique({
+            where: { id: adminId },
+            select: { role: true }
+        });
+
+        if (!admin || (admin.role !== 'SUPER_ADMIN' && admin.role !== 'TENANT_ADMIN')) {
+            throw new ForbiddenException('Acesso negado');
+        }
+
+        return this.prisma.earlyAccessLead.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+    }
 }
