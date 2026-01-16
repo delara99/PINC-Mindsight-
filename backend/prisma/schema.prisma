@@ -65,6 +65,7 @@ model User {
   solicitations CreditSolicitation[]
 
   credits Int @default(0)
+  mustChangePassword Boolean @default(false)
 
   // Connection relations
   connectionsSent      Connection[] @relation("UserA")

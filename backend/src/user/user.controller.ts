@@ -28,7 +28,7 @@ export class UserController {
                         { tenantId: req.user.tenantId, role: 'MEMBER' }
                     ]
                 },
-                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true }
+                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true, mustChangePassword: true }
             });
         }
 
@@ -39,7 +39,7 @@ export class UserController {
                     tenantId: req.user.tenantId,
                     role: 'MEMBER'
                 },
-                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true }
+                select: { id: true, name: true, email: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true, mustChangePassword: true }
             });
         }
 
@@ -78,6 +78,40 @@ export class UserController {
                 credits: { increment: body.amount }
             }
         });
+    }
+
+    // Reset de senha administrativo (Smart Reset)
+    @Post(':id/admin-reset-password')
+    async adminResetPassword(@Param('id') id: string, @Request() req) {
+        const user = req.user;
+        if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Apenas administradores podem resetar senhas.');
+        }
+
+        // Verificar permissão sobre o alvo
+        const targetUser = await this.prisma.user.findUnique({ where: { id } });
+        if (!targetUser) throw new BadRequestException('Usuário não encontrado.');
+
+        if (user.role !== 'SUPER_ADMIN' && targetUser.tenantId !== user.tenantId) {
+            throw new ForbiddenException('Sem permissão para este usuário.');
+        }
+
+        // Gerar senha temporária
+        const tempPassword = `Mudar${Math.floor(1000 + Math.random() * 9000)}!`;
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        await this.prisma.user.update({
+            where: { id },
+            data: {
+                password: hashedPassword,
+                mustChangePassword: true
+            }
+        });
+
+        return {
+            message: 'Senha resetada com sucesso.',
+            tempPassword
+        };
     }
 
     // Registrar novo cliente (PF ou PJ)
@@ -168,7 +202,6 @@ export class UserController {
         return newUser;
     }
 
-    // Atualizar dados do cliente
     @Put(':id')
     async updateClient(@Param('id') id: string, @Body() data: any, @Request() req) {
         const user = req.user;
@@ -237,6 +270,28 @@ export class UserController {
                 plan: true
             }
         });
+    }
+
+    // Troca de senha pelo próprio usuário (Reset Forçado ou Voluntário)
+    @Post('change-password')
+    async changeMyPassword(@Request() req, @Body() body: { newPassword: string }) {
+        const userId = req.user.userId;
+
+        if (!body.newPassword || body.newPassword.length < 6) {
+            throw new BadRequestException('A nova senha deve ter pelo menos 6 caracteres.');
+        }
+
+        const hashedPassword = await bcrypt.hash(body.newPassword, 10);
+
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                password: hashedPassword,
+                mustChangePassword: false // Remove a obrigatoriedade
+            }
+        });
+
+        return { message: 'Senha alterada com sucesso!' };
     }
 
     // Excluir cliente
