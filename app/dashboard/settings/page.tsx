@@ -71,7 +71,7 @@ export default function SettingsPage() {
     // Convert Lead Mutation
     const convertLeadMutation = useMutation({
         mutationFn: async (lead: any) => {
-            const res = await fetch(`${API_URL}/api/v1/users`, {
+            const res = await fetch(`${API_URL}/api/v1/users/register-client`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
