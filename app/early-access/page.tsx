@@ -83,14 +83,22 @@ export default function EarlyAccessPage() {
 
     return (
         <div className="min-h-screen bg-[#0A0A0B] text-white selection:bg-purple-500/30 selection:text-purple-200 overflow-x-hidden font-sans">
+            <style>{`
+                input:-webkit-autofill,
+                input:-webkit-autofill:hover, 
+                input:-webkit-autofill:focus, 
+                input:-webkit-autofill:active {
+                    -webkit-text-fill-color: white !important;
+                    -webkit-box-shadow: 0 0 0 30px #000 inset !important;
+                    transition: background-color 5000s ease-in-out 0s;
+                }
+            `}</style>
 
             {/* Navbar Minimal */}
             <nav className="fixed top-0 w-full z-50 bg-[#0A0A0B]/80 backdrop-blur-md border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        {/* Logo Placeholder - PINC */}
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">P</div>
-                        <span className="font-bold text-xl tracking-tight">PINC <span className="font-light text-gray-400">Mindsight</span></span>
+                        <img src="/logo-pinc.png" alt="PINC Mindsight" className="h-12 w-auto brightness-0 invert" />
                     </div>
                     <a href="#join" className="hidden md:block px-5 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-sm font-medium transition-all">
                         Participar do Beta
@@ -130,7 +138,7 @@ export default function EarlyAccessPage() {
                         transition={{ duration: 0.6, delay: 0.2 }}
                         className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed"
                     >
-                        Uma nova forma de interpretar comportamento humano, unindo a ciência do Big Five, tecnologia avançada e inteligência psicológica aplicada.
+                        Unindo a ciência do TalkingTO, tecnologia avançada e inteligência psicológica aplicada.
                     </motion.p>
 
                     <motion.div
@@ -208,7 +216,7 @@ export default function EarlyAccessPage() {
                     <div className="text-center max-w-3xl mx-auto mb-20">
                         <h2 className="text-3xl md:text-5xl font-bold mb-6">Uma nova camada de inteligência</h2>
                         <p className="text-xl text-gray-400">
-                            O PINC mantém o rigor científico do <span className="text-white font-semibold">Big Five</span> e adiciona uma Camada Interpretativa Avançada que revela o "como" e o "porquê".
+                            O PINC mantém o rigor científico do <span className="text-white font-semibold">TalkingTO</span> e adiciona uma Camada Interpretativa Avançada que revela o "como" e o "porquê".
                         </p>
                     </div>
 
@@ -266,7 +274,7 @@ export default function EarlyAccessPage() {
                                 <div className="flex gap-4">
                                     <div className="w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
                                     <div>
-                                        <h4 className="font-bold text-lg">Avaliação Big Five Completa</h4>
+                                        <h4 className="font-bold text-lg">Avaliação TalkingTO Completa</h4>
                                         <p className="text-sm text-gray-500">Os 5 grandes fatores e suas facetas.</p>
                                     </div>
                                 </div>
