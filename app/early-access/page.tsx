@@ -84,13 +84,22 @@ export default function EarlyAccessPage() {
     return (
         <div className="min-h-screen bg-[#0A0A0B] text-white selection:bg-purple-500/30 selection:text-purple-200 overflow-x-hidden font-sans">
             <style>{`
+                /* Forçar texto branco no Autofill */
                 input:-webkit-autofill,
                 input:-webkit-autofill:hover, 
                 input:-webkit-autofill:focus, 
-                input:-webkit-autofill:active {
-                    -webkit-text-fill-color: white !important;
-                    -webkit-box-shadow: 0 0 0 30px #000 inset !important;
+                input:-webkit-autofill:active,
+                select:-webkit-autofill,
+                select:-webkit-autofill:hover,
+                select:-webkit-autofill:focus {
+                    -webkit-text-fill-color: #ffffff !important;
+                    -webkit-box-shadow: 0 0 0 30px #0A0A0B inset !important;
                     transition: background-color 5000s ease-in-out 0s;
+                    color: white !important; /* Fallback */
+                }
+                /* Garantir cor branca nos inputs em geral */
+                input, select {
+                    color: white !important;
                 }
             `}</style>
 
@@ -346,7 +355,8 @@ export default function EarlyAccessPage() {
                                             required
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all"
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-gray-500"
+                                            style={{ colorScheme: 'dark' }}
                                             placeholder="Seu nome"
                                         />
                                     </div>
@@ -357,7 +367,8 @@ export default function EarlyAccessPage() {
                                             required
                                             value={formData.email}
                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all"
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-gray-500"
+                                            style={{ colorScheme: 'dark' }}
                                             placeholder="seu@email.com"
                                         />
                                     </div>
@@ -367,6 +378,7 @@ export default function EarlyAccessPage() {
                                             value={formData.interest}
                                             onChange={e => setFormData({ ...formData, interest: e.target.value })}
                                             className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all appearance-none"
+                                            style={{ colorScheme: 'dark' }}
                                         >
                                             <option value="Autoconhecimento">Autoconhecimento</option>
                                             <option value="Profissional">Desenvolvimento Profissional</option>
