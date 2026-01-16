@@ -94,7 +94,26 @@ function RegisterContent() {
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let value = e.target.value;
+
+        // CPF Mask
+        if (e.target.name === 'cpf') {
+            value = value.replace(/\D/g, '')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+                .replace(/(-\d{2})\d+?$/, '$1');
+        }
+
+        // Phone Mask
+        if (e.target.name === 'phone') {
+            value = value.replace(/\D/g, '')
+                .replace(/(\d{2})(\d)/, '($1) $2')
+                .replace(/(\d{5})(\d)/, '$1-$2')
+                .replace(/(-\d{4})\d+?$/, '$1');
+        }
+
+        setFormData({ ...formData, [e.target.name]: value });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -260,8 +279,24 @@ function RegisterContent() {
                                     />
                                 </div>
 
+                                {userType === 'INDIVIDUAL' && (
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">CPF</label>
+                                        <input
+                                            type="text"
+                                            name="cpf"
+                                            required
+                                            value={formData.cpf}
+                                            onChange={handleInputChange}
+                                            maxLength={14}
+                                            className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            placeholder="000.000.000-00"
+                                        />
+                                    </div>
+                                )}
+
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Email Corporativo</label>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Email</label>
                                     <input
                                         type="email"
                                         name="email"
@@ -269,7 +304,7 @@ function RegisterContent() {
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         className="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        placeholder="voce@empresa.com"
+                                        placeholder="seu@email.com"
                                     />
                                 </div>
 
