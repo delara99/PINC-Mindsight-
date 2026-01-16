@@ -31,7 +31,8 @@ export class AuthController {
     async resetPassword(@Body() body: {
         email: string;
         name: string;
-        phone?: string;
+        phone: string;
+        cpf?: string;
         cnpj?: string;
         newPassword: string;
     }) {
