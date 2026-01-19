@@ -28,6 +28,15 @@ const MOCK_DATA = {
     executive_summary: "Este é um resumo executivo de exemplo carregado em modo de segurança para evitar que você seja deslogado enquanto o sistema atualiza."
 };
 
+// Função auxiliar para renderizar qualquer coisa com segurança (evita tela preta)
+const SafeRender = ({ value }: { value: any }) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'object') {
+        return <span className="text-xs font-mono text-red-300" title={JSON.stringify(value)}>[Objeto Complexo]</span>;
+    }
+    return <>{String(value)}</>;
+};
+
 export default function MyReportPage() {
     const [report, setReport] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -103,8 +112,8 @@ export default function MyReportPage() {
             }
 
             const data = await res.json();
-            if (data.found !== false) { // Ajuste para aceitar resposta direta ou {found: true, ...}
-                setReport(data.report || data); // data pode ser o proprio report se vier do endpoint /me
+            if (data.found !== false) {
+                setReport(data.report || data);
             } else {
                 useMock();
             }
@@ -179,17 +188,16 @@ export default function MyReportPage() {
                             <button
                                 onClick={async () => {
                                     setLoading(true);
-                                    const scores = {
-                                        O: Number((document.getElementById('input-O') as HTMLInputElement).value),
-                                        C: Number((document.getElementById('input-C') as HTMLInputElement).value),
-                                        E: Number((document.getElementById('input-E') as HTMLInputElement).value),
-                                        A: Number((document.getElementById('input-A') as HTMLInputElement).value),
-                                        N: Number((document.getElementById('input-N') as HTMLInputElement).value),
-                                    };
 
                                     try {
-                                        // Usa o endpoint /simulate que sabemos que existe ou foi adicionado antes
-                                        // Se der 404, cai no catch
+                                        const scores = {
+                                            O: Number((document.getElementById('input-O') as HTMLInputElement).value),
+                                            C: Number((document.getElementById('input-C') as HTMLInputElement).value),
+                                            E: Number((document.getElementById('input-E') as HTMLInputElement).value),
+                                            A: Number((document.getElementById('input-A') as HTMLInputElement).value),
+                                            N: Number((document.getElementById('input-N') as HTMLInputElement).value),
+                                        };
+
                                         const res = await fetch(`${API_URL}/api/v1/talking-to/simulate`, {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json' },
@@ -199,16 +207,22 @@ export default function MyReportPage() {
                                         if (!res.ok) throw new Error(`Status ${res.status}`);
 
                                         const data = await res.json();
+                                        console.log("Dados recebidos da simulação:", data);
+
+                                        if (!data || !data.talkingto_analysis) {
+                                            throw new Error("Formato de resposta inválido do servidor");
+                                        }
+
                                         setReport({
                                             userId: 'manual',
                                             completedAt: new Date().toISOString(),
                                             talkingToAnalysis: data
                                         });
-                                        setUsingMock(false); // Esconde o aviso e mostra o resultado
+                                        setUsingMock(false);
                                     } catch (e) {
-                                        alert("Erro ao simular (Backend instável): " + e);
-                                        // Fallback local se o backend estiver TOTALMENTE fora
-                                        // (Opcional: implementar logica JS local aqui se quiser ser invencível)
+                                        console.error(e);
+                                        // Usando alert aqui para não quebrar a renderização se o setError tiver problemas
+                                        alert("Erro ao simular: " + String(e));
                                     } finally {
                                         setLoading(false);
                                     }
@@ -237,13 +251,13 @@ export default function MyReportPage() {
 
                     <h2 className="text-3xl font-bold mb-6 flex items-center gap-3 relative z-10">
                         <span className="text-4xl">🧬</span>
-                        {talkingToAnalysis.profile_summary?.archetype_name || 'Perfil Mapeado'}
+                        <SafeRender value={talkingToAnalysis.profile_summary?.archetype_name || 'Perfil Mapeado'} />
                     </h2>
 
                     <div className="flex flex-wrap gap-3 mb-6 relative z-10">
-                        {talkingToAnalysis.profile_summary?.dominant_traits?.map((t: string, i: number) => (
+                        {Array.isArray(talkingToAnalysis.profile_summary?.dominant_traits) && talkingToAnalysis.profile_summary.dominant_traits.map((t: string, i: number) => (
                             <span key={i} className="px-4 py-2 bg-purple-500/20 text-purple-200 rounded-full text-sm font-medium border border-purple-500/30">
-                                {t}
+                                <SafeRender value={t} />
                             </span>
                         ))}
                     </div>
@@ -251,37 +265,37 @@ export default function MyReportPage() {
 
                 {/* Grid de Dimensões */}
                 <div className="grid gap-6">
-                    {talkingToAnalysis.talkingto_analysis?.map((item: any, i: number) => (
+                    {Array.isArray(talkingToAnalysis.talkingto_analysis) ? talkingToAnalysis.talkingto_analysis.map((item: any, i: number) => (
                         <div key={i} className="bg-slate-800 p-6 md:p-8 rounded-xl border border-slate-700 hover:border-purple-500/50 transition-all duration-300">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                                 <div>
                                     <h3 className="font-bold text-xl text-white flex items-center gap-2">
-                                        {item.dimension}
-                                        <div className={`w-3 h-3 rounded-full ${(item.classification || '').toUpperCase() === 'ALTO' ? 'bg-green-500' :
-                                                (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500' :
+                                        <SafeRender value={item.dimension} />
+                                        <div className={`w-3 h-3 rounded-full ${(typeof item.classification === 'string' && item.classification.toUpperCase() === 'ALTO') ? 'bg-green-500' :
+                                                (typeof item.classification === 'string' && item.classification.toUpperCase() === 'BAIXO') ? 'bg-blue-500' :
                                                     'bg-yellow-500'
                                             }`}></div>
                                     </h3>
                                     <div className="flex gap-2 mt-2">
-                                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${(item.classification || '').toUpperCase() === 'ALTO' ? 'bg-green-500/10 text-green-400' :
-                                                (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
+                                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${(typeof item.classification === 'string' && item.classification.toUpperCase() === 'ALTO') ? 'bg-green-500/10 text-green-400' :
+                                                (typeof item.classification === 'string' && item.classification.toUpperCase() === 'BAIXO') ? 'bg-blue-500/10 text-blue-400' :
                                                     'bg-yellow-500/10 text-yellow-400'
                                             }`}>
-                                            {item.classification}
+                                            <SafeRender value={item.classification} />
                                         </span>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {item.labels?.map((l: string, idx: number) => (
+                                    {Array.isArray(item.labels) && item.labels.map((l: string, idx: number) => (
                                         <span key={idx} className="px-3 py-1 bg-slate-700 rounded-lg text-xs text-gray-300 font-mono">
-                                            {l}
+                                            <SafeRender value={l} />
                                         </span>
                                     ))}
                                 </div>
                             </div>
 
                             <div className="bg-slate-900/50 p-6 rounded-lg border-l-4 border-purple-500 mb-6 italic text-gray-300 leading-relaxed">
-                                "{item.text_interpretation}"
+                                "<SafeRender value={item.text_interpretation} />"
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-slate-700/50">
@@ -289,26 +303,30 @@ export default function MyReportPage() {
                                     <div className="p-2 bg-green-500/10 rounded-lg text-green-400">❤️</div>
                                     <div>
                                         <span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Necessidade Primária</span>
-                                        <span className="text-gray-200">{item.needs?.primary}</span>
+                                        <span className="text-gray-200"><SafeRender value={item.needs?.primary} /></span>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <div className="p-2 bg-red-500/10 rounded-lg text-red-400">⚠️</div>
                                     <div>
                                         <span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Ponto de Atenção</span>
-                                        <span className="text-gray-200">{item.needs?.risk}</span>
+                                        <span className="text-gray-200"><SafeRender value={item.needs?.risk} /></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="p-4 bg-red-900/50 text-red-200 rounded">
+                            Dados de análise indisponíveis ou inválidos.
+                        </div>
+                    )}
                 </div>
 
                 {/* Resumo Executivo */}
                 <div className="bg-slate-800 p-8 rounded-xl border border-slate-700">
                     <h3 className="text-xl font-bold mb-4">Síntese Executiva</h3>
                     <p className="text-gray-300 leading-relaxed">
-                        {talkingToAnalysis.executive_summary}
+                        <SafeRender value={talkingToAnalysis.executive_summary} />
                     </p>
                 </div>
 
