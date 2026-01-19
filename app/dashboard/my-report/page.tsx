@@ -34,24 +34,56 @@ export default function MyReportPage() {
     const [error, setError] = useState('');
     const [usingMock, setUsingMock] = useState(false);
 
-    // Usar store para pegar token correto
-    const token = useAuthStore((state) => state.token);
+    // Função robusta para pegar token (Zustand ou Raw Storage)
+    const getToken = () => {
+        // 1. Tentar do Store (memória)
+        let t = useAuthStore.getState().token;
+        if (t) return t;
+
+        // 2. Tentar do LocalStorage bruto (Zustand persist)
+        if (typeof window !== 'undefined') {
+            try {
+                const storage = localStorage.getItem('auth-storage');
+                if (storage) {
+                    const parsed = JSON.parse(storage);
+                    if (parsed.state?.token) return parsed.state.token;
+                }
+            } catch (e) {
+                console.error("Erro lendo auth-storage", e);
+            }
+        }
+        return null;
+    }
 
     useEffect(() => {
-        // Só tenta buscar se o token estiver pronto (evita hidratação prematura)
-        if (token !== undefined) {
-            fetchLatestReport();
+        // Pequeno delay para garantir hidratação, ou busca bruta imediata
+        const t = getToken();
+        if (t) {
+            fetchLatestReport(t);
+        } else {
+            // Se não achou de cara, espera 500ms e tenta de novo (hidratação lenta)
+            setTimeout(() => {
+                const t2 = getToken();
+                if (t2) fetchLatestReport(t2);
+                else {
+                    console.warn("Token não encontrado nem após delay. Carregando Mock.");
+                    useMock();
+                }
+            }, 500);
         }
-    }, [token]);
+    }, []);
 
-    const fetchLatestReport = async () => {
+    const fetchLatestReport = async (tokenOverride?: string) => {
         try {
+            const token = tokenOverride || getToken();
+
             if (!token) {
-                console.warn("Sem token no store, carregando mock");
+                console.warn("Sem token detectado, carregando mock");
                 useMock();
                 return;
             }
 
+            console.log("Tentando buscar relatório com token...");
             const res = await fetch(`${API_URL}/api/v1/reports/latest`, {
                 headers: {
                     Authorization: `Bearer ${token}`
