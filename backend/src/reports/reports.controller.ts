@@ -21,6 +21,30 @@ export class ReportsController {
         private interpretationEngine: InterpretationEngineService
     ) { }
 
+    @Get('latest')
+    async getLatestReport(@Request() req) {
+        // Buscar último assignment COMPLETO do usuário
+        const assignment = await this.prisma.assessmentAssignment.findFirst({
+            where: {
+                userId: req.user.userId,
+                status: 'COMPLETED'
+            },
+            orderBy: { completedAt: 'desc' }
+        });
+
+        if (!assignment) {
+            return { found: false };
+        }
+
+        // Gerar relatório completo (que agora inclui TalkingToAnalysis)
+        const report = await this.interpretation.generateFullReport(
+            assignment.id,
+            assignment.configId // Passar configId do assignment se existir, ou undefined para o service resolver
+        );
+
+        return { found: true, report };
+    }
+
     // @Get('interpretation')
     // async getInterpretation(@Query('scores') scoresStr: string) {
     //     const scores = JSON.parse(scoresStr);
