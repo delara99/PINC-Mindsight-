@@ -4,7 +4,7 @@ import { API_URL } from '../../../src/config/api';
 import { useAuthStore } from '../../../src/store/auth-store';
 import Link from 'next/link';
 
-// Componente SafeRender para prevenção de crashes
+// Componente SafeRender para prevenção de crashes em campos simples
 const SafeRender = ({ value }: { value: any }) => {
     if (value === null || value === undefined) return null;
     if (typeof value === 'object') {
@@ -64,7 +64,7 @@ export default function MyReportPage() {
 
             if (res.status === 404) {
                 // Usuário não tem avaliações
-                setLoading(false);
+                setLoading(false); // Mantem report null para mostrar tela de "criar avaliação"
                 return;
             }
 
@@ -216,12 +216,48 @@ export default function MyReportPage() {
                     ))}
                 </div>
 
-                {/* Executive Summary */}
+                {/* Executive Summary (Corrigido para exibir Objetos Estruturados) */}
                 <div className="bg-slate-800 p-8 rounded-xl border border-slate-700">
-                    <h3 className="text-xl font-bold mb-4">Síntese Executiva</h3>
-                    <p className="text-gray-300 leading-relaxed">
-                        <SafeRender value={talkingToAnalysis.executive_summary} />
-                    </p>
+                    <h3 className="text-xl font-bold mb-6">Síntese Executiva</h3>
+
+                    {talkingToAnalysis.executive_summary && typeof talkingToAnalysis.executive_summary === 'object' ? (
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 className="flex items-center gap-2 font-bold text-green-400 mb-4 uppercase text-sm tracking-wider">
+                                    <span className="bg-green-500/10 p-1 rounded">💪</span> Principais Forças
+                                </h4>
+                                <ul className="space-y-3">
+                                    {Array.isArray(talkingToAnalysis.executive_summary.strengths) ?
+                                        talkingToAnalysis.executive_summary.strengths.map((s: string, i: number) => (
+                                            <li key={i} className="flex gap-3 text-gray-300 text-sm leading-relaxed">
+                                                <span className="text-green-500 mt-1">•</span>
+                                                {s}
+                                            </li>
+                                        )) : <li className="text-gray-500 italic">Nenhum ponto forte identificado.</li>}
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 className="flex items-center gap-2 font-bold text-orange-400 mb-4 uppercase text-sm tracking-wider">
+                                    <span className="bg-orange-500/10 p-1 rounded">⚠️</span> Pontos de Atenção
+                                </h4>
+                                <ul className="space-y-3">
+                                    {Array.isArray(talkingToAnalysis.executive_summary.watch_outs) ?
+                                        talkingToAnalysis.executive_summary.watch_outs.map((w: string, i: number) => (
+                                            <li key={i} className="flex gap-3 text-gray-300 text-sm leading-relaxed">
+                                                <span className="text-orange-500 mt-1">•</span>
+                                                {w}
+                                            </li>
+                                        )) : <li className="text-gray-500 italic">Nenhum ponto de atenção identificado.</li>}
+                                </ul>
+                            </div>
+                        </div>
+                    ) : (
+                        // Fallback caso seja string simples (compatibilidade reversa)
+                        <p className="text-gray-300 leading-relaxed">
+                            <SafeRender value={talkingToAnalysis.executive_summary} />
+                        </p>
+                    )}
                 </div>
             </div>
         </div>
