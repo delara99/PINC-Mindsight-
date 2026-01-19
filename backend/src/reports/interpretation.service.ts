@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+import { TalkingToService } from '../talking-to/talking-to.service';
+
 @Injectable()
 export class InterpretationService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private talkingToService: TalkingToService
+    ) { }
 
     /**
      * Gera relatório completo baseado em scores calculados e config
@@ -245,7 +250,22 @@ export class InterpretationService {
             });
         }
 
-        return report;
+        // --- INTEGRAÇÃO TALKING TO ---
+        // Extrair scores calculados para alimentar o novo motor
+        const scores = {
+            O: report.traits.find(t => t.key === 'OPENNESS' || t.key.includes('OPEN'))?.score || 50,
+            C: report.traits.find(t => t.key === 'CONSCIENTIOUSNESS' || t.key.includes('CONSC'))?.score || 50,
+            E: report.traits.find(t => t.key === 'EXTRAVERSION' || t.key.includes('EXTRA'))?.score || 50,
+            A: report.traits.find(t => t.key === 'AGREEABLENESS' || t.key.includes('AGREE'))?.score || 50,
+            N: report.traits.find(t => t.key === 'NEUROTICISM' || t.key.includes('NEURO'))?.score || 50,
+        };
+
+        const talkingToAnalysis = this.talkingToService.analyzeProfile(scores);
+
+        return {
+            ...report,
+            talkingToAnalysis
+        };
     }
 
     /**

@@ -9,7 +9,10 @@ import { DebugReportsController } from './debug.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { InterpretationEngineService } from '../interpretation/interpretation-engine.service';
 
+import { TalkingToModule } from '../talking-to/talking-to.module';
+
 @Module({
+    imports: [TalkingToModule],
     controllers: [ReportsController, DebugReportsController],
     providers: [
         AnalyticsService,
