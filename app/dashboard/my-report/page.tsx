@@ -1,6 +1,6 @@
-'use client';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../../../src/config/api';
+import { useAuthStore } from '../../../src/store/auth-store';
 
 // Dados de Mock para salvamento em caso de erro de API
 const MOCK_DATA = {
@@ -33,23 +33,20 @@ export default function MyReportPage() {
     const [error, setError] = useState('');
     const [usingMock, setUsingMock] = useState(false);
 
+    // Usar store para pegar token correto
+    const token = useAuthStore((state) => state.token);
+
     useEffect(() => {
-        fetchLatestReport();
-    }, []);
+        // Só tenta buscar se o token estiver pronto (evita hidratação prematura)
+        if (token !== undefined) {
+            fetchLatestReport();
+        }
+    }, [token]);
 
     const fetchLatestReport = async () => {
         try {
-            const token = localStorage.getItem('token');
-            // Removido redirecionamento forçado para evitar loop
-            /*
             if (!token) {
-                window.location.href = '/auth/login';
-                return;
-            }
-            */
-
-            if (!token) {
-                console.warn("Sem token, carregando mock");
+                console.warn("Sem token no store, carregando mock");
                 useMock();
                 return;
             }
@@ -145,14 +142,14 @@ export default function MyReportPage() {
                                     <h3 className="font-bold text-xl text-white flex items-center gap-2">
                                         {item.dimension}
                                         <div className={`w-3 h-3 rounded-full ${(item.classification || '').toUpperCase() === 'ALTO' ? 'bg-green-500' :
-                                                (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500' :
-                                                    'bg-yellow-500'
+                                            (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500' :
+                                                'bg-yellow-500'
                                             }`}></div>
                                     </h3>
                                     <div className="flex gap-2 mt-2">
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${(item.classification || '').toUpperCase() === 'ALTO' ? 'bg-green-500/10 text-green-400' :
-                                                (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
-                                                    'bg-yellow-500/10 text-yellow-400'
+                                            (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
+                                                'bg-yellow-500/10 text-yellow-400'
                                             }`}>
                                             {item.classification}
                                         </span>
