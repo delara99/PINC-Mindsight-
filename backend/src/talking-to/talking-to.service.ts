@@ -56,6 +56,9 @@ export class TalkingToService {
                 strengths.push(`Alta capacidade de ${d.dimension} (${d.labels.join(', ')})`);
             } else if (d.classification === 'BAIXO') {
                 watchOuts.push(`Atenção para ${d.dimension} reduzida (${d.labels.join(', ')})`);
+            } else {
+                // FLEX / EQUILIBRADO
+                strengths.push(`Equilíbrio e adaptabilidade em ${d.dimension}`);
             }
         });
 

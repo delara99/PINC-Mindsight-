@@ -107,7 +107,7 @@ export class TalkingToController {
         const scores: any = {};
 
         ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'].forEach(trait => {
-            const key = Object.keys(traistsSums).find(k => k.includes(trait.substring(0, 4)));
+            const key = Object.keys(traistsSums).find(k => k.toUpperCase().includes(trait.substring(0, 4)));
 
             if (key) {
                 const { sum, count } = traistsSums[key];

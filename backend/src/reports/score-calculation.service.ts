@@ -93,7 +93,16 @@ export class ScoreCalculationService {
                 'ESTABILIDADE EMOCIONAL': 'NEUROTICISM',
                 'EMOCIONAL': 'NEUROTICISM'
             };
-            return mapping[upper] || upper;
+            if (mapping[upper]) return mapping[upper];
+
+            // Robust Fallback: Partial Match
+            if (upper.includes('EXTROVER') || upper.includes('SOCIAL')) return 'EXTRAVERSION';
+            if (upper.includes('AMABIL') || upper.includes('AGRE') || upper.includes('COLAB') || upper.includes('SENTIM')) return 'AGREEABLENESS';
+            if (upper.includes('CONSC') || upper.includes('ESTRUT') || upper.includes('ORGANIZ') || upper.includes('PLANEJ')) return 'CONSCIENTIOUSNESS';
+            if (upper.includes('ABERT') || upper.includes('OPEN') || upper.includes('IMAGIN') || upper.includes('NOV')) return 'OPENNESS';
+            if (upper.includes('ESTAB') || upper.includes('NEUR') || upper.includes('EMOC') || upper.includes('RESIL')) return 'NEUROTICISM';
+
+            return upper;
         };
 
         const mapQuestionTraitToKey = (qt: string, dic: string): string | null => {
