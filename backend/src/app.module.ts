@@ -18,6 +18,7 @@ import { MigrationModule } from './migration/migration.module';
 import { FixModule } from './fix/fix.module';
 import { PaymentModule } from './payment/payment.module';
 import { InterpretationModule } from './interpretation/interpretation.module';
+import { TalkingToModule } from './talking-to/talking-to.module';
 
 @Module({
     imports: [
@@ -37,7 +38,8 @@ import { InterpretationModule } from './interpretation/interpretation.module';
         MigrationModule,
         FixModule,
         PaymentModule,
-        InterpretationModule
+        InterpretationModule,
+        TalkingToModule
     ],
     controllers: [],
     providers: [],
