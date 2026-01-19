@@ -40,7 +40,8 @@ export default function TalkingToLab() {
                                 type="number"
                                 value={scores[key as keyof typeof scores]}
                                 onChange={(e) => setScores({ ...scores, [key]: Number(e.target.value) })}
-                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-center text-xl font-mono text-white"
+                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-center text-xl font-mono text-white placeholder-gray-500"
+                                style={{ color: 'white', colorScheme: 'dark' }}
                             />
                         </div>
                     ))}
