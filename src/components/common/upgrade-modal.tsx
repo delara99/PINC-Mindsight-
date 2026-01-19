@@ -1,7 +1,8 @@
 'use client';
 
-import { X, CheckCircle, Crown, Rocket } from 'lucide-react';
+import { X, Users, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -9,101 +10,96 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
+    const router = useRouter();
+
+    const handleUpgrade = () => {
+        onClose();
+        router.push('/dashboard/plans');
+    };
+
     return (
         <AnimatePresence>
             {isOpen && (
-                <>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                    />
+
+                    {/* Modal Content */}
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                        className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
                     >
-                        {/* Modal */}
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative"
-                        >
-                            {/* Header com Gradiente */}
-                            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-8 text-center text-white relative overflow-hidden">
-                                <button 
-                                    onClick={onClose} 
-                                    className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
-                                
-                                <div className="absolute top-0 left-0 w-full h-full opacity-10">
-                                    <Rocket size={200} className="absolute -left-10 -top-10 rotate-12" />
-                                </div>
+                        {/* Header Image/Gradient */}
+                        <div className="relative h-32 bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500 rounded-full blur-3xl opacity-50"></div>
+                            <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-400 rounded-full blur-3xl opacity-50"></div>
 
-                                <motion.div 
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/30"
-                                >
-                                    <Crown size={32} className="text-yellow-300 fill-yellow-300" />
-                                </motion.div>
-
-                                <h2 className="text-2xl font-bold mb-2">Desbloqueie o Networking PRO</h2>
-                                <p className="text-purple-100">Eleve suas conexões para o próximo nível.</p>
+                            <div className="relative z-10 p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
+                                <Users className="text-white" size={32} />
                             </div>
 
-                            {/* Conteúdo */}
-                            <div className="p-8 space-y-6">
-                                <div className="space-y-4">
-                                    <h3 className="text-gray-900 font-semibold text-center">
-                                        Por que fazer o upgrade?
-                                    </h3>
-                                    <ul className="space-y-3">
-                                        <li className="flex items-start gap-3 text-gray-600">
-                                            <CheckCircle className="text-green-500 shrink-0" size={20} />
-                                            <span>Acesso ilimitado ao menu <strong>Minhas Conexões</strong></span>
-                                        </li>
-                                        <li className="flex items-start gap-3 text-gray-600">
-                                            <CheckCircle className="text-green-500 shrink-0" size={20} />
-                                            <span>Conecte-se com profissionais <strong>PRO e Business</strong></span>
-                                        </li>
-                                        <li className="flex items-start gap-3 text-gray-600">
-                                            <CheckCircle className="text-green-500 shrink-0" size={20} />
-                                            <span>Visualização completa de perfis e compatibilidade</span>
-                                        </li>
-                                    </ul>
+                            <button
+                                onClick={onClose}
+                                className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 text-white rounded-full transition-colors z-20"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="px-8 py-8">
+                            <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                                Networking Inteligente
+                            </h2>
+                            <p className="text-center text-gray-500 text-sm mb-8 leading-relaxed">
+                                O menu <strong>Minhas Conexões</strong> utiliza nossa IA para cruzar seu perfil com outros membros e sugerir parcerias estratégicas.
+                            </p>
+
+                            <div className="space-y-4 mb-8">
+                                <div className="flex gap-4 p-3 rounded-xl bg-gray-50 hover:bg-indigo-50/50 transition-colors">
+                                    <div className="h-10 w-10 shrink-0 bg-white rounded-lg flex items-center justify-center shadow-sm text-indigo-600">
+                                        <Zap size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-sm">Match Profissional</h4>
+                                        <p className="text-xs text-gray-500">Encontre pessoas com traits complementares aos seus.</p>
+                                    </div>
                                 </div>
 
-                                <div className="pt-4 text-center">
-                                    <p className="text-3xl font-bold text-gray-900 mb-1">
-                                        R$ 59,90 <span className="text-sm font-normal text-gray-500">/único</span>
-                                    </p>
-                                    <p className="text-sm text-gray-500 mb-6">Acesso vitalício ao plano PRO</p>
-
-                                    <button 
-                                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-                                        onClick={() => {
-                                            const link = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_URL;
-                                            if (link) {
-                                                window.open(link, '_blank');
-                                            } else {
-                                                alert('⚠️ Link de pagamento não configurado no (NEXT_PUBLIC_STRIPE_PAYMENT_URL).');
-                                            }
-                                        }} 
-                                    >
-                                        <Rocket size={20} />
-                                        <span>Quero ser PRO Agora</span>
-                                    </button>
-                                    <p className="text-xs text-gray-400 mt-4">
-                                        Clique para ir ao checkout seguro. A ativação é automática.
-                                    </p>
+                                <div className="flex gap-4 p-3 rounded-xl bg-gray-50 hover:bg-indigo-50/50 transition-colors">
+                                    <div className="h-10 w-10 shrink-0 bg-white rounded-lg flex items-center justify-center shadow-sm text-indigo-600">
+                                        <ShieldCheck size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-sm">Acesso Exclusivo</h4>
+                                        <p className="text-xs text-gray-500">Disponível apenas para membros PRO e Business.</p>
+                                    </div>
                                 </div>
                             </div>
-                        </motion.div>
+
+                            <button
+                                onClick={handleUpgrade}
+                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all group"
+                            >
+                                Ver Planos de Acesso
+                                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
+                            </button>
+
+                            <p className="mt-4 text-center text-xs text-gray-400">
+                                Sem compromisso. Você pode cancelar a qualquer momento.
+                            </p>
+                        </div>
                     </motion.div>
-                </>
+                </div>
             )}
         </AnimatePresence>
     );
