@@ -159,7 +159,7 @@ export default function MyReportPage() {
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-gray-900 font-sans pb-32">
 
-            {/* Timeline NAVEGATION - Clean Style */}
+            {/* Timeline NAVEGATION - Clean Style V2 */}
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-between mb-4">
@@ -176,38 +176,56 @@ export default function MyReportPage() {
                         </span>
                     </div>
 
-                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-                        {history.map((h) => (
-                            <button
-                                key={h.id}
-                                onClick={() => handleSelectReport(h.id)}
-                                className={`flex-shrink-0 snap-start relative group transition-all duration-300 outline-none ${selectedReportId === h.id ? 'scale-[1.02]' : 'opacity-70 hover:opacity-100'
-                                    }`}
-                            >
-                                <div className={`w-72 p-5 rounded-2xl border transition-all text-left ${selectedReportId === h.id
-                                        ? 'bg-white border-purple-500 shadow-[0_4px_20px_-4px_rgba(168,85,247,0.2)] ring-1 ring-purple-500/20'
-                                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-                                    }`}>
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className={`p-2 rounded-xl ${selectedReportId === h.id ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            <Calendar size={18} />
+                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-hide snap-x px-1">
+                        {history.map((h) => {
+                            const isSelected = selectedReportId === h.id;
+                            return (
+                                <button
+                                    key={h.id}
+                                    onClick={() => handleSelectReport(h.id)}
+                                    className={`flex-shrink-0 snap-start relative group outline-none transition-all duration-300 ${isSelected ? 'translate-y-0' : 'hover:-translate-y-1'
+                                        }`}
+                                >
+                                    <div className={`w-72 p-5 rounded-2xl text-left transition-all duration-300 border ${isSelected
+                                            ? 'bg-white border-purple-500 shadow-xl shadow-purple-500/10'
+                                            : 'bg-white border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200'
+                                        }`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className={`p-2.5 rounded-xl transition-colors ${isSelected
+                                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
+                                                    : 'bg-gray-50 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
+                                                }`}>
+                                                <Calendar size={18} />
+                                            </div>
+                                            {isSelected && (
+                                                <span className="text-[10px] font-bold bg-gray-900 text-white px-3 py-1.5 rounded-lg uppercase tracking-wide flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                                    VISUALIZANDO
+                                                </span>
+                                            )}
                                         </div>
-                                        {selectedReportId === h.id && (
-                                            <span className="text-[10px] font-extrabold bg-gray-900 text-white px-3 py-1 rounded-full uppercase tracking-wide">
-                                                Ativo
-                                            </span>
-                                        )}
+
+                                        <h4 className={`font-bold text-sm mb-2 truncate transition-colors ${isSelected ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-900'
+                                            }`}>
+                                            {h.assessment?.title || 'Relatório de Perfil'}
+                                        </h4>
+
+                                        <div className="flex items-center gap-2">
+                                            <div className={`h-px flex-1 transition-colors ${isSelected ? 'bg-purple-100' : 'bg-gray-100'}`}></div>
+                                            <p className={`text-xs font-medium flex items-center gap-1.5 ${isSelected ? 'text-purple-600' : 'text-gray-400'}`}>
+                                                <Clock size={12} />
+                                                {new Date(h.completedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <h4 className={`font-bold text-base mb-1 truncate ${selectedReportId === h.id ? 'text-gray-900' : 'text-gray-600'}`}>
-                                        {h.assessment?.title || 'Relatório de Perfil'}
-                                    </h4>
-                                    <p className="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-                                        <Clock size={12} />
-                                        {new Date(h.completedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                    </p>
-                                </div>
-                            </button>
-                        ))}
+
+                                    {/* Indicador de Seleção Externo (Glow) para evitar bordas cortadas */}
+                                    {isSelected && (
+                                        <div className="absolute inset-x-4 -bottom-2 h-4 bg-purple-500/20 blur-xl rounded-full -z-10"></div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
