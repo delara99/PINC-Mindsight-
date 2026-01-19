@@ -25,8 +25,12 @@ export default function MyReportPage() {
                 }
             });
 
-            if (res.status === 401) {
-                window.location.href = '/auth/login';
+            if (!res.ok) {
+                const text = await res.text();
+                console.error('Erro API:', res.status, text);
+                setError(`Erro de conexão: Status ${res.status}. Tente recarregar.`);
+                // Não redirecionar automaticamente para podermos ler o erro
+                // if (res.status === 401) window.location.href = '/auth/login';
                 return;
             }
 
