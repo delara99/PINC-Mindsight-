@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
 import { MethodologySection } from '../src/components/landing/methodology-section';
 import { FeaturesGrid } from '../src/components/landing/features-grid';
+import { TalkingToTeaser } from '../src/components/landing/talking-to-teaser';
 import { API_URL } from '../src/config/api';
 
 // Icon mapping
@@ -140,6 +141,9 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* TALKING TO TEASER (MARKETING CARD) */}
+            <TalkingToTeaser />
 
             {/* METHODOLOGY SHOWCASE */}
             <MethodologySection />
