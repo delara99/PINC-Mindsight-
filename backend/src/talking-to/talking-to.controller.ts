@@ -2,12 +2,14 @@ import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, Par
 import { TalkingToService, TalkingToInput } from './talking-to.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
+import { ScoreCalculationService } from '../reports/score-calculation.service';
 
 @Controller('talking-to')
 export class TalkingToController {
     constructor(
         private readonly service: TalkingToService,
-        private readonly prisma: PrismaService
+        private readonly prisma: PrismaService,
+        private readonly scoreService: ScoreCalculationService
     ) { }
 
     // Endpoint público ou protegido para testar o motor
@@ -20,6 +22,7 @@ export class TalkingToController {
     @Get('history')
     async getHistory(@Request() req) {
         const userId = req.user.userId;
+        // ... (Mesma lógica de antes)
         const history = await this.prisma.assessmentAssignment.findMany({
             where: {
                 userId: userId,
@@ -45,21 +48,17 @@ export class TalkingToController {
         const assignment = await this.prisma.assessmentAssignment.findFirst({
             where: {
                 id: id,
-                userId: userId, // Garante segurança que o usuário é dono
+                userId: userId,
                 status: 'COMPLETED'
             },
-            include: {
-                responses: {
-                    include: { question: true }
-                }
-            }
+            include: { responses: { include: { question: true } }, assessment: true, config: true }
         });
 
         if (!assignment) {
             throw new NotFoundException('Relatório não encontrado ou acesso negado.');
         }
 
-        return this.generateAnalysis(assignment);
+        return this.generateUnifiedAnalysis(assignment);
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -73,66 +72,61 @@ export class TalkingToController {
                 status: 'COMPLETED'
             },
             orderBy: { completedAt: 'desc' },
-            include: {
-                responses: {
-                    include: { question: true }
-                }
-            }
+            include: { responses: { include: { question: true } }, assessment: true, config: true }
         });
 
         if (!assignment) {
             throw new NotFoundException('Nenhuma avaliação completada encontrada.');
         }
 
-        return this.generateAnalysis(assignment);
+        return this.generateUnifiedAnalysis(assignment);
     }
 
-    // Lógica compartilhada de cálculo
-    private generateAnalysis(assignment: any) {
-        // Agrupar somas
-        const traistsSums: Record<string, { sum: number, count: number }> = {};
+    // --- NOVA LÓGICA UNIFICADA ---
+    private async generateUnifiedAnalysis(assignment: any) {
+        // 1. Usar o Motor Central de Cálculo (já blindado com fallback do TalkingTo)
+        const { scores } = await this.scoreService.calculateScores(assignment.id);
 
-        assignment.responses.forEach(r => {
-            const key = r.question.traitKey;
-            if (!traistsSums[key]) traistsSums[key] = { sum: 0, count: 0 };
+        // 2. Extrair inputs para o TalkingTo Service (O, C, E, A, N)
+        // O ScoreService retorna chaves normalizadas (EXTRAVERSION, NEUROTICISM, etc.)
+        // Precisamos mapear para O, C, E, A, N
+        const talkingToInput: TalkingToInput = {
+            O: scores['OPENNESS']?.normalizedScore || 50,
+            C: scores['CONSCIENTIOUSNESS']?.normalizedScore || 50,
+            E: scores['EXTRAVERSION']?.normalizedScore || 50,
+            A: scores['AGREEABLENESS']?.normalizedScore || 50,
+            N: scores['NEUROTICISM']?.normalizedScore || 50 // Note: TalkingToService expects Stability?
+        };
 
-            const val = Number(r.answer);
-            if (!isNaN(val)) {
-                traistsSums[key].sum += val;
-                traistsSums[key].count++;
-            }
-        });
+        // NOTA: TalkingToService.analyzeStability INVERTE se achar que é Neuroticismo.
+        // O ScoreService retorna 'AGREEABLENESS' normalizado (High = High Agreeableness).
+        // ScoreService retorna 'NEUROTICISM' (High = High Neuroticism / Low Stable).
+        // O TalkingToService espera o que em 'N'?
+        // Se TalkingToService.analyzeStability(N) faz "100 - N", ele espera Neuroticismo como input.
+        // ScoreService envia Neuroticismo. Tudo certo.
 
-        // Calcular médias e normalizar
-        const scores: any = {};
-
-        ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'].forEach(trait => {
-            const key = Object.keys(traistsSums).find(k => k.toUpperCase().includes(trait.substring(0, 4)));
-
-            if (key) {
-                const { sum, count } = traistsSums[key];
-                const avg = sum / count;
-                scores[trait[0]] = Math.round(((avg - 1) / 4) * 100);
-            } else {
-                scores[trait[0]] = 50;
-            }
-        });
-
-        // Gerar Análise
-        const analysis = this.service.analyzeProfile({
-            O: scores.O,
-            C: scores.C,
-            E: scores.E,
-            A: scores.A,
-            N: scores.N
-        });
+        // 3. Gerar Análise Narrativa
+        const analysis = this.service.analyzeProfile(talkingToInput);
 
         return {
-            id: assignment.id, // Importante retornar o ID
-            title: assignment.assessment?.title || 'Inventário de Personalidade',
+            id: assignment.id,
+            title: assignment.assessment?.title || 'Relatório Unificado',
             completedAt: assignment.completedAt,
+
+            // Dados Narrativos
             talkingToAnalysis: analysis,
-            // debugScores: scores
+
+            // Dados Quantitativos (Para o Radar e Detalhes)
+            unifiedScores: scores,
+
+            // Metadados para UI
+            radarData: [
+                { subject: 'Extroversão', A: talkingToInput.E, fullMark: 100 },
+                { subject: 'Amabilidade', A: talkingToInput.A, fullMark: 100 },
+                { subject: 'Estrutura', A: talkingToInput.C, fullMark: 100 },
+                { subject: 'Estabilidade', A: 100 - talkingToInput.N, fullMark: 100 }, // Radar mostra Estabilidade (Bom)
+                { subject: 'Abertura', A: talkingToInput.O, fullMark: 100 }
+            ]
         };
     }
 }
