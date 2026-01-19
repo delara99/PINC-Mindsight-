@@ -15,7 +15,7 @@ export default function MyReportPage() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                window.location.href = '/login';
+                window.location.href = '/auth/login';
                 return;
             }
 
@@ -26,7 +26,7 @@ export default function MyReportPage() {
             });
 
             if (res.status === 401) {
-                window.location.href = '/login';
+                window.location.href = '/auth/login';
                 return;
             }
 
@@ -91,14 +91,14 @@ export default function MyReportPage() {
                                     <h3 className="font-bold text-xl text-white flex items-center gap-2">
                                         {item.dimension}
                                         <div className={`w-3 h-3 rounded-full ${item.classification === 'ALTO' ? 'bg-green-500' :
-                                                item.classification === 'BAIXO' ? 'bg-blue-500' :
-                                                    'bg-yellow-500'
+                                            item.classification === 'BAIXO' ? 'bg-blue-500' :
+                                                'bg-yellow-500'
                                             }`}></div>
                                     </h3>
                                     <div className="flex gap-2 mt-2">
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${item.classification === 'ALTO' ? 'bg-green-500/10 text-green-400' :
-                                                item.classification === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
-                                                    'bg-yellow-500/10 text-yellow-400'
+                                            item.classification === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
+                                                'bg-yellow-500/10 text-yellow-400'
                                             }`}>
                                             {item.classification}
                                         </span>
