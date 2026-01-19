@@ -1,3 +1,4 @@
+'use client';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../../../src/config/api';
 import { useAuthStore } from '../../../src/store/auth-store';
