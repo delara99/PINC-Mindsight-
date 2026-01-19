@@ -34,9 +34,14 @@ export default function MyReportPage() {
     const [error, setError] = useState('');
     const [usingMock, setUsingMock] = useState(false);
 
+    // Declarar token no escopo do componente para uso no JSX
+    const token = useAuthStore((state) => state.token);
+
     // Função robusta para pegar token (Zustand ou Raw Storage)
     const getToken = () => {
         // 1. Tentar do Store (memória)
+        if (token) return token;
+
         let t = useAuthStore.getState().token;
         if (t) return t;
 
