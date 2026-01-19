@@ -189,17 +189,59 @@ export default function MyReportPage() {
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-gray-900 font-sans pb-32">
 
-            {/* TIMELINE NAV */}
-            {history.length > 1 && (
-                <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200">
+            {/* TIMELINE NAV - Premium Card Style */}
+            {history.length > 0 && (
+                <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all duration-300">
                     <div className="max-w-7xl mx-auto px-6 py-4">
-                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                            {history.map(h => (
-                                <button key={h.id} onClick={() => handleSelectReport(h.id)}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${selectedReportId === h.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                                    {new Date(h.completedAt).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).toUpperCase()} • {h.assessment?.title || 'Relatório'}
-                                </button>
-                            ))}
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2 text-gray-400 text-xs font-bold uppercase tracking-widest">
+                                <History size={14} /> Histórico de Análises
+                            </div>
+                            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">
+                                {history.length} {history.length === 1 ? 'RESULTADO' : 'RESULTADOS'}
+                            </span>
+                        </div>
+
+                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                            {history.map((h) => {
+                                const isSelected = selectedReportId === h.id;
+                                return (
+                                    <button
+                                        key={h.id}
+                                        onClick={() => handleSelectReport(h.id)}
+                                        className={`flex-shrink-0 snap-start relative group outline-none transition-all duration-300 text-left`}
+                                    >
+                                        <div className={`w-64 p-4 rounded-xl border transition-all duration-300 ${isSelected
+                                            ? 'bg-gray-900 border-gray-900 text-white shadow-xl shadow-purple-900/20 scale-[1.02]'
+                                            : 'bg-white border-gray-100 text-gray-500 hover:border-purple-200 hover:shadow-md'
+                                            }`}>
+
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className={`p-2 rounded-lg ${isSelected ? 'bg-white/10 text-purple-300' : 'bg-gray-50 text-gray-400 group-hover:text-purple-500'}`}>
+                                                    <Calendar size={16} />
+                                                </div>
+                                                {isSelected && (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-bold bg-green-500/20 text-green-300 px-2 py-1 rounded full uppercase">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                                        Ativo
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <h4 className={`font-bold text-sm truncate mb-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                                                {h.assessment?.title || 'Relatório de Perfil'}
+                                            </h4>
+
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={12} className={isSelected ? 'text-gray-400' : 'text-gray-300'} />
+                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                                                    {new Date(h.completedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
