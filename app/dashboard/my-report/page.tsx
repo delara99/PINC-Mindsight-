@@ -131,10 +131,31 @@ export default function MyReportPage() {
             <div className="max-w-4xl mx-auto space-y-8">
 
                 {usingMock && (
-                    <div className="bg-yellow-600/20 border border-yellow-500 text-yellow-200 p-4 rounded-lg mb-4 text-center">
-                        ⚠️ <strong>Modo de Visualização (Safe Mode)</strong><br />
-                        O sistema não conseguiu conectar ao backend atualizado (erro 404/500).<br />
-                        Exibindo dados de exemplo para validação visual.
+                    <div className="bg-yellow-600/20 border border-yellow-500 text-yellow-200 p-4 rounded-lg mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <span>⚠️ <strong>Modo de Visualização (Safe Mode)</strong></span>
+                            </div>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs rounded font-bold transition-colors"
+                            >
+                                Tentar Conectar Novamente
+                            </button>
+                        </div>
+                        <p className="text-sm mb-2">
+                            O sistema não conseguiu conectar ao backend atualizado ({error || 'Erro de conexão'}).
+                            Exibindo dados de exemplo para validação visual.
+                        </p>
+                        <details className="text-xs text-yellow-500/70 mt-2 cursor-pointer">
+                            <summary>Ver Detalhes Técnicos</summary>
+                            <div className="mt-1 p-2 bg-black/30 rounded font-mono break-all text-left">
+                                URL: {API_URL}/api/v1/talking-to/me<br />
+                                Token: {token ? 'Presente (AuthStore)' : 'Ausente'}<br />
+                                Status: Estável (Dados Mockados)<br />
+                                Dica: Se o erro for 404, o servidor ainda está processando o deploy da nova rota.
+                            </div>
+                        </details>
                     </div>
                 )}
 
