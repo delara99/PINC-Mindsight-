@@ -84,7 +84,7 @@ export default function MyReportPage() {
             }
 
             console.log("Tentando buscar relatório com token...");
-            const res = await fetch(`${API_URL}/api/v1/reports/latest`, {
+            const res = await fetch(`${API_URL}/api/v1/talking-to/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
