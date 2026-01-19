@@ -146,7 +146,7 @@ export default function MyReportPage() {
                     <p className="text-gray-600 mb-8 text-lg leading-relaxed">
                         Você ainda não possui um mapeamento TalkingTo. Inicie sua jornada de autoconhecimento hoje mesmo.
                     </p>
-                    <Link href="/dashboard/assessments" className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-10 py-4 rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                    <Link href="/dashboard/my-assessments" className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-10 py-4 rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
                         Iniciar Diagnóstico <ArrowUpRight size={20} />
                     </Link>
                 </div>
@@ -187,13 +187,13 @@ export default function MyReportPage() {
                                         }`}
                                 >
                                     <div className={`w-72 p-5 rounded-2xl text-left transition-all duration-300 border ${isSelected
-                                            ? 'bg-white border-purple-500 shadow-xl shadow-purple-500/10'
-                                            : 'bg-white border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200'
+                                        ? 'bg-white border-purple-500 shadow-xl shadow-purple-500/10'
+                                        : 'bg-white border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200'
                                         }`}>
                                         <div className="flex justify-between items-start mb-4">
                                             <div className={`p-2.5 rounded-xl transition-colors ${isSelected
-                                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
-                                                    : 'bg-gray-50 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
+                                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
+                                                : 'bg-gray-50 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
                                                 }`}>
                                                 <Calendar size={18} />
                                             </div>
@@ -296,8 +296,8 @@ export default function MyReportPage() {
 
                                             <div className="flex items-center gap-3">
                                                 <div className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest border ${(typeof item.classification === 'string' && item.classification.toUpperCase() === 'ALTO') ? 'bg-green-50 text-green-700 border-green-200' :
-                                                        (typeof item.classification === 'string' && item.classification.toUpperCase() === 'BAIXO') ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                            'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                    (typeof item.classification === 'string' && item.classification.toUpperCase() === 'BAIXO') ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                        'bg-yellow-50 text-yellow-700 border-yellow-200'
                                                     }`}>
                                                     <SafeRender value={item.classification} />
                                                 </div>
@@ -313,8 +313,8 @@ export default function MyReportPage() {
                                         </div>
 
                                         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${(typeof item.classification === 'string' && item.classification.toUpperCase() === 'ALTO') ? 'bg-green-100 text-green-600' :
-                                                (typeof item.classification === 'string' && item.classification.toUpperCase() === 'BAIXO') ? 'bg-blue-100 text-blue-600' :
-                                                    'bg-yellow-100 text-yellow-600'
+                                            (typeof item.classification === 'string' && item.classification.toUpperCase() === 'BAIXO') ? 'bg-blue-100 text-blue-600' :
+                                                'bg-yellow-100 text-yellow-600'
                                             }`}>
                                             <span className="text-2xl font-bold">
                                                 {item.classification ? item.classification[0] : '-'}
