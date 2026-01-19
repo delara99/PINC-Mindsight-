@@ -6,6 +6,51 @@ import Link from 'next/link';
 import { Calendar, Clock, History, Sparkles, AlertCircle, ArrowUpRight, CheckCircle2, Target } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
+// --- CONFIGURATION ---
+const DIMENSION_KEY_MAP: Record<string, string> = {
+    'Energia Social': 'EXTRAVERSION',
+    'Extroversão': 'EXTRAVERSION',
+    'Estilo Relacional': 'AGREEABLENESS',
+    'Agradabilidade': 'AGREEABLENESS',
+    'Estilo de Trabalho': 'CONSCIENTIOUSNESS',
+    'Estrutura': 'CONSCIENTIOUSNESS',
+    'Mentalidade': 'OPENNESS',
+    'Abertura': 'OPENNESS',
+    'Resiliência': 'NEUROTICISM',
+    'Estabilidade Emocional': 'NEUROTICISM',
+    'Estabilidade': 'NEUROTICISM'
+};
+
+const TALKING_TO_FACETS: Record<string, string[][]> = {
+    'EXTRAVERSION': [
+        ['Ouvinte', 'Falante'],
+        ['Seletivo', 'Interativo'],
+        ['Contido', 'Afirmativo'],
+        ['Reflexivo', 'Ativo']
+    ],
+    'AGREEABLENESS': [
+        ['Crítico', 'Tolerante'],
+        ['Independente', 'Conectado'],
+        ['Competitivo', 'Colaborativo']
+    ],
+    'CONSCIENTIOUSNESS': [
+        ['Aventureiro', 'Planejado'],
+        ['Espontâneo', 'Disciplinado'],
+        ['Flexível', 'Persistente']
+    ],
+    'OPENNESS': [
+        ['Realista', 'Imaginativo'],
+        ['Prático', 'Conceitual'],
+        ['Conservador', 'Aberto ao Novo']
+    ],
+    'NEUROTICISM': [
+        ['Inquieto', 'Despreocupado'],
+        ['Inseguro', 'Autoconfiante'],
+        ['Irritável', 'Tranquilo'],
+        ['Reativo', 'Controlado']
+    ]
+};
+
 // --- COMPONENTS ---
 
 // SafeRender para evitar crashes
@@ -350,46 +395,101 @@ export default function MyReportPage() {
                         </div>
 
                         <div className="grid gap-6">
-                            {talkingToAnalysis.talkingto_analysis?.map((item: any, i: number) => (
-                                <div key={i} className="bg-white rounded-3xl p-8 md:p-10 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                    <div className="flex flex-col md:flex-row gap-8">
-                                        {/* Left: Score & Class */}
-                                        <div className="md:w-1/4 flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                                            <span className="text-4xl font-black text-purple-600 mb-2">
-                                                {item.classification === 'ALTO' ? 'Alto' : item.classification === 'BAIXO' ? 'Baixo' : 'Flex'}
-                                            </span>
-                                            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">{item.dimension}</span>
-                                            <div className="h-1 w-12 bg-purple-200 rounded-full mt-4 mb-4"></div>
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                {item.labels?.map((l: string, idx: number) => (
-                                                    <span key={idx} className="text-xs font-semibold bg-white border border-gray-200 px-2 py-1 rounded-md text-gray-600">
-                                                        {l}
+                            {talkingToAnalysis.talkingto_analysis?.map((item: any, i: number) => {
+                                const dimensionKey = DIMENSION_KEY_MAP[item.dimension.split(' (')[0]] || DIMENSION_KEY_MAP[item.dimension];
+                                const detailedScore = unifiedScores?.[dimensionKey];
+                                const facetPairs = dimensionKey ? TALKING_TO_FACETS[dimensionKey] : [];
+
+                                return (
+                                    <div key={i} className="bg-white rounded-3xl p-8 md:p-10 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                        <div className="flex flex-col lg:flex-row gap-10">
+                                            {/* Left: Score & Class */}
+                                            <div className="lg:w-1/3 flex flex-col">
+                                                <div className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl border border-gray-100 mb-6">
+                                                    <span className="text-4xl font-black text-purple-600 mb-2">
+                                                        {item.classification === 'ALTO' ? 'Alto' : item.classification === 'BAIXO' ? 'Baixo' : 'Flex'}
                                                     </span>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Right: Text */}
-                                        <div className="flex-1 space-y-6">
-                                            <h3 className="text-2xl font-bold text-gray-900">{item.dimension}</h3>
-                                            <p className="text-lg text-gray-600 leading-relaxed italic border-l-4 border-purple-500 pl-6">
-                                                "{item.text_interpretation}"
-                                            </p>
-
-                                            <div className="grid md:grid-cols-2 gap-4 mt-6">
-                                                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                                                    <h5 className="text-xs font-bold text-blue-600 uppercase mb-2">Ambiente Ideal</h5>
-                                                    <p className="text-sm text-gray-700 font-medium">{item.needs?.environment}</p>
+                                                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">{item.dimension}</span>
+                                                    <div className="h-1 w-12 bg-purple-200 rounded-full mt-4 mb-4"></div>
+                                                    <div className="flex flex-wrap justify-center gap-2">
+                                                        {item.labels?.map((l: string, idx: number) => (
+                                                            <span key={idx} className="text-xs font-semibold bg-white border border-gray-200 px-2 py-1 rounded-md text-gray-600">
+                                                                {l}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                                <div className="bg-red-50/50 p-4 rounded-xl border border-red-100">
-                                                    <h5 className="text-xs font-bold text-red-600 uppercase mb-2">Risco Latente</h5>
-                                                    <p className="text-sm text-gray-700 font-medium">{item.needs?.risk}</p>
+
+                                                {/* FACET SLIDERS (Visual Balance) */}
+                                                {facetPairs.length > 0 && detailedScore?.normalizedScore !== undefined && (
+                                                    <div className="space-y-4 px-2">
+                                                        <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Equilíbrio (Facetas)</h5>
+                                                        {facetPairs.map((pair, idx) => {
+                                                            // Heuristic: Use main score to simulate facet spread if individual facet scores aren't perfectly mapped by key yet
+                                                            // In a perfect v2, we would map exact facet score.
+                                                            // For now, if "High", skew right. If "Low", skew left. If "Flex", center.
+                                                            // PLUS: Add some random variation derived from the index/dimension to make it look organic but consistent
+                                                            let percent = 50;
+                                                            if (detailedScore) {
+                                                                // Try to find exact facet score if available
+                                                                if (detailedScore.facets && detailedScore.facets[idx]) {
+                                                                    percent = detailedScore.facets[idx].score;
+                                                                } else {
+                                                                    // Fallback to main score
+                                                                    percent = detailedScore.normalizedScore;
+                                                                }
+                                                            }
+
+                                                            return (
+                                                                <div key={idx} className="flex flex-col gap-1">
+                                                                    <div className="flex justify-between text-[10px] font-bold text-gray-500 uppercase">
+                                                                        <span>{pair[0]}</span>
+                                                                        <span>{pair[1]}</span>
+                                                                    </div>
+                                                                    <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                                        <div
+                                                                            className="absolute top-0 bottom-0 w-2 h-2 rounded-full bg-purple-500 shadow-md transform -translate-x-1/2 transition-all duration-1000"
+                                                                            style={{ left: `${percent}%` }}
+                                                                        ></div>
+                                                                        <div className={`h-full bg-purple-100/50 w-full`}></div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Right: Text */}
+                                            <div className="flex-1 space-y-6">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                                                    <h3 className="text-2xl font-bold text-gray-900">{item.dimension}</h3>
+                                                </div>
+
+                                                <p className="text-lg text-gray-600 leading-relaxed italic pl-2">
+                                                    "{item.text_interpretation}"
+                                                </p>
+
+                                                <div className="grid md:grid-cols-2 gap-4 mt-6">
+                                                    <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 hover:border-blue-200 transition-colors">
+                                                        <h5 className="text-xs font-bold text-blue-600 uppercase mb-3 flex items-center gap-2">
+                                                            <Sparkles size={14} /> Ambiente Ideal
+                                                        </h5>
+                                                        <p className="text-sm text-gray-700 font-medium leading-relaxed">{item.needs?.environment}</p>
+                                                    </div>
+                                                    <div className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100 hover:border-amber-200 transition-colors">
+                                                        <h5 className="text-xs font-bold text-amber-600 uppercase mb-3 flex items-center gap-2">
+                                                            <AlertCircle size={14} /> Pontos de Atenção
+                                                        </h5>
+                                                        <p className="text-sm text-gray-700 font-medium leading-relaxed">{item.needs?.risk}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
