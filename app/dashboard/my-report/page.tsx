@@ -76,7 +76,7 @@ export default function MyReportPage() {
                 }
             }, 500);
         }
-    }, []);
+    }, [token]);
 
     const fetchLatestReport = async (tokenOverride?: string) => {
         try {
@@ -97,20 +97,21 @@ export default function MyReportPage() {
 
             if (!res.ok) {
                 console.error('Erro API Real:', res.status);
-                // EM VEZ DE ERRO, USAR MOCK PARA VALIDAR TELA
                 useMock();
+                setError(res.status === 404 ? 'Servidor atualizando (404)' : `Erro ${res.status}`);
                 return;
             }
 
             const data = await res.json();
-            if (data.found && data.report) {
-                setReport(data.report);
+            if (data.found !== false) { // Ajuste para aceitar resposta direta ou {found: true, ...}
+                setReport(data.report || data); // data pode ser o proprio report se vier do endpoint /me
             } else {
-                useMock(); // Se não achou relatório, mostra mock
+                useMock();
             }
         } catch (err) {
             console.error("Erro fetch:", err);
             useMock();
+            setError("Erro de Rede");
         } finally {
             setLoading(false);
         }
@@ -136,31 +137,87 @@ export default function MyReportPage() {
             <div className="max-w-4xl mx-auto space-y-8">
 
                 {usingMock && (
-                    <div className="bg-yellow-600/20 border border-yellow-500 text-yellow-200 p-4 rounded-lg mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <span>⚠️ <strong>Modo de Visualização (Safe Mode)</strong></span>
+                    <div className="bg-slate-800 border border-yellow-500/30 p-6 rounded-2xl mb-8 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-yellow-500"></div>
+
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-yellow-100 flex items-center gap-2">
+                                    ⚠️ Modo Manual de Validação
+                                </h3>
+                                <p className="text-gray-400 text-sm mt-1 max-w-xl">
+                                    O servidor ainda não disponibilizou seus dados automáticos (Erro 404).
+                                    Mas o motor <strong>TalkingTo™</strong> está pronto! Insira scores (0-100) abaixo para gerar seu relatório agora mesmo.
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="text-xs text-yellow-500 hover:text-yellow-400 underline"
+                                >
+                                    Tentar reconectar automático
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Formulário de Simulação Manual */}
+                        <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+                            <div className="grid grid-cols-5 gap-4 mb-6">
+                                {['O', 'C', 'E', 'A', 'N'].map((trait) => (
+                                    <div key={trait} className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold text-gray-500 text-center">{trait}</label>
+                                        <input
+                                            type="number"
+                                            placeholder="50"
+                                            className="bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-white font-mono focus:border-purple-500 focus:outline-none"
+                                            id={`input-${trait}`}
+                                            defaultValue={50}
+                                        />
+                                    </div>
+                                ))}
                             </div>
                             <button
-                                onClick={() => window.location.reload()}
-                                className="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs rounded font-bold transition-colors"
+                                onClick={async () => {
+                                    setLoading(true);
+                                    const scores = {
+                                        O: Number((document.getElementById('input-O') as HTMLInputElement).value),
+                                        C: Number((document.getElementById('input-C') as HTMLInputElement).value),
+                                        E: Number((document.getElementById('input-E') as HTMLInputElement).value),
+                                        A: Number((document.getElementById('input-A') as HTMLInputElement).value),
+                                        N: Number((document.getElementById('input-N') as HTMLInputElement).value),
+                                    };
+
+                                    try {
+                                        // Usa o endpoint /simulate que sabemos que existe ou foi adicionado antes
+                                        // Se der 404, cai no catch
+                                        const res = await fetch(`${API_URL}/api/v1/talking-to/simulate`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(scores)
+                                        });
+
+                                        if (!res.ok) throw new Error(`Status ${res.status}`);
+
+                                        const data = await res.json();
+                                        setReport({
+                                            userId: 'manual',
+                                            completedAt: new Date().toISOString(),
+                                            talkingToAnalysis: data
+                                        });
+                                        setUsingMock(false); // Esconde o aviso e mostra o resultado
+                                    } catch (e) {
+                                        alert("Erro ao simular (Backend instável): " + e);
+                                        // Fallback local se o backend estiver TOTALMENTE fora
+                                        // (Opcional: implementar logica JS local aqui se quiser ser invencível)
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-[1.01]"
                             >
-                                Tentar Conectar Novamente
+                                ✨ GERAR RELATÓRIO AGORA
                             </button>
                         </div>
-                        <p className="text-sm mb-2">
-                            O sistema não conseguiu conectar ao backend atualizado ({error || 'Erro de conexão'}).
-                            Exibindo dados de exemplo para validação visual.
-                        </p>
-                        <details className="text-xs text-yellow-500/70 mt-2 cursor-pointer">
-                            <summary>Ver Detalhes Técnicos</summary>
-                            <div className="mt-1 p-2 bg-black/30 rounded font-mono break-all text-left">
-                                URL: {API_URL}/api/v1/talking-to/me<br />
-                                Token: {token ? 'Presente (AuthStore)' : 'Ausente'}<br />
-                                Status: Estável (Dados Mockados)<br />
-                                Dica: Se o erro for 404, o servidor ainda está processando o deploy da nova rota.
-                            </div>
-                        </details>
                     </div>
                 )}
 
@@ -201,14 +258,14 @@ export default function MyReportPage() {
                                     <h3 className="font-bold text-xl text-white flex items-center gap-2">
                                         {item.dimension}
                                         <div className={`w-3 h-3 rounded-full ${(item.classification || '').toUpperCase() === 'ALTO' ? 'bg-green-500' :
-                                            (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500' :
-                                                'bg-yellow-500'
+                                                (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500' :
+                                                    'bg-yellow-500'
                                             }`}></div>
                                     </h3>
                                     <div className="flex gap-2 mt-2">
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${(item.classification || '').toUpperCase() === 'ALTO' ? 'bg-green-500/10 text-green-400' :
-                                            (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
-                                                'bg-yellow-500/10 text-yellow-400'
+                                                (item.classification || '').toUpperCase() === 'BAIXO' ? 'bg-blue-500/10 text-blue-400' :
+                                                    'bg-yellow-500/10 text-yellow-400'
                                             }`}>
                                             {item.classification}
                                         </span>
