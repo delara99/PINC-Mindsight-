@@ -270,38 +270,69 @@ export class ScoreCalculationService {
                 return; // Pular esta resposta
             }
 
-            // --- Determine Trait ---
+            // --- Determine Trait (Robust Unification Logic) ---
             let targetKey: string | null = null;
+            let normKey: string | null = null;
+
+            // 1. Strict Mapping (Existing Config)
             if (q.traitKey) {
-                const norm = normalizeKey(q.traitKey);
-                if (configKeyMap[norm]) targetKey = configKeyMap[norm];
-            }
-            if (!targetKey && (q.questionTrait || q.dichotomy)) {
-                const inferred = mapQuestionTraitToKey(q.questionTrait || '', q.dichotomy || '');
-                if (inferred && configKeyMap[inferred]) targetKey = configKeyMap[inferred];
+                normKey = normalizeKey(q.traitKey);
+                if (configKeyMap[normKey]) targetKey = configKeyMap[normKey];
             }
 
-            // Fallback via Concept/Subtrait Map
+            // 2. Inference from Metadata
+            if (!targetKey && (q.questionTrait || q.dichotomy)) {
+                const inferred = mapQuestionTraitToKey(q.questionTrait || '', q.dichotomy || '');
+                if (inferred && configKeyMap[inferred]) {
+                    targetKey = configKeyMap[inferred];
+                    normKey = inferred;
+                }
+            }
+
+            // 3. Fallback (Metadata -> Concept)
             if (!targetKey) {
                 if (q.concept) {
                     const norm = conceptTraitMap.get(cleanString(q.concept));
-                    if (norm && configKeyMap[norm]) targetKey = configKeyMap[norm];
-                }
-                if (!targetKey && q.subtrait) {
-                    const norm = conceptTraitMap.get(cleanString(q.subtrait));
-                    if (norm && configKeyMap[norm]) targetKey = configKeyMap[norm];
+                    if (norm && configKeyMap[norm]) {
+                        targetKey = configKeyMap[norm];
+                        normKey = norm;
+                    }
                 }
             }
 
-            if (targetKey) {
-                if (scores[targetKey]) {
-                    scores[targetKey].score += finalValue * weight;
-                    traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
+            // 4. TALKINGTO ENGINE INJECTION (The "Universal Matcher")
+            // Se ainda não encontrou key no config estrito, vamos forçar a atribuição baseada em String Match robusto
+            // Isso garante que o Radar funcione mesmo se o Config do Banco estiver desatualizado.
+            if (!targetKey) {
+                const textToSearch = (q.traitKey || q.questionTrait || q.concept || '').toUpperCase();
+
+                if (textToSearch.includes('EXTROVER') || textToSearch.includes('SOCIAL') || textToSearch.includes('FALANTE')) normKey = 'EXTRAVERSION';
+                else if (textToSearch.includes('AMABIL') || textToSearch.includes('AGRE') || textToSearch.includes('COLAB')) normKey = 'AGREEABLENESS';
+                else if (textToSearch.includes('CONSC') || textToSearch.includes('ESTRUT') || textToSearch.includes('ORGANIZ')) normKey = 'CONSCIENTIOUSNESS';
+                else if (textToSearch.includes('ABERT') || textToSearch.includes('OPEN') || textToSearch.includes('IMAGIN')) normKey = 'OPENNESS';
+                else if (textToSearch.includes('ESTAB') || textToSearch.includes('NEUR') || textToSearch.includes('EMOC')) normKey = 'NEUROTICISM';
+
+                // Se identificamos o traço UNIVERSAL, tentamos achar uma key "próxima" no config ou usamos o padrão interno
+                if (normKey) {
+                    // Tenta achar no config
+                    if (configKeyMap[normKey]) targetKey = configKeyMap[normKey];
+                    else {
+                        // Se não tem no config, usa a chave padrão, pois o loop de inicialização "Ensure All Big 5" já criou o slot.
+                        targetKey = normKey;
+                    }
                 }
-                // Dynamic Learning (if question has traitKey, reinforce map)
-                // Note: We prioritize Static map for safety, but can add if missing
-                // ...
             }
+
+            // --- Accumulation ---
+            if (targetKey && scores[targetKey]) {
+                scores[targetKey].score += finalValue * weight;
+
+                // Fix total possible calculation
+                // Only add to total if we actually added to score to avoid double counting if multiple Qs map to same trait?
+                // Actually, logic allows many Qs to same trait.
+                traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
+            }
+            // ---------------------------------------------------------
 
             // --- Facets Logic ---
             let fKey: string | null = q.facetKey || null;
@@ -333,17 +364,16 @@ export class ScoreCalculationService {
 
         // 6. Finalize & Normalize
         Object.keys(scores).forEach(key => {
-            const totalPossible = traitTotalPossible[key] || 1;
+            // FIX: Se TotalPossible for 0 (nenhuma questão mapeada), verificar se tem respostas "órfãs" que o TalkingTo pegaria
+            // Mas com o passo 4 acima, isso deve ser resolvido.
+
+            let totalPossible = traitTotalPossible[key] || 0;
             const accumulated = scores[key].score || 0;
 
-            // PROTEÇÃO ANTI-NaN
-            if (isNaN(accumulated) || !isFinite(accumulated)) {
-                console.error('[calculateScores] accumulated NaN para trait:', key);
-                scores[key].score = 0;
-                scores[key].normalizedScore = 0;
-                return;
-            }
+            // Fallback safety: If totalPossible is 0 but we have score? (Shouldn't happen with above logic)
+            if (totalPossible === 0 && accumulated > 0) totalPossible = accumulated; // Worst case
 
+            // Cálculo padrão
             let percent = totalPossible > 0 ? (accumulated / totalPossible) * 100 : 0;
 
             // VALIDAÇÃO DO RESULTADO
