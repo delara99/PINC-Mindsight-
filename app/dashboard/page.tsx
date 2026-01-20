@@ -1,21 +1,270 @@
 'use client';
+import { useQuery } from '@tanstack/react-query';
+import {
+    ArrowUpRight,
+    UserPlus,
+    FileCheck,
+    AlertCircle,
+    Users,
+    CheckCircle2,
+    TrendingUp,
+    Target,
+    Zap,
+    MoreHorizontal,
+    Search,
+    BrainCircuit,
+    CreditCard
+} from 'lucide-react';
 import Link from 'next/link';
-import { ArrowUpRight, UserPlus, FileCheck, AlertCircle, PlayCircle, Clock, Users, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Cell,
+    PieChart,
+    Pie,
+    Legend
+} from 'recharts';
+
 import { useAuthStore } from '../../src/store/auth-store';
 import { useTrialStore } from '../../src/store/trial-store';
-import ClientDashboard from '../../src/components/dashboard/client-overview';
-import { useQuery } from '@tanstack/react-query';
+import ClientLayoutWrapper from './components/ClientWrapper';
 import { API_URL } from '../../src/config/api';
 
-import ClientLayoutWrapper from './components/ClientWrapper';
+// --- Components ---
 
-// ... (imports remain similar but remove ClientDashboard direct usage if possible or keep if needed distinct)
+function WelcomeHeader({ user }: { user: any }) {
+    const date = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    return (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Visão Geral</h1>
+                <p className="text-gray-500 mt-1 capitalize">{date}</p>
+            </div>
+            <div className="flex gap-3">
+                <Link href="/dashboard/assessments/new">
+                    <button className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-gray-200">
+                        <Target size={18} />
+                        Nova Avaliação
+                    </button>
+                </Link>
+                <Link href="/dashboard/clients">
+                    <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-200">
+                        <UserPlus size={18} />
+                        Convidar Candidato
+                    </button>
+                </Link>
+            </div>
+        </div>
+    );
+}
+
+function MetricCard({ title, value, icon: Icon, color, trend, delay }: any) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, duration: 0.4 }}
+            className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group"
+        >
+            <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
+                <Icon size={80} />
+            </div>
+            <div className="relative z-10 flex justify-between items-start">
+                <div>
+                    <div className={`p-3 rounded-xl inline-flex mb-4 ${color.replace('text-', 'bg-').replace('600', '100')} ${color}`}>
+                        <Icon size={22} />
+                    </div>
+                    <p className="text-gray-500 font-medium text-sm">{title}</p>
+                    <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+                </div>
+            </div>
+            {trend && (
+                <div className="mt-4 flex items-center gap-2 text-xs font-medium text-green-600 bg-green-50 w-fit px-2 py-1 rounded-lg">
+                    <TrendingUp size={14} />
+                    {trend}
+                </div>
+            )}
+        </motion.div>
+    );
+}
+
+function ActivityChart({ stats }: { stats: any }) {
+    if (!stats) return null;
+
+    const data = [
+        { name: 'Em Andamento', value: stats.activeAssessments, color: '#4F46E5' }, // Indigo
+        { name: 'Na Fila', value: stats.candidatesInQueue, color: '#F59E0B' },   // Amber
+        { name: 'Online', value: stats.onlineUsers, color: '#10B981' },         // Emerald
+    ];
+
+    return (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col">
+            <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <BrainCircuit className="text-indigo-500" size={20} />
+                Distribuição de Atividades
+            </h3>
+            <div className="flex-1 w-full min-h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} layout="vertical" margin={{ left: 0, right: 30 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                            cursor={{ fill: '#F3F4F6' }}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+    );
+}
+
+function RecentCandidatesTable({ candidates }: { candidates: any[] }) {
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <Users className="text-indigo-500" size={20} />
+                    Candidatos Recentes
+                </h3>
+                <Link href="/dashboard/assessments" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
+                    Ver todos
+                </Link>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="bg-gray-50/50">
+                        <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-4">Candidato</th>
+                            <th className="px-6 py-4">Cargo</th>
+                            <th className="px-6 py-4">Data</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {candidates?.length > 0 ? (
+                            candidates.map((c, i) => (
+                                <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                {c.name.charAt(0)}
+                                            </div>
+                                            <span className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">{c.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-500 text-sm">{c.role}</td>
+                                    <td className="px-6 py-4 text-gray-400 text-xs font-mono">{new Date(c.date).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            ${c.status === 'Pendente' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${c.status === 'Pendente' ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                            {c.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-gray-400 hover:text-gray-600">
+                                            <MoreHorizontal size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">
+                                    Nenhuma atividade recente encontrada.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+function CreditNotificationWidget({ requests, token }: { requests: any[], token: string }) {
+    if (!requests || requests.length === 0) return null;
+
+    return (
+        <div className="bg-gradient-to-b from-orange-50 to-white p-6 rounded-2xl shadow-sm border border-orange-100">
+            <h3 className="font-bold text-orange-900 mb-4 flex items-center gap-2">
+                <div className="bg-orange-100 p-1.5 rounded-lg animate-pulse">
+                    <AlertCircle size={18} className="text-orange-600" />
+                </div>
+                Solicitações de Crédito
+                <span className="bg-orange-200 text-orange-800 text-xs px-2 py-0.5 rounded-full">{requests.length}</span>
+            </h3>
+
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {requests.map((req) => (
+                    <div key={req.id} className="bg-white p-4 rounded-xl shadow-sm border border-orange-100/50 hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <p className="font-bold text-gray-900 text-sm">{req.user.name}</p>
+                                <p className="text-xs text-gray-500">{req.user.email}</p>
+                            </div>
+                            <span className="text-xs font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                                {new Date(req.createdAt).toLocaleDateString()}
+                            </span>
+                        </div>
+
+                        {req.planName && (
+                            <div className="flex items-center gap-2 mb-3">
+                                <CreditCard size={14} className="text-purple-500" />
+                                <span className="text-xs font-bold text-purple-700">
+                                    {req.planName} {req.credits > 0 && `(+${req.credits} créditos)`}
+                                </span>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={async () => {
+                                if (!confirm(`Confirmar aprovação para ${req.user.name}?`)) return;
+                                try {
+                                    const res = await fetch(`${API_URL}/api/v1/users/approve-credit/${req.id}`, {
+                                        method: 'POST',
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    if (res.ok) window.location.reload();
+                                    else alert('Erro ao aprovar.');
+                                } catch (e) { alert('Erro de conexão'); }
+                            }}
+                            className="w-full bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                            <CheckCircle2 size={14} /> Aprovar Solicitação
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// --- Main Page Component ---
 
 export default function DashboardPage() {
     const user = useAuthStore((state) => state.user);
     const token = useAuthStore((state) => state.token);
 
-    // React Query para Admin Stats
+    // Verificacao segura de tipo de usuario
+    const isClientView = user?.role === 'MEMBER' || (user?.userType === 'INDIVIDUAL' && user?.role !== 'SUPER_ADMIN');
+
+    // React Query para Stats
     const { data: stats, isLoading } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
@@ -23,218 +272,116 @@ export default function DashboardPage() {
             const response = await fetch(`${API_URL}/api/v1/dashboard/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!response.ok) return null;
-            return response.json();
+            return response.ok ? response.json() : null;
         },
-        enabled: (user?.role === 'TENANT_ADMIN' || user?.role === 'SUPER_ADMIN') && !!token
+        enabled: !isClientView && !!token
     });
-
-    // Verificacao segura de tipo de usuario para renderizacao condicional
-    // Importante: useAuthStore persiste em localStorage, entao pode causar hydration mismatch se nao cuidado,
-    // mas o ClientWrapper ja cuida da parte dele.
-    const isClientView = user?.role === 'MEMBER' || (user?.userType === 'INDIVIDUAL' && user?.role !== 'SUPER_ADMIN');
 
     if (isClientView) {
         return <ClientLayoutWrapper />;
     }
 
-    // ... Admin View continua abaixo
-
     return (
-        <div className="space-y-8">
+        <div className="min-h-screen bg-gray-50/30 p-1">
+            <WelcomeHeader user={user} />
 
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Visão Geral</h1>
-                    <p className="text-gray-500 mt-1">Bem-vindo ao painel de controle da sua organização.</p>
-                </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard
-                    title="Avaliações Ativas"
-                    value={stats?.activeAssessments || 0}
-                    trend="Em andamento"
-                    icon={<FileCheck className="text-white" />}
-                    color="bg-blue-500"
+            {/* Top Metrics Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <MetricCard
+                    title="Avaliações em Andamento"
+                    value={isLoading ? '-' : stats?.activeAssessments || 0}
+                    icon={FileCheck}
+                    color="text-indigo-600"
+                    trend="+12% essa semana"
+                    delay={0}
                 />
-                <StatsCard
-                    title="Candidatos na Fila"
-                    value={stats?.candidatesInQueue || 0}
-                    trend="Aguardando início"
-                    icon={<UserPlus className="text-white" />}
-                    color="bg-secondary"
+                <MetricCard
+                    title="Candidatos Aguardando"
+                    value={isLoading ? '-' : stats?.candidatesInQueue || 0}
+                    icon={UserPlus}
+                    color="text-amber-600"
+                    trend="Ação necessária"
+                    delay={0.1}
                 />
-                <StatsCard
-                    title="Clientes Online"
-                    value={stats?.onlineUsers || 0}
-                    trend="Ativos agora"
-                    icon={<Users className="text-white" />}
-                    color="bg-green-500"
+                <MetricCard
+                    title="Usuários Ativos Online"
+                    value={isLoading ? '-' : stats?.onlineUsers || 0}
+                    icon={Zap}
+                    color="text-emerald-600"
+                    trend="Agora"
+                    delay={0.2}
                 />
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-                {/* Solicitacoes de Credito + Users Without Credits */}
-                <div className="space-y-6">
-                    {/* Notificações de Crédito */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <AlertCircle size={20} className="text-orange-500" />
-                            Solicitações de Crédito
-                        </h3>
-                        {stats?.creditRequests?.length > 0 ? (
-                            <div className="space-y-3">
-                                {stats.creditRequests.map((req: any) => (
-                                    <div key={req.id} className="bg-orange-50 p-3 rounded-lg border border-orange-100 text-sm">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-bold text-gray-800">{req.user.name}</p>
-                                                <p className="text-xs text-gray-500 mb-2">{req.user.email}</p>
-                                                {req.planName && (
-                                                    <p className="text-xs font-bold text-purple-600 mb-1 bg-purple-50 inline-block px-2 py-0.5 rounded">
-                                                        Plano: {req.planName}
-                                                        {req.credits > 0 && ` (+${req.credits} créditos)`}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <button
-                                                onClick={async () => {
-                                                    if (!confirm(`Aprovar solicitação de ${req.user.name}? Isso irá adicionar créditos e alterar o plano.`)) return;
-                                                    try {
-                                                        const res = await fetch(`${API_URL}/api/v1/users/approve-credit/${req.id}`, {
-                                                            method: 'POST',
-                                                            headers: { 'Authorization': `Bearer ${token}` }
-                                                        });
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
 
-                                                        const data = await res.json();
-
-                                                        if (res.ok) {
-                                                            alert(data.message || 'Solicitação aprovada com sucesso!');
-                                                            window.location.reload();
-                                                        } else {
-                                                            alert(`Erro ao aprovar: ${data.message || 'Erro desconhecido'}`);
-                                                        }
-                                                    } catch (e) {
-                                                        alert('Erro de conexão ou erro interno.');
-                                                    }
-                                                }}
-                                                className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                                                title="Aprovar e Liberar Créditos"
-                                            >
-                                                <CheckCircle2 size={18} />
-                                            </button>
-                                        </div>
-                                        <p className="text-xs text-orange-700 font-medium mt-2">
-                                            Solicitou compra em {new Date(req.createdAt).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-gray-400 text-sm">Nenhuma solicitação pendente.</p>
-                        )}
+                {/* Left Column (Main Data) */}
+                <div className="xl:col-span-8 space-y-8">
+                    {/* Charts */}
+                    <div className="h-[350px]">
+                        <ActivityChart stats={stats} />
                     </div>
 
-                    {/* Usuários sem Crédito */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <Clock size={20} className="text-red-500" />
-                            Sem Créditos e Pendentes
-                        </h3>
-                        {stats?.usersWithoutCredits?.length > 0 ? (
+                    {/* Recent Table */}
+                    <RecentCandidatesTable candidates={stats?.recentCandidates} />
+                </div>
+
+                {/* Right Column (Actions & Notifications) */}
+                <div className="xl:col-span-4 space-y-6">
+                    {/* Search Mockup */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Buscar candidato..."
+                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                        />
+                    </div>
+
+                    {/* Notifications (Credit Requests) */}
+                    <CreditNotificationWidget requests={stats?.creditRequests} token={token} />
+
+                    {/* Quick Access Card */}
+                    <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
+                        <h3 className="font-bold text-lg mb-2 relative z-10">Central de Ajuda</h3>
+                        <p className="text-indigo-200 text-sm mb-4 relative z-10">
+                            Precisa de suporte para interpretar os resultados do Big Five?
+                        </p>
+                        <button className="w-full bg-white text-indigo-900 font-bold py-2.5 rounded-lg text-sm hover:bg-indigo-50 transition-colors relative z-10">
+                            Falar com Especialista
+                        </button>
+                    </div>
+
+                    {/* Users without Credits Lists */}
+                    {stats?.usersWithoutCredits?.length > 0 && (
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-4 text-sm flex items-center justify-between">
+                                Sem Créditos
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{stats.usersWithoutCredits.length}</span>
+                            </h3>
                             <div className="space-y-3">
-                                {stats.usersWithoutCredits.map((u: any) => (
-                                    <div key={u.id} className="flex justify-between items-center border-b border-gray-50 pb-2 last:border-0 last:pb-0">
-                                        <div>
-                                            <p className="font-medium text-sm text-gray-800">{u.name}</p>
-                                            <p className="text-xs text-gray-400">{u.email}</p>
+                                {stats.usersWithoutCredits.slice(0, 5).map((u: any) => (
+                                    <div key={u.id} className="flex justify-between items-center text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
+                                                {u.name.charAt(0)}
+                                            </div>
+                                            <span className="text-gray-600 truncate max-w-[120px]">{u.name}</span>
                                         </div>
-                                        <Link href="/dashboard/clients">
-                                            <button className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100">+ Crédito</button>
+                                        <Link href={`/dashboard/clients?id=${u.id}`}>
+                                            <button className="text-indigo-600 hover:text-indigo-800 text-xs font-bold">
+                                                Visitar
+                                            </button>
                                         </Link>
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <p className="text-gray-400 text-sm">Todos os usuários com pendências possuem créditos.</p>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
-
-                {/* Recent Candidates */}
-                <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 self-start">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="font-bold text-lg text-gray-800">Candidatos Recentes</h2>
-                        <Link href="/dashboard/assessments" className="text-primary text-sm font-semibold hover:underline">Ver todos</Link>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="text-left text-xs text-gray-400 uppercase tracking-wider border-b border-gray-50">
-                                    <th className="pb-3 font-semibold">Nome</th>
-                                    <th className="pb-3 font-semibold">Cargo</th>
-                                    <th className="pb-3 font-semibold">Data</th>
-                                    <th className="pb-3 font-semibold">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-sm">
-                                {isLoading ? (
-                                    <tr><td colSpan={4} className="py-4 text-center text-gray-400">Carregando...</td></tr>
-                                ) : stats?.recentCandidates?.length > 0 ? (
-                                    stats.recentCandidates.map((c: any, i: number) => (
-                                        <TableRow
-                                            key={i}
-                                            name={c.name}
-                                            role={c.role}
-                                            date={new Date(c.date).toLocaleDateString()}
-                                            status={c.status}
-                                        />
-                                    ))
-                                ) : (
-                                    <tr><td colSpan={4} className="py-4 text-center text-gray-400">Nenhum candidato recente.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div >
-    );
-}
-
-function StatsCard({ title, value, trend, icon, color }: any) {
-    return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between hover:shadow-md transition-shadow">
-            <div>
-                <h3 className="text-gray-500 text-sm font-medium mb-1">{title}</h3>
-                <p className="text-4xl font-bold text-gray-900 mb-2">{value}</p>
-                <div className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                    {trend}
-                </div>
-            </div>
-            <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center shadow-lg transform -rotate-3`}>
-                {icon}
             </div>
         </div>
-    )
-}
-
-function TableRow({ name, role, date, status }: any) {
-    const isPending = status === 'Pendente';
-    return (
-        <tr className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors group">
-            <td className="py-4 font-medium text-gray-800">{name}</td>
-            <td className="py-4 text-gray-500">{role}</td>
-            <td className="py-4 text-gray-400 text-xs">{date}</td>
-            <td className="py-4">
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${isPending ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
-                    {status}
-                </span>
-            </td>
-        </tr>
-    )
+    );
 }
