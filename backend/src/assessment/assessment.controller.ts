@@ -108,13 +108,40 @@ export class AssessmentController {
         // voltem a aparecer na lista, atendendo à solicitação do usuário.
         // Se ainda existirem usuários antigos com duplicidade, eles verão os dois, mas o fluxo de novos está corrigido.
         /*
+        // 🔥 FILTRO INTELIGENTE: Remove duplicatas de auto-assign sem esconder aplicações manuais.
         try {
              if (bigFiveModel) {
-                 assignments = assignments.filter(a => {
-                     if (a.status === 'COMPLETED') return true;
-                     if (a.assessment.type !== 'BIG_FIVE') return true;
-                     return a.assessmentId === bigFiveModel.id;
-                 });
+                 // Buscar dados do usuário para ter o createdAt
+                 const fullUser = await this.prisma.user.findUnique({ where: { id: user.userId } });
+                 
+                 if (fullUser) {
+                    const userCreatedAt = new Date(fullUser.createdAt).getTime();
+
+                    assignments = assignments.filter(a => {
+                        // 1. Se for completado, SEMPRE MOSTRA (histórico)
+                        if (a.status === 'COMPLETED') return true;
+
+                        // 2. Se não for Big Five, SEMPRE MOSTRA (outros produtos)
+                        if (a.assessment.type !== 'BIG_FIVE') return true;
+
+                        // 3. Se for o Modelo Padrão Identificado, SEMPRE MOSTRA
+                        if (a.assessmentId === bigFiveModel.id) return true;
+
+                        // 4. Se for um modelo Big Five "estranho" (não padrão):
+                        // Verifica se foi criado durante o "Onboarding" (Auto-Assign) ou depois (Manual).
+                        const assignmentCreatedAt = new Date(a.assignedAt).getTime();
+                        const timeDiffMinutes = (assignmentCreatedAt - userCreatedAt) / 1000 / 60;
+
+                        // Se foi criado nos primeiros 15 minutos de vida do usuário, assumimos que foi o BUG de duplicidade.
+                        // ESCONDE.
+                        if (timeDiffMinutes < 15) {
+                            return false; 
+                        }
+
+                        // Se foi criado depois (ex: Admin aplicou manualmente dias depois), MOSTRA.
+                        return true;
+                    });
+                 }
              }
         } catch (e) {
             console.error('[AssignmentFilter] Error filtering assignments:', e); 
