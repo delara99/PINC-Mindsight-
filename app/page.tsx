@@ -19,7 +19,13 @@ const iconMap: any = {
     'brain': BrainCircuit
 };
 
+// Add Mobile Menu state and imports
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+
 export default function Home() {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     // Fetch site settings
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
@@ -37,6 +43,8 @@ export default function Home() {
         );
     }
 
+    const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
     return (
         <main className="min-h-screen bg-white text-gray-800 font-sans">
 
@@ -46,6 +54,8 @@ export default function Home() {
                     <div className="flex items-center gap-2">
                         <img src="/logo.png" alt="PINC Logo" className="h-12 w-auto object-contain" />
                     </div>
+
+                    {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-600">
                         <Link href="#features" className="hover:text-primary transition-colors">Funcionalidades</Link>
                         <Link href="/company" className="hover:text-primary transition-colors font-semibold text-primary">Metodologia</Link>
@@ -53,18 +63,54 @@ export default function Home() {
                         <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
                         <Link href="/about" className="hover:text-primary transition-colors">Sobre Nós</Link>
                     </nav>
+
                     <div className="flex items-center gap-4">
-                        <Link href="/auth/login" className="text-sm font-semibold text-primary hover:text-primary-hover">
-                            Área do Cliente
-                        </Link>
-                        <Link
-                            href="/auth/register"
-                            className="bg-secondary hover:bg-secondary-hover text-black font-bold py-2.5 px-6 rounded-full text-sm transition-transform hover:scale-105 shadow-lg shadow-secondary/30"
+                        <div className="hidden md:flex items-center gap-4">
+                            <Link href="/auth/login" className="text-sm font-semibold text-primary hover:text-primary-hover">
+                                Área do Cliente
+                            </Link>
+                            <Link
+                                href="/auth/register"
+                                className="bg-secondary hover:bg-secondary-hover text-black font-bold py-2.5 px-6 rounded-full text-sm transition-transform hover:scale-105 shadow-lg shadow-secondary/30"
+                            >
+                                COMEÇAR AGORA
+                            </Link>
+                        </div>
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            className="md:hidden text-gray-700 hover:text-primary focus:outline-none"
+                            onClick={toggleMenu}
                         >
-                            COMEÇAR AGORA
-                        </Link>
+                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile Menu Overlay */}
+                {isMobileMenuOpen && (
+                    <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl py-6 px-6 flex flex-col gap-6 animate-in slide-in-from-top-5">
+                        <nav className="flex flex-col gap-4 font-medium text-gray-700 text-lg">
+                            <Link href="#features" onClick={toggleMenu} className="hover:text-primary">Funcionalidades</Link>
+                            <Link href="/company" onClick={toggleMenu} className="hover:text-primary text-primary">Metodologia</Link>
+                            <Link href="/business" onClick={toggleMenu} className="hover:text-primary">Para Empresas</Link>
+                            <Link href="#plans" onClick={toggleMenu} className="hover:text-primary">Planos</Link>
+                            <Link href="/about" onClick={toggleMenu} className="hover:text-primary">Sobre Nós</Link>
+                        </nav>
+                        <div className="flex flex-col gap-3 border-t border-gray-100 pt-6">
+                            <Link href="/auth/login" onClick={toggleMenu} className="text-center font-semibold text-primary py-2">
+                                Área do Cliente
+                            </Link>
+                            <Link
+                                href="/auth/register"
+                                onClick={toggleMenu}
+                                className="text-center bg-secondary hover:bg-secondary-hover text-black font-bold py-3 rounded-full shadow-md"
+                            >
+                                COMEÇAR AGORA
+                            </Link>
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* HERO SECTION - DYNAMIC */}
