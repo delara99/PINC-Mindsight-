@@ -50,6 +50,7 @@ export class AssessmentController {
             if (bigFiveModel) {
                 // Verificar se já existe um assignment para ESTE MODELO PADRÃO
                 // Alterado para garantir que o modelo PADRÃO esteja sempre disponível, mesmo que existam outros antigos
+                console.log(`[AutoAssign] Default Model Check: Found ${bigFiveModel.id} (${bigFiveModel.title}). Checking if user ${user.userId} has it...`);
                 const alreadyAssigned = await this.prisma.assessmentAssignment.findFirst({
                     where: {
                         userId: user.userId,
@@ -57,6 +58,7 @@ export class AssessmentController {
                         status: { not: 'COMPLETED' }
                     }
                 });
+                console.log(`[AutoAssign] User ${user.userId} has assignment for default model? ${!!alreadyAssigned ? 'YES' : 'NO'}`);
 
                 if (!alreadyAssigned) {
                     console.log(`[AutoAssign] Criando novo assignment do modelo ${bigFiveModel.id} para user ${user.userId}`);
