@@ -27,9 +27,11 @@ export class AssessmentController {
 
         // --- AUTO-ASSIGN: START ---
         // Garantir que o usuário tenha um inventário disponível (Regra de Negócio: Sempre ter um a fazer)
+        let bigFiveModel = null;
+
         try {
             // 1. Buscar modelo Padrão do Tenant
-            let bigFiveModel = await this.prisma.assessmentModel.findFirst({
+            bigFiveModel = await this.prisma.assessmentModel.findFirst({
                 where: { tenantId: user.tenantId, isDefault: true, type: 'BIG_FIVE' }
             });
 
