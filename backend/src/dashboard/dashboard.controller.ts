@@ -44,7 +44,20 @@ export class DashboardController {
             onlineUsersWhere.tenantId = tenantId;
         }
 
-        const onlineUsers = await this.prisma.user.count({
+        // Fetch the details of online users
+        const onlineUsersListRaw = await this.prisma.user.findMany({
+            where: onlineUsersWhere,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                lastPage: true,
+                lastActivityAt: true
+            },
+            orderBy: { lastActivityAt: 'desc' }
+        });
+
+        const onlineUsersCount = await this.prisma.user.count({
             where: onlineUsersWhere
         });
 
@@ -96,7 +109,13 @@ export class DashboardController {
         return {
             activeAssessments,
             candidatesInQueue,
-            onlineUsers,
+            onlineUsers: onlineUsersCount,
+            onlineUsersList: onlineUsersListRaw.map(u => ({
+                id: u.id,
+                name: u.name || u.email,
+                lastPage: u.lastPage,
+                lastActivity: u.lastActivityAt
+            })),
             recentCandidates: recentAssignments.map(a => ({
                 name: a.user.name || 'Sem nome',
                 role: 'Candidato', // Pode ajustar se tiver campo 'position'

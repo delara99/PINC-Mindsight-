@@ -38,6 +38,71 @@ import { API_URL } from '../../src/config/api';
 
 // --- Components ---
 
+function LiveUsersWidget({ users }: { users: any[] }) {
+    if (!users || users.length === 0) return null;
+
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden mb-8 relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    Usuários Online Agora
+                </h3>
+                <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-2 py-1 rounded-full border border-emerald-100">
+                    {users.length} ativos
+                </span>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="bg-gray-50/50">
+                        <tr className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3">Usuário</th>
+                            <th className="px-6 py-3">Local Atual</th>
+                            <th className="px-6 py-3">Última Ação</th>
+                            <th className="px-6 py-3 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {users.map((u) => (
+                            <tr key={u.id} className="hover:bg-emerald-50/10 transition-colors">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold border-2 border-white shadow-sm">
+                                            {u.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-gray-900 text-sm">{u.name}</p>
+                                            <p className="text-xs text-gray-400">{u.email}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-100 w-fit px-2 py-1 rounded-md">
+                                        <MoreHorizontal size={12} className="text-gray-400" />
+                                        {u.lastPage || 'Navegando...'}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-xs text-gray-400 font-mono">
+                                    {new Date(u.lastActivity).toLocaleTimeString()}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
+                                        <Zap size={10} /> Online
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
 function WelcomeHeader({ user }: { user: any }) {
     const date = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -274,7 +339,8 @@ export default function DashboardPage() {
             });
             return response.ok ? response.json() : null;
         },
-        enabled: !isClientView && !!token
+        enabled: !isClientView && !!token,
+        refetchInterval: 5000 // Real-time update every 5 seconds
     });
 
     if (isClientView) {
@@ -322,6 +388,14 @@ export default function DashboardPage() {
                     <div className="h-[350px]">
                         <ActivityChart stats={stats} />
                     </div>
+
+                    {/* Live Users Widget (New) */}
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: stats?.onlineUsersList?.length > 0 ? 1 : 0, height: 'auto' }}
+                    >
+                        {stats?.onlineUsersList?.length > 0 && <LiveUsersWidget users={stats.onlineUsersList} />}
+                    </motion.div>
 
                     {/* Recent Table */}
                     <RecentCandidatesTable candidates={stats?.recentCandidates} />

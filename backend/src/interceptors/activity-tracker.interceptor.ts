@@ -13,12 +13,26 @@ export class ActivityTrackerInterceptor implements NestInterceptor {
 
         // "Fire and forget" update logic - doesn't block response
         if (user && user.userId) {
+            const referer = request.headers['referer'] || request.headers['referrer'];
+            let currentPath = null;
+
+            if (referer) {
+                try {
+                    const url = new URL(referer);
+                    currentPath = url.pathname; // Gets '/dashboard/...'
+                } catch (e) {
+                    // Invalid URL, ignore
+                }
+            }
+
             this.prisma.user.update({
                 where: { id: user.userId },
-                data: { lastActivityAt: new Date() }
+                data: {
+                    lastActivityAt: new Date(),
+                    lastPage: currentPath
+                }
             }).catch(err => {
-                // Silently ignore errors to avoid affecting the main request
-                // console.error('Failed to update last outcome', err); 
+                // Silently ignore errors
             });
         }
 
