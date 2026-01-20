@@ -51,7 +51,7 @@ export default function Home() {
                         <Link href="/company" className="hover:text-primary transition-colors font-semibold text-primary">Metodologia</Link>
                         <Link href="/business" className="hover:text-primary transition-colors">Para Empresas</Link>
                         <Link href="#plans" className="hover:text-primary transition-colors">Planos</Link>
-                        <Link href="/about" className="hover:text-primary transition-colors">Sobre</Link>
+                        <Link href="/about" className="hover:text-primary transition-colors">Sobre Nós</Link>
                     </nav>
                     <div className="flex items-center gap-4">
                         <Link href="/auth/login" className="text-sm font-semibold text-primary hover:text-primary-hover">
