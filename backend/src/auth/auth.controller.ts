@@ -26,6 +26,12 @@ export class AuthController {
         return this.authService.getMe(req.user.userId);
     }
 
+    @Post('logout')
+    @UseGuards(AuthGuard('jwt'))
+    async logout(@Request() req) {
+        return this.authService.logout(req.user.userId);
+    }
+
     // Reset de senha sem email - validação por dados cadastrais
     @Post('reset-password')
     async resetPassword(@Body() body: {

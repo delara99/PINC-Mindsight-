@@ -159,9 +159,23 @@ export function DashboardSidebar() {
         setIsMobileOpen(false);
     }, [pathname]);
 
-    const handleLogout = () => {
-        logout();
-        router.push('/auth/login');
+    const handleLogout = async () => {
+        try {
+            // Notifica o backend para remover status online imediatamente
+            if (token) {
+                await fetch(`${API_URL}/api/v1/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    // Timeout curto caso algo trave
+                    signal: AbortSignal.timeout(2000)
+                }).catch(() => { }); // Ignora erros de rede no logout
+            }
+        } catch (e) {
+            // Ignora
+        } finally {
+            logout();
+            router.push('/auth/login');
+        }
     };
 
     return (

@@ -312,6 +312,15 @@ export class AuthService {
         };
     }
 
+    async logout(userId: string) {
+        // "Zera" a atividade do usuário para que ele suma da lista de online imediatamente
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { lastActivityAt: new Date(0) } // 1970
+        });
+        return { message: 'Logout realizado com sucesso' };
+    }
+
     async getMe(userId: string) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId }
