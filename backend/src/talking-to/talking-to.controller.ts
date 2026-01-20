@@ -95,7 +95,14 @@ export class TalkingToController {
             C: scores['CONSCIENTIOUSNESS']?.normalizedScore || 50,
             E: scores['EXTRAVERSION']?.normalizedScore || 50,
             A: scores['AGREEABLENESS']?.normalizedScore || 50,
-            N: scores['NEUROTICISM']?.normalizedScore || 50 // Note: TalkingToService expects Stability?
+            N: scores['NEUROTICISM']?.normalizedScore || 50, // Note: TalkingToService expects Stability?
+            facets: {
+                EXTRAVERSION: scores['EXTRAVERSION']?.facets || [],
+                AGREEABLENESS: scores['AGREEABLENESS']?.facets || [],
+                CONSCIENTIOUSNESS: scores['CONSCIENTIOUSNESS']?.facets || [],
+                OPENNESS: scores['OPENNESS']?.facets || [],
+                NEUROTICISM: scores['NEUROTICISM']?.facets || []
+            }
         };
 
         // NOTA: TalkingToService.analyzeStability INVERTE se achar que é Neuroticismo.
