@@ -340,7 +340,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Notifications (Credit Requests) */}
-                    <CreditNotificationWidget requests={stats?.creditRequests} token={token} />
+                    <CreditNotificationWidget requests={stats?.creditRequests} token={token || ''} />
 
                     {/* Quick Access Card */}
                     <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
