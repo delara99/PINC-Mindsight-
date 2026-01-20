@@ -266,57 +266,116 @@ export default function ConnectionDetailPage() {
                                         {loadingComparison ? (
                                             <div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary" /></div>
                                         ) : comparisonData?.radarData ? (
-                                            <div className="grid md:grid-cols-2 gap-8">
-                                                <div className="h-[400px] w-full">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={comparisonData.radarData}>
-                                                            <PolarGrid />
-                                                            <PolarAngleAxis dataKey="subject" />
-                                                            <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                                                            <Radar
-                                                                name="Você"
-                                                                dataKey="A"
-                                                                stroke="#E94C84" // Primary color
-                                                                fill="#E94C84"
-                                                                fillOpacity={0.5}
-                                                            />
-                                                            <Radar
-                                                                name={partner?.name}
-                                                                dataKey="B"
-                                                                stroke="#8884d8"
-                                                                fill="#8884d8"
-                                                                fillOpacity={0.5}
-                                                            />
-                                                            <Legend />
-                                                        </RadarChart>
-                                                    </ResponsiveContainer>
+                                            <div className="flex flex-col gap-10">
+                                                {/* Chart Section */}
+                                                <div className="grid md:grid-cols-2 gap-8 items-center bg-gray-50 p-6 rounded-2xl">
+                                                    <div className="h-[400px] w-full relative">
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparisonData.radarData}>
+                                                                <PolarGrid gridType="polygon" />
+                                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#6B7280', fontSize: 12 }} />
+                                                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                                                <Radar
+                                                                    name="Você"
+                                                                    dataKey="A"
+                                                                    stroke="#E94C84"
+                                                                    strokeWidth={3}
+                                                                    fill="#E94C84"
+                                                                    fillOpacity={0.2}
+                                                                />
+                                                                <Radar
+                                                                    name={partner?.name}
+                                                                    dataKey="B"
+                                                                    stroke="#6366F1"
+                                                                    strokeWidth={3}
+                                                                    fill="#6366F1"
+                                                                    fillOpacity={0.2}
+                                                                />
+                                                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                                            </RadarChart>
+                                                        </ResponsiveContainer>
+                                                    </div>
+
+                                                    <div className="space-y-6">
+                                                        <div>
+                                                            <h4 className="font-black text-2xl text-gray-800 mb-2">Visão Comparativa</h4>
+                                                            <p className="text-gray-500 leading-relaxed">
+                                                                Este gráfico sobrepõe os mapas comportamentais de você e seu parceiro(a).
+                                                                Áreas de sobreposição indicam semelhanças, enquanto pontos distantes sugerem complementaridade ou possíveis atritos.
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-pink-500 shadow-sm">
+                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Seu Arquétipo</p>
+                                                                <p className="font-bold text-gray-800">{comparisonData.me.analysis.archetype_name}</p>
+                                                            </div>
+                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm">
+                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Arquétipo de {partner?.name}</p>
+                                                                <p className="font-bold text-gray-800">{comparisonData.partner.analysis.archetype_name}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-col justify-center space-y-6">
-                                                    <div className="p-4 bg-pink-50 rounded-xl border border-pink-100">
-                                                        <h4 className="font-bold text-primary mb-1">Seu Perfil</h4>
-                                                        <p className="text-xl font-black text-gray-800">{comparisonData.me.analysis.archetype_name}</p>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            {comparisonData.me.analysis.dominant_traits.map((t: string) => (
-                                                                <span key={t} className="px-2 py-0.5 bg-white text-pink-600 text-xs rounded-full border border-pink-200">{t}</span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
 
-                                                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                                                        <h4 className="font-bold text-indigo-600 mb-1">Perfil de {partner?.name}</h4>
-                                                        <p className="text-xl font-black text-gray-800">{comparisonData.partner.analysis.archetype_name}</p>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            {comparisonData.partner.analysis.dominant_traits.map((t: string) => (
-                                                                <span key={t} className="px-2 py-0.5 bg-white text-indigo-600 text-xs rounded-full border border-indigo-200">{t}</span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                                                {/* Detailed Breakdown */}
+                                                <div className="space-y-6">
+                                                    <h3 className="font-bold text-lg text-gray-800 border-b pb-2">Detalhamento dos 5 Fatores</h3>
 
-                                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                                        <p className="text-sm text-gray-600 italic">
-                                                            "A diversidade de perfis gera riqueza na relação. Utilize o gráfico Radar para identificar onde vocês se complementam e onde podem surgir atritos."
-                                                        </p>
-                                                    </div>
+                                                    {comparisonData.me.full_analysis?.map((trait: any, index: number) => {
+                                                        const partnerTrait = comparisonData.partner.full_analysis?.[index];
+                                                        return (
+                                                            <div key={trait.dimension} className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                                                <div className="flex items-center gap-3 mb-4">
+                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${index % 2 === 0 ? 'bg-gray-800' : 'bg-primary'}`}>
+                                                                        {index + 1}
+                                                                    </div>
+                                                                    <h4 className="font-black text-lg text-gray-800">{trait.dimension}</h4>
+                                                                </div>
+
+                                                                <div className="grid md:grid-cols-2 gap-8 relative">
+                                                                    {/* Vertical Divider for Desktop */}
+                                                                    <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
+
+                                                                    {/* Me */}
+                                                                    <div className="space-y-3">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-xs font-bold text-pink-500 uppercase tracking-wider">Você</span>
+                                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${trait.classification === 'ALTO' ? 'bg-green-100 text-green-700' : trait.classification === 'BAIXO' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                                {trait.classification}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {trait.labels.map((l: string) => (
+                                                                                <span key={l} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md border border-gray-200">{l}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                                                            {trait.text_interpretation}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    {/* Partner */}
+                                                                    <div className="space-y-3">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">{partner?.name}</span>
+                                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${partnerTrait?.classification === 'ALTO' ? 'bg-green-100 text-green-700' : partnerTrait?.classification === 'BAIXO' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                                {partnerTrait?.classification}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {partnerTrait?.labels.map((l: string) => (
+                                                                                <span key={l} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md border border-gray-200">{l}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                                                            {partnerTrait?.text_interpretation}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         ) : (

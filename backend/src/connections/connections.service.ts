@@ -97,18 +97,20 @@ export class ConnectionsService {
             { subject: 'Conscienciosidade', A: myScores.C, B: partnerScores.C, fullMark: 100 },
             { subject: 'Extroversão', A: myScores.E, B: partnerScores.E, fullMark: 100 },
             { subject: 'Agradabilidade', A: myScores.A, B: partnerScores.A, fullMark: 100 },
-            { subject: 'Estabilidade', A: 100 - myScores.N, B: 100 - partnerScores.N, fullMark: 100 }, // Inverting Neuroticism for "Stability" visual
+            { subject: 'Estabilidade', A: 100 - myScores.N, B: 100 - partnerScores.N, fullMark: 100 },
         ];
 
         return {
             me: {
                 name: myLastAssessment.user.name,
                 analysis: myAnalysis.profile_summary,
+                full_analysis: myAnalysis.talkingto_analysis, // Passed full details
                 scores: myScores
             },
             partner: {
                 name: partnerLastAssessment.user.name,
                 analysis: partnerAnalysis.profile_summary,
+                full_analysis: partnerAnalysis.talkingto_analysis, // Passed full details
                 scores: partnerScores
             },
             radarData,
