@@ -107,14 +107,13 @@ export class AssessmentController {
         // Remover este filtro permite que inventários aplicados manualmente pelo Admin (de modelos diferentes do padrão)
         // voltem a aparecer na lista, atendendo à solicitação do usuário.
         // Se ainda existirem usuários antigos com duplicidade, eles verão os dois, mas o fluxo de novos está corrigido.
-        /*
         // 🔥 FILTRO INTELIGENTE: Remove duplicatas de auto-assign sem esconder aplicações manuais.
         try {
-             if (bigFiveModel) {
-                 // Buscar dados do usuário para ter o createdAt
-                 const fullUser = await this.prisma.user.findUnique({ where: { id: user.userId } });
-                 
-                 if (fullUser) {
+            if (bigFiveModel) {
+                // Buscar dados do usuário para ter o createdAt
+                const fullUser = await this.prisma.user.findUnique({ where: { id: user.userId } });
+
+                if (fullUser) {
                     const userCreatedAt = new Date(fullUser.createdAt).getTime();
 
                     assignments = assignments.filter(a => {
@@ -135,18 +134,17 @@ export class AssessmentController {
                         // Se foi criado nos primeiros 15 minutos de vida do usuário, assumimos que foi o BUG de duplicidade.
                         // ESCONDE.
                         if (timeDiffMinutes < 15) {
-                            return false; 
+                            return false;
                         }
 
                         // Se foi criado depois (ex: Admin aplicou manualmente dias depois), MOSTRA.
                         return true;
                     });
-                 }
-             }
+                }
+            }
         } catch (e) {
-            console.error('[AssignmentFilter] Error filtering assignments:', e); 
+            console.error('[AssignmentFilter] Error filtering assignments:', e);
         }
-        */
 
         return assignments.map(assignment => ({
             ...assignment.assessment,
