@@ -163,9 +163,21 @@ export class AuthService {
         // 5. Auto-Atribuição do Inventário (Big Five)
         // Isso garante que o usuário já tenha o card "Em Andamento" no dashboard assim que se cadastra.
         // Evita erros de ID mismatch e race conditions no frontend.
-        const assessmentModel = await this.prisma.assessmentModel.findFirst({
-            where: { type: 'BIG_FIVE' }
+
+        // CORREÇÃO: Priorizar modelo marcado como Default (mesmo que seja de outro tenant se for template global, ou system default)
+        // Como o tenant acabou de ser criado, ele não tem modelos próprios ainda.
+        // Devemos buscar o modelo PADRÃO do sistema (Global).
+        let assessmentModel = await this.prisma.assessmentModel.findFirst({
+            where: { type: 'BIG_FIVE', isDefault: true }
         });
+
+        // Fallback: Se não tiver nenhum default marcado, pega o mais recente global
+        if (!assessmentModel) {
+            assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE' },
+                orderBy: { createdAt: 'desc' }
+            });
+        }
 
         if (assessmentModel) {
             // Criar atribuição (Assignment) IMEDIATAMENTE
