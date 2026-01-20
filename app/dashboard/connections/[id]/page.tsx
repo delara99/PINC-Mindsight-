@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar, Trash2 } from 'lucide-react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend } from 'recharts';
 
 export default function ConnectionDetailPage() {
     const { id } = useParams(); // Connection ID
@@ -24,6 +25,19 @@ export default function ConnectionDetailPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erro ao carregar conexão');
+            return res.json();
+        }
+    });
+
+    // Fetch Comparison Data
+    const { data: comparisonData, isLoading: loadingComparison } = useQuery({
+        queryKey: ['connection-comparison', id],
+        enabled: activeTab === 'overview' && !!detail,
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}/comparison`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return null; // Silent fail if forbidden
             return res.json();
         }
     });
@@ -248,7 +262,69 @@ export default function ConnectionDetailPage() {
                             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                                 <h3 className="font-bold text-lg mb-4">Comparativo de Perfil</h3>
                                 {theirSettings.shareInventories ? (
-                                    <p className="text-gray-500 text-sm">Aqui virão os gráficos comparativos (Radar Chart) entre você e {partner?.name}. Esta funcionalidade será implementada no próximo passo.</p>
+                                    <>
+                                        {loadingComparison ? (
+                                            <div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary" /></div>
+                                        ) : comparisonData?.radarData ? (
+                                            <div className="grid md:grid-cols-2 gap-8">
+                                                <div className="h-[400px] w-full">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={comparisonData.radarData}>
+                                                            <PolarGrid />
+                                                            <PolarAngleAxis dataKey="subject" />
+                                                            <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                                                            <Radar
+                                                                name="Você"
+                                                                dataKey="A"
+                                                                stroke="#E94C84" // Primary color
+                                                                fill="#E94C84"
+                                                                fillOpacity={0.5}
+                                                            />
+                                                            <Radar
+                                                                name={partner?.name}
+                                                                dataKey="B"
+                                                                stroke="#8884d8"
+                                                                fill="#8884d8"
+                                                                fillOpacity={0.5}
+                                                            />
+                                                            <Legend />
+                                                        </RadarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                                <div className="flex flex-col justify-center space-y-6">
+                                                    <div className="p-4 bg-pink-50 rounded-xl border border-pink-100">
+                                                        <h4 className="font-bold text-primary mb-1">Seu Perfil</h4>
+                                                        <p className="text-xl font-black text-gray-800">{comparisonData.me.analysis.archetype_name}</p>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                            {comparisonData.me.analysis.dominant_traits.map((t: string) => (
+                                                                <span key={t} className="px-2 py-0.5 bg-white text-pink-600 text-xs rounded-full border border-pink-200">{t}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                                                        <h4 className="font-bold text-indigo-600 mb-1">Perfil de {partner?.name}</h4>
+                                                        <p className="text-xl font-black text-gray-800">{comparisonData.partner.analysis.archetype_name}</p>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                            {comparisonData.partner.analysis.dominant_traits.map((t: string) => (
+                                                                <span key={t} className="px-2 py-0.5 bg-white text-indigo-600 text-xs rounded-full border border-indigo-200">{t}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                                        <p className="text-sm text-gray-600 italic">
+                                                            "A diversidade de perfis gera riqueza na relação. Utilize o gráfico Radar para identificar onde vocês se complementam e onde podem surgir atritos."
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-10 bg-gray-50 rounded-lg">
+                                                <p className="text-gray-500">Dados insuficientes para gerar o comparativo. Ambos precisam ter completado o inventário Big Five.</p>
+                                            </div>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg text-sm flex items-center gap-2">
                                         <Lock size={16} />

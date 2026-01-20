@@ -1,9 +1,103 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TalkingToService, TalkingToInput } from '../talking-to/talking-to.service';
 
 @Injectable()
 export class ConnectionsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private talkingToService: TalkingToService
+    ) { }
+
+    // ... (keep all other methods until getComparisonData)
+
+    // ... existing code ...
+
+    async getComparisonData(connectionId: string, userId: string) {
+        const connection = await this.prisma.connection.findFirst({
+            where: {
+                id: connectionId,
+                OR: [{ userAId: userId }, { userBId: userId }]
+            },
+            include: { userA: true, userB: true, sharingSettings: true }
+        });
+
+        if (!connection) {
+            throw new NotFoundException('Conexão não encontrada');
+        }
+
+        const isUserA = connection.userAId === userId;
+        const otherUserId = isUserA ? connection.userBId : connection.userAId;
+
+        // Verificar permissões de compartilhamento
+        const partnerSettings = connection.sharingSettings.find(s => s.userId === otherUserId);
+        if (!partnerSettings || !partnerSettings.shareInventories) {
+            throw new ForbiddenException('O parceiro não está compartilhando resultados com você.');
+        }
+
+        const [myLastAssessment, partnerLastAssessment] = await Promise.all([
+            this.prisma.assessmentAssignment.findFirst({
+                where: { userId, status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
+                orderBy: { completedAt: 'desc' },
+                include: { user: true, result: true }
+            }),
+            this.prisma.assessmentAssignment.findFirst({
+                where: { userId: otherUserId, status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
+                orderBy: { completedAt: 'desc' },
+                include: { user: true, result: true }
+            })
+        ]);
+
+        if (!myLastAssessment || !partnerLastAssessment) {
+            return { error: 'Dados insuficientes para comparação. Ambos precisam ter realizado o teste Big Five.' };
+        }
+
+        const myScores = (myLastAssessment.result as any)?.scores as TalkingToInput;
+        const partnerScores = (partnerLastAssessment.result as any)?.scores as TalkingToInput;
+
+        if (!myScores || !partnerScores) {
+            return { error: 'Scores não encontrados.' };
+        }
+
+        const myAnalysis = this.talkingToService.analyzeProfile(myScores);
+        const partnerAnalysis = this.talkingToService.analyzeProfile(partnerScores);
+
+        // Prepare Radar Data (Normalized)
+        const dimensionsMap: Record<string, string> = {
+            'O': 'Abertura',
+            'C': 'Conscienciosidade',
+            'E': 'Extroversão',
+            'A': 'Agradabilidade',
+            'N': 'Estabilidade' // Note: N is usually Neuroticism, but TalkingTo treats inverse as Stability sometimes. Let's use raw or inverse? 
+            // In TalkingToService logic: analyzeStability takes neuroticismScore. 
+            // But for Radar Chart, usually we want "Positive" traits outwards. 
+            // Let's stick to the 5 keys.
+        };
+
+        const radarData = [
+            { subject: 'Abertura', A: myScores.O, B: partnerScores.O, fullMark: 100 },
+            { subject: 'Conscienciosidade', A: myScores.C, B: partnerScores.C, fullMark: 100 },
+            { subject: 'Extroversão', A: myScores.E, B: partnerScores.E, fullMark: 100 },
+            { subject: 'Agradabilidade', A: myScores.A, B: partnerScores.A, fullMark: 100 },
+            { subject: 'Estabilidade', A: 100 - myScores.N, B: 100 - partnerScores.N, fullMark: 100 }, // Inverting Neuroticism for "Stability" visual
+        ];
+
+        return {
+            me: {
+                name: myLastAssessment.user.name,
+                analysis: myAnalysis.profile_summary,
+                scores: myScores
+            },
+            partner: {
+                name: partnerLastAssessment.user.name,
+                analysis: partnerAnalysis.profile_summary,
+                scores: partnerScores
+            },
+            radarData,
+            shared: true
+        };
+    }
+
 
     // Enviar convite
     async sendInvite(senderId: string, email: string) {
@@ -585,57 +679,4 @@ export class ConnectionsService {
         };
     }
 
-    async getComparisonData(connectionId: string, userId: string) {
-        const connection = await this.prisma.connection.findFirst({
-            where: {
-                id: connectionId,
-                OR: [{ userAId: userId }, { userBId: userId }]
-            },
-            include: { userA: true, userB: true, sharingSettings: true }
-        });
-
-        if (!connection) {
-            throw new NotFoundException('Conexão não encontrada');
-        }
-
-        const otherUserId = connection.userAId === userId ? connection.userBId : connection.userAId;
-
-        const [currentUser, otherUser] = await Promise.all([
-            this.prisma.assessmentAssignment.findFirst({
-                where: { userId, status: 'COMPLETED' },
-                orderBy: { completedAt: 'desc' },
-                include: { user: true }
-            }),
-            this.prisma.assessmentAssignment.findFirst({
-                where: { userId: otherUserId, status: 'COMPLETED' },
-                orderBy: { completedAt: 'desc' },
-                include: { user: true }
-            })
-        ]);
-
-        if (!currentUser || !otherUser) {
-            throw new NotFoundException('Um ou ambos usuários não possuem avaliações completadas');
-        }
-
-        const scores1 = (currentUser as any).result?.scores || {};
-        const scores2 = (otherUser as any).result?.scores || {};
-
-        return {
-            user1: {
-                name: currentUser.user.name,
-                email: currentUser.user.email,
-                scores: scores1
-            },
-            user2: {
-                name: otherUser.user.name,
-                email: otherUser.user.email,
-                scores: scores2
-            },
-            insights: {
-                compatibility: 75,
-                strengths: ['Comunicação aberta', 'Objetivos alinhados'],
-                differences: []
-            }
-        };
-    }
 }
