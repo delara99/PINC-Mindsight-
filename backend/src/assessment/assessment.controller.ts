@@ -87,7 +87,7 @@ export class AssessmentController {
         }
         // --- AUTO-ASSIGN: END ---
 
-        const assignments = await this.prisma.assessmentAssignment.findMany({
+        let assignments = await this.prisma.assessmentAssignment.findMany({
             where: { userId: user.userId, status: { not: 'DELETED' } },
             include: {
                 assessment: {
@@ -99,6 +99,28 @@ export class AssessmentController {
             },
             orderBy: { assignedAt: 'desc' }
         });
+
+        // 🔥 CORREÇÃO DE EXIBIÇÃO: Se o sistema identificou um MODELO PADRÃO,
+        // vamos filtrar a lista para esconder outros "Big Five" antigos/incorretos que possam ter sido criados por erro anterior.
+        // Apenas para status não completados (histórico completado deve ser mantido)
+        try {
+            // Re-resolve active default model just to be sure (cheap cache call usually)
+            // ...or rely on bigFiveModel variable from above scope if available
+            if (bigFiveModel) {
+                assignments = assignments.filter(a => {
+                    // Se for completado, deixa passar
+                    if (a.status === 'COMPLETED') return true;
+
+                    // Se não for Big Five, deixa passar (ex: DISC, Motivadores)
+                    if (a.assessment.type !== 'BIG_FIVE') return true;
+
+                    // Se for Big Five, SÓ MOSTRA se for o ID do Modelo Padrão Identificado
+                    return a.assessmentId === bigFiveModel.id;
+                });
+            }
+        } catch (e) {
+            console.error('[AssignmentFilter] Error filtering assignments:', e);
+        }
 
         return assignments.map(assignment => ({
             ...assignment.assessment,
