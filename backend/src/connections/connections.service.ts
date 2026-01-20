@@ -49,7 +49,25 @@ export class ConnectionsService {
         ]);
 
         if (!myLastAssessment || !partnerLastAssessment) {
-            return { error: 'Dados insuficientes para comparação. Ambos precisam ter realizado o teste Big Five.' };
+            const status = {
+                me: !!myLastAssessment,
+                partner: !!partnerLastAssessment,
+                message: 'Dados insuficientes para comparação.'
+            };
+
+            if (!status.me && !status.partner) {
+                status.message = 'Nenhum dos usuários completou o inventário Big Five.';
+            } else if (!status.me) {
+                status.message = 'Você ainda não completou o inventário Big Five.';
+            } else {
+                status.message = 'Seu parceiro(a) ainda não completou o inventário Big Five.';
+            }
+
+            return {
+                radarData: null,
+                error: status.message,
+                status
+            };
         }
 
         const myScores = (myLastAssessment.result as any)?.scores as TalkingToInput;

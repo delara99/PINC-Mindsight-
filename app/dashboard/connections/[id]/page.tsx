@@ -320,8 +320,10 @@ export default function ConnectionDetailPage() {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="text-center py-10 bg-gray-50 rounded-lg">
-                                                <p className="text-gray-500">Dados insuficientes para gerar o comparativo. Ambos precisam ter completado o inventário Big Five.</p>
+                                            <div className="text-center py-10 bg-gray-50 rounded-lg flex flex-col items-center justify-center p-6">
+                                                <BarChart2 className="text-gray-300 mb-3" size={48} />
+                                                <p className="text-gray-500 font-medium">{comparisonData?.error || 'Dados insuficientes para gerar o comparativo.'}</p>
+                                                <p className="text-gray-400 text-sm mt-1">Ambos precisam ter completado o inventário Big Five.</p>
                                             </div>
                                         )}
                                     </>
