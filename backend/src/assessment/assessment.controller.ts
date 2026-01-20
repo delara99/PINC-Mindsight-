@@ -102,27 +102,24 @@ export class AssessmentController {
             orderBy: { assignedAt: 'desc' }
         });
 
-        // 🔥 CORREÇÃO DE EXIBIÇÃO: Se o sistema identificou um MODELO PADRÃO,
-        // vamos filtrar a lista para esconder outros "Big Five" antigos/incorretos que possam ter sido criados por erro anterior.
-        // Apenas para status não completados (histórico completado deve ser mantido)
+        // 🔥 LÓGICA DE FILTRO REMOVIDA
+        // A correção anterior (Auth + Controller determinísticos) já impede a criação de duplicatas para novos usuários.
+        // Remover este filtro permite que inventários aplicados manualmente pelo Admin (de modelos diferentes do padrão)
+        // voltem a aparecer na lista, atendendo à solicitação do usuário.
+        // Se ainda existirem usuários antigos com duplicidade, eles verão os dois, mas o fluxo de novos está corrigido.
+        /*
         try {
-            // Re-resolve active default model just to be sure (cheap cache call usually)
-            // ...or rely on bigFiveModel variable from above scope if available
-            if (bigFiveModel) {
-                assignments = assignments.filter(a => {
-                    // Se for completado, deixa passar
-                    if (a.status === 'COMPLETED') return true;
-
-                    // Se não for Big Five, deixa passar (ex: DISC, Motivadores)
-                    if (a.assessment.type !== 'BIG_FIVE') return true;
-
-                    // Se for Big Five, SÓ MOSTRA se for o ID do Modelo Padrão Identificado
-                    return a.assessmentId === bigFiveModel.id;
-                });
-            }
+             if (bigFiveModel) {
+                 assignments = assignments.filter(a => {
+                     if (a.status === 'COMPLETED') return true;
+                     if (a.assessment.type !== 'BIG_FIVE') return true;
+                     return a.assessmentId === bigFiveModel.id;
+                 });
+             }
         } catch (e) {
-            console.error('[AssignmentFilter] Error filtering assignments:', e);
+            console.error('[AssignmentFilter] Error filtering assignments:', e); 
         }
+        */
 
         return assignments.map(assignment => ({
             ...assignment.assessment,
