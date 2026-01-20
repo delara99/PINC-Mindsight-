@@ -322,53 +322,52 @@ export default function ConnectionDetailPage() {
                                                 <div className="space-y-6">
                                                     <h3 className="font-bold text-lg text-gray-800 border-b pb-2">Detalhamento dos 5 Fatores</h3>
 
-                                                    {comparisonData.me.full_analysis?.map((trait: any, index: number) => {
+                                                    {comparisonData.relationship_analysis?.map((trait: any, index: number) => {
+                                                        const meTrait = comparisonData.me.full_analysis?.[index];
                                                         const partnerTrait = comparisonData.partner.full_analysis?.[index];
+
                                                         return (
                                                             <div key={trait.dimension} className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                                                <div className="flex items-center gap-3 mb-4">
-                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${index % 2 === 0 ? 'bg-gray-800' : 'bg-primary'}`}>
+                                                                <div className="flex items-center gap-3 mb-6">
+                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md ${index % 2 === 0 ? 'bg-gray-800' : 'bg-primary'}`}>
                                                                         {index + 1}
                                                                     </div>
-                                                                    <h4 className="font-black text-lg text-gray-800">{trait.dimension}</h4>
+                                                                    <div>
+                                                                        <h4 className="font-black text-xl text-gray-800">{trait.dimension}</h4>
+                                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${trait.similarity === 'HIGH' ? 'bg-green-100 text-green-700' : trait.similarity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                                            {trait.similarity === 'HIGH' ? 'Alta Similaridade' : trait.similarity === 'MEDIUM' ? 'Complementares' : 'Opostos'}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
 
-                                                                <div className="grid md:grid-cols-2 gap-8 relative">
-                                                                    {/* Vertical Divider for Desktop */}
-                                                                    <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
+                                                                {/* Relationship Insight */}
+                                                                <div className="bg-gray-50 rounded-lg p-5 border-l-4 border-gray-800 mb-6">
+                                                                    <p className="font-bold text-gray-800 text-sm mb-2">{trait.insight}</p>
+                                                                    <p className="text-gray-600 text-sm italic">"{trait.implication}"</p>
+                                                                </div>
+
+                                                                {/* Side by Side Comparison */}
+                                                                <div className="grid md:grid-cols-2 gap-8 relative border-t pt-4 border-gray-100">
+                                                                    <div className="md:absolute top-4 bottom-0 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
 
                                                                     {/* Me */}
-                                                                    <div className="space-y-3">
+                                                                    <div className="space-y-2">
                                                                         <div className="flex items-center justify-between">
                                                                             <span className="text-xs font-bold text-pink-500 uppercase tracking-wider">Você</span>
-                                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${trait.classification === 'ALTO' ? 'bg-green-100 text-green-700' : trait.classification === 'BAIXO' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                                                {trait.classification}
-                                                                            </span>
+                                                                            <span className="text-xs font-bold bg-pink-50 text-pink-700 px-2 py-1 rounded">{meTrait?.classification}</span>
                                                                         </div>
-                                                                        <div className="flex flex-wrap gap-2">
-                                                                            {trait.labels.map((l: string) => (
-                                                                                <span key={l} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md border border-gray-200">{l}</span>
-                                                                            ))}
-                                                                        </div>
-                                                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                                                            {trait.text_interpretation}
+                                                                        <p className="text-xs text-gray-500 leading-relaxed text-justify">
+                                                                            {meTrait?.text_interpretation}
                                                                         </p>
                                                                     </div>
 
                                                                     {/* Partner */}
-                                                                    <div className="space-y-3">
+                                                                    <div className="space-y-2">
                                                                         <div className="flex items-center justify-between">
                                                                             <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">{partner?.name}</span>
-                                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${partnerTrait?.classification === 'ALTO' ? 'bg-green-100 text-green-700' : partnerTrait?.classification === 'BAIXO' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                                                {partnerTrait?.classification}
-                                                                            </span>
+                                                                            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded">{partnerTrait?.classification}</span>
                                                                         </div>
-                                                                        <div className="flex flex-wrap gap-2">
-                                                                            {partnerTrait?.labels.map((l: string) => (
-                                                                                <span key={l} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md border border-gray-200">{l}</span>
-                                                                            ))}
-                                                                        </div>
-                                                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                                                        <p className="text-xs text-gray-500 leading-relaxed text-justify">
                                                                             {partnerTrait?.text_interpretation}
                                                                         </p>
                                                                     </div>

@@ -100,6 +100,8 @@ export class ConnectionsService {
             { subject: 'Estabilidade', A: 100 - myScores.N, B: 100 - partnerScores.N, fullMark: 100 },
         ];
 
+        const relationshipAnalysis = this.talkingToService.analyzeRelationship(myScores, partnerScores);
+
         return {
             me: {
                 name: myLastAssessment.user.name,
@@ -113,6 +115,7 @@ export class ConnectionsService {
                 full_analysis: partnerAnalysis.talkingto_analysis, // Passed full details
                 scores: partnerScores
             },
+            relationship_analysis: relationshipAnalysis,
             radarData,
             shared: true
         };

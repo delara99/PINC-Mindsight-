@@ -442,10 +442,61 @@ export class TalkingToService {
         };
     }
 
+    // --- COMPARISON LOGIC ---
+
+    analyzeRelationship(myScores: TalkingToInput, partnerScores: TalkingToInput): any[] {
+        const dimensions = [
+            { key: 'E', name: 'Energia Social (Extroversão)', trait: 'EXTRAVERSION' },
+            { key: 'A', name: 'Estilo Relacional (Agradabilidade)', trait: 'AGREEABLENESS' },
+            { key: 'C', name: 'Estilo de Trabalho (Estrutura)', trait: 'CONSCIENTIOUSNESS' },
+            { key: 'O', name: 'Mentalidade (Abertura)', trait: 'OPENNESS' },
+            { key: 'N', name: 'Resiliência (Estabilidade)', trait: 'NEUROTICISM' }
+        ];
+
+        return dimensions.map(dim => {
+            let myScore = (myScores as any)[dim.key];
+            let partnerScore = (partnerScores as any)[dim.key];
+
+            // Invert N for Stability calculation logic if needed, but here we compare raw traits mostly 
+            // EXCEPT for N where high score = Low Stability. Let's keep raw for logic but invert for display if needed.
+
+            const diff = myScore - partnerScore;
+            const absDiff = Math.abs(diff);
+
+            let insight = "";
+            let implication = "";
+
+            // LOW DIFFERENCE
+            if (absDiff < 15) {
+                insight = "Vocês são muito parecidos neste aspecto.";
+                implication = "Essa similaridade facilita a compreensão mútua, pois tendem a reagir de maneira semelhante. O risco é a falta de complementaridade (pontos cegos compartilhados).";
+            }
+            // MEDIUM DIFFERENCE
+            else if (absDiff < 30) {
+                insight = "Vocês possuem estilos complementares com algumas diferenças.";
+                if (diff > 0) implication = "Você tende a ser mais intenso neste traço, enquanto seu parceiro é mais moderado. Isso pode gerar um equilíbrio saudável.";
+                else implication = "Seu parceiro tende a liderar neste aspecto, enquanto você adota uma postura mais moderada.";
+            }
+            // HIGH DIFFERENCE
+            else {
+                insight = "Vocês são opostos neste traço.";
+                implication = "Essa diferença gera grande complementaridade, mas exige paciência. O que é natural para um, pode ser exaustivo para o outro. É o maior ponto de aprendizado da relação.";
+            }
+
+            return {
+                dimension: dim.name,
+                similarity: absDiff < 15 ? 'HIGH' : absDiff < 30 ? 'MEDIUM' : 'LOW',
+                insight,
+                implication,
+                diff
+            };
+        });
+    }
+
     private generateArchetypeName(traits: string[]): string {
         const t1 = traits[0] ? traits[0].split(' ')[0] : 'Generalista';
         const t2 = traits[1] ? traits[1].split(' ')[0] : 'Adaptável';
-        return `O ${t1} ${t2}`; // Ex: O Energia Mentalidade
+        // return `O ${t1} ${t2}`; // Ex: O Energia Mentalidade
         // Melhorar isso: precisamos de nomes legais para os traços.
         // Vou deixar genérico por enquanto: "O Estrategista Dinâmico"
         // Isso requer uma tabela combinatória gigante de 25 pares.
