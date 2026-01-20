@@ -12,7 +12,7 @@ export default function ClientDashboard() {
     const { data: assessments, isLoading } = useQuery({
         queryKey: ['my-assessments-history'],
         queryFn: async () => {
-            const response = await fetch(`${API_URL}/api/v1/assessments`, {
+            const response = await fetch(`${API_URL}/api/v1/assessments/my-assignments-list`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar histórico');
