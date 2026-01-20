@@ -52,7 +52,20 @@ export class DashboardController {
                 name: true,
                 email: true,
                 lastPage: true,
-                lastActivityAt: true
+                lastActivityAt: true,
+                assignments: {
+                    where: { status: 'IN_PROGRESS' },
+                    take: 1,
+                    select: {
+                        id: true,
+                        assessment: {
+                            select: { title: true }
+                        },
+                        _count: {
+                            select: { responses: true }
+                        }
+                    }
+                }
             },
             orderBy: { lastActivityAt: 'desc' }
         });
@@ -110,12 +123,20 @@ export class DashboardController {
             activeAssessments,
             candidatesInQueue,
             onlineUsers: onlineUsersCount,
-            onlineUsersList: onlineUsersListRaw.map(u => ({
-                id: u.id,
-                name: u.name || u.email,
-                lastPage: u.lastPage,
-                lastActivity: u.lastActivityAt
-            })),
+            onlineUsersList: onlineUsersListRaw.map(u => {
+                const activeAssignment = u.assignments && u.assignments.length > 0 ? u.assignments[0] : null;
+
+                return {
+                    id: u.id,
+                    name: u.name || u.email,
+                    lastPage: u.lastPage,
+                    lastActivity: u.lastActivityAt,
+                    currentExam: activeAssignment ? {
+                        name: activeAssignment.assessment.title,
+                        question: (activeAssignment._count?.responses || 0) + 1
+                    } : null
+                };
+            }),
             recentCandidates: recentAssignments.map(a => ({
                 name: a.user.name || 'Sem nome',
                 role: 'Candidato', // Pode ajustar se tiver campo 'position'

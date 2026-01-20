@@ -50,7 +50,7 @@ function LiveUsersWidget({ users }: { users: any[] }) {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </span>
-                    Usuários Online Agora
+                    Monitoramento em Tempo Real
                 </h3>
                 <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-2 py-1 rounded-full border border-emerald-100">
                     {users.length} ativos
@@ -61,41 +61,62 @@ function LiveUsersWidget({ users }: { users: any[] }) {
                     <thead className="bg-gray-50/50">
                         <tr className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             <th className="px-6 py-3">Usuário</th>
-                            <th className="px-6 py-3">Local Atual</th>
+                            <th className="px-6 py-3">Atividade Atual</th>
                             <th className="px-6 py-3">Última Ação</th>
                             <th className="px-6 py-3 text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                        {users.map((u) => (
-                            <tr key={u.id} className="hover:bg-emerald-50/10 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold border-2 border-white shadow-sm">
-                                            {u.name.charAt(0)}
+                        {users.map((u) => {
+                            const isTakingExam = !!u.currentExam;
+                            return (
+                                <tr key={u.id} className={isTakingExam ? "bg-indigo-50/30 hover:bg-indigo-50/50 transition-colors" : "hover:bg-gray-50/50 transition-colors"}>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm ${isTakingExam ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                {u.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900 text-sm">{u.name}</p>
+                                                <p className="text-xs text-gray-400">{u.email}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900 text-sm">{u.name}</p>
-                                            <p className="text-xs text-gray-400">{u.email}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-100 w-fit px-2 py-1 rounded-md">
-                                        <MoreHorizontal size={12} className="text-gray-400" />
-                                        {u.lastPage || 'Navegando...'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-xs text-gray-400 font-mono">
-                                    {new Date(u.lastActivity).toLocaleTimeString()}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
-                                        <Zap size={10} /> Online
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {isTakingExam ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                                                </span>
+                                                <span className="text-xs font-bold text-indigo-700">
+                                                    Respondendo {u.currentExam.name}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-100 w-fit px-2 py-1 rounded-md">
+                                                <MoreHorizontal size={12} className="text-gray-400" />
+                                                {u.lastPage || 'Navegando...'}
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-gray-400 font-mono">
+                                        {new Date(u.lastActivity).toLocaleTimeString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        {isTakingExam ? (
+                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                                <Target size={12} /> Questão {u.currentExam.question}
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
+                                                <Zap size={10} /> Online
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
