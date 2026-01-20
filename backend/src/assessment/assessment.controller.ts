@@ -48,16 +48,17 @@ export class AssessmentController {
             }
 
             if (bigFiveModel) {
-                // Verificar se já existe algum pendente (de qualquer versão Big Five, para não acumular)
-                const anyPending = await this.prisma.assessmentAssignment.findFirst({
+                // Verificar se já existe um assignment para ESTE MODELO PADRÃO
+                // Alterado para garantir que o modelo PADRÃO esteja sempre disponível, mesmo que existam outros antigos
+                const alreadyAssigned = await this.prisma.assessmentAssignment.findFirst({
                     where: {
                         userId: user.userId,
-                        assessment: { type: 'BIG_FIVE' },
+                        assessmentId: bigFiveModel.id,
                         status: { not: 'COMPLETED' }
                     }
                 });
 
-                if (!anyPending) {
+                if (!alreadyAssigned) {
                     console.log(`[AutoAssign] Criando novo assignment do modelo ${bigFiveModel.id} para user ${user.userId}`);
                     await this.prisma.assessmentAssignment.create({
                         data: {
