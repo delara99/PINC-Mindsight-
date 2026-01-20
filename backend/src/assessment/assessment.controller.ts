@@ -131,9 +131,9 @@ export class AssessmentController {
                         const assignmentCreatedAt = new Date(a.assignedAt).getTime();
                         const timeDiffMinutes = (assignmentCreatedAt - userCreatedAt) / 1000 / 60;
 
-                        // Se foi criado nos primeiros 15 minutos de vida do usuário, assumimos que foi o BUG de duplicidade.
+                        // Se foi criado nos primeiros 2 minutos de vida do usuário, assumimos que foi o Auto-Assign duplicado.
                         // ESCONDE.
-                        if (timeDiffMinutes < 15) {
+                        if (timeDiffMinutes < 2) {
                             return false;
                         }
 
