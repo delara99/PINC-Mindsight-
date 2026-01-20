@@ -168,7 +168,8 @@ export class AuthService {
         // Como o tenant acabou de ser criado, ele não tem modelos próprios ainda.
         // Devemos buscar o modelo PADRÃO do sistema (Global).
         let assessmentModel = await this.prisma.assessmentModel.findFirst({
-            where: { type: 'BIG_FIVE', isDefault: true }
+            where: { type: 'BIG_FIVE', isDefault: true },
+            orderBy: { createdAt: 'desc' } // ✅ Garantir determinismo se houver múltiplos defaults
         });
 
         // Fallback: Se não tiver nenhum default marcado, pega o mais recente global

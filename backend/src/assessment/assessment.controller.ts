@@ -36,7 +36,8 @@ export class AssessmentController {
             // 2. Fallback: Padrão Global (Qualquer modelo Big Five marcado como default no sistema inteiro)
             if (!bigFiveModel) {
                 bigFiveModel = await this.prisma.assessmentModel.findFirst({
-                    where: { type: 'BIG_FIVE', isDefault: true }
+                    where: { type: 'BIG_FIVE', isDefault: true },
+                    orderBy: { createdAt: 'desc' } // ✅ Garantir determinismo (mesma lógica do Auth)
                 });
             }
 
