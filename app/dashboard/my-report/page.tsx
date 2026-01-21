@@ -254,35 +254,40 @@ export default function MyReportPage() {
                                     <button
                                         key={h.id}
                                         onClick={() => handleSelectReport(h.id)}
-                                        className={`flex-shrink-0 snap-start relative group outline-none transition-all duration-300 text-left`}
+                                        className={`flex-shrink-0 snap-start relative group outline-none transition-all duration-500 text-left`}
                                     >
-                                        <div className={`w-64 p-4 rounded-xl border transition-all duration-300 ${isSelected
-                                            ? 'bg-gray-900 border-gray-900 text-white shadow-xl shadow-purple-900/20 scale-[1.02]'
-                                            : 'bg-white border-gray-100 text-gray-500 hover:border-purple-200 hover:shadow-md'
+                                        <div className={`w-72 p-5 rounded-2xl border transition-all duration-300 ${isSelected
+                                            ? 'bg-slate-900 border-indigo-500/30 text-white shadow-2xl shadow-indigo-900/20 ring-1 ring-indigo-500/50 scale-[1.02]'
+                                            : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200 hover:shadow-xl hover:shadow-gray-200/40 hover:-translate-y-1'
                                             }`}>
 
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div className={`p-2 rounded-lg ${isSelected ? 'bg-white/10 text-purple-300' : 'bg-gray-50 text-gray-400 group-hover:text-purple-500'}`}>
-                                                    <Calendar size={16} />
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className={`p-2.5 rounded-xl ${isSelected ? 'bg-indigo-500/20 text-indigo-300' : 'bg-gray-50 text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors'}`}>
+                                                    <Calendar size={18} />
                                                 </div>
                                                 {isSelected && (
-                                                    <span className="flex items-center gap-1.5 text-[10px] font-bold bg-green-500/20 text-green-300 px-2 py-1 rounded full uppercase">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                                        Ativo
+                                                    <span className="flex items-center gap-1.5 text-[9px] font-black bg-emerald-400/10 text-emerald-400 px-2.5 py-1 rounded-full uppercase tracking-wider border border-emerald-400/20 shadow-[0_0_10px_rgba(52,211,153,0.2)]">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]"></span>
+                                                        Visualizando
                                                     </span>
                                                 )}
                                             </div>
 
-                                            <h4 className={`font-bold text-sm truncate mb-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                                            <h4 className={`font-bold text-sm truncate mb-2 ${isSelected ? 'text-white' : 'text-gray-800'}`}>
                                                 {h.assessment?.title || 'Relatório de Perfil'}
                                             </h4>
 
                                             <div className="flex items-center gap-2">
-                                                <Clock size={12} className={isSelected ? 'text-gray-400' : 'text-gray-300'} />
-                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                                                <Clock size={13} className={isSelected ? 'text-slate-500' : 'text-gray-300'} />
+                                                <span className={`text-xs font-semibold tracking-wide ${isSelected ? 'text-slate-400' : 'text-gray-400'}`}>
                                                     {new Date(h.completedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
                                                 </span>
                                             </div>
+
+                                            {/* Decorative Gradient on active */}
+                                            {isSelected && (
+                                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-indigo-500/5 via-transparent to-transparent pointer-events-none"></div>
+                                            )}
                                         </div>
                                     </button>
                                 );
