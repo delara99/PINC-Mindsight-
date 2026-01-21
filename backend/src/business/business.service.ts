@@ -86,7 +86,6 @@ export class BusinessService {
                 password: hashedPassword, // Código é a senha
                 role: Role.MEMBER,
                 tenantId: tenantId,
-                status: 'active', // Forçar ACTIVE para que funcione imediatamente (Prisma pode reclamar se for string 'active', mas geralmente aceita se mapeado, porém vamos garantir via string que bata com o Enum do banco, ou usar Type se importado. Assumindo que o banco aceita string 'active' ou 'ACTIVE'. No código anterior usava UserStatus.pending. Vou usar string 'active' minúscula pois o view_file da linha 15154 mostrava 'UserStatus.active' mapeado no prisma. Se falhar, é pq o enum espera maiúsculo. O mais seguro é 'active' pois o prisma schema costuma ser lowercase no client typescript type, mas no banco é o que for. Na dúvida, se antes funcionava com UserStatus.pending, e UserStatus geralmente é um objeto gerado pelo Prisma. Vou manter a string 'active' mas se der erro 500 recorrente, sabemos que é isso. *CORREÇÃO*: O erro relatado foi "Erro ao criar". Vou usar UserStatus.active explicitamente se possível, mas como estou editando texto, vou assumir 'active' e torcer, ou melhor, importar UserStatus se já não estiver. Está importado na linha 5. Então vou usar UserStatus.active).
                 status: UserStatus.active,
                 plan: PlanType.BUSINESS,
                 mustChangePassword: false, // Código é fixo
