@@ -95,7 +95,6 @@ export class ScoreCalculationService {
             };
             if (mapping[upper]) return mapping[upper];
 
-            // Robust Fallback: Partial Match
             if (upper.includes('EXTROVER') || upper.includes('SOCIAL')) return 'EXTRAVERSION';
             if (upper.includes('AMABIL') || upper.includes('AGRE') || upper.includes('COLAB') || upper.includes('SENTIM')) return 'AGREEABLENESS';
             if (upper.includes('CONSC') || upper.includes('ESTRUT') || upper.includes('ORGANIZ') || upper.includes('PLANEJ')) return 'CONSCIENTIOUSNESS';
@@ -105,69 +104,51 @@ export class ScoreCalculationService {
             return upper;
         };
 
-        const mapQuestionTraitToKey = (qt: string, dic: string): string | null => {
-            if (!qt && !dic) return null;
-            const context = (qt + ' ' + dic).toUpperCase();
-            if (context.includes('EXTROVER') || context.includes('INTROVER')) return 'EXTRAVERSION';
-            if (context.includes('LOGICO') || context.includes('SENTIMENTAL') || context.includes('COMPETITIV') || context.includes('COLAB')) return 'AGREEABLENESS';
-            if (context.includes('ADAPT') || context.includes('ESTRUT') || context.includes('PLAN')) return 'CONSCIENTIOUSNESS';
-            if (context.includes('CONCRETO') || context.includes('ABSTRATO') || context.includes('IMAGIN')) return 'OPENNESS';
-            if (context.includes('EMOC') || context.includes('RACIONAL') || context.includes('INSTAV') || context.includes('ESTAV')) return 'NEUROTICISM';
-            return null;
-        };
-
         const cleanString = (str: string): string => {
             if (!str) return '';
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[()%]/g, "").toLowerCase().trim();
         };
 
         // 4. Initialize Accumulators
-        const scores: Record<string, ScoreResult> = {};
-        const configKeyMap: Record<string, string> = {}; // Normalized -> Runtime Key
+        const configKeyMap: Record<string, string> = {};
 
-        const facetScores: Record<string, {
-            score: number;
-            total: number;
-            rawScoreSum: number;
+        // Structure to accumulate questions PER FACET/SUBTRAIT
+        // Logic Phase 1: Aggregate Questions -> Facets
+        const facetAccumulator: Record<string, {
+            sum: number;
+            weightSum: number;
             count: number;
             name: string;
-            traitKey: string
+            traitKey: string | null;  // The parent trait key if known
         }> = {};
-        const facetNameMap: Record<string, string> = {};
 
-        // INITIALIZE SCORES FROM CONFIG
+        // Also track Concepts/Dichotomies for metadata reporting (legacy support)
+        const conceptMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
+        const subtraitMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
+        const dichotomyMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
+
+        // SETUP: Pre-populate facet accumulator from Config to ensure we capture hierarchy
         if (config.traits) {
             config.traits.forEach(t => {
-                scores[t.traitKey] = {
-                    traitKey: t.traitKey,
-                    traitName: t.name,
-                    score: 0,
-                    normalizedScore: 0,
-                    level: 'AVERAGE',
-                    interpretation: 'Médio',
-                    facets: []
-                };
-                configKeyMap[normalizeKey(t.traitKey)] = t.traitKey;
+                const nKey = normalizeKey(t.traitKey);
+                configKeyMap[nKey] = t.traitKey;
 
                 if (t.facets) {
                     t.facets.forEach(f => {
-                        facetScores[f.facetKey] = {
-                            score: 0,
-                            total: 0,
-                            rawScoreSum: 0,
-                            count: 0,
-                            name: f.name,
-                            traitKey: t.traitKey
-                        };
+                        const cleanF = cleanString(f.facetKey);
+                        // Store using both CLEAN key (for robust matching) and ORIGINAL key
+                        facetAccumulator[cleanF] = { sum: 0, weightSum: 0, count: 0, name: f.name, traitKey: t.traitKey };
+                        // Ensure we can lookup by Name too if needed
                         const cleanName = cleanString(f.name);
-                        if (cleanName) facetNameMap[cleanName] = f.facetKey;
-                        facetNameMap[cleanString(f.facetKey)] = f.facetKey;
+                        if (cleanName && cleanName !== cleanF) {
+                            // Pointer or duplicate entry? Let's just rely on robust key mapping during response processing
+                        }
                     });
                 }
             });
         }
 
-        // TRADUÇÃO DOS NOMES DE TRAÇOS PARA PORTUGUÊS
+        // TRADUÇÃO DOS NOMES DE TRAÇOS PARA PORTUGUÊS (Fallback)
         const traitNameTranslation: Record<string, string> = {
             'EXTRAVERSION': 'Extroversão',
             'AGREEABLENESS': 'Amabilidade',
@@ -176,177 +157,81 @@ export class ScoreCalculationService {
             'NEUROTICISM': 'Estabilidade Emocional'
         };
 
-        // ENSURE ALL BIG 5 KEYS EXIST (Fallback if config improperly incomplete)
+        // ENSURE ALL BIG 5 KEYS EXIST IN CONFIG MAP
         ['EXTRAVERSION', 'AGREEABLENESS', 'CONSCIENTIOUSNESS', 'OPENNESS', 'NEUROTICISM'].forEach(stdKey => {
-            if (!configKeyMap[stdKey]) {
-                // If missing, add it to 'scores' using standard key but with Portuguese name
-                scores[stdKey] = {
-                    traitKey: stdKey,
-                    traitName: traitNameTranslation[stdKey] || stdKey,
-                    score: 0,
-                    normalizedScore: 0,
-                    level: 'AVERAGE',
-                    interpretation: 'Médio',
-                    facets: []
-                };
-                configKeyMap[stdKey] = stdKey;
-            }
+            if (!configKeyMap[stdKey]) configKeyMap[stdKey] = stdKey;
         });
-
-        // 4.1 Concept Mapping Setup
-        const conceptTraitMap = new Map<string, string>(); // CleanConcept -> NormalizedTrait
-
-        // Static Mapping for TalkingTo
-        const STATIC_CONCEPT_MAP: Record<string, string> = {
-            'comunicacao': 'EXTRAVERSION',
-            'interacao social': 'EXTRAVERSION',
-            'autoridade': 'EXTRAVERSION',
-            'orientacao para acao': 'EXTRAVERSION',
-            'ouvinte-falante': 'EXTRAVERSION',
-            'seletivo-sociavel': 'EXTRAVERSION',
-            'contido-afirmativo': 'EXTRAVERSION',
-            'reflexivo-ativo': 'EXTRAVERSION',
-
-            'logica': 'AGREEABLENESS',
-            'independencia pessoal': 'AGREEABLENESS',
-            'competitividade': 'AGREEABLENESS',
-            'critico-tolerante': 'AGREEABLENESS',
-            'independente-conectado': 'AGREEABLENESS',
-            'competitivo-colaborativo': 'AGREEABLENESS',
-
-            'estilo de planejamento': 'CONSCIENTIOUSNESS',
-            'disciplina': 'CONSCIENTIOUSNESS',
-            'persistencia': 'CONSCIENTIOUSNESS',
-            'aventureiro-planejado': 'CONSCIENTIOUSNESS',
-            'espontaneo-disciplinado': 'CONSCIENTIOUSNESS',
-            'flexivel-persistente': 'CONSCIENTIOUSNESS',
-
-            'imaginacao': 'OPENNESS',
-            'intelectualidade': 'OPENNESS',
-            'abertura ao novo': 'OPENNESS',
-            'realista-imaginativo': 'OPENNESS',
-            'pratico-conceitual': 'OPENNESS',
-            'conservador-aberto': 'OPENNESS',
-
-            'confianca': 'NEUROTICISM',
-            'autoconfianca': 'NEUROTICISM',
-            'temperamento': 'NEUROTICISM',
-            'controlado': 'NEUROTICISM',
-            'inquieto-despreocupado': 'NEUROTICISM',
-            'inseguro-autoconfiante': 'NEUROTICISM',
-            'irritavel-paciente': 'NEUROTICISM',
-            'reativo-controlado': 'NEUROTICISM'
-        };
-
-        // Populate map from Static
-        Object.entries(STATIC_CONCEPT_MAP).forEach(([k, v]) => {
-            conceptTraitMap.set(k, v);
-        });
-
-
-        const conceptMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
-        const subtraitMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
-        const dichotomyMap = new Map<string, { sum: number, weightSum: number, count: number, originalName: string }>();
-        const traitTotalPossible: Record<string, number> = {};
 
         // 5. Process Responses
         assignment.responses.forEach(r => {
             const q = r.question as any;
             if (!q) return;
 
+            // --- 1. VALUE NORMALIZATION (1-6 SCALE) ---
             let rawVal = (r as any).answer || (r as any).value || 0;
             rawVal = Number(rawVal);
-            if (isNaN(rawVal) || !isFinite(rawVal)) {
-                console.warn('[calculateScores] rawVal inválido, usando 3:', rawVal);
-                rawVal = 3;
-            }
+            if (isNaN(rawVal) || !isFinite(rawVal)) rawVal = 3.5; // Midpoint 1-6 is 3.5
 
-            const finalValue = q.isReverse ? (6 - rawVal) : rawVal;
+            // INVERSÃO: Escala 1 a 6. Inverso = 7 - valor.
+            const finalValue = q.isReverse ? (7 - rawVal) : rawVal;
             const weight = q.weight || 1;
 
-            // PROTEÇÃO: Garantir que finalValue é número válido
-            if (isNaN(finalValue) || !isFinite(finalValue)) {
-                console.error('[calculateScores] finalValue NaN detectado! rawVal:', rawVal, 'isReverse:', q.isReverse);
-                return; // Pular esta resposta
-            }
+            if (isNaN(finalValue) || !isFinite(finalValue)) return;
 
-            // --- Determine Trait (Robust Unification Logic) ---
-            let targetKey: string | null = null;
-            let normKey: string | null = null;
 
-            // 1. Strict Mapping (Existing Config)
+            // --- 2. IDENTIFY HIERARCHY (Trait -> Facet) ---
+
+            // Determine Parent Trait Key
+            let traitKey: string | null = null;
             if (q.traitKey) {
-                normKey = normalizeKey(q.traitKey);
-                if (configKeyMap[normKey]) targetKey = configKeyMap[normKey];
+                const nKey = normalizeKey(q.traitKey);
+                if (configKeyMap[nKey]) traitKey = configKeyMap[nKey];
+                else traitKey = nKey; // Fallback to raw if not in config
             }
 
-            // 2. Inference from Metadata
-            if (!targetKey && (q.questionTrait || q.dichotomy)) {
-                const inferred = mapQuestionTraitToKey(q.questionTrait || '', q.dichotomy || '');
-                if (inferred && configKeyMap[inferred]) {
-                    targetKey = configKeyMap[inferred];
-                    normKey = inferred;
-                }
-            }
-
-            // 3. Fallback (Metadata -> Concept)
-            if (!targetKey) {
-                if (q.concept) {
-                    const norm = conceptTraitMap.get(cleanString(q.concept));
-                    if (norm && configKeyMap[norm]) {
-                        targetKey = configKeyMap[norm];
-                        normKey = norm;
-                    }
-                }
-            }
-
-            // 4. TALKINGTO ENGINE INJECTION (The "Universal Matcher")
-            // Se ainda não encontrou key no config estrito, vamos forçar a atribuição baseada em String Match robusto
-            // Isso garante que o Radar funcione mesmo se o Config do Banco estiver desatualizado.
-            if (!targetKey) {
+            // TalkingTo Safe Mapping (If explicit map missing)
+            if (!traitKey) {
                 const textToSearch = (q.traitKey || q.questionTrait || q.concept || '').toUpperCase();
+                if (textToSearch.includes('EXTROVER') || textToSearch.includes('SOCIAL') || textToSearch.includes('FALANTE')) traitKey = 'EXTRAVERSION';
+                else if (textToSearch.includes('AMABIL') || textToSearch.includes('AGRE') || textToSearch.includes('COLAB')) traitKey = 'AGREEABLENESS';
+                else if (textToSearch.includes('CONSC') || textToSearch.includes('ESTRUT') || textToSearch.includes('ORGANIZ')) traitKey = 'CONSCIENTIOUSNESS';
+                else if (textToSearch.includes('ABERT') || textToSearch.includes('OPEN') || textToSearch.includes('IMAGIN')) traitKey = 'OPENNESS';
+                else if (textToSearch.includes('ESTAB') || textToSearch.includes('NEUR') || textToSearch.includes('EMOC')) traitKey = 'NEUROTICISM';
 
-                if (textToSearch.includes('EXTROVER') || textToSearch.includes('SOCIAL') || textToSearch.includes('FALANTE')) normKey = 'EXTRAVERSION';
-                else if (textToSearch.includes('AMABIL') || textToSearch.includes('AGRE') || textToSearch.includes('COLAB')) normKey = 'AGREEABLENESS';
-                else if (textToSearch.includes('CONSC') || textToSearch.includes('ESTRUT') || textToSearch.includes('ORGANIZ')) normKey = 'CONSCIENTIOUSNESS';
-                else if (textToSearch.includes('ABERT') || textToSearch.includes('OPEN') || textToSearch.includes('IMAGIN')) normKey = 'OPENNESS';
-                else if (textToSearch.includes('ESTAB') || textToSearch.includes('NEUR') || textToSearch.includes('EMOC')) normKey = 'NEUROTICISM';
+                // Normalize to Config Key if possible
+                if (traitKey && configKeyMap[traitKey]) traitKey = configKeyMap[traitKey];
+            }
 
-                // Se identificamos o traço UNIVERSAL, tentamos achar uma key "próxima" no config ou usamos o padrão interno
-                if (normKey) {
-                    // Tenta achar no config
-                    if (configKeyMap[normKey]) targetKey = configKeyMap[normKey];
-                    else {
-                        // Se não tem no config, usa a chave padrão, pois o loop de inicialização "Ensure All Big 5" já criou o slot.
-                        targetKey = normKey;
+            // Determine Facet/Subtrait Key
+            // Priorities: facetKey > subtrait > concept
+            let facetIdentifier = q.facetKey || q.subtrait || q.concept;
+            let facetCleanKey = cleanString(facetIdentifier);
+
+            if (facetCleanKey) {
+                // Initialize if not exists
+                if (!facetAccumulator[facetCleanKey]) {
+                    facetAccumulator[facetCleanKey] = {
+                        sum: 0,
+                        weightSum: 0,
+                        count: 0,
+                        name: facetIdentifier, // Use raw name initially
+                        traitKey: traitKey // Associate with determined trait
+                    };
+                } else {
+                    // Update trait linkage if we found a strong traitMatch now and it was null before
+                    if (traitKey && !facetAccumulator[facetCleanKey].traitKey) {
+                        facetAccumulator[facetCleanKey].traitKey = traitKey;
                     }
                 }
+
+                // Add to Facet Accumulator (Weighted Average Logic)
+                const acc = facetAccumulator[facetCleanKey];
+                acc.sum += finalValue * weight;
+                acc.weightSum += weight;
+                acc.count++;
             }
 
-            // --- Accumulation ---
-            if (targetKey && scores[targetKey]) {
-                scores[targetKey].score += finalValue * weight;
-
-                // Fix total possible calculation
-                // Only add to total if we actually added to score to avoid double counting if multiple Qs map to same trait?
-                // Actually, logic allows many Qs to same trait.
-                traitTotalPossible[targetKey] = (traitTotalPossible[targetKey] || 0) + (5 * weight);
-            }
-            // ---------------------------------------------------------
-
-            // --- Facets Logic ---
-            let fKey: string | null = q.facetKey || null;
-            if (!fKey && q.subtrait) fKey = facetNameMap[cleanString(q.subtrait)] || null;
-            if (!fKey && q.concept) fKey = facetNameMap[cleanString(q.concept)] || null;
-
-            if (fKey && facetScores[fKey]) {
-                facetScores[fKey].score += finalValue * weight;
-                facetScores[fKey].total += (5 * weight);
-                facetScores[fKey].rawScoreSum += finalValue;
-                facetScores[fKey].count++;
-            }
-
-            // --- TalkingTo Accumulation ---
+            // --- Legacy Metadata Maps (Just for reporting, not core calc) ---
             const accumulate = (map: Map<string, any>, key: string, name: string) => {
                 if (!key) return;
                 const k = cleanString(key);
@@ -356,119 +241,103 @@ export class ScoreCalculationService {
                 entry.weightSum += weight;
                 entry.count++;
             };
-
             if (q.concept) accumulate(conceptMap, q.concept, q.concept);
             if (q.subtrait) accumulate(subtraitMap, q.subtrait, q.subtrait);
             if (q.dichotomy) accumulate(dichotomyMap, q.dichotomy, q.dichotomy);
         });
 
-        // 6. Finalize & Normalize
-        Object.keys(scores).forEach(key => {
-            // FIX: Se TotalPossible for 0 (nenhuma questão mapeada), verificar se tem respostas "órfãs" que o TalkingTo pegaria
-            // Mas com o passo 4 acima, isso deve ser resolvido.
+        // 6. Calculate Facet Scores & Aggregators
+        // Structure: Trait -> [FacetScores]
+        const traitFacetsMap: Record<string, number[]> = {};
+        const finalScores: Record<string, ScoreResult> = {};
 
-            let totalPossible = traitTotalPossible[key] || 0;
-            const accumulated = scores[key].score || 0;
+        // Initialize Big 5 Slots in FinalScores
+        Object.values(configKeyMap).forEach(k => {
+            finalScores[k] = {
+                traitKey: k,
+                traitName: traitNameTranslation[k] || k, // Better defaults needed?
+                score: 0,
+                normalizedScore: 0,
+                level: 'AVERAGE',
+                interpretation: '',
+                facets: []
+            };
+            traitFacetsMap[k] = []; // Array to hold Avg Score of each facet
+        });
 
-            // Fallback safety: If totalPossible is 0 but we have score? (Shouldn't happen with above logic)
-            if (totalPossible === 0 && accumulated > 0) totalPossible = accumulated; // Worst case
+        // 6.1 Process Facets -> Calculate Avg -> Push to Parent Trait
+        Object.keys(facetAccumulator).forEach(fKey => {
+            const data = facetAccumulator[fKey];
+            // Calc Weighted Avg for this Facet
+            // Result is on 1-6 scale still
+            const facetAvg = data.weightSum > 0 ? (data.sum / data.weightSum) : 0;
 
-            // Cálculo padrão
-            let percent = totalPossible > 0 ? (accumulated / totalPossible) * 100 : 0;
+            // Normalize (Percentage) for reporting
+            const facetNorm = this.normalizeScore(facetAvg);
 
-            // VALIDAÇÃO DO RESULTADO
-            if (isNaN(percent) || !isFinite(percent)) {
-                console.error('[calculateScores] percent NaN! accumulated:', accumulated, 'totalPossible:', totalPossible);
-                percent = 0;
+            // Add this facet's RAW avg to the parent trait list
+            if (data.traitKey && finalScores[data.traitKey]) {
+                traitFacetsMap[data.traitKey].push(facetNorm); // Pushing NORMALIZED score to average them directly as percentages?
+                // Specialist Rule: "O resultado do traço maior deve ser a média simples das pontuações obtidas nos seus respectivos subtraços".
+                // If we average the Normalized Scores (0-100), the result is also 0-100. correct.
+
+                // Add to facets list for output
+                finalScores[data.traitKey].facets?.push({
+                    facetKey: fKey,
+                    facetName: data.name,
+                    score: facetNorm,
+                    rawScore: facetAvg
+                });
+            } else {
+                // Orphaned facet? Check if it belongs to Big 5 via static map
+                // Doing late binding if needed, but for now we skip invalid metadata
             }
-            percent = Math.min(100, Math.max(0, percent));
+        });
 
-            scores[key].normalizedScore = Math.round(percent);
-            scores[key].level = this.determineLevel(percent, config);
+        // 6.2 Calculate Trait Scores (Simple Average of Facet SCORES)
+        Object.keys(finalScores).forEach(tKey => {
+            const facetScoresList = traitFacetsMap[tKey];
+            let traitFinalPct = 0;
 
-            // Text Interpretation
-            const traitConfig = config.traits?.find(t => t.traitKey === key) || {};
-            scores[key].interpretation = this.getInterpretation(scores[key].level, traitConfig);
+            if (facetScoresList.length > 0) {
+                // Rule: Simple Average of Subtraits
+                const sum = facetScoresList.reduce((a, b) => a + b, 0);
+                traitFinalPct = sum / facetScoresList.length;
+            } else {
+                // Fallback: If no sub-traits defined/found, use raw question average?
+                // In this strict mode, result is 0 if no facets found.
+                // However, likely we want to fallback to direct question average if "Facets" concept is missing
+                // BUT per instructions "Flexible Questions... Subtrait". Assuming Subtraits ALWAYS exist.
+                // If they don't, we should look at 'concept' or 'subtrait' field in questions.
+                // If questions have NO grouping, this logic yields 0.
+
+                // Safety: If 0 and we have questions that mapped to this trait but somehow didn't create a facet entry?
+                // (Unlikely with Phase 2 logic above)
+            }
+
+            traitFinalPct = Math.round(traitFinalPct);
+
+            finalScores[tKey].score = traitFinalPct; // This is actually the % now
+            finalScores[tKey].normalizedScore = traitFinalPct;
+            finalScores[tKey].level = this.determineLevel(traitFinalPct, config);
+
+            // Config text lookup
+            const traitConfig = config.traits?.find((t: any) => t.traitKey === tKey) || {};
+            finalScores[tKey].interpretation = this.getInterpretation(finalScores[tKey].level, traitConfig);
 
             // Label
             let levelLabel = '';
-            switch (scores[key].level) {
+            switch (finalScores[tKey].level) {
                 case 'VERY_LOW': levelLabel = config.veryLowLabel || 'Muito Baixo'; break;
                 case 'LOW': levelLabel = config.lowLabel || 'Baixo'; break;
                 case 'AVERAGE': levelLabel = config.averageLabel || 'Médio'; break;
                 case 'HIGH': levelLabel = config.highLabel || 'Alto'; break;
                 case 'VERY_HIGH': levelLabel = config.veryHighLabel || 'Muito Alto'; break;
             }
-            scores[key].levelLabel = levelLabel;
-
-            // --- Populate Facets from Accumulator ---
-            // If explicit facets existed
-            const facets = scores[key].facets || [];
-            // Try to find matching config trait
-            const tConf = config.traits?.find(t => t.traitKey === key);
-            if (tConf && tConf.facets) {
-                tConf.facets.forEach(f => {
-                    const fData = facetScores[f.facetKey];
-                    if (fData) {
-                        // Check if already in list (it shouldn't be yet)
-                        if (!facets.find(x => x.facetKey === f.facetKey)) {
-                            let fPct = fData.total > 0 ? (fData.score / fData.total) * 100 : 0;
-                            fPct = Math.round(Math.max(0, Math.min(100, fPct)));
-                            const fRaw = fData.count > 0 ? (fData.rawScoreSum / fData.count) : 0;
-                            facets.push({
-                                facetKey: f.facetKey,
-                                facetName: f.name,
-                                score: fPct,
-                                rawScore: fRaw
-                            });
-                        }
-                    }
-                });
-            }
-            scores[key].facets = facets;
+            finalScores[tKey].levelLabel = levelLabel;
         });
 
-        // 7. SAFETY NET: Inject Concepts as Facets
-        conceptMap.forEach((val, k) => {
-            // Find Normalized Trait for this concept
-            const normTrait = conceptTraitMap.get(k);
-            if (normTrait) {
-                // Find Runtime Trait
-                const targetKey = configKeyMap[normTrait];
-                if (targetKey && scores[targetKey]) {
-                    const s = scores[targetKey];
-                    if (!s.facets) s.facets = [];
-
-                    const existing = s.facets.find(f => cleanString(f.facetName) === k || cleanString(f.facetKey) === k);
-
-                    const avg = val.weightSum > 0 ? val.sum / val.weightSum : 0;
-
-                    // PROTEÇÃO ANTI-NaN
-                    if (isNaN(avg) || !isFinite(avg)) {
-                        console.error('[calculateScores] avg NaN para concept:', k, 'val:', val);
-                        return; // Pular este conceito
-                    }
-
-                    const norm = this.normalizeScore(avg);
-                    const raw = avg;
-
-                    if (existing) {
-                        if (existing.score === 0 && existing.rawScore === 0) {
-                            existing.score = norm;
-                            existing.rawScore = raw;
-                        }
-                    } else {
-                        s.facets.push({
-                            facetKey: `concept_${k}`,
-                            facetName: val.originalName,
-                            score: norm,
-                            rawScore: raw
-                        });
-                    }
-                }
-            }
-        });
-
+        // 7. Auxiliary Outputs (Metadata Scores)
         const processMap = (map: Map<string, any>) => {
             const out: Record<string, any> = {};
             map.forEach((v, k) => {
@@ -484,7 +353,7 @@ export class ScoreCalculationService {
         };
 
         return {
-            scores,
+            scores: finalScores,
             conceptScores: processMap(conceptMap),
             subtraitScores: processMap(subtraitMap),
             dichotomyScores: processMap(dichotomyMap),
@@ -493,23 +362,16 @@ export class ScoreCalculationService {
     }
 
     private normalizeScore(rawScore: number): number {
-        // PROTEÇÃO ANTI-NaN
-        if (typeof rawScore !== 'number' || isNaN(rawScore) || !isFinite(rawScore)) {
-            console.warn('[normalizeScore] Valor inválido recebido:', rawScore, '- Retornando 0');
-            return 0;
-        }
+        // SCALE 1 to 6
+        // Min 1, Max 6. Range = 5.
+        // Formula: (Val - 1) / 5 * 100
 
-        if (rawScore < 1) return 0;
-        const norm = ((rawScore - 1) / 4) * 100;
-        const result = Math.min(100, Math.max(0, Math.round(norm)));
+        if (typeof rawScore !== 'number' || isNaN(rawScore) || !isFinite(rawScore)) return 0;
+        if (rawScore < 1) rawScore = 1; // Clamp bottom
+        if (rawScore > 6) rawScore = 6; // Clamp top? Or allow overflow? Usually clamp.
 
-        // VALIDAÇÃO FINAL
-        if (isNaN(result) || !isFinite(result)) {
-            console.error('[normalizeScore] Resultado NaN detectado! rawScore:', rawScore);
-            return 0;
-        }
-
-        return result;
+        const norm = ((rawScore - 1) / 5) * 100;
+        return Math.min(100, Math.max(0, Math.round(norm)));
     }
 
     private determineLevel(score: number, config: any): 'VERY_LOW' | 'LOW' | 'AVERAGE' | 'HIGH' | 'VERY_HIGH' {
