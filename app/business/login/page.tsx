@@ -14,8 +14,8 @@ export default function BusinessLoginPage() {
         try {
             // Reutiliza endpoint padrão de auth, a distinção é feita pelo role no retorno
             const res = await axios.post(`${API_URL}/api/v1/auth/login`, {
-                email: email,
-                password: password
+                email,
+                password
             });
 
 
