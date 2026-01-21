@@ -38,21 +38,12 @@ export class PdfService {
     private generateTalkingToHtml(data: any): string {
         const { talkingToAnalysis: analysis, unifiedScores, radarData, userName, date } = data;
 
-        // Helper to get color based on score/level
-        const getColor = (score: number) => {
-            if (score >= 65) return '#10b981'; // Green
-            if (score <= 35) return '#ef4444'; // Red
-            return '#8b5cf6'; // Purple default/middle
-        };
-
-        // Generative Radar SVG
         const generateRadarSvg = (radarData: any[]) => {
-            const size = 300;
+            const size = 350;
             const center = size / 2;
-            const radius = 100;
+            const radius = 120;
             const angles = radarData.map((_, i) => (Math.PI * 2 * i) / radarData.length - Math.PI / 2);
 
-            // Background Grid (5 levels)
             let gridSvg = '';
             for (let i = 1; i <= 5; i++) {
                 const r = (radius / 5) * i;
@@ -60,34 +51,29 @@ export class PdfService {
                 gridSvg += `<polygon points="${points}" fill="none" stroke="#e5e7eb" stroke-width="1" />`;
             }
 
-            // Data Path
             const dataPoints = radarData.map((d, i) => {
                 const val = (d.A / 100) * radius;
                 return `${center + val * Math.cos(angles[i])},${center + val * Math.sin(angles[i])}`;
             }).join(' ');
 
-            // Labels
             const labelsSvg = radarData.map((d, i) => {
-                const r = radius + 25;
+                const r = radius + 30;
                 const x = center + r * Math.cos(angles[i]);
                 const y = center + r * Math.sin(angles[i]);
-                // Anchor adjustment based on position
-                let anchor = 'middle';
-                if (Math.abs(Math.cos(angles[i])) > 0.1) anchor = Math.cos(angles[i]) > 0 ? 'start' : 'end';
-
-                return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="10" fill="#6b7280" font-family="Arial, sans-serif" font-weight="bold">${d.subject}</text>`;
+                const anchor = Math.abs(Math.cos(angles[i])) < 0.1 ? 'middle' : (Math.cos(angles[i]) > 0 ? 'start' : 'end');
+                return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" fill="#4b5563" font-family="'Inter', sans-serif" font-weight="600">${d.subject}</text>`;
             }).join('');
 
             return `
                 <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-                    <circle cx="${center}" cy="${center}" r="${radius}" fill="#f9fafb" />
+                    <circle cx="${center}" cy="${center}" r="${radius}" fill="#ffffff" />
                     ${gridSvg}
-                    <polygon points="${dataPoints}" fill="rgba(139, 92, 246, 0.4)" stroke="#8b5cf6" stroke-width="2" />
+                    <polygon points="${dataPoints}" fill="rgba(139, 92, 246, 0.2)" stroke="#8b5cf6" stroke-width="2.5" />
                     ${radarData.map((d, i) => {
                 const val = (d.A / 100) * radius;
                 const cx = center + val * Math.cos(angles[i]);
                 const cy = center + val * Math.sin(angles[i]);
-                return `<circle cx="${cx}" cy="${cy}" r="3" fill="#8b5cf6" />`;
+                return `<circle cx="${cx}" cy="${cy}" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="2" />`;
             }).join('')}
                     ${labelsSvg}
                 </svg>
@@ -101,181 +87,278 @@ export class PdfService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
             <style>
                 @page { margin: 0; size: A4; }
-                body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1f2937; -webkit-print-color-adjust: exact; background: #fff; }
+                * { box-sizing: border-box; }
+                body { 
+                    margin: 0; 
+                    font-family: 'Inter', sans-serif; 
+                    color: #1f2937; 
+                    background: #fff; 
+                    -webkit-print-color-adjust: exact; 
+                }
                 
-                .page { position: relative; width: 210mm; min-height: 297mm; padding: 40px; box-sizing: border-box; page-break-after: always; overflow: hidden; }
-                .page:last-child { page-break-after: auto; }
+                /* UTILS */
+                .page-break { page-break-after: always; }
+                .avoid-break { page-break-inside: avoid; }
+                .container { padding: 40px; max-width: 210mm; margin: 0 auto; }
 
-                /* HERO COVER */
-                .cover-bg { position: absolute; top:0; left:0; right:0; height: 350px; background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%); z-index: -1; border-bottom-right-radius: 100px; }
-                .header-logo { color: white; font-weight: bold; font-size: 24px; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
-                .report-title { color: white; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9; margin-bottom: 15px; }
-                .archetype-title { color: white; font-size: 48px; font-weight: 900; line-height: 1.1; margin: 0 0 20px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-                .tags { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
-                .tag { background: rgba(255,255,255,0.2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); }
+                /* COVER PAGE */
+                .cover-page {
+                    height: 297mm;
+                    width: 210mm;
+                    position: relative;
+                    color: white;
+                    overflow: hidden;
+                    page-break-after: always;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    background: #0f172a; /* Fallback */
+                }
+                .cover-bg {
+                    position: absolute; inset: 0;
+                    background: radial-gradient(circle at 100% 0%, #7c3aed 0%, #4c1d95 50%, #1e1b4b 100%);
+                    z-index: 0;
+                }
+                .cover-content { position: relative; z-index: 10; padding: 60px; height: 100%; display: flex; flex-direction: column; }
                 
-                .meta { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 20px; }
+                .brand { font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 12px; margin-bottom: auto; }
+                .report-type { font-size: 14px; text-transform: uppercase; letter-spacing: 3px; font-weight: 600; opacity: 0.8; margin-bottom: 20px; border-left: 4px solid #fff; padding-left: 15px; }
+                .main-title { font-size: 56px; line-height: 1.1; font-weight: 900; margin: 0 0 30px 0; letter-spacing: -1px; }
+                
+                .pill-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 60px; }
+                .pill { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2); font-weight: 600; font-size: 13px; }
 
-                /* EXECUTIVE SUMMARY & RADAR LAYOUT */
-                .exec-container { display: flex; gap: 30px; margin-top: 60px; }
-                .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f3f4f6; }
-                
-                .radar-card { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; }
-                .summary-card { flex: 1.5; }
+                .cover-footer { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+                .client-name { font-size: 20px; font-weight: 700; }
+                .date { font-size: 14px; opacity: 0.7; }
 
-                .section-title { font-size: 18px; font-weight: 800; color: #111827; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
+                /* CONTENT PAGES */
+                .header-strip {
+                    display: flex; justify-content: space-between; align-items: center;
+                    border-bottom: 2px solid #f3f4f6; padding-bottom: 20px; margin-bottom: 40px;
+                }
+                .header-strip h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 700; margin: 0; }
                 
-                .list-group h4 { font-size: 12px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-                .list-group.strengths h4 { color: #059669; }
-                .list-group.risks h4 { color: #d97706; }
+                /* EXECUTIVE SUMMARY */
+                .summary-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: center; margin-bottom: 50px; }
+                .radar-box { display: flex; justify-content: center; }
+                .insights-box h3 { font-size: 18px; font-weight: 800; margin: 0 0 20px 0; color: #111827; }
                 
-                .bullet-list { list-style: none; padding: 0; margin: 0 0 20px 0; }
-                .bullet-list li { position: relative; padding-left: 20px; font-size: 13px; line-height: 1.5; color: #4b5563; margin-bottom: 8px; }
-                .bullet-list.s li::before { content: '✓'; color: #059669; position: absolute; left: 0; font-weight: bold; }
-                .bullet-list.r li::before { content: '!'; color: #d97706; position: absolute; left: 4px; font-weight: bold; }
+                .insight-group { margin-bottom: 25px; }
+                .insight-title { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; display: block; }
+                .insight-title.pos { color: #059669; }
+                .insight-title.neg { color: #d97706; }
+                
+                .check-list { list-style: none; padding: 0; margin: 0; }
+                .check-list li { 
+                    position: relative; padding-left: 18px; font-size: 13px; line-height: 1.5; color: #4b5563; margin-bottom: 6px; 
+                }
+                .check-list li::before {
+                    content: ''; position: absolute; left: 0; top: 6px; width: 6px; height: 6px; border-radius: 50%;
+                }
+                .check-list.pos li::before { background: #059669; }
+                .check-list.neg li::before { background: #d97706; }
 
-                /* DETAILED FEATURES */
-                .feature-block { margin-top: 40px; page-break-inside: avoid; }
-                .feature-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-                .feature-icon { width: 40px; height: 40px; background: #8b5cf6; border-radius: 10px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:18px; }
-                .feature-name { font-size: 20px; font-weight: 800; color: #1f2937; }
-                .feature-class { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: bold; text-transform: uppercase; }
-                
-                .feature-body { display: flex; gap: 25px; }
-                .feature-text { flex: 2; font-size: 14px; line-height: 1.6; color: #374151; text-align: justify; }
-                .feature-side { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-                
-                .info-box { background: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; }
-                .info-box h5 { margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: bold; }
-                .info-box p { margin: 0; font-size: 12px; color: #4b5563; line-height: 1.4; }
+                /* FEATURE BLOCKS */
+                .feature-block { 
+                    margin-bottom: 30px; 
+                    background: #fff; 
+                    border: 1px solid #e5e7eb; 
+                    border-radius: 12px; 
+                    overflow: hidden; 
+                    /* Crucial avoid break */
+                    page-break-inside: avoid; 
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                }
+                .feature-header {
+                    padding: 20px 25px;
+                    background: #f9fafb;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: flex; justify-content: space-between; align-items: center;
+                }
+                .f-title { display: flex; align-items: center; gap: 12px; }
+                .circle-icon { width: 32px; height: 32px; background: #7c3aed; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+                .f-name { font-size: 16px; font-weight: 700; color: #111827; }
+                .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; }
+                .badge.ALTO { background: #d1fae5; color: #065f46; }
+                .badge.BAIXO { background: #fee2e2; color: #991b1b; }
+                .badge.FLEX { background: #e0e7ff; color: #3730a3; }
 
-                /* SCORES TABLE */
-                .score-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-                .score-table th { text-align: left; padding: 8px; border-bottom: 2px solid #e5e7eb; color: #6b7280; text-transform: uppercase; font-size: 10px; }
-                .score-table td { padding: 8px; border-bottom: 1px solid #f3f4f6; color: #1f2937; }
-                .score-bar { height: 6px; background: #e5e7eb; border-radius: 3px; width: 100px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
-                .score-fill { height: 100%; background: #8b5cf6; }
+                .feature-body { padding: 25px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+                .f-desc { font-size: 13px; line-height: 1.7; color: #374151; text-align: justify; }
+                .f-side { display: flex; flex-direction: column; gap: 15px; }
+                
+                .mini-card { background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #cbd5e1; }
+                .mini-card h5 { margin: 0 0 4px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+                .mini-card p { margin: 0; font-size: 11px; color: #334155; line-height: 1.4; }
 
-                .footer { position: absolute; bottom: 20px; left: 40px; right: 40px; text-align: center; color: #9ca3af; font-size: 10px; border-top: 1px solid #f3f4f6; padding-top: 10px; }
+                /* TABLE */
+                .table-container { 
+                    border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-top: 10px; 
+                    page-break-inside: avoid;
+                }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                th { background: #f9fafb; text-align: left; padding: 12px 20px; font-size: 11px; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+                td { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; color: #1f2937; }
+                tr:last-child td { border-bottom: none; }
+                .bar-track { width: 80px; height: 6px; background: #e2e8f0; border-radius: 3px; display: inline-block; margin-right: 8px; vertical-align: middle; }
+                .bar-fill { height: 100%; background: #8b5cf6; border-radius: 3px; }
+                .sub-row td:first-child { padding-left: 40px; color: #6b7280; font-size: 11px; }
+
+                .footer-strip {
+                    position: fixed; bottom: 0; left: 0; right: 0; 
+                    padding: 15px 40px; background: white; 
+                    border-top: 1px solid #e5e7eb;
+                    font-size: 10px; color: #9ca3af;
+                    display: flex; justify-content: space-between;
+                    z-index: 100;
+                }
             </style>
         </head>
         <body>
-            <!-- PAGE 1: CAPA & SUMMARY -->
-            <div class="page">
+            
+            <!-- PAGE 1: COVER -->
+            <div class="cover-page">
                 <div class="cover-bg"></div>
-                
-                <div class="header-logo">
-                    <span>🧠</span> PINC Mindsight
-                </div>
-
-                <div style="margin-top: 40px; position: relative; z-index: 10;">
-                    <div class="report-title">Relatório de Perfil Comportamental</div>
-                    <h1 class="archetype-title">${analysis.profile_summary?.archetype_name || 'Seu Arquétipo'}</h1>
+                <div class="cover-content">
+                    <div class="brand">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+                        PINC Mindsight
+                    </div>
                     
-                    <div class="tags">
-                        ${(analysis.profile_summary?.dominant_traits || []).map((t: string) => `<div class="tag">${t}</div>`).join('')}
+                    <div class="main-block">
+                        <div class="report-type">Relatório de Perfil</div>
+                        <h1 class="main-title">${analysis.profile_summary?.archetype_name || 'Seu Arquétipo'}</h1>
+                        <div class="pill-container">
+                             ${(analysis.profile_summary?.dominant_traits || []).slice(0, 3).map((t: string) => `<div class="pill">${t}</div>`).join('')}
+                        </div>
                     </div>
 
-                    <div class="meta">
-                        Este relatório foi gerado exclusivamente para <strong>${userName}</strong> em ${date}.
+                    <div class="cover-footer">
+                        <div>
+                            <div class="client-name">${userName}</div>
+                            <div class="date">Análise gerada em ${date}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px; opacity:0.6;">POWERED BY</div>
+                            <div style="font-weight:bold;">TalkingTo Engine</div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="exec-container">
-                    <div class="card radar-card">
-                        <div class="section-title">Dimensional</div>
+            <!-- PAGE 2: SUMMARY -->
+            <div class="container page-break">
+                <div class="header-strip">
+                    <h2>Síntese Executiva</h2>
+                    <span>PINC • ${date}</span>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="radar-box">
                         ${radarSvg}
                     </div>
-                    
-                    <div class="card summary-card">
-                        <div class="section-title">Síntese Executiva</div>
+                    <div class="insights-box">
+                        <h3>Visão Geral do Perfil</h3>
                         
-                        <div class="list-group strengths">
-                            <h4>Potencializadores</h4>
-                            <ul class="bullet-list s">
+                        <div class="insight-group">
+                            <span class="insight-title pos">Pontos Fortes (Potencializadores)</span>
+                            <ul class="check-list pos">
                                 ${(analysis.executive_summary?.strengths || []).slice(0, 5).map((s: string) => `<li>${s}</li>`).join('')}
                             </ul>
                         </div>
 
-                        <div class="list-group risks">
-                            <h4>Pontos de Atenção</h4>
-                            <ul class="bullet-list r">
+                        <div class="insight-group">
+                            <span class="insight-title neg">Pontos de Atenção</span>
+                            <ul class="check-list neg">
                                 ${(analysis.executive_summary?.watch_outs || []).slice(0, 4).map((s: string) => `<li>${s}</li>`).join('')}
                             </ul>
                         </div>
                     </div>
                 </div>
-                
-                <div class="footer">PINC Mindsight & TalkingTo Analysis Engine • ${date}</div>
+
+                <div style="padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1; text-align: center;">
+                    <p style="margin: 0; font-size: 13px; color: #64748b; font-style: italic;">
+                        "Este resumo captura as dinâmicas centrais da sua personalidade. Nas próximas páginas, exploraremos cada dimensão em detalhe."
+                    </p>
+                </div>
             </div>
 
-            <!-- PAGE 2: DETAILED BREAKDOWN -->
-            <div class="page">
-                <div class="section-title" style="margin-top:0;">Detalhamento Comportamental</div>
-                <p style="font-size: 13px; color: #6b7280; margin-bottom: 30px;">Análise profunda das 5 dimensões fundamentais que compõem sua personalidade.</p>
+            <!-- FEATURES FLOW (Continuous) -->
+            <div class="container">
+                <div class="header-strip">
+                    <h2>Detalhamento das Dimensões</h2>
+                    <span>PINC • ${date}</span>
+                </div>
 
                 ${analysis.talkingto_analysis?.map((item: any) => `
-                    <div class="feature-block">
+                    <div class="feature-block avoid-break">
                         <div class="feature-header">
-                            <div class="feature-icon">${item.dimension.charAt(0)}</div>
-                            <div style="flex:1;">
-                                <div class="feature-name">${item.dimension}</div>
+                            <div class="f-title">
+                                <div class="circle-icon">${item.dimension.charAt(0)}</div>
+                                <span class="f-name">${item.dimension}</span>
                             </div>
-                            <div class="feature-class" style="background: ${item.classification === 'ALTO' ? '#d1fae5' : item.classification === 'BAIXO' ? '#fee2e2' : '#e0e7ff'}; color: ${item.classification === 'ALTO' ? '#065f46' : item.classification === 'BAIXO' ? '#991b1b' : '#3730a3'};">
-                                ${item.classification}
-                            </div>
+                            <span class="badge ${item.classification}">${item.classification}</span>
                         </div>
                         <div class="feature-body">
-                            <div class="feature-text">
+                            <div class="f-desc">
                                 ${item.text_interpretation}
                             </div>
-                            <div class="feature-side">
+                            <div class="f-side">
                                 ${item.needs?.environment ? `
-                                <div class="info-box">
-                                    <h5>Ambiente Ideal</h5>
+                                <div class="mini-card" style="border-left-color: #3b82f6;">
+                                    <h5 style="color:#3b82f6;">Ambiente Ideal</h5>
                                     <p>${item.needs.environment}</p>
                                 </div>` : ''}
                                 ${item.needs?.risk ? `
-                                <div class="info-box" style="background:#fffcf5; border-color:#fef3c7;">
-                                    <h5 style="color:#d97706;">Risco</h5>
+                                <div class="mini-card" style="border-left-color: #f59e0b; background: #fffbeb;">
+                                    <h5 style="color:#f59e0b;">Risco Latente</h5>
                                     <p>${item.needs.risk}</p>
                                 </div>` : ''}
                             </div>
                         </div>
                     </div>
                 `).join('')}
-
-                <div class="footer">PINC Mindsight & TalkingTo Analysis Engine • ${date}</div>
             </div>
-            
-            <!-- PAGE 3: RAW DATA APPENDIX -->
-            <div class="page">
-                 <div class="section-title" style="margin-top:0;">Apêndice de Dados Analíticos</div>
 
-                 <div class="card" style="margin-top:20px;">
-                    <table class="score-table">
+            <!-- DATA APPENDIX -->
+            <div class="container avoid-break">
+                <div class="header-strip">
+                    <h2>Apêndice de Dados</h2>
+                    <span>PINC • ${date}</span>
+                </div>
+
+                <p style="margin-bottom: 20px; font-size: 13px; color: #6b7280;">
+                    Tabela completa de pontuações normalizadas por traço e faceta.
+                </p>
+
+                <div class="table-container">
+                    <table>
                         <thead>
                             <tr>
-                                <th>Traço / Faceta</th>
+                                <th>Dimensão / Faceta</th>
                                 <th style="text-align:right;">Score</th>
-                                <th style="text-align:right;">Nível</th>
+                                <th style="text-align:right;">Classificação</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${Object.values(unifiedScores).map((score: any) => `
-                                <tr style="background:#f9fafb; font-weight:bold;">
-                                    <td>${score.traitName}</td>
+                                <tr style="background:#fcfcfc;">
+                                    <td style="font-weight: 600;">${score.traitName}</td>
                                     <td style="text-align:right;">
-                                        <div class="score-bar"><div class="score-fill" style="width:${score.normalizedScore}%"></div></div>
-                                        ${score.normalizedScore}%
+                                        <div class="bar-track"><div class="bar-fill" style="width:${score.normalizedScore}%"></div></div>
+                                        <strong>${score.normalizedScore}%</strong>
                                     </td>
-                                    <td style="text-align:right;">${score.levelLabel}</td>
+                                    <td style="text-align:right; font-size:10px; font-weight:700; text-transform:uppercase; color:#6b7280;">${score.levelLabel}</td>
                                 </tr>
                                 ${(score.facets || []).map((f: any) => `
-                                    <tr>
-                                        <td style="padding-left: 20px; color: #6b7280;">• ${f.facetName}</td>
+                                    <tr class="sub-row">
+                                        <td>↳ ${f.facetName}</td>
                                         <td style="text-align:right;">${f.score}%</td>
                                         <td style="text-align:right;">-</td>
                                     </tr>
@@ -283,9 +366,7 @@ export class PdfService {
                             `).join('')}
                         </tbody>
                     </table>
-                 </div>
-
-                 <div class="footer">PINC Mindsight & TalkingTo Analysis Engine • ${date}</div>
+                </div>
             </div>
 
         </body>
