@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function CandidatesPage() {
@@ -10,6 +10,7 @@ export default function CandidatesPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [credits, setCredits] = useState(0);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     // Create Form
     const [newName, setNewName] = useState('');
@@ -106,6 +107,36 @@ export default function CandidatesPage() {
         }
     };
 
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Tem certeza que deseja excluir o colaborador "${name}"? Esta ação removerá todos os dados e não pode ser desfeita.`)) return;
+        try {
+            const token = localStorage.getItem('accessToken');
+            await axios.delete(`${API_URL}/api/v1/business/employees/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchEmployees();
+            setOpenMenuId(null);
+            alert('Colaborador excluído com sucesso.');
+        } catch (error) {
+            alert('Erro ao excluir colaborador.');
+        }
+    };
+
+    const handleResetCode = async (id: string, name: string) => {
+        if (!confirm(`Deseja gerar um novo código de acesso para "${name}"? O código anterior deixará de funcionar.`)) return;
+        try {
+            const token = localStorage.getItem('accessToken');
+            await axios.post(`${API_URL}/api/v1/business/employees/${id}/reset-code`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchEmployees();
+            setOpenMenuId(null);
+            alert('Código resetado com sucesso! Verifique o novo código na tabela.');
+        } catch (error) {
+            alert('Erro ao resetar código.');
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
@@ -193,8 +224,32 @@ export default function CandidatesPage() {
                                             <td className="px-6 py-4 text-slate-500">
                                                 {new Date(emp.createdAt).toLocaleDateString()}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button className="text-slate-400 hover:text-slate-900"><MoreHorizontal size={18} /></button>
+                                            <td className="px-6 py-4 text-right relative">
+                                                <button
+                                                    onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
+                                                    className="text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100"
+                                                >
+                                                    <MoreHorizontal size={18} />
+                                                </button>
+
+                                                {/* Dropdown Menu */}
+                                                {openMenuId === emp.id && (
+                                                    <div className="absolute right-8 top-8 z-10 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                                        <button
+                                                            onClick={() => handleResetCode(emp.id, emp.name)}
+                                                            className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                        >
+                                                            <RefreshCw size={14} className="text-blue-500" /> Resetar Código
+                                                        </button>
+                                                        <div className="h-px bg-slate-100"></div>
+                                                        <button
+                                                            onClick={() => handleDelete(emp.id, emp.name)}
+                                                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                        >
+                                                            <Trash2 size={14} /> Excluir Colaborador
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     );

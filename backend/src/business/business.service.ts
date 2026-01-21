@@ -61,9 +61,54 @@ export class BusinessService {
                     select: { status: true, assignedAt: true, completedAt: true },
                     orderBy: { assignedAt: 'desc' },
                     take: 1
-                }
+                },
+                companyName: true // Add companyName explicitly
             },
             orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async deleteEmployee(tenantId: string, userId: string) {
+        const user = await this.validateEmployee(tenantId, userId);
+
+        // Soft delete ou Hard delete? Hard delete limpa tudo.
+        // Precisamos deletar assignments e responses primeiro ou usar cascade.
+        // Como é dev, vamos tentar delete direto, se falhar por FK, fazemos transação.
+        // Prisma schema geralmente tem cascade se configurado. Se não, deletamos dependents.
+
+        return this.prisma.$transaction(async (tx) => {
+            await tx.assessmentResponse.deleteMany({
+                where: { assignment: { userId } }
+            });
+            await tx.assessmentAssignment.deleteMany({
+                where: { userId }
+            });
+            await tx.creditSolicitation.deleteMany({
+                where: { userId }
+            });
+            // Limpar qualquer outro dado vinculado se houver
+            await tx.user.delete({
+                where: { id: userId }
+            });
+        });
+    }
+
+    async resetAccessCode(tenantId: string, userId: string) {
+        const user = await this.validateEmployee(tenantId, userId);
+
+        // Gerar novo código
+        const newCode = 'PINC-' + Math.floor(1000 + Math.random() * 9000);
+        const dummyEmail = `${newCode.toLowerCase()}.${Date.now()}@func.pinc.app`;
+        const hashedPassword = await bcrypt.hash(newCode, 10);
+
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                companyName: newCode, // Guarda o código visível
+                password: hashedPassword, // Atualiza a senha
+                // email: dummyEmail // Opcional: mudar email para garantir sync, mas talvez nao precise se o login é por código puramente via companyName lookup hack.
+                // Melhor não mudar o email se não for estritamente necessário para manter histórico, mas como o email é dummy... tanto faz.
+            }
         });
     }
 

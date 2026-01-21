@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Param, Res, UseGuards, Request, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Res, UseGuards, Request, ForbiddenException, NotFoundException, Delete } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { BusinessService } from './business.service';
@@ -50,6 +50,18 @@ export class BusinessController {
         this.validateCompanyAccess(req.user);
         // O Admin é quem está logado (req.user)
         return this.service.distributeCredit(req.user.tenantId, req.user.userId, targetId);
+    }
+
+    @Post('employees/:id/reset-code')
+    async resetCode(@Request() req, @Param('id') id: string) {
+        this.validateCompanyAccess(req.user);
+        return this.service.resetAccessCode(req.user.tenantId, id);
+    }
+
+    @Delete('employees/:id')
+    async deleteEmployee(@Request() req, @Param('id') id: string) {
+        this.validateCompanyAccess(req.user);
+        return this.service.deleteEmployee(req.user.tenantId, id);
     }
 
     @Get('reports')
