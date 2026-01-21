@@ -39,7 +39,7 @@ export default function BusinessLoginPage() {
                 });
             }
 
-            const { accessToken, user } = res.data;
+            const { access_token, user } = res.data;
 
             // Validar Role vs Modo
             if (mode === 'company') {
@@ -49,7 +49,7 @@ export default function BusinessLoginPage() {
             }
 
             // Salvar token (simples para exemplo)
-            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('accessToken', access_token);
             localStorage.setItem('user', JSON.stringify(user));
 
             // Redirecionamento
