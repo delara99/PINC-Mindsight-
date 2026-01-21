@@ -4,27 +4,15 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Building2, User } from 'lucide-react';
-import axios from 'axios';
+import { API_URL } from '@/src/config/api';
 
 export default function BusinessLoginPage() {
-    const router = useRouter();
-    const [mode, setMode] = useState<'company' | 'candidate'>('company');
-    const [loading, setLoading] = useState(false);
-
-    // Form States
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
-
+    // ...
     const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-
+        // ...
         try {
             // Reutiliza endpoint padrão de auth, a distinção é feita pelo role no retorno
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/auth/login`, {
+            const res = await axios.post(`${API_URL}/api/v1/auth/login`, {
                 email,
                 password
             });
