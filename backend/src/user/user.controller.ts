@@ -145,8 +145,9 @@ export class UserController {
                 cnpj: data.cnpj || null,
                 companyName: data.companyName || null,
                 phone: data.phone || null,
-                tenantId: user.tenantId, // Nota: Se for SaaS multi-tenant real, aqui deveria gerar um novo UUID para a empresa. Por enquanto mantemos no mesmo tenant do Admin ou geramos um novo se for COMPANY.
-                credits: 0
+                tenantId: user.tenantId,
+                credits: 0,
+                status: 'active' // Admin-created users are active by default
             },
             select: {
                 id: true,
