@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 export default function CandidatesPage() {
     const [employees, setEmployees] = useState<any[]>([]);
@@ -54,7 +55,7 @@ export default function CandidatesPage() {
         setCreateLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/employees`, {
+            await axios.post(`${API_URL}/api/v1/business/employees`, {
                 name: newName,
                 accessCode: accessCode
             }, {
@@ -75,7 +76,7 @@ export default function CandidatesPage() {
     const handleToggleStatus = async (id: string) => {
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/employees/${id}/toggle-status`, {}, {
+            await axios.post(`${API_URL}/api/v1/business/employees/${id}/toggle-status`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchEmployees();
@@ -95,7 +96,7 @@ export default function CandidatesPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/employees/${id}/distribute-credit`, {}, {
+            await axios.post(`${API_URL}/api/v1/business/employees/${id}/distribute-credit`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchEmployees();

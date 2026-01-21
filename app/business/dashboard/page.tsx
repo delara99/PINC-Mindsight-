@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, FileCheck, Clock, TrendingUp } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '@/src/config/api';
 
 export default function BusinessDashboardHome() {
     const [stats, setStats] = useState<any>(null);
@@ -12,7 +13,7 @@ export default function BusinessDashboardHome() {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/dashboard`, {
+                const res = await axios.get(`${API_URL}/api/v1/business/dashboard`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats(res.data);
