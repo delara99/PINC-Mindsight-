@@ -56,7 +56,7 @@ export default function BusinessLoginPage() {
             if (mode === 'company') {
                 router.push('/business/dashboard');
             } else {
-                router.push('/dashboard');
+                router.push('/business/employee');
             }
 
         } catch (err: any) {

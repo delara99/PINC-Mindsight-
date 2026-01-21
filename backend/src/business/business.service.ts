@@ -77,6 +77,34 @@ export class BusinessService {
         // Prisma schema geralmente tem cascade se configurado. Se não, deletamos dependents.
 
         return this.prisma.$transaction(async (tx) => {
+            // 1. Limpar relações de Conexões e Reports (Ordem importa devido FKs)
+            await tx.crossProfileReport.deleteMany({
+                where: { OR: [{ authorId: userId }, { targetId: userId }] }
+            });
+
+            // Connection cascade deletes: Messages, SharingSettings
+            await tx.connection.deleteMany({
+                where: { OR: [{ userAId: userId }, { userBId: userId }] }
+            });
+
+            await tx.connectionRequest.deleteMany({
+                where: { OR: [{ senderId: userId }, { receiverId: userId }] }
+            });
+
+            await tx.connectionInviteLink.deleteMany({
+                where: { OR: [{ creatorId: userId }, { usedById: userId }] }
+            });
+
+            // 2. Limpar Feedbacks e Pagamentos
+            await tx.professionalFeedback.deleteMany({
+                where: { userId }
+            });
+
+            await tx.payment.deleteMany({
+                where: { userId }
+            });
+
+            // 3. Limpar Avaliações e Créditos (Existentes)
             await tx.assessmentResponse.deleteMany({
                 where: { assignment: { userId } }
             });
@@ -86,7 +114,8 @@ export class BusinessService {
             await tx.creditSolicitation.deleteMany({
                 where: { userId }
             });
-            // Limpar qualquer outro dado vinculado se houver
+
+            // 4. Deletar Usuário Final
             await tx.user.delete({
                 where: { id: userId }
             });
