@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs", "npm", "chromium", "nss", "freetype", "freetype-dev", "libnss3", "libfreetype6", "libx11-6", "libxext6", "libxrender1", "libxtst6", "libxi6", "procps"]
+nixPkgs = ["nodejs", "npm", "chromium", "nss", "freetype", "libnss3", "procps"]
 
 [phases.install]
 cmds = ["npm ci"]
