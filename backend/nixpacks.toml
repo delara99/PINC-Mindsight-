@@ -1,12 +1,15 @@
-# Nixpacks configuration for NestJS backend
 [phases.setup]
-nixPkgs = ['nodejs_20', 'python3']
+nixPkgs = ["nodejs", "npm", "chromium", "nss", "freetype", "freetype-dev", "libnss3", "libfreetype6", "libx11-6", "libxext6", "libxrender1", "libxtst6", "libxi6", "procps"]
 
 [phases.install]
-cmds = ['npm ci --include=dev']
+cmds = ["npm ci"]
 
 [phases.build]
-cmds = ['npx prisma generate', 'npm run build']
+cmds = ["npm run build", "npx prisma generate"]
 
 [start]
-cmd = 'npx prisma migrate deploy && npm run start:prod'
+cmd = "npm run start:prod"
+
+[envs]
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "1"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
