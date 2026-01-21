@@ -18,8 +18,19 @@ async function bootstrap() {
     }
 
     const app = await NestFactory.create(AppModule);
-    // Enable CORS
-    app.enableCors();
+    // Enable CORS with specific options to avoid 405/403 issues in production
+    app.enableCors({
+        origin: [
+            'https://pinc.app.br',
+            'https://www.pinc.app.br',
+            'http://localhost:3000',
+            'http://localhost:3001',
+            process.env.FRONTEND_URL
+        ].filter(Boolean),
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+        allowedHeaders: 'Content-Type, Accept, Authorization',
+    });
     // Global Prefix
     app.setGlobalPrefix('api/v1');
 
