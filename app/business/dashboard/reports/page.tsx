@@ -13,7 +13,7 @@ export default function ReportsPage() {
         const fetchReports = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/business/reports`, {
+                const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/reports`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setReports(res.data);
@@ -31,7 +31,7 @@ export default function ReportsPage() {
         try {
             const token = localStorage.getItem('accessToken');
             const res = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/business/reports/${userId}/pdf`,
+                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/reports/${userId}/pdf`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                     responseType: 'blob'

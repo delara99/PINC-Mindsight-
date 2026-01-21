@@ -24,10 +24,11 @@ export default function BusinessLoginPage() {
 
         try {
             // Reutiliza endpoint padrão de auth, a distinção é feita pelo role no retorno
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/auth/login`, {
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/auth/login`, {
                 email,
                 password
             });
+
 
             const { accessToken, user } = res.data;
 

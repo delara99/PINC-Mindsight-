@@ -17,7 +17,7 @@ export default function CandidatesPage() {
     const fetchEmployees = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/business/employees`, {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/employees`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEmployees(res.data);
@@ -37,7 +37,7 @@ export default function CandidatesPage() {
         setCreateLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/business/employees`, {
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/employees`, {
                 name: newName,
                 email: newEmail
             }, {
