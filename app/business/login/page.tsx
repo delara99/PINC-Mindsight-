@@ -8,16 +8,27 @@ import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 
 export default function BusinessLoginPage() {
-    // ...
+    const router = useRouter();
+    const [mode, setMode] = useState<'company' | 'candidate'>('company');
+    const [loading, setLoading] = useState(false);
+
+    // Form States
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState('');
+
     const handleLogin = async (e: React.FormEvent) => {
-        // ...
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
         try {
             // Reutiliza endpoint padrão de auth, a distinção é feita pelo role no retorno
             const res = await axios.post(`${API_URL}/api/v1/auth/login`, {
                 email,
                 password
             });
-
 
             const { accessToken, user } = res.data;
 
@@ -36,9 +47,6 @@ export default function BusinessLoginPage() {
             if (mode === 'company') {
                 router.push('/business/dashboard');
             } else {
-                // Candidato vai para o dashboard padrão de usuário (limitado) ou área específica
-                // Para manter isolamento perfeito, poderiamos ter /business/candidate-area
-                // Por hora, enviaremos para o dashboard padrão que já sabe lidar com usuários members
                 router.push('/dashboard');
             }
 
