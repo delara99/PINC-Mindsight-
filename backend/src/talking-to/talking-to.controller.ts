@@ -1,15 +1,18 @@
-import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, Param, Res } from '@nestjs/common';
 import { TalkingToService, TalkingToInput } from './talking-to.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
+import { PdfService } from '../reports/pdf.service';
+import { Response } from 'express';
 
 @Controller('talking-to')
 export class TalkingToController {
     constructor(
         private readonly service: TalkingToService,
         private readonly prisma: PrismaService,
-        private readonly scoreService: ScoreCalculationService
+        private readonly scoreService: ScoreCalculationService,
+        private readonly pdfService: PdfService
     ) { }
 
     // Endpoint público ou protegido para testar o motor
@@ -80,6 +83,50 @@ export class TalkingToController {
         }
 
         return this.generateUnifiedAnalysis(assignment);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('export/pdf/:id')
+    async exportPdf(@Request() req, @Param('id') id: string, @Res() res: Response) {
+        const userId = req.user.userId;
+
+        let assignment;
+
+        // Se ID for 'latest', busca o último do usuário
+        if (id === 'latest') {
+            assignment = await this.prisma.assessmentAssignment.findFirst({
+                where: { userId: userId, status: 'COMPLETED' },
+                orderBy: { completedAt: 'desc' },
+                include: { responses: { include: { question: true } }, assessment: true, config: true, user: true }
+            });
+        } else {
+            assignment = await this.prisma.assessmentAssignment.findFirst({
+                where: { id: id, userId: userId, status: 'COMPLETED' },
+                include: { responses: { include: { question: true } }, assessment: true, config: true, user: true }
+            });
+        }
+
+        if (!assignment) {
+            throw new NotFoundException('Relatório não encontrado ou acesso negado.');
+        }
+
+        const data = await this.generateUnifiedAnalysis(assignment);
+
+        const pdfData = {
+            ...data,
+            userName: (assignment.user as any)?.name || 'Cliente',
+            date: new Date().toLocaleDateString('pt-BR')
+        };
+
+        const buffer = await this.pdfService.generateTalkingToPdf(pdfData);
+
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="Relatorio_Mindsight_${assignment.user?.name?.split(' ')[0] || 'PINC'}.pdf"`,
+            'Content-Length': buffer.length.toString(),
+        });
+
+        res.end(buffer);
     }
 
     // --- NOVA LÓGICA UNIFICADA ---

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { API_URL } from '../../../src/config/api';
 import { useAuthStore } from '../../../src/store/auth-store';
 import Link from 'next/link';
-import { Calendar, Clock, History, Sparkles, AlertCircle, ArrowUpRight, CheckCircle2, Target } from 'lucide-react';
+import { Calendar, Clock, History, Sparkles, AlertCircle, ArrowUpRight, CheckCircle2, Target, Download } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
 // --- CONFIGURATION ---
@@ -231,6 +231,44 @@ export default function MyReportPage() {
     const { talkingToAnalysis, unifiedScores, radarData } = report;
     const scoresList = unifiedScores ? Object.values(unifiedScores) : [];
 
+    const handleDownloadPdf = async () => {
+        const t = getToken();
+        if (!t || !selectedReportId) return;
+
+        try {
+            const reportId = selectedReportId === 'current' ? 'latest' : selectedReportId;
+
+            // Feedback visual básico (poderia ser um estado de loading, mas por hora ok)
+            const btn = document.activeElement as HTMLButtonElement;
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) btn.innerHTML = '<span class="animate-spin">⏳</span> Gerando...';
+
+            const res = await fetch(`${API_URL}/api/v1/talking-to/export/pdf/${reportId}`, {
+                headers: { 'Authorization': `Bearer ${t}` }
+            });
+
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Relatorio_PINC.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert('Erro ao gerar o PDF. Tente novamente em instantes.');
+            }
+
+            if (btn) btn.innerHTML = originalText;
+
+        } catch (e) {
+            console.error(e);
+            alert('Não foi possível iniciar o download.');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-gray-900 font-sans pb-32">
 
@@ -322,10 +360,17 @@ export default function MyReportPage() {
                                 </span>
                             ))}
                         </div>
-                        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-8">
                             Relatório processado em <span className="font-semibold text-gray-900">{new Date(report.completedAt).toLocaleDateString('pt-BR')}</span>.
                             Este documento unifica sua identidade comportamental com métricas de alta precisão.
                         </p>
+
+                        <button
+                            onClick={handleDownloadPdf}
+                            className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+                        >
+                            <Download size={18} /> Baixar Relatório Completo (PDF)
+                        </button>
                     </div>
                 </div>
 
