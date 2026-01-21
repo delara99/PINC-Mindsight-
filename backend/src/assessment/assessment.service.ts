@@ -167,4 +167,40 @@ export class AssessmentService {
             where: { id }
         });
     }
+
+    async cloneForTenant(assessmentId: string, targetTenantId: string) {
+        // 1. Busca a avaliação original
+        const original = await this.prisma.assessmentModel.findUnique({
+            where: { id: assessmentId },
+            include: { questions: true }
+        });
+
+        if (!original) throw new Error('Avaliação original não encontrada');
+
+        // 2. Cria a cópia para o novo tenant
+        return this.prisma.assessmentModel.create({
+            data: {
+                title: original.title, // Pode adicionar (Clone) se quiser
+                description: original.description,
+                type: original.type,
+                tenantId: targetTenantId, // Define o novo tenant
+                isTemplate: false, // Normal, não template
+                isDefault: false, // Reset default
+                questions: {
+                    create: original.questions.map(q => ({
+                        text: q.text,
+                        traitKey: q.traitKey,
+                        facetKey: q.facetKey,
+                        weight: q.weight,
+                        isReverse: q.isReverse,
+                        dichotomy: q.dichotomy,
+                        questionTrait: q.questionTrait,
+                        subtraitDichotomy: q.subtraitDichotomy,
+                        subtrait: q.subtrait,
+                        concept: q.concept
+                    }))
+                }
+            }
+        });
+    }
 }

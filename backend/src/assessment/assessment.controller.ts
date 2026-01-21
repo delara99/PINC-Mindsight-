@@ -1400,6 +1400,27 @@ export class AssessmentController {
         };
     }
 
+
+    /**
+     * POST /assessments/:id/share-b2b
+     * Clona avaliação para o tenant de um usuário B2B (Gestor)
+     */
+    @Post(':id/share-b2b')
+    async shareAssessmentWithB2B(@Param('id') id: string, @Body() body: { targetUserId: string }, @Request() req) {
+        const user = req.user;
+        if (user.role !== 'SUPER_ADMIN') { // Apenas Super Admin pode distribuir entre empresas
+            // Se quiser permitir que Tenant Admin distribua para outro Tenant (improvável em multi-tenant isolado), altere aqui.
+            // Mas o requisito é "Admin forneceu a ele".
+            throw new ForbiddenException('Apenas Super Admin pode distribuir avaliações para Gestores.');
+        }
+
+        const targetUser = await this.prisma.user.findUnique({ where: { id: body.targetUserId } });
+        if (!targetUser) throw new BadRequestException('Usuário destino não encontrado');
+        if (targetUser.role !== 'TENANT_ADMIN') throw new BadRequestException('Usuário destino não é um Gestor Business');
+
+        return this.assessmentService.cloneForTenant(id, targetUser.tenantId);
+    }
+
     /**
      * GET /assessments/templates
      * Lista templates de inventários disponíveis

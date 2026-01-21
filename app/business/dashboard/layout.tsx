@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, FileText, Settings, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, LogOut, Building2, BrainCircuit } from 'lucide-react';
 
 export default function BusinessLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -35,10 +35,10 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
 
     if (!user) return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400">Carregando ambiente...</div>;
 
-    const menu = [
-        { name: 'Visão Geral', href: '/business/dashboard', icon: LayoutDashboard },
-        { name: 'Colaboradores', href: '/business/dashboard/candidates', icon: Users },
-        { name: 'Relatórios de Perfil', href: '/business/dashboard/reports', icon: FileText },
+    { name: 'Visão Geral', href: '/business/dashboard', icon: LayoutDashboard },
+    { name: 'Inventário', href: '/business/dashboard/inventory', icon: BrainCircuit },
+    { name: 'Colaboradores', href: '/business/dashboard/candidates', icon: Users },
+    { name: 'Relatórios de Perfil', href: '/business/dashboard/reports', icon: FileText },
         // { name: 'Configurações', href: '/business/dashboard/settings', icon: Settings },
     ];
 
