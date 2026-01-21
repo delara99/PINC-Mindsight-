@@ -131,7 +131,28 @@ export class UserController {
             throw new BadRequestException('Email já cadastrado');
         }
 
+
         const hashedPassword = await bcrypt.hash(data.password, 10);
+
+        // Lógica de Tenant:
+        // Se for SUPER_ADMIN criando um cliente, cria UM NOVO TENANT isolado.
+        // Se for TENANT_ADMIN criando, usa o próprio tenant (embora endpoint de collab seja outro).
+        let targetTenantId = user.tenantId;
+
+        if (user.role === 'SUPER_ADMIN') {
+            const tenantName = data.companyName || data.name || 'Nova Empresa';
+            // Slug único
+            const slug = tenantName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(7);
+
+            const newTenant = await this.prisma.tenant.create({
+                data: {
+                    name: tenantName,
+                    slug: slug,
+                    plan: data.plan || 'START'
+                }
+            });
+            targetTenantId = newTenant.id;
+        }
 
         // Criar novo cliente
         const newUser = await this.prisma.user.create({
@@ -139,13 +160,13 @@ export class UserController {
                 email: data.email,
                 password: hashedPassword,
                 name: data.name,
-                role: (data.userType === 'COMPANY' || data.role === 'TENANT_ADMIN') ? 'TENANT_ADMIN' : 'MEMBER',
+                role: (data.userType === 'COMPANY' || data.role === 'TENANT_ADMIN') ? 'TENANT_ADMIN' : 'MEMBER', // Se não especificado, assume MEMBER ou TENANT_ADMIN baseado no tipo
                 userType: data.userType || 'INDIVIDUAL',
                 cpf: data.cpf || null,
                 cnpj: data.cnpj || null,
                 companyName: data.companyName || null,
                 phone: data.phone || null,
-                tenantId: user.tenantId,
+                tenantId: targetTenantId, // USA O NOVO TENANT
                 credits: 0,
                 status: 'active' // Admin-created users are active by default
             },
