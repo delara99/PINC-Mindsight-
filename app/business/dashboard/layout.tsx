@@ -33,12 +33,14 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
         router.push('/business/login');
     };
 
+
     if (!user) return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400">Carregando ambiente...</div>;
 
-    { name: 'Visão Geral', href: '/business/dashboard', icon: LayoutDashboard },
-    { name: 'Inventário', href: '/business/dashboard/inventory', icon: BrainCircuit },
-    { name: 'Colaboradores', href: '/business/dashboard/candidates', icon: Users },
-    { name: 'Relatórios de Perfil', href: '/business/dashboard/reports', icon: FileText },
+    const menu = [
+        { name: 'Visão Geral', href: '/business/dashboard', icon: LayoutDashboard },
+        { name: 'Inventário', href: '/business/dashboard/inventory', icon: BrainCircuit },
+        { name: 'Colaboradores', href: '/business/dashboard/candidates', icon: Users },
+        { name: 'Relatórios de Perfil', href: '/business/dashboard/reports', icon: FileText },
         // { name: 'Configurações', href: '/business/dashboard/settings', icon: Settings },
     ];
 

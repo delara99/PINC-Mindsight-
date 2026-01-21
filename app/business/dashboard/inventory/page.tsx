@@ -1,7 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { API_URL } from '../../../../../src/config/api';
+import { API_URL } from '../../../../src/config/api';
 import { Loader2, BrainCircuit, Users, Calendar, CheckCircle, X } from 'lucide-react';
 import axios from 'axios';
 
