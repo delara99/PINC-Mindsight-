@@ -35,7 +35,7 @@ export class PdfService {
         return Buffer.from(pdfBuffer);
     }
 
-    private generateTalkingToHtml(data: any): string {
+    public generateTalkingToHtml(data: any): string {
         const { talkingToAnalysis: analysis, unifiedScores, radarData, userName, date } = data;
 
         const generateRadarSvg = (radarData: any[]) => {
