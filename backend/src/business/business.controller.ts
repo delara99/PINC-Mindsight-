@@ -34,9 +34,22 @@ export class BusinessController {
     }
 
     @Post('employees')
-    async createEmployee(@Request() req, @Body() body: { name: string; email: string }) {
+    async createEmployee(@Request() req, @Body() body: { name: string; accessCode?: string }) {
         this.validateCompanyAccess(req.user);
         return this.service.createEmployee(req.user.tenantId, body);
+    }
+
+    @Post('employees/:id/toggle-status')
+    async toggleEmployeeStatus(@Request() req, @Param('id') id: string) {
+        this.validateCompanyAccess(req.user);
+        return this.service.toggleEmployeeStatus(req.user.tenantId, id);
+    }
+
+    @Post('employees/:id/distribute-credit')
+    async distributeCredit(@Request() req, @Param('id') targetId: string) {
+        this.validateCompanyAccess(req.user);
+        // O Admin é quem está logado (req.user)
+        return this.service.distributeCredit(req.user.tenantId, req.user.userId, targetId);
     }
 
     @Get('reports')

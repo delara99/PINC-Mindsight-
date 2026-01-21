@@ -39,7 +39,7 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
         { name: 'Visão Geral', href: '/business/dashboard', icon: LayoutDashboard },
         { name: 'Colaboradores', href: '/business/dashboard/candidates', icon: Users },
         { name: 'Relatórios de Perfil', href: '/business/dashboard/reports', icon: FileText },
-        { name: 'Configurações', href: '/business/dashboard/settings', icon: Settings },
+        // { name: 'Configurações', href: '/business/dashboard/settings', icon: Settings },
     ];
 
     return (

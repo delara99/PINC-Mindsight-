@@ -15,6 +15,15 @@ export class AuthController {
         return this.authService.login(user);
     }
 
+    @Post('login-code')
+    async loginCode(@Body() body: { code: string }) {
+        const user = await this.authService.loginByAccessCode(body.code);
+        if (!user) {
+            return { message: 'Código inválido ou inativo.' };
+        }
+        return this.authService.login(user);
+    }
+
     @Post('register')
     async register(@Body() body) {
         return this.authService.register(body);

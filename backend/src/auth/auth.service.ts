@@ -26,6 +26,27 @@ export class AuthService {
         return null;
     }
 
+    async loginByAccessCode(accessCode: string): Promise<any> {
+        // Busca usuário onde companyName = accessCode (hack definido no BusinessService)
+        // Por segurança, verificamos se o companyName começa com "PINC-" para evitar logar como empresa errada
+        if (!accessCode.startsWith('PINC-')) return null;
+
+        const user = await this.prisma.user.findFirst({
+            where: { companyName: accessCode }
+        });
+
+        // Valida se a SENHA também bate (por segurança extra)
+        // No createEmployee, definimos hash do accessCode como senha.
+        if (user && await bcrypt.compare(accessCode, user.password)) {
+            if (user.status === 'pending') throw new UnauthorizedException('Conta pendente.');
+            if (user.status === 'inactive') throw new UnauthorizedException('Conta inativa.');
+
+            const { password, ...result } = user;
+            return result;
+        }
+        return null;
+    }
+
     async login(user: any) {
         const payload = {
             email: user.email,

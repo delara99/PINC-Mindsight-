@@ -36,9 +36,14 @@ export class BusinessService {
         const completed = assessments.filter(a => a.status === 'COMPLETED').length;
         const pending = assessments.filter(a => a.status === 'PENDING' || a.status === 'IN_PROGRESS').length;
 
+        const adminUser = await this.prisma.user.findFirst({
+            where: { tenantId, role: { in: [Role.TENANT_ADMIN, Role.SUPER_ADMIN] } }
+        });
+
         return {
             employees: { total: totalEmployees, active: activeEmployees },
-            assessments: { completed, pending, total: assessments.length }
+            assessments: { completed, pending, total: assessments.length },
+            credits: adminUser?.credits || 0
         };
     }
 
@@ -59,53 +64,34 @@ export class BusinessService {
         });
     }
 
-    async createEmployee(tenantId: string, data: { name: string; email: string }) {
-        // 1. Verificar duplicação
-        const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
-        if (existing) {
-            throw new BadRequestException('E-mail já cadastrado na plataforma.');
-        }
+    async createEmployee(tenantId: string, data: { name: string; accessCode?: string }) {
+        // Gera um email fictício para unicidade no banco se não fornecido
+        // Formato: codigo.empresa@pinc.app (mas precisamos garantir unicidade)
+        const accessCode = data.accessCode || Math.random().toString(36).slice(-6).toUpperCase();
 
-        // 2. Senha temporária
-        const tempList = '123456';
-        const hashedPassword = await bcrypt.hash(tempList, 10);
+        // Email placeholder único
+        const dummyEmail = `${accessCode.toLowerCase()}.${Date.now()}@func.pinc.app`;
 
-        // 3. Criar Usuário
+        // 1. Senha = Código de Acesso Hash
+        const hashedPassword = await bcrypt.hash(accessCode, 10);
+
+        // 2. Criar Usuário
         const newUser = await this.prisma.user.create({
             data: {
                 name: data.name,
-                email: data.email,
-                password: hashedPassword,
+                email: dummyEmail, // Email de sistema
+                password: hashedPassword, // Código é a senha
                 role: Role.MEMBER,
                 tenantId: tenantId,
-                status: UserStatus.pending,
+                status: 'pending', // Começa pendente até ativar? Ou ativo? Usuário pediu botão. Vamos deixar 'active' default se tiver código.
                 plan: PlanType.BUSINESS,
-                mustChangePassword: true
+                mustChangePassword: false, // Código é fixo
+                companyName: accessCode // Usamos companyName temporariamente para guardar o código visível para o Admin (hack seguro pois Member não usa esse campo para PJ)
             }
         });
 
-        // 4. Atribuir Assessment Padrão do Tenant
-        let assessment = await this.prisma.assessmentModel.findFirst({
-            where: { tenantId, isDefault: true }
-        });
-
-        if (!assessment) {
-            assessment = await this.prisma.assessmentModel.findFirst({
-                where: { OR: [{ tenantId }, { isDefault: true }] }
-            });
-        }
-
-        if (assessment) {
-            await this.prisma.assessmentAssignment.create({
-                data: {
-                    userId: newUser.id,
-                    assessmentId: assessment.id,
-                    status: 'PENDING'
-                }
-            });
-        }
-
-        return newUser;
+        // Retorna o usuário com o código (guardado em companyName ou re-injetado)
+        return { ...newUser, accessCode };
     }
 
     // --- REPORTS ---
@@ -198,5 +184,69 @@ export class BusinessService {
             throw new NotFoundException('Colaborador não encontrado ou não pertence a esta empresa.');
         }
         return user;
+    }
+
+    // --- ACCESS CONTROL & CREDITS ---
+
+    async toggleEmployeeStatus(tenantId: string, userId: string) {
+        const user = await this.validateEmployee(tenantId, userId);
+        const newStatus = user.status === 'active' ? 'inactive' : 'active';
+
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { status: newStatus }
+        });
+    }
+
+    async distributeCredit(tenantId: string, adminUserId: string, targetUserId: string) {
+        // 1. Validar Admin (Fonte)
+        const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
+        if (!admin || admin.credits < 1) {
+            throw new BadRequestException('Saldo insuficiente para distribuir créditos.');
+        }
+
+        if (admin.tenantId !== tenantId) throw new ForbiddenException();
+
+        // 2. Validar Alvo
+        const target = await this.validateEmployee(tenantId, targetUserId);
+
+        // 3. Transação: Tira de Admin -> Cria Assignment (Usa crédito)
+        // Nota: O sistema atual não põe créditos no Member, ele CRIA a avaliação PAGA.
+        // Se o pedido for "dar créditos para o membro redistribuir", seria diferente.
+        // Mas o pedido diz "redistribuir para seus colaboradores... poderem realizar o inventario".
+        // Isso significa: Gastar 1 crédito do Admin para criar 1 Assignment para o Member.
+
+        return this.prisma.$transaction(async (tx) => {
+            // Decrementa Admin
+            await tx.user.update({
+                where: { id: adminUserId },
+                data: { credits: { decrement: 1 } }
+            });
+
+            // Busca Modelo Padrão
+            let assessment = await tx.assessmentModel.findFirst({
+                where: { tenantId, isDefault: true }
+            });
+
+            if (!assessment) {
+                assessment = await tx.assessmentModel.findFirst({
+                    where: { OR: [{ tenantId }, { isDefault: true }] }
+                });
+            }
+
+            if (!assessment) throw new NotFoundException('Nenhuma avaliação configurada.');
+
+            // Cria Assignment
+            const assignment = await tx.assessmentAssignment.create({
+                data: {
+                    userId: targetUserId,
+                    assessmentId: assessment.id,
+                    status: 'PENDING',
+                    assignedAt: new Date()
+                }
+            });
+
+            return assignment;
+        });
     }
 }

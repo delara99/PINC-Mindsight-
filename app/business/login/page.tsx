@@ -15,6 +15,7 @@ export default function BusinessLoginPage() {
     // Form States
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [accessCode, setAccessCode] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
 
@@ -24,11 +25,19 @@ export default function BusinessLoginPage() {
         setLoading(true);
 
         try {
-            // Reutiliza endpoint padrão de auth, a distinção é feita pelo role no retorno
-            const res = await axios.post(`${API_URL}/api/v1/auth/login`, {
-                email,
-                password
-            });
+            let res;
+
+            if (mode === 'company') {
+                res = await axios.post(`${API_URL}/api/v1/auth/login`, {
+                    email,
+                    password
+                });
+            } else {
+                // Login por Código de Acesso
+                res = await axios.post(`${API_URL}/api/v1/auth/login-code`, {
+                    code: accessCode
+                });
+            }
 
             const { accessToken, user } = res.data;
 
@@ -111,7 +120,7 @@ export default function BusinessLoginPage() {
                             {mode === 'company' ? 'Login Corporativo' : 'Acesso do Candidato'}
                         </h2>
                         <p className="text-slate-500 mt-2">
-                            {mode === 'company' ? 'Entre com suas credenciais de gestor.' : 'Use o e-mail convidado pela empresa.'}
+                            {mode === 'company' ? 'Entre com suas credenciais de gestor.' : 'Use o código fornecido pela sua empresa.'}
                         </p>
                     </div>
 
@@ -122,37 +131,53 @@ export default function BusinessLoginPage() {
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">E-mail Profissional</label>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all font-medium text-slate-900 placeholder:text-slate-400"
-                                placeholder="nome@empresa.com"
-                            />
-                        </div>
+                        {mode === 'company' ? (
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">E-mail Profissional</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all font-medium text-slate-900 placeholder:text-slate-400"
+                                        placeholder="nome@empresa.com"
+                                    />
+                                </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Senha</label>
-                            <div className="relative">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Senha</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all font-medium text-slate-900 placeholder:text-slate-400 pr-12"
+                                            placeholder="••••••••"
+                                        />
+                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <a href="#" className="text-xs font-semibold text-slate-500 hover:text-slate-800">Esqueceu a senha?</a>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700">Código de Acesso</label>
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type="text"
                                     required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all font-medium text-slate-900 placeholder:text-slate-400 pr-12"
-                                    placeholder="••••••••"
+                                    value={accessCode}
+                                    onChange={(e) => setAccessCode(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all font-medium text-slate-900 placeholder:text-slate-400 font-mono tracking-wider text-center Uppercase"
+                                    placeholder="PINC-XXXX"
                                 />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
                             </div>
-                            <div className="flex justify-end">
-                                <a href="#" className="text-xs font-semibold text-slate-500 hover:text-slate-800">Esqueceu a senha?</a>
-                            </div>
-                        </div>
+                        )}
 
                         <button
                             type="submit"

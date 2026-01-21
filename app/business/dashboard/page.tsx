@@ -54,9 +54,9 @@ export default function BusinessDashboardHome() {
                     color="bg-orange-50 text-orange-600"
                 />
                 <StatCard
-                    title="Taxa de Engajamento"
-                    value={`${stats?.employees?.total ? Math.round((stats.assessments.completed / (stats.employees.total || 1)) * 100) : 0}%`}
-                    icon={TrendingUp}
+                    title="Seus Créditos"
+                    value={stats?.credits || 0}
+                    icon={TrendingUp} // Trocando icone temporario
                     color="bg-purple-50 text-purple-600"
                 />
             </div>
