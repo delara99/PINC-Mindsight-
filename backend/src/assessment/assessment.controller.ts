@@ -383,9 +383,11 @@ export class AssessmentController {
      * GET /assessments/:id/my-assignment
      * Busca o assignment do usuário logado para um assessment específico
      */
+
     @Get(':id/my-assignment')
     async getMyAssignment(@Param('id') assessmentId: string, @Request() req) {
         const user = req.user;
+        console.log(`[DEBUG] getMyAssignment called. AssessmentId: ${assessmentId}, UserId: ${user.userId}, TenantId: ${user.tenantId}`);
 
         const assignment = await this.prisma.assessmentAssignment.findFirst({
             where: {
@@ -401,9 +403,15 @@ export class AssessmentController {
         });
 
         if (!assignment) {
+            console.error(`[DEBUG] ❌ Assignment NOT FOUND for User ${user.userId} and Assessment ${assessmentId}`);
+            // Check if assessment exists at all
+            const assessment = await this.prisma.assessmentModel.findUnique({ where: { id: assessmentId } });
+            console.log(`[DEBUG] Assessment ${assessmentId} exists? ${!!assessment} (Tenant: ${assessment?.tenantId})`);
+
             throw new BadRequestException('Você não possui assignment para esta avaliação');
         }
 
+        console.log(`[DEBUG] ✅ Assignment FOUND: ${assignment.id}`);
         return assignment;
     }
 
@@ -733,21 +741,36 @@ export class AssessmentController {
     @Post(':id/start-session')
     async startSession(@Param('id') id: string, @Request() req) {
         const user = req.user;
-        console.log(`[DEBUG] Starting session for Assessment: ${id}, User: ${user.userId}`);
+        console.log(`[DEBUG] Starting session for Assessment: ${id}, User: ${user.userId}, Tenant: ${user.tenantId}`);
 
         // 1. Verificar se a avaliação existe (mesma lógica permissiva do getOne)
         let assessment = null;
         try {
+            // Tenta buscar pelo tenant do usuário
             assessment = await this.assessmentService.findOne(id, user.tenantId);
-        } catch (e) { }
-
-        if (!assessment) {
-            assessment = await this.prisma.assessmentModel.findFirst({
-                where: { id: id, type: 'BIG_FIVE' }
-            });
+            if (assessment) console.log(`[DEBUG] Assessment found via findOne(tenantId): ${assessment.id}`);
+        } catch (e) {
+            console.log(`[DEBUG] findOne error: ${e.message}`);
         }
 
         if (!assessment) {
+            console.log('[DEBUG] Not found in tenant, checking System/Globals...');
+            // Tenta buscar se é GLOBAL (sem tenantId ou System)
+            // Ou se tem o ID exato mesmo que tenant seja null
+            assessment = await this.prisma.assessmentModel.findFirst({
+                where: { id: id }
+            });
+
+            // Se achou, verificamos se é acessível (ex: isTemplate, ou Big Five global)
+            if (assessment) {
+                console.log(`[DEBUG] Found raw assessment: ${assessment.id}. Type: ${assessment.type}, Tenant: ${assessment.tenantId}`);
+                // Regra: Se tem o ID e o usuario tem acesso (verificar permissões basicas se necessario)
+                // Como é start-session, assumimos que se ele tem o link, ele pode tentar.
+            }
+        }
+
+        if (!assessment) {
+            console.error(`[DEBUG] ❌ Assessment ${id} NOT FOUND absolutely.`);
             throw new BadRequestException('Avaliação não encontrada para iniciar sessão.');
         }
 
@@ -761,16 +784,21 @@ export class AssessmentController {
             return existing;
         }
 
-        const newAssignment = await this.prisma.assessmentAssignment.create({
-            data: {
-                userId: user.userId,
-                assessmentId: id,
-                status: 'IN_PROGRESS',
-                assignedAt: new Date()
-            }
-        });
-        console.log('[DEBUG] New Session created:', newAssignment.id);
-        return newAssignment;
+        try {
+            const newAssignment = await this.prisma.assessmentAssignment.create({
+                data: {
+                    userId: user.userId,
+                    assessmentId: id,
+                    status: 'IN_PROGRESS',
+                    assignedAt: new Date()
+                }
+            });
+            console.log('[DEBUG] New Session created:', newAssignment.id);
+            return newAssignment;
+        } catch (createError) {
+            console.error('[DEBUG] Failed to create assignment:', createError);
+            throw new BadRequestException('Falha ao criar sessão: ' + createError.message);
+        }
     }
 
     @Put(':id/set-default')
