@@ -59,7 +59,7 @@ export default function InventoryList() {
                                 </div>
                             </div>
                             <button
-                                onClick={() => router.push(`/business/employee/inventory/${a.assignmentId}`)}
+                                onClick={() => router.push(`/business/employee/inventory/${a.id}`)}
                                 className="w-full md:w-auto bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
                             >
                                 <PlayCircle size={18} />
