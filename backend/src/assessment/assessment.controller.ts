@@ -1167,12 +1167,13 @@ export class AssessmentController {
 
             // Executar tudo em uma transação para garantir consistência
             const result = await this.prisma.$transaction(async (tx) => {
-                // Verificar créditos novamente dentro da transação
+                // Verificar créditos APENAS para B2C (CLIENT)
+                // No B2B (MEMBER), o Gestor já pagou ao distribuir o inventário
                 const user = await tx.user.findUnique({
                     where: { id: userId }
                 });
 
-                if (user.credits < 1) {
+                if (user.role === 'CLIENT' && user.credits < 1) {
                     throw new BadRequestException('Créditos insuficientes para completar a avaliação.');
                 }
 
@@ -1226,7 +1227,7 @@ export class AssessmentController {
                     }
                 });
 
-                // Atualizar assignment e decrementar créditos
+                // Atualizar assignment
                 await tx.assessmentAssignment.update({
                     where: { id: assignment.id },
                     data: {
@@ -1235,12 +1236,16 @@ export class AssessmentController {
                     }
                 });
 
-                await tx.user.update({
-                    where: { id: userId },
-                    data: {
-                        credits: { decrement: 1 }
-                    }
-                });
+                // Decrementar créditos APENAS para B2C (CLIENT)
+                // No B2B (MEMBER), o Gestor já pagou ao distribuir
+                if (user.role === 'CLIENT') {
+                    await tx.user.update({
+                        where: { id: userId },
+                        data: {
+                            credits: { decrement: 1 }
+                        }
+                    });
+                }
 
                 return savedResult;
             });
