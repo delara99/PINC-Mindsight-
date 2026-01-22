@@ -107,9 +107,15 @@ export class AssessmentController {
         // Remover este filtro permite que inventários aplicados manualmente pelo Admin (de modelos diferentes do padrão)
         // voltem a aparecer na lista, atendendo à solicitação do usuário.
         // Se ainda existirem usuários antigos com duplicidade, eles verão os dois, mas o fluxo de novos está corrigido.
+
+        // FILTRAR Assignments órfãos (onde a assessment foi deletada mas o assignment ficou)
+        assignments = assignments.filter(a => a.assessment !== null && a.assessment !== undefined);
+
         // 🔥 FILTRO INTELIGENTE: Remove duplicatas de auto-assign sem esconder aplicações manuais.
         try {
             if (bigFiveModel) {
+
+
                 // Buscar dados do usuário para ter o createdAt
                 const fullUser = await this.prisma.user.findUnique({ where: { id: user.userId } });
 
