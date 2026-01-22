@@ -1165,6 +1165,21 @@ export class AssessmentController {
                 throw new BadRequestException('Esta avaliação já foi respondida.');
             }
 
+            // PROTEÇÃO ANTI-DUPLICAÇÃO: Verificar se já existe QUALQUER assignment COMPLETED para esta avaliação
+            // Isso impede que o usuário responda múltiplas vezes mesmo se houver múltiplos assignments (bug de auto-assign)
+            const anyCompleted = await this.prisma.assessmentAssignment.findFirst({
+                where: {
+                    assessmentId: id,
+                    userId: userId,
+                    status: 'COMPLETED'
+                }
+            });
+
+            if (anyCompleted) {
+                console.log(`[ANTI-FRAUD] User ${userId} tentou responder assessment ${id} novamente. Assignment já completado: ${anyCompleted.id}`);
+                throw new BadRequestException('Você já respondeu esta avaliação. Cada inventário pode ser respondido apenas uma vez.');
+            }
+
             // Executar tudo em uma transação para garantir consistência
             const result = await this.prisma.$transaction(async (tx) => {
                 // Verificar créditos APENAS para usuários individuais (B2C)
