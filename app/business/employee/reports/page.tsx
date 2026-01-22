@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { API_URL } from '../../../../src/config/api';
+import { API_URL } from '@/src/config/api';
 import { FileBarChart, Download, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 
 export default function EmployeeReports() {

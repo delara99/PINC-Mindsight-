@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { API_URL } from '../../../../src/config/api';
+import { API_URL } from '@/src/config/api';
 import { PlayCircle, CheckCircle, Clock } from 'lucide-react';
 
 export default function InventoryList() {
