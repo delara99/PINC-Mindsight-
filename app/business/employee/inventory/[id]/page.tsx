@@ -174,16 +174,41 @@ export default function EmployeeTakeAssessmentPage() {
         }
     };
 
+
     if (isLoading || !token) {
         return (
-            <div className="flex justify-center items-center h-64 bg-slate-50 rounded-xl">
-                <Loader2 size={32} className="animate-spin text-purple-600" />
-                <span className="ml-3 text-slate-500 font-medium">Carregando avaliação...</span>
+            <div className="flex justify-center items-center h-screen bg-slate-50">
+                <div className="text-center">
+                    <Loader2 size={48} className="animate-spin text-purple-600 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-slate-700">Carregando avaliação...</h2>
+                    <p className="text-slate-400 mt-2">Por favor, aguarde.</p>
+                </div>
             </div>
         );
     }
 
-    if (!assessment) return <div className="p-8 text-center text-red-500">Erro ao carregar avaliação.</div>;
+    if (!assessment) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-slate-50 p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-100">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <X className="text-red-500 w-8 h-8" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Avaliação Indisponível</h2>
+                    <p className="text-slate-500 mb-8">
+                        Não foi possível carregar esta avaliação. Ela pode ter sido removida ou você não possui permissão para acessá-la.
+                    </p>
+                    <button
+                        onClick={() => router.push('/business/employee/inventory')}
+                        className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <ArrowLeft size={20} />
+                        Voltar para Lista
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const currentQuestion = assessment.questions[currentQuestionIndex];
     if (!currentQuestion) return <div>Questão não encontrada.</div>;
