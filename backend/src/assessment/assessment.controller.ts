@@ -109,8 +109,19 @@ export class AssessmentController {
         // Se ainda existirem usuários antigos com duplicidade, eles verão os dois, mas o fluxo de novos está corrigido.
 
 
+
+        console.log(`[DEBUG] getMyAssignmentsList: User ${user.userId} has ${assignments.length} raw assignments BEFORE filtering.`);
+
         // FILTRAR Assignments órfãos e inválidos
-        assignments = assignments.filter(a => a.assessment && a.assessment.id);
+        assignments = assignments.filter(a => {
+            const isValid = a.assessment && a.assessment.id && a.assessment.title;
+            if (!isValid) {
+                console.log(`[DEBUG] Filtering OUT orphaned assignment: ${a.id}, assessmentId: ${a.assessmentId}`);
+            }
+            return isValid;
+        });
+
+        console.log(`[DEBUG] getMyAssignmentsList: User ${user.userId} has ${assignments.length} assignments AFTER orphan filter.`);
 
         try {
             // Lógica de Filtro para B2B (Gestores/Membros)
