@@ -112,6 +112,12 @@ export class AssessmentController {
 
         console.log(`[DEBUG] getMyAssignmentsList: User ${user.userId} has ${assignments.length} raw assignments BEFORE filtering.`);
 
+        // Log detalhado de cada assignment
+        assignments.forEach((a, idx) => {
+            console.log(`[DEBUG] Assignment ${idx}: id=${a.id}, assessmentId=${a.assessmentId}, assessment.id=${a.assessment?.id}, assessment.title=${a.assessment?.title}`);
+        });
+
+
         // FILTRAR Assignments órfãos e inválidos
         assignments = assignments.filter(a => {
             const isValid = a.assessment && a.assessment.id && a.assessment.title;
