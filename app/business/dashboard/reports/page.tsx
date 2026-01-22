@@ -103,18 +103,27 @@ export default function ReportsPage() {
                                         {new Date(report.completedAt).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => handleDownload(report.userId, report.userName)}
-                                            disabled={downloading === report.userId}
-                                            className="inline-flex items-center gap-2 text-slate-600 hover:text-purple-600 font-bold disabled:opacity-50 transition-colors"
-                                        >
-                                            {downloading === report.userId ? (
-                                                <span className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></span>
-                                            ) : (
-                                                <Download size={18} />
-                                            )}
-                                            PDF
-                                        </button>
+                                        <div className="flex items-center justify-end gap-3">
+                                            <button
+                                                onClick={() => window.location.href = `/business/dashboard/reports/${report.userId}`}
+                                                className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-bold transition-colors"
+                                            >
+                                                <FileText size={18} />
+                                                Visualizar
+                                            </button>
+                                            <button
+                                                onClick={() => handleDownload(report.userId, report.userName)}
+                                                disabled={downloading === report.userId}
+                                                className="inline-flex items-center gap-2 text-slate-600 hover:text-purple-600 font-bold disabled:opacity-50 transition-colors"
+                                            >
+                                                {downloading === report.userId ? (
+                                                    <span className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></span>
+                                                ) : (
+                                                    <Download size={18} />
+                                                )}
+                                                PDF
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
