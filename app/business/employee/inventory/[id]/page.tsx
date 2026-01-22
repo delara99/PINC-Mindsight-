@@ -1,5 +1,5 @@
 'use client';
-import { API_URL } from '../../../../../src/config/api';
+import { API_URL } from '../../../../src/config/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
