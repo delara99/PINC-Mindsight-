@@ -184,42 +184,14 @@ export class UserController {
             }
         });
 
-        // AUTO-ASSIGN: Atribuir automaticamente a avaliação PADRÃO ao novo cliente
+
+        // AUTO-ASSIGN REMOVIDO: Evitar que novos clientes/colaboradores recebam avaliação fantasma.
+        // A atribuição deve ser explícita pelo Gestor ou Admin.
+        /*
         try {
-            // 1. Buscar Avaliação Padrão do Tenant
-            let assessmentModel = await this.prisma.assessmentModel.findFirst({
-                where: { tenantId: user.tenantId, isDefault: true, type: 'BIG_FIVE' }
-            });
-
-            // Fallback: Primeira encontrada do tenant
-            if (!assessmentModel) {
-                assessmentModel = await this.prisma.assessmentModel.findFirst({
-                    where: { tenantId: user.tenantId, type: 'BIG_FIVE' }, orderBy: { createdAt: 'desc' }
-                });
-            }
-
-            // 2. Buscar Configuração Big Five Ativa
-            const activeConfig = await this.prisma.bigFiveConfig.findFirst({
-                where: { tenantId: user.tenantId, isActive: true }
-            });
-
-            // Se encontrou ambos, cria a atribuição
-            if (assessmentModel && activeConfig) {
-                await this.prisma.assessmentAssignment.create({
-                    data: {
-                        userId: newUser.id,
-                        assessmentId: assessmentModel.id,
-                        configId: activeConfig.id,
-                        status: 'IN_PROGRESS',
-                        assignedAt: new Date(),
-                    }
-                });
-                console.log(`[AutoAssign] Avaliação ${assessmentModel.title} atribuída para ${newUser.email}`);
-            }
-        } catch (error) {
-            console.error('[AutoAssign] Falha ao atribuir avaliação automática:', error);
-            // Não bloqueia o retorno da criação do usuário
-        }
+            // ... (logica antiga removida)
+        } catch (error) { ... }
+        */
 
         return newUser;
     }

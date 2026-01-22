@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { API_URL } from '../../../../src/config/api';
-import { Loader2, BrainCircuit, Users, Calendar, CheckCircle, X } from 'lucide-react';
+import { Loader2, BrainCircuit, Users, Calendar, CheckCircle, X, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 interface Assessment {
@@ -24,13 +24,28 @@ interface Employee {
     status: string;
 }
 
+interface Assignment {
+    id: string;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+    };
+    status: string;
+}
+
 export default function BusinessInventoryPage() {
     const [selectedAssessment, setSelectedAssessment] = useState<string | null>(null);
     const [isDistributeModalOpen, setIsDistributeModalOpen] = useState(false);
+    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
     const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+
+    // Estado para "Gerenciar Atribuições"
+    const [viewingAssessmentId, setViewingAssessmentId] = useState<string | null>(null);
+
     const queryClient = useQueryClient();
 
-    // 1. Fetch Assessments (Only those belonging to this Tenant)
+    // 1. Fetch Assessments
     const { data: assessments, isLoading: isLoadingAssessments } = useQuery<Assessment[]>({
         queryKey: ['business-assessments'],
         queryFn: async () => {
@@ -55,7 +70,21 @@ export default function BusinessInventoryPage() {
         enabled: isDistributeModalOpen
     });
 
-    // 3. Mutation to Assign (Distribute)
+    // 3. Fetch Assignments (For management)
+    const { data: assignments, isLoading: isLoadingAssignments, refetch: refetchAssignments } = useQuery<Assignment[]>({
+        queryKey: ['business-assignments', viewingAssessmentId],
+        queryFn: async () => {
+            if (!viewingAssessmentId) return [];
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get(`${API_URL}/api/v1/assessments/${viewingAssessmentId}/assignments`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return res.data;
+        },
+        enabled: !!viewingAssessmentId && isManageModalOpen
+    });
+
+    // 4. Mutation to Assign
     const distributeMutation = useMutation({
         mutationFn: async () => {
             const token = localStorage.getItem('accessToken');
@@ -77,15 +106,43 @@ export default function BusinessInventoryPage() {
         }
     });
 
+    // 5. Mutation to Remove Assignment
+    const removeAssignmentMutation = useMutation({
+        mutationFn: async ({ assessmentId, userId }: { assessmentId: string, userId: string }) => {
+            const token = localStorage.getItem('accessToken');
+            await axios.delete(`${API_URL}/api/v1/assessments/${assessmentId}/assignments/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+        onSuccess: () => {
+            alert('Atribuição removida com sucesso.');
+            refetchAssignments();
+            queryClient.invalidateQueries({ queryKey: ['business-assessments'] });
+        },
+        onError: (err: any) => {
+            alert('Erro ao remover: ' + (err.response?.data?.message || err.message));
+        }
+    });
+
     const openDistributeModal = (id: string) => {
         setSelectedAssessment(id);
         setIsDistributeModalOpen(true);
         setSelectedEmployees([]);
     };
 
+    const openManageModal = (id: string) => {
+        setViewingAssessmentId(id);
+        setIsManageModalOpen(true);
+    };
+
     const toggleEmployee = (id: string) => {
         setSelectedEmployees(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     };
+
+    const handleCloseManageModal = () => {
+        setIsManageModalOpen(false);
+        setViewingAssessmentId(null);
+    }
 
     if (isLoadingAssessments) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-purple-600" /></div>;
 
@@ -124,7 +181,12 @@ export default function BusinessInventoryPage() {
                                 </p>
                                 <div className="flex gap-4 text-xs text-slate-400 border-t border-slate-50 pt-3 mb-4">
                                     <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(assessment.createdAt).toLocaleDateString()}</span>
-                                    <span className="flex items-center gap-1"><Users size={14} /> {assessment._count?.assignments || 0} Aplicações</span>
+                                    <button
+                                        onClick={() => openManageModal(assessment.id)}
+                                        className="flex items-center gap-1 hover:text-purple-600 hover:underline cursor-pointer"
+                                    >
+                                        <Users size={14} /> {assessment._count?.assignments || 0} Aplicações (Ver)
+                                    </button>
                                 </div>
                             </div>
 
@@ -185,6 +247,57 @@ export default function BusinessInventoryPage() {
                             >
                                 {distributeMutation.isPending && <Loader2 className="animate-spin" size={16} />}
                                 Distribuir ({selectedEmployees.length})
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Gerenciamento de Atribuições */}
+            {isManageModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-xl text-slate-900">Gerenciar Distribuições</h3>
+                            <button onClick={handleCloseManageModal} className="text-slate-400 hover:text-slate-700"><X size={24} /></button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
+                            {isLoadingAssignments ? (
+                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-purple-600" /></div>
+                            ) : assignments?.length === 0 ? (
+                                <div className="text-center text-slate-400 py-12 flex flex-col items-center">
+                                    <Users size={40} className="mb-2 opacity-50" />
+                                    <p>Nenhum colaborador recebeu este inventário ainda.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {assignments?.map(assignment => (
+                                        <div key={assignment.id} className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <div className="font-bold text-slate-900">{assignment.user.name}</div>
+                                                <div className="text-sm text-slate-500">{assignment.user.email}</div>
+                                                <div className="text-xs text-slate-400 mt-1">Status: <span className="font-semibold text-purple-600">{assignment.status}</span></div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Tem certeza que deseja remover esta atribuição? O colaborador perderá o acesso e as respostas (se houver).')) {
+                                                        removeAssignmentMutation.mutate({ assessmentId: viewingAssessmentId!, userId: assignment.user.id })
+                                                    }
+                                                }}
+                                                className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-bold"
+                                            >
+                                                <Trash2 size={16} /> Remover
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3">
+                            <button onClick={handleCloseManageModal} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors">
+                                Fechar
                             </button>
                         </div>
                     </div>
