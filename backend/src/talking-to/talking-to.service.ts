@@ -47,26 +47,25 @@ export class TalkingToService {
 
     // --- REPOSITORY HELPER (AUTO-SEEDING) ---
     private async getText(key: string, group: string, defaultContent: string, description?: string): Promise<string> {
-        // Tentar buscar do cache ou banco
+        // Upsert garante que não haverá erro de "Unique constraint" se dois requests baterem ao mesmo tempo
         try {
-            const found = await this.prisma.talkingToMessage.findUnique({ where: { key } });
-            if (found) return found.content;
-
-            // Se não achar, cria (Auto-Seed)
-            await this.prisma.talkingToMessage.create({
-                data: {
+            const result = await this.prisma.talkingToMessage.upsert({
+                where: { key },
+                update: {}, // Se existe, não muda nada (usa o que tá no banco, que pode ter sido editado pelo Admin)
+                create: {
                     key,
                     group,
                     description,
                     content: defaultContent
                 }
             });
-            return defaultContent;
+            return result.content;
         } catch (e) {
-            console.error(`Erro ao buscar texto TalkingTO [${key}]:`, e);
-            return defaultContent; // Fallback seguro
+            console.error(`Erro crítico no getText [${key}]:`, e);
+            return defaultContent; // Fallback extremo
         }
     }
+
 
     // --- FINE-TUNED TEXTS ---
     private readonly FINETUNED_TEXTS: Record<string, Record<string, string>> = {
@@ -176,45 +175,59 @@ export class TalkingToService {
 
     // --- MAIN ENTRY POINT ---
     async analyzeProfile(scores: TalkingToInput): Promise<TalkingToAnalysisResult> {
-        const dimensions: TalkingToDimensionResult[] = [];
-        const strengths: string[] = [];
-        const watchOuts: string[] = [];
-        const dominantTraits: string[] = [];
+        try {
+            // Sanitize Inputs (NaN/Null protection)
+            const safeScores = {
+                E: Number(scores.E) || 50,
+                A: Number(scores.A) || 50,
+                C: Number(scores.C) || 50,
+                O: Number(scores.O) || 50,
+                N: Number(scores.N) || 50,
+            };
 
-        // 1. Analisar cada dimensão
-        dimensions.push(await this.analyzeExtroversion(scores.E, scores.facets?.EXTRAVERSION));
-        dimensions.push(await this.analyzeAgreeableness(scores.A, scores.facets?.AGREEABLENESS));
-        dimensions.push(await this.analyzeStructure(scores.C, scores.facets?.CONSCIENTIOUSNESS));
-        dimensions.push(await this.analyzeOpenness(scores.O, scores.facets?.OPENNESS));
-        dimensions.push(await this.analyzeStability(scores.N, scores.facets?.NEUROTICISM));
+            const dimensions: TalkingToDimensionResult[] = [];
+            const strengths: string[] = [];
+            const watchOuts: string[] = [];
+            const dominantTraits: string[] = [];
 
-        // 2. Definir Pontos Fortes e Atenção (Lógica Simples baseada em extremos)
-        dimensions.forEach(d => {
-            if (d.classification === 'ALTO') {
-                dominantTraits.push(d.dimension);
-                strengths.push(`Alta capacidade de ${d.dimension} (${d.labels.join(', ')})`);
-            } else if (d.classification === 'BAIXO') {
-                watchOuts.push(`Atenção para ${d.dimension} reduzida (${d.labels.join(', ')})`);
-            } else {
-                // FLEX / EQUILIBRADO
-                strengths.push(`Equilíbrio e adaptabilidade em ${d.dimension}`);
-            }
-        });
+            // 1. Analisar cada dimensão (Safe Calls)
+            dimensions.push(await this.analyzeExtroversion(safeScores.E, scores.facets?.EXTRAVERSION));
+            dimensions.push(await this.analyzeAgreeableness(safeScores.A, scores.facets?.AGREEABLENESS));
+            dimensions.push(await this.analyzeStructure(safeScores.C, scores.facets?.CONSCIENTIOUSNESS));
+            dimensions.push(await this.analyzeOpenness(safeScores.O, scores.facets?.OPENNESS));
+            dimensions.push(await this.analyzeStability(safeScores.N, scores.facets?.NEUROTICISM));
 
-        // 3. Gerar Nome do Arquétipo (Combinatória simples dos top 2 dominantes)
-        const archetype = this.generateArchetypeName(dominantTraits);
+            // 2. Definir Pontos Fortes e Atenção (Lógica Simples baseada em extremos)
+            dimensions.forEach(d => {
+                if (d.classification === 'ALTO') {
+                    dominantTraits.push(d.dimension);
+                    strengths.push(`Alta capacidade de ${d.dimension} (${d.labels.join(', ')})`);
+                } else if (d.classification === 'BAIXO') {
+                    watchOuts.push(`Atenção para ${d.dimension} reduzida (${d.labels.join(', ')})`);
+                } else {
+                    // FLEX / EQUILIBRADO
+                    strengths.push(`Equilíbrio e adaptabilidade em ${d.dimension}`);
+                }
+            });
 
-        return {
-            profile_summary: {
-                archetype_name: archetype,
-                dominant_traits: dominantTraits
-            },
-            talkingto_analysis: dimensions,
-            executive_summary: {
-                strengths: strengths,
-                watch_outs: watchOuts
-            }
-        };
+            // 3. Gerar Nome do Arquétipo (Combinatória simples dos top 2 dominantes)
+            const archetype = this.generateArchetypeName(dominantTraits);
+
+            return {
+                profile_summary: {
+                    archetype_name: archetype,
+                    dominant_traits: dominantTraits
+                },
+                talkingto_analysis: dimensions,
+                executive_summary: {
+                    strengths: strengths,
+                    watch_outs: watchOuts
+                }
+            };
+        } catch (error) {
+            console.error('CRITICAL ERROR in analyzeProfile:', error);
+            throw new Error(`Falha ao processar simulação: ${error.message}`);
+        }
     }
 
     // --- CLASSIFICATION LOGIC (0-35, 36-64, 65-100) ---
