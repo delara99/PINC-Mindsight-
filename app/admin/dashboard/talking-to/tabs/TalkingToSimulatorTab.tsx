@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Play, RotateCcw, Activity, FileText, BarChart3 } from 'lucide-react';
+import { Play, RotateCcw, Activity, FileText, BarChart3, BrainCircuit } from 'lucide-react';
 
 export default function TalkingToSimulatorTab({ isActive }: { isActive: boolean }) {
     const [inputs, setInputs] = useState({
