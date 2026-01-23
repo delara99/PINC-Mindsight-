@@ -78,7 +78,11 @@ export class TalkingToService {
         }
 
         const dimensions = await this.prisma.talkingToDimension.findMany({
-            include: { facets: true }
+            include: {
+                facets: {
+                    orderBy: { createdAt: 'asc' }
+                }
+            }
         });
 
         // Mapa para busca rápida: { "EXTRAVERSION": { ...dim, facets: [...] } }
