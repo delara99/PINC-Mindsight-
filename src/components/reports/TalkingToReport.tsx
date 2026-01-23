@@ -137,8 +137,8 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                 ></div>
                             </div>
 
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                                {trait.customTexts?.text_interpretation?.slice(0, 100) || trait.interpretation?.slice(0, 100) || "Análise detalhada disponível abaixo."}...
+                            <p className="text-xs text-slate-500 leading-relaxed text-justify mt-2">
+                                {trait.customTexts?.text_interpretation || trait.interpretation || "Análise detalhada disponível abaixo."}
                             </p>
                         </div>
                     ))}
@@ -173,11 +173,11 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                 </h4>
 
                                 {trait.customTexts ? (
-                                    <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed">
+                                    <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
                                         {trait.customTexts.text_interpretation}
                                     </div>
                                 ) : trait.interpretation ? (
-                                    <p className="text-slate-600 leading-relaxed">{trait.interpretation}</p>
+                                    <p className="text-slate-600 leading-relaxed text-justify">{trait.interpretation}</p>
                                 ) : (
                                     <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 text-amber-800 text-sm flex items-center gap-3">
                                         <RefreshCw size={16} />
@@ -185,9 +185,13 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                     </div>
                                 )}
 
-                                {/* Facetas em Grid (Com Fallback) */}
+                                {/* Facetas em Grid (Com Fallback Robusto) */}
                                 {(() => {
-                                    const facetsToShow = (trait.facets && trait.facets.length > 0)
+                                    // Validar se existem facetas E se elas têm nome preenchido
+                                    // Evita mostrar facetas vazias que vêm do banco como {}
+                                    const hasValidFacets = trait.facets && trait.facets.length > 0 && trait.facets[0].name;
+
+                                    const facetsToShow = hasValidFacets
                                         ? trait.facets
                                         : getDefaultFacets(trait.key, trait.score);
 
@@ -197,7 +201,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                 {facetsToShow.map((facet: any, idx: number) => (
                                                     <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                        <span className="text-sm font-medium text-slate-700">{facet.name}</span>
+                                                        <span className="text-sm font-medium text-slate-700">{facet.name || `Faceta ${idx + 1}`}</span>
                                                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${getLevelColor(facet.level)}`}>
                                                             {getLevelLabel(facet.level)}
                                                         </span>
@@ -207,7 +211,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                         </div>
                                     );
                                 })()}
-
                             </div>
                         </div>
                     </div>
