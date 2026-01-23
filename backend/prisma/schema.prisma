@@ -870,6 +870,10 @@ enum AudienceType {
 // TalkingTO Engine Config
 // =======================
 
+// =======================
+// TalkingTO Engine Config
+// =======================
+
 model TalkingToMessage {
   id          String   @id @default(uuid())
   key         String   @unique
@@ -877,8 +881,78 @@ model TalkingToMessage {
   description String?  
   content     String   @db.Text 
   
+  // Relacionamento reverso com as Regras
+  rules       TalkingToRule[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   @@map("talking_to_messages")
+}
+
+// Nova Tabela: Regras de Inteligência
+model TalkingToRule {
+  id          String   @id @default(uuid())
+  name        String   // Ex: "Extroversão Alta" ou "Perfil Ouvinte Seletivo"
+  description String?  // Descrição para o admin
+  
+  domain      String   // Ex: "OCEAN_E", "CROSS_TRAIT", "ARCHETYPE"
+  priority    Int      @default(1) 
+
+  // Condições lógicas (JSON)
+  // Ex: { "E": { "min": 65 }, "facets": { "falante": { "min": 50 } } }
+  conditions  Json     
+
+  // Mensagem resultante
+  messageId   String
+  message     TalkingToMessage @relation(fields: [messageId], references: [id])
+
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("talking_to_rules")
+}
+
+// (Opcional) Metadados para o Editor Visual funcionar melhor
+model TalkingToDimension {
+  id       String @id @default(uuid())
+  key      String @unique // "E", "N", "A"...
+  name     String // "Extroversão"
+  minRange Float  @default(0)
+  maxRange Float  @default(100)
+  color    String @default("#000000")
+  
+  facets   TalkingToFacet[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("talking_to_dimensions")
+}
+
+model TalkingToFacet {
+  id          String @id @default(uuid())
+  dimensionId String
+  key         String // "FALANTE", "OUVINTE"
+  name        String 
+  
+  dimension   TalkingToDimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("talking_to_facets")
+}
+
+// Log de Validação (Simulador)
+model TalkingToValidationLog {
+  id        String   @id @default(uuid())
+  inputs    Json     // Scores simulados
+  outputs   Json     // Regras que bateram
+  adminId   String?  // Quem testou
+  createdAt DateTime @default(now())
+
+  @@map("talking_to_validation_logs")
 }
