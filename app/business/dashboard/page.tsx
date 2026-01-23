@@ -48,12 +48,12 @@ export default function BusinessDashboardHome() {
                     icon={FileCheck}
                     color="bg-green-50 text-green-600"
                 />
-                <StatCard
+                {/* <StatCard
                     title="Pendentes"
                     value={stats?.assessments?.pending || 0}
                     icon={Clock}
                     color="bg-orange-50 text-orange-600"
-                />
+                /> */}
                 <StatCard
                     title="Seus Créditos"
                     value={stats?.credits || 0}
