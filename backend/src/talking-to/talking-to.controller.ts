@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, UnauthorizedException, Param, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, UnauthorizedException, Param, Res, Delete } from '@nestjs/common';
 import { TalkingToService, TalkingToInput } from './talking-to.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,14 +30,40 @@ export class TalkingToController {
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'))
     @Post('admin/texts')
-    async updateText(@Request() req, @Body() body: { id: string, content: string }) {
+    async updateText(@Request() req, @Body() body: { id?: string, content: string, key?: string, group?: string, description?: string }) {
         if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
             throw new UnauthorizedException('Acesso restrito a administradores');
         }
-        return this.prisma.talkingToMessage.update({
-            where: { id: body.id },
-            data: { content: body.content }
+
+        // CREATE OR UPDATE
+        if (body.id) {
+            return this.prisma.talkingToMessage.update({
+                where: { id: body.id },
+                data: { content: body.content }
+            });
+        } else {
+            // Create Logic
+            return this.prisma.talkingToMessage.create({
+                data: {
+                    key: body.key || `CUSTOM_${Date.now()}`,
+                    group: body.group || 'GENERAL',
+                    description: body.description,
+                    content: body.content
+                }
+            });
+        }
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Delete('admin/texts/:id')
+    async deleteText(@Request() req, @Param('id') id: string) {
+        if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
+            throw new UnauthorizedException('Acesso restrito a administradores');
+        }
+        return this.prisma.talkingToMessage.delete({
+            where: { id }
         });
     }
 

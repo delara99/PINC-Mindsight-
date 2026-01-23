@@ -3,21 +3,29 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 import { useAuthStore } from '@/src/store/auth-store';
-import { Sparkles, Save, Search, RefreshCw, Database, Layers, BrainCircuit, Type } from 'lucide-react';
+import { Sparkles, Save, Search, RefreshCw, Database, Layers, BrainCircuit, Type, Plus, Trash2, X } from 'lucide-react';
 
 export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
-    // Only fetch if tab is active to save resources? 
-    // Or fetch once. Let's keep it simple.
-
     const token = useAuthStore((state) => state.token);
     const [loading, setLoading] = useState(true);
     const [texts, setTexts] = useState<any[]>([]);
     const [filter, setFilter] = useState('');
     const [textTypeFilter, setTextTypeFilter] = useState('ALL'); // DIMENSION, FINE_TUNED
+
+    // Editing State
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
     const [saving, setSaving] = useState(false);
     const [seeding, setSeeding] = useState(false);
+
+    // Creating State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newTextData, setNewTextData] = useState({
+        key: '',
+        group: 'FINE_TUNED',
+        description: '',
+        content: ''
+    });
 
     useEffect(() => {
         if (token && isActive) {
@@ -75,6 +83,35 @@ export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
         }
     };
 
+    const handleCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await axios.post(`${API_URL}/api/v1/talking-to/admin/texts`, newTextData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setIsModalOpen(false);
+            setNewTextData({ key: '', group: 'FINE_TUNED', description: '', content: '' });
+            fetchTexts();
+            alert('Texto criado com sucesso!');
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao criar texto.');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Tem certeza que deseja excluir este texto permanentemente?')) return;
+        try {
+            await axios.delete(`${API_URL}/api/v1/talking-to/admin/texts/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setTexts(texts.filter(t => t.id !== id));
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao excluir texto.');
+        }
+    };
+
     const filteredTexts = texts.filter(t =>
         (textTypeFilter === 'ALL' || t.group === textTypeFilter) &&
         (t.key.toLowerCase().includes(filter.toLowerCase()) ||
@@ -91,7 +128,7 @@ export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
     if (!isActive) return null;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
             {/* Controls */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
@@ -129,9 +166,16 @@ export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
                         onClick={handleSeed}
                         disabled={seeding || !token}
                         className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50 whitespace-nowrap"
+                        title="Restaurar Padrões"
                     >
                         <RefreshCw size={18} className={seeding ? "animate-spin" : ""} />
-                        <span className="hidden md:inline">Sincronizar</span>
+                    </button>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200 whitespace-nowrap"
+                    >
+                        <Plus size={18} />
+                        Novo Texto
                     </button>
                 </div>
             </div>
@@ -143,12 +187,12 @@ export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
                 <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
                     <Database className="mx-auto h-12 w-12 text-slate-300 mb-3" />
                     <h3 className="text-lg font-medium text-slate-900">Nenhum texto encontrado</h3>
-                    <p className="text-slate-500">Tente sincronizar para inicializar o banco.</p>
+                    <p className="text-slate-500">Tente sincronizar para inicializar o banco ou crie um novo.</p>
                 </div>
             ) : (
                 <div className="grid gap-6">
                     {filteredTexts.map((text) => (
-                        <div key={text.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div key={text.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
                             <div className="p-6">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
@@ -166,15 +210,24 @@ export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
                                     </div>
 
                                     {!editingId || editingId !== text.id ? (
-                                        <button
-                                            onClick={() => {
-                                                setEditingId(text.id);
-                                                setEditContent(text.content);
-                                            }}
-                                            className="text-sm font-bold text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-lg transition-colors"
-                                        >
-                                            Editar
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingId(text.id);
+                                                    setEditContent(text.content);
+                                                }}
+                                                className="text-sm font-bold text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-lg transition-colors"
+                                            >
+                                                Editar
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(text.id)}
+                                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Excluir Texto"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     ) : null}
                                 </div>
 
@@ -210,6 +263,77 @@ export default function TalkingToTextsTab({ isActive }: { isActive: boolean }) {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Create Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-800">Novo Texto / Interpretação</h3>
+                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <X size={20} className="text-slate-500" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreate} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Chave Única (Key)</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="EX: HIGH_E_BOSS"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none uppercase font-mono text-sm"
+                                        value={newTextData.key}
+                                        onChange={e => setNewTextData({ ...newTextData, key: e.target.value.toUpperCase().replace(/\s+/g, '_') })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Grupo</label>
+                                    <select
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                        value={newTextData.group}
+                                        onChange={e => setNewTextData({ ...newTextData, group: e.target.value })}
+                                    >
+                                        <option value="FINE_TUNED">Interpretação Fina (Regras)</option>
+                                        <option value="DIMENSION">Dimensão (Ocean Padrão)</option>
+                                        <option value="UI_TEXT">Texto de Interface</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição (Admin)</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ex: Texto para perfil Líder Extrovertido"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                    value={newTextData.description}
+                                    onChange={e => setNewTextData({ ...newTextData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Conteúdo da Interpretação</label>
+                                <textarea
+                                    required
+                                    className="w-full h-40 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed"
+                                    value={newTextData.content}
+                                    onChange={e => setNewTextData({ ...newTextData, content: e.target.value })}
+                                ></textarea>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200"
+                            >
+                                Criar Texto
+                            </button>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

@@ -1,13 +1,32 @@
 'use client';
 import { useState } from 'react';
+import axios from 'axios';
+import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '@/src/store/auth-store';
 import { Play, RotateCcw, Activity, FileText, BarChart3, BrainCircuit } from 'lucide-react';
 
 export default function TalkingToSimulatorTab({ isActive }: { isActive: boolean }) {
+    const token = useAuthStore((state) => state.token);
     const [inputs, setInputs] = useState({
         O: 50, C: 50, E: 50, A: 50, N: 50
     });
     const [result, setResult] = useState<any>(null);
     const [simulating, setSimulating] = useState(false);
+
+    const handleSimulate = async () => {
+        setSimulating(true);
+        try {
+            const res = await axios.post(`${API_URL}/api/v1/talking-to/admin/rules/simulate`, inputs, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setResult(res.data);
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao conectar com o Motor de Regras. Verifique se o servidor está online.');
+        } finally {
+            setSimulating(false);
+        }
+    };
 
     if (!isActive) return null;
 
@@ -54,11 +73,12 @@ export default function TalkingToSimulatorTab({ isActive }: { isActive: boolean 
                         <RotateCcw size={16} className="mx-auto" />
                     </button>
                     <button
-                        onClick={() => { setSimulating(true); setTimeout(() => setSimulating(false), 1000); setResult(true); }}
-                        className="flex-[3] flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        onClick={handleSimulate}
+                        disabled={simulating}
+                        className="flex-[3] flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
                     >
                         {simulating ? <Activity className="animate-spin" /> : <Play size={18} fill="currentColor" />}
-                        Simular Análise
+                        {simulating ? 'Processando...' : 'Simular Análise'}
                     </button>
                 </div>
             </div>
@@ -73,14 +93,17 @@ export default function TalkingToSimulatorTab({ isActive }: { isActive: boolean 
                 ) : (
                     <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-500">
                         {/* Summary Cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                                 <p className="text-xs font-bold text-slate-400 uppercase">Regras Ativadas</p>
-                                <p className="text-2xl font-bold text-slate-800">12</p>
+                                <p className="text-2xl font-bold text-slate-800">{result.matchesCount}</p>
                             </div>
-                            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                                <p className="text-xs font-bold text-slate-400 uppercase">Perfil Detectado</p>
-                                <p className="text-sm font-bold text-purple-600 mt-1">Líder Estratégico</p>
+                            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm col-span-2 lg:col-span-3">
+                                <p className="text-xs font-bold text-slate-400 uppercase">Status do Motor</p>
+                                <p className="text-sm font-bold text-green-600 mt-1 flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    Online e Processando Lógica
+                                </p>
                             </div>
                         </div>
 
@@ -92,31 +115,29 @@ export default function TalkingToSimulatorTab({ isActive }: { isActive: boolean 
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-800">Resultado da Simulação</h3>
-                                    <p className="text-sm text-slate-500">Baseado nas regras ativas atualmente (Snapshot da Memória)</p>
+                                    <p className="text-sm text-slate-500">Regras que dispararam para este perfil de input.</p>
                                 </div>
                             </div>
 
                             <div className="space-y-6">
-                                <div>
-                                    <h4 className="font-bold text-slate-700 text-sm mb-2 flex items-center gap-2">
-                                        <BarChart3 size={14} className="text-slate-400" />
-                                        Dimensão Dominante: Extroversão (High)
-                                    </h4>
-                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-600 leading-relaxed text-sm">
-                                        [SIMULAÇÃO] O perfil indica uma alta tendência à extroversão, buscando ativamente interações sociais e demonstrando assertividade em contextos de grupo.
+                                {result.matches.length === 0 ? (
+                                    <div className="text-center text-slate-500 py-8">
+                                        Nenhuma regra foi disparada para esta combinação. Tente ajustar os scores.
                                     </div>
-                                </div>
-
-                                <div>
-                                    <h4 className="font-bold text-slate-700 text-sm mb-2 flex items-center gap-2">
-                                        <BrainCircuit size={14} className="text-slate-400" />
-                                        Análise Combinatória (TalkingTO Rules)
-                                    </h4>
-                                    <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 text-slate-700 leading-relaxed text-sm">
-                                        <strong>Regra #24 (Ouvinte Seletivo):</strong> Ativada.<br />
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                    </div>
-                                </div>
+                                ) : (
+                                    result.matches.map((match: any) => (
+                                        <div key={match.id}>
+                                            <h4 className="font-bold text-slate-700 text-sm mb-2 flex items-center gap-2">
+                                                <BrainCircuit size={14} className="text-purple-500" />
+                                                {match.name}
+                                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider">{match.domain}</span>
+                                            </h4>
+                                            <div className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 text-slate-700 leading-relaxed text-sm whitespace-pre-line">
+                                                {match.message || <em className="text-slate-400">Sem conteúdo definido na mensagem associada.</em>}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>
