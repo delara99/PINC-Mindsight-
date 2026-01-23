@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, Lock, Building2, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Building2, User, Home } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 
@@ -83,8 +83,11 @@ function BusinessLoginForm() {
             {/* Lado Esquerdo - Branding */}
             <div className={`hidden md:flex w-1/2 bg-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden transition-colors duration-500 ${mode === 'candidate' ? 'bg-indigo-900' : 'bg-slate-900'}`}>
                 <div className="relative z-10">
-                    <Link href="/business" className="text-2xl font-bold tracking-tight mb-2 inline-block hover:text-slate-300 transition-colors">{"<--"} Voltar para home</Link>
-                    <p className="text-slate-400 text-sm">Plataforma de Inteligência Comportamental</p>
+                    <Link href="/business" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white text-sm font-medium transition-all hover:scale-105">
+                        <Home size={16} />
+                        Voltar para Home
+                    </Link>
+                    <p className="text-slate-400 text-sm mt-4">Plataforma de Inteligência Comportamental</p>
                 </div>
 
                 <div className="relative z-10 max-w-lg">
