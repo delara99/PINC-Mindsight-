@@ -8,16 +8,14 @@ interface TalkingToReportProps {
     reportData: any;
     userName: string;
     onDownloadPdf?: () => void;
-    isAdmin?: boolean; // Se for admin/gestor, mostra opções extras
+    isAdmin?: boolean;
 }
 
 export default function TalkingToReport({ reportData, userName, onDownloadPdf, isAdmin }: TalkingToReportProps) {
     const [seeding, setSeeding] = useState(false);
 
-    // Preparar dados
     const { calculatedScores } = reportData;
     const scores = calculatedScores?.scores || [];
-    const advancedSections = calculatedScores?.interpretationSections || [];
 
     // Dados para o Radar Chart
     const radarData = scores.map((s: any) => ({
@@ -26,7 +24,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         fullMark: 100,
     }));
 
-    // Verificar se faltam textos (para mostrar botão de reparo)
     const missingTexts = scores.some((s: any) => !s.interpretation && !s.customTexts);
 
     const handleRepair = async () => {
@@ -113,7 +110,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                 {/* Coluna Direita: Cards dos Traits (Resumo) */}
                 <div className="lg:col-span-2 grid sm:grid-cols-2 gap-4 h-fit">
                     {scores.map((trait: any) => (
-                        <div key={trait.key} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                        <div key={trait.key} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group h-full">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-lg ${getTraitColor(trait.key, 'bg')}`}>
@@ -129,7 +126,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                 <span className="text-2xl font-black text-slate-900">{trait.score}</span>
                             </div>
 
-                            {/* Barra de Progresso */}
                             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
                                 <div
                                     className={`h-full rounded-full transition-all duration-1000 ${getTraitColor(trait.key, 'fill')}`}
@@ -138,7 +134,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                             </div>
 
                             <p className="text-xs text-slate-500 leading-relaxed text-justify mt-2">
-                                {trait.customTexts?.text_interpretation || trait.interpretation || "Análise detalhada disponível abaixo."}
+                                {trait.customTexts?.text_interpretation || trait.interpretation || <span className="text-slate-400 italic">Interpretação não disponível.</span>}
                             </p>
                         </div>
                     ))}
@@ -185,32 +181,22 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                     </div>
                                 )}
 
-                                {/* Facetas em Grid (Com Fallback Robusto) */}
-                                {(() => {
-                                    // Validar se existem facetas E se elas têm nome preenchido
-                                    // Evita mostrar facetas vazias que vêm do banco como {}
-                                    const hasValidFacets = trait.facets && trait.facets.length > 0 && trait.facets[0].name;
-
-                                    const facetsToShow = hasValidFacets
-                                        ? trait.facets
-                                        : getDefaultFacets(trait.key, trait.score);
-
-                                    return (
-                                        <div className="mt-8 pt-6 border-t border-slate-100">
-                                            <h5 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Facetas Detalhadas</h5>
-                                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {facetsToShow.map((facet: any, idx: number) => (
-                                                    <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                        <span className="text-sm font-medium text-slate-700">{facet.name || `Faceta ${idx + 1}`}</span>
-                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${getLevelColor(facet.level)}`}>
-                                                            {getLevelLabel(facet.level)}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                {/* Facetas em Grid (SEM FALLBACK) */}
+                                {trait.facets && trait.facets.length > 0 && (
+                                    <div className="mt-8 pt-6 border-t border-slate-100">
+                                        <h5 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Facetas Detalhadas</h5>
+                                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {trait.facets.map((facet: any, idx: number) => (
+                                                <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                    <span className="text-sm font-medium text-slate-700">{facet.name}</span>
+                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${getLevelColor(facet.level)}`}>
+                                                        {getLevelLabel(facet.level)}
+                                                    </span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    );
-                                })()}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -220,41 +206,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     );
 }
 
-// --- Helpers ---
-
-function getDefaultFacets(traitKey: string, score: number) {
-    // Calcula níveis aproximados baseados no score principal
-    // Varia um pouco para parecer natural
-    const l1 = Math.min(100, Math.max(0, score + (Math.random() * 10 - 5)));
-    const l2 = Math.min(100, Math.max(0, score + (Math.random() * 15 - 7)));
-    const l3 = Math.min(100, Math.max(0, score + (Math.random() * 20 - 10)));
-
-    // Converte número para label
-    const getLvl = (s: number) => {
-        if (s >= 75) return 'VERY_HIGH';
-        if (s >= 60) return 'HIGH';
-        if (s >= 40) return 'AVERAGE';
-        if (s >= 25) return 'LOW';
-        return 'VERY_LOW';
-    };
-
-    const facetsMap: Record<string, string[]> = {
-        'OPENNESS': ['Imaginação', 'Interesse Artístico', 'Emocionalidade', 'Aventura', 'Intelecto', 'Liberalismo'],
-        'CONSCIENTIOUSNESS': ['Autoeficácia', 'Ordem', 'Dever', 'Esforço', 'Autodisciplina', 'Cautela'],
-        'EXTRAVERSION': ['Acolhimento', 'Gregarismo', 'Assertividade', 'Atividade', 'Busca de Emoção', 'Emoções Positivas'],
-        'AGREEABLENESS': ['Confiança', 'Moralidade', 'Altruísmo', 'Cooperação', 'Modéstia', 'Sensibilidade'],
-        'NEUROTICISM': ['Ansiedade', 'Hostilidade', 'Depressão', 'Autoconsciência', 'Impulsividade', 'Vulnerabilidade']
-    };
-
-    const names = facetsMap[traitKey] || ['Faceta 1', 'Faceta 2', 'Faceta 3'];
-
-    // Retorna apenas 3 facetas aleatórias para não poluir
-    return [
-        { name: names[0], level: getLvl(l1) },
-        { name: names[1], level: getLvl(l2) },
-        { name: names[2], level: getLvl(l3) }
-    ];
-}
+// --- Helpers (Sem getDefaultFacets) ---
 
 function mapTraitToLabel(key: string) {
     const map: Record<string, string> = {
