@@ -297,20 +297,32 @@ export default function TalkingToRulesTab({ isActive }: { isActive: boolean }) {
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Mensagem Associada</label>
-                                <select
-                                    required
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    value={formData.messageId}
-                                    onChange={e => setFormData({ ...formData, messageId: e.target.value })}
-                                >
-                                    <option value="">Selecione uma mensagem...</option>
-                                    {messages.map(m => (
-                                        <option key={m.id} value={m.id}>
-                                            {m.key} - {m.description?.substring(0, 50)}...
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-slate-500 mt-1">Crie novas mensagens na aba "Biblioteca de Conteúdo".</p>
+                                {messages.length === 0 ? (
+                                    <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm mb-2">
+                                        <div className="font-bold flex items-center gap-2">
+                                            <AlertCircle size={16} /> Nenhuma mensagem encontrada
+                                        </div>
+                                        <div className="mt-1">
+                                            Você precisa ter mensagens cadastradas para criar uma regra.
+                                            Vá na aba <strong>Estrutura do Modelo</strong> e clique em <em>Restaurar Padrão</em> ou crie manualmente na <strong>Biblioteca de Conteúdo</strong>.
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <select
+                                        required
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={formData.messageId}
+                                        onChange={e => setFormData({ ...formData, messageId: e.target.value })}
+                                    >
+                                        <option value="">Selecione uma mensagem...</option>
+                                        {messages.map(m => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.key} - {m.description?.substring(0, 50)}...
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                                <p className="text-xs text-slate-500 mt-1">A regra associará essa mensagem de texto quando as condições forem atendidas.</p>
                             </div>
 
                             <div>

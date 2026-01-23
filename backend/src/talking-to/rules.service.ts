@@ -1,5 +1,5 @@
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -17,30 +17,53 @@ export class TalkingToRulesService {
 
     async create(data: any) {
         // Data should include: name, description, domain, conditions (JSON), messageId (or create new message)
-        return this.prisma.talkingToRule.create({
-            data: {
-                name: data.name,
-                description: data.description,
-                domain: data.domain,
-                priority: data.priority || 1,
-                conditions: data.conditions,
-                isActive: data.isActive ?? true,
-                message: {
-                    connect: { id: data.messageId }
+        if (!data.messageId) {
+            throw new BadRequestException("É necessário selecionar uma Mensagem para criar a regra.");
+        }
+
+        try {
+            return await this.prisma.talkingToRule.create({
+                data: {
+                    name: data.name,
+                    description: data.description,
+                    domain: data.domain,
+                    priority: data.priority || 1,
+                    conditions: data.conditions,
+                    isActive: data.isActive ?? true,
+                    message: {
+                        connect: { id: data.messageId }
+                    }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error("Error creating rule:", error);
+            throw new ServiceUnavailableException("Erro ao salvar regra no banco de dados.");
+        }
     }
 
     async update(id: string, data: any) {
-        return this.prisma.talkingToRule.update({
-            where: { id },
-            data
-        });
+        if (data.messageId === '') {
+            throw new BadRequestException("A Mensagem não pode ser vazia.");
+        }
+
+        try {
+            return await this.prisma.talkingToRule.update({
+                where: { id },
+                data
+            });
+        } catch (error) {
+            console.error("Error updating rule:", error);
+            throw new ServiceUnavailableException("Erro ao atualizar regra.");
+        }
     }
 
     async delete(id: string) {
-        return this.prisma.talkingToRule.delete({ where: { id } });
+        try {
+            return await this.prisma.talkingToRule.delete({ where: { id } });
+        } catch (error) {
+            console.error("Error deleting rule:", error);
+            throw error;
+        }
     }
 
     // --- ENGINE ---
