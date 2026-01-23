@@ -1,10 +1,10 @@
 
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { TalkingToRulesService } from './rules.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('talking-to/admin/rules')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard('jwt'))
 export class TalkingToRulesController {
     constructor(private readonly service: TalkingToRulesService) { }
 
