@@ -77,8 +77,10 @@ export class ConnectionsService {
             return { error: 'Scores não encontrados.' };
         }
 
-        const myAnalysis = this.talkingToService.analyzeProfile(myScores);
-        const partnerAnalysis = this.talkingToService.analyzeProfile(partnerScores);
+        const [myAnalysis, partnerAnalysis] = await Promise.all([
+            this.talkingToService.analyzeProfile(myScores),
+            this.talkingToService.analyzeProfile(partnerScores)
+        ]);
 
         // Prepare Radar Data (Normalized)
         const dimensionsMap: Record<string, string> = {
