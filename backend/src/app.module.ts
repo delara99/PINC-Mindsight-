@@ -21,6 +21,7 @@ import { PaymentModule } from './payment/payment.module';
 import { InterpretationModule } from './interpretation/interpretation.module';
 import { TalkingToModule } from './talking-to/talking-to.module';
 import { BusinessModule } from './business/business.module';
+import { CalculationEngineModule } from './calculation-engine/calculation-engine.module';
 import { SeedController } from './admin/seed.controller';
 
 @Module({
@@ -43,7 +44,8 @@ import { SeedController } from './admin/seed.controller';
         PaymentModule,
         InterpretationModule,
         TalkingToModule,
-        BusinessModule
+        BusinessModule,
+        CalculationEngineModule
     ],
     controllers: [SeedController],
     providers: [

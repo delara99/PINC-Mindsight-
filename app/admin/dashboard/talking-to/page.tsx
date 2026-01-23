@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuthStore } from '@/src/store/auth-store';
-import { Sparkles, Database, BrainCircuit, Activity, Layers } from 'lucide-react';
+import { Sparkles, Database, BrainCircuit, Activity, Layers, Home } from 'lucide-react';
 
 // Import Modular Tabs
 import TalkingToTextsTab from './tabs/TalkingToTextsTab';
@@ -27,6 +28,15 @@ export default function TalkingToManager() {
                         <p className="text-slate-500 mt-1 max-w-2xl">
                             Central de controle PINC: Gerencie regras, calibrações e conteúdo.
                         </p>
+                    </div>
+                    <div>
+                        <Link
+                            href="/dashboard"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-sm font-medium transition-all hover:scale-105 shadow-sm"
+                        >
+                            <Home size={16} />
+                            Voltar para o Painel
+                        </Link>
                     </div>
                 </div>
 

@@ -92,6 +92,10 @@ model User {
   lastActivityAt DateTime? @map("last_activity_at")
   lastPage String? @map("last_page")
 
+  // Calculation Engine Relations
+  calculationAudits      CalculationConfigAudit[]
+  calculationSimulations CalculationSimulation[]
+
   @@map("users")
 }
 
@@ -968,4 +972,141 @@ model TalkingToValidationLog {
   createdAt DateTime @default(now())
 
   @@map("talking_to_validation_logs")
+}
+// Adicionar ao final do schema.prisma
+
+// ============================================
+// MOTOR DE CÁLCULO - Configuração Editável
+// ============================================
+
+// Configuração de Mapeamento de Questões para Dimensões
+model CalculationQuestionMapping {
+  id          String   @id @default(uuid())
+  
+  // Identificação da Questão
+  questionId  Int      // ID da questão (1-50)
+  questionText String? // Texto da questão (opcional, para referência)
+  
+  // Mapeamento para Dimensão
+  dimension   String   // "O", "C", "E", "A", "N"
+  facet       String?  // Faceta específica (opcional)
+  
+  // Configuração de Peso e Inversão
+  weight      Float    @default(1.0)  // Peso da questão no cálculo
+  isReversed  Boolean  @default(false) // Se true, inverte o score (6 - valor)
+  
+  // Metadados
+  description String?  // Explicação do porquê desse mapeamento
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([questionId, dimension])
+  @@map("calculation_question_mappings")
+}
+
+// Configuração de Fórmulas de Cálculo
+model CalculationFormula {
+  id          String   @id @default(uuid())
+  
+  // Identificação
+  name        String   @unique // "BIG_FIVE_OCEAN", "FACET_EXTRAVERSION", etc.
+  type        String   // "DIMENSION", "FACET", "CUSTOM"
+  dimension   String?  // "O", "C", "E", "A", "N" (se aplicável)
+  
+  // Fórmula em JSON
+  // Ex: { "type": "AVERAGE", "questions": [1,6,11,16,21,26,31,36,41,46], "reversed": [6,26,36] }
+  formula     Json
+  
+  // Configurações
+  minValue    Float    @default(0)
+  maxValue    Float    @default(100)
+  precision   Int      @default(2) // Casas decimais
+  
+  // Documentação
+  description String?  @db.Text // Explicação detalhada da fórmula
+  example     String?  @db.Text // Exemplo de cálculo
+  
+  // Controle
+  isActive    Boolean  @default(true)
+  version     Int      @default(1)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("calculation_formulas")
+}
+
+// Configuração de Classificações (Ranges)
+model CalculationClassification {
+  id          String   @id @default(uuid())
+  
+  // Identificação
+  dimension   String   // "O", "C", "E", "A", "N"
+  level       String   // "LOW", "AVG", "HIGH", "FLEX"
+  
+  // Range de Valores
+  minScore    Float    // Ex: 0
+  maxScore    Float    // Ex: 35
+  
+  // Labels
+  label       String   // "Introvertido", "Extrovertido", etc.
+  description String?  @db.Text
+  color       String?  // Cor para visualização
+  
+  // Controle
+  isActive    Boolean  @default(true)
+  priority    Int      @default(1) // Ordem de avaliação
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([dimension, level])
+  @@map("calculation_classifications")
+}
+
+// Log de Mudanças nas Configurações
+model CalculationConfigAudit {
+  id          String   @id @default(uuid())
+  
+  // Identificação
+  entityType  String   // "FORMULA", "MAPPING", "CLASSIFICATION"
+  entityId    String   // ID do registro alterado
+  
+  // Mudança
+  action      String   // "CREATE", "UPDATE", "DELETE"
+  oldValue    Json?    // Valor anterior
+  newValue    Json?    // Novo valor
+  
+  // Quem alterou
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Metadados
+  reason      String?  // Motivo da mudança
+  createdAt   DateTime @default(now())
+  
+  @@map("calculation_config_audits")
+}
+
+// Simulador de Cálculo (para testes)
+model CalculationSimulation {
+  id          String   @id @default(uuid())
+  
+  // Inputs
+  name        String   // Nome da simulação
+  inputs      Json     // Respostas simuladas { "1": 5, "2": 3, ... }
+  
+  // Outputs
+  results     Json     // Scores calculados
+  steps       Json?    // Passo a passo do cálculo
+  
+  // Controle
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("calculation_simulations")
 }
