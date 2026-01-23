@@ -1,16 +1,28 @@
 
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Lock, Building2, User } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 
 export default function BusinessLoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [mode, setMode] = useState<'company' | 'candidate'>('company');
     const [loading, setLoading] = useState(false);
+
+    // Detectar query parameter ?tab
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'candidate') {
+            setMode('candidate');
+        } else if (tab === 'company') {
+            setMode('company');
+        }
+    }, [searchParams]);
 
     // Form States
     const [email, setEmail] = useState('');
@@ -99,6 +111,11 @@ export default function BusinessLoginPage() {
             {/* Lado Direito - Form */}
             <div className="flex-1 flex flex-col justify-center items-center p-6 bg-white">
                 <div className="w-full max-w-md space-y-8">
+                    {/* Logo PINC */}
+                    <div className="flex justify-center mb-6">
+                        <Image src="/pinc-logo.png" alt="PINC" width={120} height={45} className="object-contain" />
+                    </div>
+
                     {/* Toggle Mode */}
                     <div className="bg-slate-100 p-1 rounded-xl flex mb-8">
                         <button
@@ -160,9 +177,6 @@ export default function BusinessLoginPage() {
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
-                                    <div className="flex justify-end">
-                                        <a href="#" className="text-xs font-semibold text-slate-500 hover:text-slate-800">Esqueceu a senha?</a>
-                                    </div>
                                 </div>
                             </>
                         ) : (
@@ -187,12 +201,6 @@ export default function BusinessLoginPage() {
                             {loading ? 'Entrando...' : (<>{mode === 'company' ? 'Acessar Painel' : 'Acessar Avaliação'} <Lock size={16} opacity={0.5} /></>)}
                         </button>
                     </form>
-
-                    <div className="text-center pt-4 border-t border-slate-100">
-                        <p className="text-sm text-slate-500">
-                            Ainda não tem conta corporativa? <Link href="/business" className="text-slate-900 font-bold hover:underline">Saiba mais</Link>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>

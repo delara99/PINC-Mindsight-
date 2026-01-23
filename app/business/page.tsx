@@ -1,7 +1,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, BarChart3, Users, Lock, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, CheckCircle2, BarChart3, Users, Lock, ShieldCheck, Home } from 'lucide-react';
 
 export default function BusinessLandingPage() {
     return (
@@ -9,21 +10,20 @@ export default function BusinessLandingPage() {
             {/* HERDER */}
             <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        {/* Logo Placeholder - PINC */}
-                        <div className="bg-slate-900 text-white p-1 rounded font-bold text-xl tracking-tight">PINC</div>
-                        <span className="text-sm font-semibold text-slate-500 uppercase tracking-widest border-l border-slate-300 pl-3 ml-2">Business</span>
-                    </div>
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
                         <a href="#solucoes" className="hover:text-slate-900 transition-colors">Soluções</a>
                         <a href="#metodologia" className="hover:text-slate-900 transition-colors">Metodologia</a>
                         <a href="#planos" className="hover:text-slate-900 transition-colors">Planos Enterprise</a>
                     </nav>
                     <div className="flex items-center gap-4">
-                        <Link href="/business/login" className="text-sm font-bold text-slate-700 hover:text-slate-900 px-4 py-2">
+                        <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-slate-900 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all">
+                            <Home size={16} />
+                            Voltar para Home
+                        </Link>
+                        <Link href="/business/login?tab=candidate" className="text-sm font-bold text-slate-700 hover:text-slate-900 px-4 py-2">
                             Área do Candidato
                         </Link>
-                        <Link href="/business/login" className="bg-slate-900 hover:bg-black text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                        <Link href="/business/login?tab=company" className="bg-slate-900 hover:bg-black text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
                             Acesso RH
                         </Link>
                     </div>
@@ -50,9 +50,6 @@ export default function BusinessLandingPage() {
                             <Link href="/business/login" className="inline-flex justify-center items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-black transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
                                 Começar Agora <ArrowRight size={18} />
                             </Link>
-                            <a href="#demo" className="inline-flex justify-center items-center gap-2 bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 transition-all">
-                                Agendar Demo
-                            </a>
                         </div>
                         <div className="mt-10 flex items-center gap-6 text-sm text-slate-500 font-medium">
                             <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-green-500" /> Compliance LGPD</div>
@@ -132,9 +129,6 @@ export default function BusinessLandingPage() {
                         <Link href="/business/login" className="bg-white text-slate-900 px-10 py-4 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all shadow-lg hover:shadow-white/20">
                             Acessar Plataforma
                         </Link>
-                        <button className="bg-transparent border border-slate-700 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 transition-all">
-                            Falar com Consultor
-                        </button>
                     </div>
                 </div>
             </section>
