@@ -1,6 +1,6 @@
 
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -8,7 +8,7 @@ import { Eye, EyeOff, Lock, Building2, User } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 
-export default function BusinessLoginPage() {
+function BusinessLoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [mode, setMode] = useState<'company' | 'candidate'>('company');
@@ -204,5 +204,13 @@ export default function BusinessLoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function BusinessLoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50">Carregando...</div>}>
+            <BusinessLoginForm />
+        </Suspense>
     );
 }
