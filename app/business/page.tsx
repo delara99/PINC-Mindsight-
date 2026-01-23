@@ -10,6 +10,10 @@ export default function BusinessLandingPage() {
             {/* HERDER */}
             <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Image src="/pinc-logo.png" alt="PINC" width={80} height={30} className="object-contain" />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">| Business</span>
+                    </div>
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
                         <a href="#solucoes" className="hover:text-slate-900 transition-colors">Soluções</a>
                         <a href="#metodologia" className="hover:text-slate-900 transition-colors">Metodologia</a>
