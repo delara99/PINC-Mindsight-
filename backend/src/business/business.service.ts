@@ -173,6 +173,8 @@ export class BusinessService {
 
     // --- REPORTS ---
     async getAllReports(tenantId: string) {
+        console.log(`[getAllReports] Buscando relatórios para tenant: ${tenantId}`);
+
         const reports = await this.prisma.assessmentAssignment.findMany({
             where: {
                 user: { tenantId },
@@ -189,6 +191,17 @@ export class BusinessService {
             },
             orderBy: { completedAt: 'desc' }
         });
+
+        console.log(`[getAllReports] Encontrados ${reports.length} relatórios`);
+
+        if (reports.length > 0) {
+            console.log(`[getAllReports] Exemplo do primeiro:`, {
+                userId: reports[0].user.id,
+                userName: reports[0].user.name,
+                assessmentTitle: reports[0].assessment.title,
+                status: reports[0].status
+            });
+        }
 
         return reports.map(r => ({
             reportId: r.id,
