@@ -21,6 +21,7 @@ import { PaymentModule } from './payment/payment.module';
 import { InterpretationModule } from './interpretation/interpretation.module';
 import { TalkingToModule } from './talking-to/talking-to.module';
 import { BusinessModule } from './business/business.module';
+import { SeedController } from './admin/seed.controller';
 
 @Module({
     imports: [
@@ -44,7 +45,7 @@ import { BusinessModule } from './business/business.module';
         TalkingToModule,
         BusinessModule
     ],
-    controllers: [],
+    controllers: [SeedController],
     providers: [
         {
             provide: APP_INTERCEPTOR,

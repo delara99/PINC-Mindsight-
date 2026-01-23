@@ -83,7 +83,7 @@ function BusinessLoginForm() {
             {/* Lado Esquerdo - Branding */}
             <div className={`hidden md:flex w-1/2 bg-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden transition-colors duration-500 ${mode === 'candidate' ? 'bg-indigo-900' : 'bg-slate-900'}`}>
                 <div className="relative z-10">
-                    <Link href="/business" className="text-2xl font-bold tracking-tight mb-2 inline-block">PINC Business</Link>
+                    <Link href="/business" className="text-2xl font-bold tracking-tight mb-2 inline-block hover:text-slate-300 transition-colors">{"<--"} Voltar para home</Link>
                     <p className="text-slate-400 text-sm">Plataforma de Inteligência Comportamental</p>
                 </div>
 
