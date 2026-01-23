@@ -23,9 +23,9 @@ export default function TalkingToManager() {
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                             <Sparkles size={14} /> Motor de Inteligência v2.0
                         </div>
-                        <h1 className="text-3xl font-bold text-slate-900">Psychometric Engine</h1>
+                        <h1 className="text-3xl font-bold text-slate-900">Motor PINC</h1>
                         <p className="text-slate-500 mt-1 max-w-2xl">
-                            Central de controle da IA Psicológica. Gerencie regras, calibrações e conteúdo.
+                            Central de controle PINC: Gerencie regras, calibrações e conteúdo.
                         </p>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, UnauthorizedException, Param, Res, Delete } from '@nestjs/common';
 import { TalkingToService, TalkingToInput } from './talking-to.service';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
 import { PdfService } from '../reports/pdf.service';
@@ -17,7 +17,7 @@ export class TalkingToController {
 
     // --- ADMIN ENDPOINTS (Gerenciamento do Motor) ---
 
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     @Get('admin/texts')
     async getAllTexts(@Request() req) {
         // TODO: Mover validação de admin para Guard
@@ -29,8 +29,7 @@ export class TalkingToController {
         });
     }
 
-    @UseGuards(AuthGuard('jwt'))
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     @Post('admin/texts')
     async updateText(@Request() req, @Body() body: { id?: string, content: string, key?: string, group?: string, description?: string }) {
         if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {

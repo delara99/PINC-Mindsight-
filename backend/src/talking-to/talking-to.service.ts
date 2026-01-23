@@ -142,7 +142,11 @@ export class TalkingToService {
             if (facetLabels.length > 0) {
                 // Montar chave de busca: EXTRAVERSION_FALANTE_INTERATIVO...
                 // IMPORTANTE: A ordem dos labels influencia a chave.
-                const signature = facetLabels.join('_').toUpperCase(); // Padronizar caixa alta
+                // Remover acentos e padronizar caixa alta
+                const signature = facetLabels
+                    .map(l => l.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))
+                    .join('_')
+                    .toUpperCase();
 
                 // Buscar texto no Banco (TalkingToMessage)
                 // Chave esperada: TRAIT_LABEL1_LABEL2...

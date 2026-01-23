@@ -1,12 +1,17 @@
 
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { TalkingToRulesService } from './rules.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('talking-to/admin/rules')
+@UseGuards(JwtAuthGuard)
 export class TalkingToRulesController {
     constructor(private readonly service: TalkingToRulesService) { }
 
     private checkAdmin(req) {
+        if (!req.user) {
+            throw new UnauthorizedException('Usuário não autenticado');
+        }
         if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
             throw new UnauthorizedException('Acesso restrito a administradores');
         }
