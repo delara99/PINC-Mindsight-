@@ -7,10 +7,13 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { ScoreCalculationService } from '../reports/score-calculation.service';
 import { PdfService } from '../reports/pdf.service';
 
+import { TalkingToStructureController } from './structure.controller';
+import { TalkingToStructureService } from './structure.service';
+
 @Module({
     imports: [PrismaModule],
-    controllers: [TalkingToController, TalkingToRulesController],
-    providers: [TalkingToService, TalkingToRulesService, ScoreCalculationService, PdfService],
+    controllers: [TalkingToController, TalkingToRulesController, TalkingToStructureController],
+    providers: [TalkingToService, TalkingToRulesService, TalkingToStructureService, ScoreCalculationService, PdfService],
     exports: [TalkingToService]
 })
 export class TalkingToModule { }

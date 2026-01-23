@@ -918,8 +918,14 @@ model TalkingToRule {
 // (Opcional) Metadados para o Editor Visual funcionar melhor
 model TalkingToDimension {
   id       String @id @default(uuid())
-  key      String @unique // "E", "N", "A"...
-  name     String // "Extroversão"
+  key      String @unique // "E", "N", "A", "O", "C"
+  name     String // "EXTROVERSÃO"
+  
+  // Colunas do Excel
+  dichotomy      String? // "Introversão-Extroversão"
+  questionTraitLow  String? // "INTROVERTIDO"
+  questionTraitHigh String? // "EXTROVERTIDO"
+  
   minRange Float  @default(0)
   maxRange Float  @default(100)
   color    String @default("#000000")
@@ -935,8 +941,15 @@ model TalkingToDimension {
 model TalkingToFacet {
   id          String @id @default(uuid())
   dimensionId String
-  key         String // "FALANTE", "OUVINTE"
-  name        String 
+  
+  // Colunas do Excel
+  dichotomy     String? // "ouvinte-falante"
+  facetLow      String? // "ouvinte"
+  facetHigh     String? // "falante"
+  concept       String? // "comunicação"
+  
+  key         String? // "COMMUNICATION" (Internal)
+  name        String? // Display Name if needed
   
   dimension   TalkingToDimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
 
