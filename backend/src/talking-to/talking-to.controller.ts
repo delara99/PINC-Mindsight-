@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, Param, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, NotFoundException, UnauthorizedException, Param, Res } from '@nestjs/common';
 import { TalkingToService, TalkingToInput } from './talking-to.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,8 +22,7 @@ export class TalkingToController {
     async getAllTexts(@Request() req) {
         // TODO: Mover validação de admin para Guard
         if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
-            // throw new UnauthorizedException('Acesso restrito a administradores');
-            // Por enquanto, permitir para teste se necessário, ou usar Forbidden
+            throw new UnauthorizedException('Acesso restrito a administradores');
         }
         return this.prisma.talkingToMessage.findMany({
             orderBy: [{ group: 'asc' }, { key: 'asc' }]
@@ -33,6 +32,9 @@ export class TalkingToController {
     @UseGuards(AuthGuard('jwt'))
     @Post('admin/texts')
     async updateText(@Request() req, @Body() body: { id: string, content: string }) {
+        if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
+            throw new UnauthorizedException('Acesso restrito a administradores');
+        }
         return this.prisma.talkingToMessage.update({
             where: { id: body.id },
             data: { content: body.content }
@@ -43,17 +45,19 @@ export class TalkingToController {
     @UseGuards(AuthGuard('jwt'))
     @Post('admin/seed')
     async seedDefaults(@Request() req) {
-        // Dispara uma simulação dummy que força o "getText" a rodar e popular o banco
-        const dummy: TalkingToInput = { O: 10, C: 10, E: 10, A: 10, N: 90 }; // Baixos
+        if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
+            throw new UnauthorizedException('Acesso restrito a administradores');
+        }
+        // 1. Simulações Dummy (Garantem dimensões básicas)
+        const dummy: TalkingToInput = { O: 10, C: 10, E: 10, A: 10, N: 90 };
         await this.service.analyzeProfile(dummy);
+        await this.service.analyzeProfile({ O: 90, C: 90, E: 90, A: 90, N: 10 });
+        await this.service.analyzeProfile({ O: 50, C: 50, E: 50, A: 50, N: 50 });
 
-        const dummy2: TalkingToInput = { O: 90, C: 90, E: 90, A: 90, N: 10 }; // Altos
-        await this.service.analyzeProfile(dummy2);
+        // 2. Seed Exaustivo de Fine-Tuned (Garante todas as combinações)
+        const count = await this.service.seedAllDefinitions();
 
-        const dummy3: TalkingToInput = { O: 50, C: 50, E: 50, A: 50, N: 50 }; // Médios
-        await this.service.analyzeProfile(dummy3);
-
-        return { message: 'Textos padrão populados no banco com sucesso.' };
+        return { message: `Sincronização concluída. ${count} interpretações finas verificadas/criadas.` };
     }
 
     // Endpoint público ou protegido para testar o motor

@@ -537,6 +537,40 @@ export class TalkingToService {
         };
     }
 
+    // --- SEEDING UTILITY ---
+    // Chamado pelo Controller para garantir que TODOS os textos do código vão para o banco
+    async seedAllDefinitions() {
+        let count = 0;
+
+        // 1. Seed Fine-Tuned Texts
+        for (const [trait, signatures] of Object.entries(this.FINETUNED_TEXTS)) {
+            for (const [signature, content] of Object.entries(signatures)) {
+                // Ex: EXTRAVERSION_OUVINTE_SELETIVO...
+                const key = `${trait}_${signature}`;
+
+                // Formatar labels para descrição legível
+                const readableSignature = signature
+                    .replace(/_/g, ', ')
+                    .toLowerCase()
+                    .replace(/\b\w/g, c => c.toUpperCase()); // Title Case
+
+                await this.getText(
+                    key,
+                    'FINE_TUNED',
+                    content,
+                    `Interpretação: ${trait} - ${readableSignature}`
+                );
+                count++;
+            }
+        }
+
+        // 2. Seed Dimensions (Simulando chamadas para garantir defaults)
+        // Isso já é coberto pelo uso normal, mas podemos reforçar aqui se necessário.
+        // As chamadas dummy do controller cuidam disso.
+
+        return count;
+    }
+
     // --- COMPARISON LOGIC ---
 
     analyzeRelationship(myScores: TalkingToInput, partnerScores: TalkingToInput): any[] {
