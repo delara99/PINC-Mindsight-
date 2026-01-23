@@ -28,9 +28,13 @@ export class TalkingToStructureService {
     }
 
     async updateDimension(id: string, data: any) {
+        // Sanitize data: remove 'facets', 'id', 'createdAt', 'updatedAt' to avoid Prisma errors
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { facets, id: _id, createdAt, updatedAt, ...cleanData } = data;
+
         return this.prisma.talkingToDimension.update({
             where: { id },
-            data
+            data: cleanData
         });
     }
 

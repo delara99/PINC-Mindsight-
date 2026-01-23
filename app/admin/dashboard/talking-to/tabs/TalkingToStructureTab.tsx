@@ -273,19 +273,24 @@ export default function TalkingToStructureTab({ isActive }: { isActive: boolean 
 
             {/* Facet Modal */}
             {isFacetModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800">
                                 {editingFacet ? 'Editar Faceta' : 'Nova Faceta'}
                             </h3>
-                            <button onClick={() => setIsFacetModalOpen(false)}><X size={20} /></button>
+                            <button
+                                onClick={() => setIsFacetModalOpen(false)}
+                                className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
                         </div>
                         <form onSubmit={handleSaveFacet} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Subtraço Dicotômico</label>
                                 <input
-                                    className="w-full p-2 border rounded-lg"
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                                     placeholder="Ex: ouvinte-falante"
                                     value={facetFormData.dichotomy}
                                     onChange={e => setFacetFormData({ ...facetFormData, dichotomy: e.target.value })}
@@ -296,7 +301,7 @@ export default function TalkingToStructureTab({ isActive }: { isActive: boolean 
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Polo Baixo</label>
                                     <input
-                                        className="w-full p-2 border rounded-lg"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                                         placeholder="Ex: ouvinte"
                                         value={facetFormData.facetLow}
                                         onChange={e => setFacetFormData({ ...facetFormData, facetLow: e.target.value })}
@@ -306,7 +311,7 @@ export default function TalkingToStructureTab({ isActive }: { isActive: boolean 
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Polo Alto</label>
                                     <input
-                                        className="w-full p-2 border rounded-lg"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                                         placeholder="Ex: falante"
                                         value={facetFormData.facetHigh}
                                         onChange={e => setFacetFormData({ ...facetFormData, facetHigh: e.target.value })}
@@ -317,16 +322,26 @@ export default function TalkingToStructureTab({ isActive }: { isActive: boolean 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Conceito</label>
                                 <input
-                                    className="w-full p-2 border rounded-lg"
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                                     placeholder="Ex: comunicação"
                                     value={facetFormData.concept}
                                     onChange={e => setFacetFormData({ ...facetFormData, concept: e.target.value })}
                                     required
                                 />
                             </div>
-                            <button type="submit" className="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700">
-                                Salvar Faceta
-                            </button>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFacetModalOpen(false)}
+                                    className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">
+                                    Salvar
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
