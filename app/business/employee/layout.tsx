@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { LayoutDashboard, ClipboardList, FileBarChart, LogOut, UserCircle } from 'lucide-react';
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
@@ -52,8 +53,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
             {/* SIDEBAR */}
             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full z-10 transition-all">
                 <div className="p-6 border-b border-slate-100 flex items-center gap-2">
-                    <div className="bg-purple-600 text-white p-1 rounded font-bold text-lg">PINC</div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Business | Candidato</span>
+                    <Image src="/pinc-logo.png" alt="PINC" width={80} height={30} className="object-contain" />
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">| Business | Candidato</span>
                 </div>
 
                 <div className="p-4 flex items-center gap-3 bg-slate-50 mx-4 mt-4 rounded-lg border border-slate-100">
