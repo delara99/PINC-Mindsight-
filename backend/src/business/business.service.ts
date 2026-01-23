@@ -393,7 +393,7 @@ export class BusinessService {
         };
 
         // 4. Rodar TalkingTo Engine
-        const analysis = this.talkingToService.analyzeProfile(input);
+        const analysis = await this.talkingToService.analyzeProfile(input);
 
         // 5. Harmonizar
         const mappedScores = analysis.talkingto_analysis.map(dim => {

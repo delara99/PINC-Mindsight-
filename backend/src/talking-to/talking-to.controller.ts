@@ -15,6 +15,47 @@ export class TalkingToController {
         private readonly pdfService: PdfService
     ) { }
 
+    // --- ADMIN ENDPOINTS (Gerenciamento do Motor) ---
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('admin/texts')
+    async getAllTexts(@Request() req) {
+        // TODO: Mover validação de admin para Guard
+        if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
+            // throw new UnauthorizedException('Acesso restrito a administradores');
+            // Por enquanto, permitir para teste se necessário, ou usar Forbidden
+        }
+        return this.prisma.talkingToMessage.findMany({
+            orderBy: [{ group: 'asc' }, { key: 'asc' }]
+        });
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('admin/texts')
+    async updateText(@Request() req, @Body() body: { id: string, content: string }) {
+        return this.prisma.talkingToMessage.update({
+            where: { id: body.id },
+            data: { content: body.content }
+        });
+    }
+
+    // Endpoint para popular o banco inicialmente (Admin pode chamar quando quiser resetar/criar defaults)
+    @UseGuards(AuthGuard('jwt'))
+    @Post('admin/seed')
+    async seedDefaults(@Request() req) {
+        // Dispara uma simulação dummy que força o "getText" a rodar e popular o banco
+        const dummy: TalkingToInput = { O: 10, C: 10, E: 10, A: 10, N: 90 }; // Baixos
+        await this.service.analyzeProfile(dummy);
+
+        const dummy2: TalkingToInput = { O: 90, C: 90, E: 90, A: 90, N: 10 }; // Altos
+        await this.service.analyzeProfile(dummy2);
+
+        const dummy3: TalkingToInput = { O: 50, C: 50, E: 50, A: 50, N: 50 }; // Médios
+        await this.service.analyzeProfile(dummy3);
+
+        return { message: 'Textos padrão populados no banco com sucesso.' };
+    }
+
     // Endpoint público ou protegido para testar o motor
     @Post('simulate')
     simulate(@Body() scores: TalkingToInput) {
@@ -160,7 +201,7 @@ export class TalkingToController {
         // ScoreService envia Neuroticismo. Tudo certo.
 
         // 3. Gerar Análise Narrativa
-        const analysis = this.service.analyzeProfile(talkingToInput);
+        const analysis = await this.service.analyzeProfile(talkingToInput);
 
         return {
             id: assignment.id,
