@@ -25,41 +25,43 @@ export default function EmployeeReportView() {
     const fetchReport = async () => {
         try {
             const token = localStorage.getItem('accessToken');
+            let assignmentId = '';
 
-            // Buscar lista de assignments completados do usuário para este tenant
-            const listRes = await axios.get(`${API_URL}/api/v1/business/reports`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // 1. Tentar buscar na lista de relatórios do negócio
+            try {
+                const listRes = await axios.get(`${API_URL}/api/v1/business/reports`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const userReport = listRes.data.find((r: any) => r.userId === userId);
+                if (userReport) {
+                    assignmentId = userReport.reportId;
+                }
+            } catch (ignore) { }
 
-            // Encontrar o relatório específico deste usuário
-            // A API retorna uma lista simplificada, precisamos buscar o detalhe
-            const userReport = listRes.data.find((r: any) => r.userId === userId);
-
-            if (!userReport) {
-                // Tentar buscar diretamente como admin se a lista falhar (fallback)
+            // 2. Se não achou na lista (ex: lista vazia ou erro), tentar buscar direto do usuário
+            if (!assignmentId) {
                 const directRes = await axios.get(`${API_URL}/api/v1/assessments/user/${userId}/completed`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
                 if (directRes.data && directRes.data.length > 0) {
-                    // Pegar detalhe completo
-                    const detailRes = await axios.get(`${API_URL}/api/v1/assessments/assignments/${directRes.data[0].id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    setReport(detailRes.data);
-                    return;
+                    assignmentId = directRes.data[0].id;
                 }
+            }
 
+            if (!assignmentId) {
                 setError('Relatório não encontrado.');
                 setLoading(false);
                 return;
             }
 
-            // Buscar detalhe completo usando o ID do assignment (reportId na lista é o assignmentId)
-            const detailRes = await axios.get(`${API_URL}/api/v1/assessments/assignments/${userReport.reportId}`, {
+            // 3. Buscar Detalhe UNIFICADO (TalkingTO Engine)
+            // Agora usamos o endpoint que garante o uso do motor inteligente
+            const detailRes = await axios.get(`${API_URL}/api/v1/business/reports/${assignmentId}/unified`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
+            console.log('Dados do Relatório Unificado:', detailRes.data);
             setReport(detailRes.data);
         } catch (err) {
             console.error(err);
@@ -74,7 +76,7 @@ export default function EmployeeReportView() {
             <div className="flex justify-center items-center h-screen bg-slate-50">
                 <div className="text-center">
                     <div className="animate-spin w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p className="text-slate-500 font-medium">Gerando análise comportamental...</p>
+                    <p className="text-slate-500 font-medium">Gerando análise comportamental (TalkingTO)...</p>
                 </div>
             </div>
         );

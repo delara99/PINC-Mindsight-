@@ -339,4 +339,120 @@ export class BusinessService {
             return assignment;
         });
     }
+
+    // --- UNIFIED REPORT (TALKING TO ENGINE) ---
+    async getUnifiedReport(assignmentId: string, requestUser: any) {
+        // 1. Validar e Buscar Assignment
+        const assignment = await this.prisma.assessmentAssignment.findUnique({
+            where: { id: assignmentId },
+            include: {
+                user: true,
+                assessment: true,
+                result: true
+            }
+        });
+
+        if (!assignment) throw new NotFoundException('Relatório não encontrado');
+
+        // Validar Acesso
+        if (requestUser.role === 'TENANT_ADMIN' || requestUser.role === 'SUPER_ADMIN') {
+            // Admin ok
+        } else {
+            // Colaborador validando próprio acesso
+            if (assignment.userId !== requestUser.userId) {
+                throw new ForbiddenException('Acesso negado a este relatório.');
+            }
+        }
+
+        // 2. Calcular Scores REAIS
+        const scoreResult = await this.scoreService.calculateScores(assignmentId);
+        const { scores } = scoreResult;
+
+        if (!scores || Object.keys(scores).length === 0) {
+            console.error('Falha ao calcular scores para TalkingTo:', assignmentId);
+            throw new BadRequestException('Não foi possível calcular os scores.');
+        }
+
+        // Helper
+        const getScore = (k: string) => Math.round(scores[k]?.normalizedScore || 0);
+
+        // 3. Preparar Input
+        const input: TalkingToInput = {
+            O: getScore('OPENNESS'),
+            C: getScore('CONSCIENTIOUSNESS'),
+            E: getScore('EXTRAVERSION'),
+            A: getScore('AGREEABLENESS'),
+            N: getScore('NEUROTICISM'),
+            facets: {
+                EXTRAVERSION: scores['EXTRAVERSION']?.facets || [],
+                AGREEABLENESS: scores['AGREEABLENESS']?.facets || [],
+                CONSCIENTIOUSNESS: scores['CONSCIENTIOUSNESS']?.facets || [],
+                OPENNESS: scores['OPENNESS']?.facets || [],
+                NEUROTICISM: scores['NEUROTICISM']?.facets || []
+            }
+        };
+
+        // 4. Rodar TalkingTo Engine
+        const analysis = this.talkingToService.analyzeProfile(input);
+
+        // 5. Harmonizar
+        const mappedScores = analysis.talkingto_analysis.map(dim => {
+            let traitKey = '';
+            let finalScore = 0;
+            let realFacets: any[] = [];
+
+            if (dim.dimension.includes('Extroversão')) {
+                traitKey = 'EXTRAVERSION';
+                finalScore = input.E;
+                realFacets = scores['EXTRAVERSION']?.facets || [];
+            }
+            else if (dim.dimension.includes('Agradabilidade')) {
+                traitKey = 'AGREEABLENESS';
+                finalScore = input.A;
+                realFacets = scores['AGREEABLENESS']?.facets || [];
+            }
+            else if (dim.dimension.includes('Estrutura') || dim.dimension.includes('Conscienciosidade')) {
+                traitKey = 'CONSCIENTIOUSNESS';
+                finalScore = input.C;
+                realFacets = scores['CONSCIENTIOUSNESS']?.facets || [];
+            }
+            else if (dim.dimension.includes('Abertura') || dim.dimension.includes('Mentalidade')) {
+                traitKey = 'OPENNESS';
+                finalScore = input.O;
+                realFacets = scores['OPENNESS']?.facets || [];
+            }
+            else if (dim.dimension.includes('Estabilidade') || dim.dimension.includes('Resiliência')) {
+                traitKey = 'NEUROTICISM';
+                finalScore = 100 - input.N;
+                realFacets = scores['NEUROTICISM']?.facets || [];
+            }
+
+            const levelMap: Record<string, string> = { 'BAIXO': 'LOW', 'FLEX': 'AVERAGE', 'ALTO': 'HIGH' };
+
+            return {
+                key: traitKey,
+                name: dim.dimension,
+                score: finalScore,
+                level: levelMap[dim.classification] || 'AVERAGE',
+                customTexts: {
+                    text_interpretation: dim.text_interpretation,
+                    needs: dim.needs
+                },
+                facets: realFacets
+            };
+        });
+
+        const order = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
+        mappedScores.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+
+        return {
+            ...assignment,
+            calculatedScores: {
+                scores: mappedScores,
+                profile_summary: analysis.profile_summary,
+                executive_summary: analysis.executive_summary
+            }
+        };
+    }
 }
+

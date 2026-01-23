@@ -33,15 +33,15 @@ export default function EmployeeReports() {
                 return;
             }
 
-            // 2. Get Details (Triggers Calculation)
-            // Use assignmentId correct field
+            // 2. Get Details (Triggers Calculation via Unified Engine)
             const idToFetch = completed.assignmentId || completed.id;
 
-            const detailRes = await axios.get(`${API_URL}/api/v1/assessments/assignments/${idToFetch}`, {
+            // Usando rota unificada do Business para garantir motor TalkingTO
+            const detailRes = await axios.get(`${API_URL}/api/v1/business/reports/${idToFetch}/unified`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            console.log('Report Data:', detailRes.data);
+            console.log('Dados do Relatório (Colaborador):', detailRes.data);
             setReport(detailRes.data);
 
         } catch (err) {
@@ -56,7 +56,7 @@ export default function EmployeeReports() {
         <div className="flex justify-center items-center h-[60vh]">
             <div className="text-center">
                 <div className="animate-spin w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-slate-500">Carregando seus resultados...</p>
+                <p className="text-slate-500">Gerando sua análise completa...</p>
             </div>
         </div>
     );

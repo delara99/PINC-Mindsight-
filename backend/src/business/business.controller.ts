@@ -104,4 +104,10 @@ export class BusinessController {
             isBusiness: true
         };
     }
+
+    @Get('reports/:assignmentId/unified')
+    async getUnifiedReport(@Request() req, @Param('assignmentId') assignmentId: string) {
+        // O Service valida permissões internamente (Gestor ou Próprio Colaborador)
+        return this.service.getUnifiedReport(assignmentId, req.user);
+    }
 }
