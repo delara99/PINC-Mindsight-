@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
+import { useAuthStore } from '@/src/store/auth-store';
 import { Sparkles, Save, Search, RefreshCw, Database, Layers, BrainCircuit, Type } from 'lucide-react';
 
 export default function TalkingToManager() {
+    const token = useAuthStore((state) => state.token);
     const [loading, setLoading] = useState(true);
     const [texts, setTexts] = useState<any[]>([]);
     const [filter, setFilter] = useState('');
@@ -15,12 +17,15 @@ export default function TalkingToManager() {
     const [seeding, setSeeding] = useState(false);
 
     useEffect(() => {
-        fetchTexts();
-    }, []);
+        if (token) {
+            fetchTexts();
+        } else {
+            setLoading(false); // Se não tiver token, para de carregar mas mostra vazio/erro
+        }
+    }, [token]);
 
     const fetchTexts = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
             const res = await axios.get(`${API_URL}/api/v1/talking-to/admin/texts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -36,14 +41,14 @@ export default function TalkingToManager() {
         if (!confirm('Isso irá verificar e criar textos padrão faltantes. Continuar?')) return;
         setSeeding(true);
         try {
-            const token = localStorage.getItem('accessToken');
             await axios.post(`${API_URL}/api/v1/talking-to/admin/seed`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Sistema sincronizado com sucesso!');
             fetchTexts();
         } catch (err) {
-            alert('Erro ao sincronizar.');
+            console.error(err);
+            alert('Erro ao sincronizar. Verifique se você é Administrador.');
         } finally {
             setSeeding(false);
         }
@@ -52,7 +57,6 @@ export default function TalkingToManager() {
     const handleSave = async (id: string) => {
         setSaving(true);
         try {
-            const token = localStorage.getItem('accessToken');
             await axios.post(`${API_URL}/api/v1/talking-to/admin/texts`, {
                 id,
                 content: editContent
@@ -64,6 +68,7 @@ export default function TalkingToManager() {
             setTexts(texts.map(t => t.id === id ? { ...t, content: editContent } : t));
             setEditingId(null);
         } catch (err) {
+            console.error(err);
             alert('Erro ao salvar.');
         } finally {
             setSaving(false);
@@ -73,7 +78,7 @@ export default function TalkingToManager() {
     const filteredTexts = texts.filter(t =>
         (activeTab === 'ALL' || t.group === activeTab) &&
         (t.key.toLowerCase().includes(filter.toLowerCase()) ||
-            t.description?.toLowerCase().includes(filter.toLowerCase()) ||
+            (t.description && t.description.toLowerCase().includes(filter.toLowerCase())) ||
             t.content.toLowerCase().includes(filter.toLowerCase()))
     );
 
@@ -101,8 +106,8 @@ export default function TalkingToManager() {
                     <div className="flex gap-3">
                         <button
                             onClick={handleSeed}
-                            disabled={seeding}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                            disabled={seeding || !token}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
                         >
                             <RefreshCw size={18} className={seeding ? "animate-spin" : ""} />
                             {seeding ? 'Sincronizando...' : 'Sincronizar Textos'}
@@ -147,12 +152,14 @@ export default function TalkingToManager() {
 
             {/* List */}
             {loading ? (
-                <div className="text-center py-20 text-slate-400">Carregando inteligência...</div>
+                <div className="text-center py-20 text-slate-400 animate-pulse">Carregando inteligência do sistema...</div>
             ) : filteredTexts.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
                     <Database className="mx-auto h-12 w-12 text-slate-300 mb-3" />
                     <h3 className="text-lg font-medium text-slate-900">Nenhum texto encontrado</h3>
-                    <p className="text-slate-500 mb-6">Tente ajustar os filtros ou clique em Sincronizar Textos.</p>
+                    <p className="text-slate-500 mb-6">
+                        {texts.length === 0 ? "O banco de dados parece vazio. Clique em Sincronizar Textos para inicializar." : "Tente ajustar os filtros de busca."}
+                    </p>
                 </div>
             ) : (
                 <div className="grid gap-6">
@@ -168,7 +175,7 @@ export default function TalkingToManager() {
                                             <h3 className="font-bold text-slate-800 text-sm md:text-base">
                                                 {text.description || text.key}
                                             </h3>
-                                            <code className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                            <code className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 font-mono">
                                                 {text.key}
                                             </code>
                                         </div>
@@ -190,7 +197,7 @@ export default function TalkingToManager() {
                                 {editingId === text.id ? (
                                     <div className="animate-in fade-in zoom-in-95 duration-200">
                                         <textarea
-                                            className="w-full h-40 p-4 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-medium text-slate-700 resize-y"
+                                            className="w-full h-48 p-4 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-medium text-slate-700 resize-y leading-relaxed"
                                             value={editContent}
                                             onChange={(e) => setEditContent(e.target.value)}
                                         />
@@ -204,7 +211,7 @@ export default function TalkingToManager() {
                                             <button
                                                 onClick={() => handleSave(text.id)}
                                                 disabled={saving}
-                                                className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200"
+                                                className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200 disabled:opacity-70"
                                             >
                                                 {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
                                                 Salvar Alterações
@@ -212,7 +219,7 @@ export default function TalkingToManager() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                                    <p className="text-slate-600 leading-relaxed text-sm md:text-base whitespace-pre-line">
                                         {text.content}
                                     </p>
                                 )}
