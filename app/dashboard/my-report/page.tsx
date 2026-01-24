@@ -51,6 +51,55 @@ const TALKING_TO_FACETS: Record<string, string[][]> = {
     ]
 };
 
+// --- TRANSLATION UTILS ---
+const FACET_TRANSLATIONS: Record<string, string> = {
+    // Neuroticismo
+    'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
+    'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
+    'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
+    'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
+    'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
+    'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
+
+    // Extroversão
+    'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
+    'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
+    'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
+    'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
+    'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
+    'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
+
+    // Abertura
+    'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
+    'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
+    'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
+    'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
+    'ideas': 'Ideias', 'factors_ideas': 'Ideias',
+    'values': 'Valores', 'factors_values': 'Valores',
+
+    // Amabilidade
+    'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
+    'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
+    'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
+    'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
+    'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
+    'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
+
+    // Conscienciosidade
+    'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
+    'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
+    'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
+    'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
+    'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
+    'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
+};
+
+const getTranslatedFacetName = (name: string) => {
+    if (!name) return '';
+    const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
+    return FACET_TRANSLATIONS[normalized] || name;
+};
+
 // --- COMPONENTS ---
 
 // SafeRender para evitar crashes
@@ -479,82 +528,20 @@ export default function MyReportPage() {
                                                     {/* CASE 1: REAL FACETS AVAILABLE (From Modern Engine) */}
                                                     {detailedScore?.facets && detailedScore.facets.length > 0 ? (
                                                         <div className="space-y-3">
-                                                            {(() => {
-                                                                // Dicionário de Tradução B2C
-                                                                const translateFacet = (name: string) => {
-                                                                    const map: Record<string, string> = {
-                                                                        // Neuroticismo
-                                                                        'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
-                                                                        'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
-                                                                        'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
-                                                                        'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
-                                                                        'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
-                                                                        'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
-
-                                                                        // Extroversão
-                                                                        'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
-                                                                        'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
-                                                                        'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
-                                                                        'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
-                                                                        'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
-                                                                        'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
-
-                                                                        // Abertura
-                                                                        'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
-                                                                        'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
-                                                                        'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
-                                                                        'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
-                                                                        'ideas': 'Ideias', 'factors_ideas': 'Ideias',
-                                                                        'values': 'Valores', 'factors_values': 'Valores',
-
-                                                                        // Amabilidade
-                                                                        'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
-                                                                        'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
-                                                                        'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
-                                                                        'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
-                                                                        'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
-                                                                        'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
-
-                                                                        // Conscienciosidade
-                                                                        'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
-                                                                        'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
-                                                                        'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
-                                                                        'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
-                                                                        'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
-                                                                        'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
-                                                                    };
-                                                                    const normalized = name.toLowerCase().replace(/[^a-z_]/g, ''); // Permite underscore
-                                                                    return map[normalized] || name;
-                                                                };
-
-                                                                // Deduplicação baseada no nome traduzido
-                                                                const seen = new Set();
-                                                                const uniqueFacets = detailedScore.facets.filter((f: any) => {
-                                                                    const translated = translateFacet(f.facetName);
-                                                                    if (seen.has(translated)) return false;
-                                                                    seen.add(translated);
-                                                                    return true;
-                                                                });
-
-                                                                return uniqueFacets.map((facet: any, fIdx: number) => {
-                                                                    const translatedName = translateFacet(facet.facetName);
-
-                                                                    return (
-                                                                        <div key={fIdx}>
-                                                                            <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
-                                                                                <span>{translatedName}</span>
-                                                                                <span className="text-purple-600">{facet.score}%</span>
-                                                                            </div>
-                                                                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                                                <div
-                                                                                    className="h-full bg-purple-500 rounded-full transition-all duration-1000"
-                                                                                    style={{ width: `${facet.score}%` }}
-                                                                                ></div>
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                });
-                                                            })()}
+                                                            {detailedScore.facets.map((facet: any, fIdx: number) => (
+                                                                <div key={fIdx}>
+                                                                    <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+                                                                        <span>{getTranslatedFacetName(facet.facetName)}</span>
+                                                                        <span className="text-purple-600">{facet.score}%</span>
+                                                                    </div>
+                                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                                        <div
+                                                                            className="h-full bg-purple-500 rounded-full transition-all duration-1000"
+                                                                            style={{ width: `${facet.score}%` }}
+                                                                        ></div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     ) : (
                                                         /* CASE 2: LEGACY FALLBACK (Simulated from Main Score) */
@@ -664,7 +651,7 @@ export default function MyReportPage() {
                                                     <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
                                                         {score.facets.map((f: any, fi: number) => (
                                                             <div key={fi} className="flex justify-between items-center text-xs">
-                                                                <span className="text-gray-400">{f.facetName}</span>
+                                                                <span className="text-gray-400">{getTranslatedFacetName(f.facetName)}</span>
                                                                 <span className="font-mono text-gray-300">{f.score}%</span>
                                                             </div>
                                                         ))}
