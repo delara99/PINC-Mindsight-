@@ -8,13 +8,30 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
     const [profile, setProfile] = useState<any>(null);
     const [analysis, setAnalysis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
-    // Helper para URL da API
+    // Helper URLs
     const getApiUrl = () => {
         const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
         const baseUrl = url.startsWith('http') ? url : `https://${url}`;
         if (baseUrl.includes('/api/v1')) return baseUrl;
         return `${baseUrl}/api/v1`;
+    };
+
+    const toggleRow = (id: string) => {
+        if (expandedRow === id) {
+            setExpandedRow(null);
+        } else {
+            setExpandedRow(id);
+        }
+    };
+
+    // Helper para cor do gap
+    const getGapColor = (ideal: number, real: number) => {
+        const diff = Math.abs(ideal - real);
+        if (diff <= 10) return 'bg-green-500';
+        if (diff <= 20) return 'bg-yellow-500';
+        return 'bg-red-500';
     };
 
     useEffect(() => {
@@ -56,31 +73,6 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
     if (!profile) {
         return <div className="text-center py-20">Perfil não encontrado</div>;
     }
-
-    const [expandedRow, setExpandedRow] = useState<string | null>(null);
-
-    const toggleRow = (id: string) => {
-        if (expandedRow === id) {
-            setExpandedRow(null);
-        } else {
-            setExpandedRow(id);
-        }
-    };
-
-    // Helper para cor do gap
-    const getGapColor = (ideal: number, real: number) => {
-        const diff = Math.abs(ideal - real);
-        if (diff <= 10) return 'bg-green-500';
-        if (diff <= 20) return 'bg-yellow-500';
-        return 'bg-red-500';
-    };
-
-    const getGapColorText = (ideal: number, real: number) => {
-        const diff = Math.abs(ideal - real);
-        if (diff <= 10) return 'text-green-600';
-        if (diff <= 20) return 'text-yellow-600';
-        return 'text-red-500';
-    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
