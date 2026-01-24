@@ -196,7 +196,6 @@ export class ScoreCalculationService {
             // Mapeia O->OPENNESS, etc.
             const fullKey = dimensionKeysMap[dimKey] || dimKey;
 
-            // Encontrar classificação baseada no range
             const classification = classifications.find(c =>
                 c.dimension === fullKey &&
                 score >= c.minScore &&
@@ -206,6 +205,16 @@ export class ScoreCalculationService {
             const level = (classification?.level as any) || 'AVERAGE';
             const label = classification?.label || 'Médio';
 
+            // Recuperar facetas desta dimensão
+            const relevantFacets = Object.keys(facetScores)
+                .filter(fk => facetScores[fk].dimension === dimKey)
+                .map(fk => ({
+                    facetKey: fk,
+                    facetName: fk.split('_')[1] || fk,
+                    score: facetScores[fk].score,
+                    rawScore: facetScores[fk].sum
+                }));
+
             finalScores[fullKey] = {
                 traitKey: fullKey,
                 traitName: dimensionNames[dimKey] || dimKey,
@@ -213,7 +222,8 @@ export class ScoreCalculationService {
                 normalizedScore: score,
                 level: level,
                 levelLabel: label,
-                interpretation: classification?.description || ''
+                interpretation: classification?.description || '',
+                facets: relevantFacets
             };
         });
 
