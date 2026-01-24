@@ -629,37 +629,99 @@ export default function MyReportPage() {
                                 </h2>
 
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {scoresList.map((score: any, idx: number) => (
-                                        <div key={idx} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-colors">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <h4 className="font-bold text-lg text-gray-200">{score.traitName}</h4>
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${score.level === 'HIGH' || score.level === 'VERY_HIGH' ? 'bg-green-500/20 text-green-300' : score.level === 'LOW' || score.level === 'VERY_LOW' ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
-                                                    {score.levelLabel || score.level}
-                                                </span>
-                                            </div>
+                                    {scoresList.map((score: any, idx: number) => {
+                                        // Tradução do Traço
+                                        const translateTrait = (name: string) => {
+                                            const map: Record<string, string> = {
+                                                'openness': 'Abertura à Experiência',
+                                                'conscientiousness': 'Conscienciosidade',
+                                                'extraversion': 'Extroversão',
+                                                'agreeableness': 'Amabilidade',
+                                                'neuroticism': 'Neuroticismo',
+                                                'estabilidade emocional': 'Neuroticismo'
+                                            };
+                                            return map[name.toLowerCase()] || name;
+                                        };
 
-                                            <div className="mb-4">
-                                                <div className="flex justify-between text-sm text-gray-400 mb-1">
-                                                    <span>Score</span>
-                                                    <span>{score.normalizedScore}%</span>
-                                                </div>
-                                                <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: `${score.normalizedScore}%` }}></div>
-                                                </div>
-                                            </div>
+                                        // Dicionário de Tradução de Facetas (Reutilizado)
+                                        const translateFacet = (name: string) => {
+                                            const map: Record<string, string> = {
+                                                'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
+                                                'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
+                                                'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
+                                                'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
+                                                'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
+                                                'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
+                                                'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
+                                                'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
+                                                'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
+                                                'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
+                                                'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
+                                                'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
+                                                'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
+                                                'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
+                                                'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
+                                                'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
+                                                'ideas': 'Ideias', 'factors_ideas': 'Ideias',
+                                                'values': 'Valores', 'factors_values': 'Valores',
+                                                'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
+                                                'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
+                                                'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
+                                                'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
+                                                'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
+                                                'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
+                                                'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
+                                                'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
+                                                'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
+                                                'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
+                                                'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
+                                                'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
+                                            };
+                                            const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
+                                            return map[normalized] || name;
+                                        };
 
-                                            {score.facets && score.facets.length > 0 && (
-                                                <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
-                                                    {score.facets.map((f: any, fi: number) => (
-                                                        <div key={fi} className="flex justify-between items-center text-xs">
-                                                            <span className="text-gray-400">{f.facetName}</span>
-                                                            <span className="font-mono text-gray-300">{f.score}%</span>
-                                                        </div>
-                                                    ))}
+                                        // Deduplicação de Facetas para a Tabela Bruta
+                                        const seenFacets = new Set();
+                                        const uniqueFacetsRaw = (score.facets || []).filter((f: any) => {
+                                            const translated = translateFacet(f.facetName || f.name);
+                                            if (seenFacets.has(translated)) return false;
+                                            seenFacets.add(translated);
+                                            return true;
+                                        });
+
+                                        return (
+                                            <div key={idx} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-colors">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <h4 className="font-bold text-lg text-gray-200">{translateTrait(score.traitName)}</h4>
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${score.level === 'HIGH' || score.level === 'VERY_HIGH' ? 'bg-green-500/20 text-green-300' : score.level === 'LOW' || score.level === 'VERY_LOW' ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
+                                                        {score.levelLabel || score.level}
+                                                    </span>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))}
+
+                                                <div className="mb-4">
+                                                    <div className="flex justify-between text-sm text-gray-400 mb-1">
+                                                        <span>Score</span>
+                                                        <span>{score.normalizedScore}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: `${score.normalizedScore}%` }}></div>
+                                                    </div>
+                                                </div>
+
+                                                {uniqueFacetsRaw.length > 0 && (
+                                                    <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
+                                                        {uniqueFacetsRaw.map((f: any, fi: number) => (
+                                                            <div key={fi} className="flex justify-between items-center text-xs">
+                                                                <span className="text-gray-400">{translateFacet(f.facetName)}</span>
+                                                                <span className="font-mono text-gray-300">{f.score}%</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    }})
                                 </div>
                             </div>
                         </div>
