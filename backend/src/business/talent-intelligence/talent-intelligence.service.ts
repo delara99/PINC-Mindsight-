@@ -106,6 +106,26 @@ export class TalentIntelligenceService {
         });
     }
 
+    async addMembersToTeam(tenantId: string, teamId: string, memberIds: string[]) {
+        const team = await this.prisma.team.findUnique({ where: { id: teamId } });
+        if (!team || team.tenantId !== tenantId) throw new Error("Team not found");
+
+        const currentMembers = (team.memberIds as string[]) || [];
+        // Merge único para evitar duplicatas
+        const updatedMembers = Array.from(new Set([...currentMembers, ...memberIds]));
+
+        // Recalcular a média da equipe com os novos membros
+        const avgScores = await this.calculateTeamAverage(updatedMembers);
+
+        return this.prisma.team.update({
+            where: { id: teamId },
+            data: {
+                memberIds: updatedMembers,
+                avgScores: avgScores || {}
+            }
+        });
+    }
+
     async calculateTeamFit(candidateId: string, teamId: string) {
         const team = await this.prisma.team.findUnique({ where: { id: teamId } });
         if (!team) throw new Error("Team not found");

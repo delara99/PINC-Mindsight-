@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TalentIntelligenceService } from './talent-intelligence.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -73,5 +73,10 @@ export class TalentIntelligenceController {
     @Get('teams')
     async getTeams(@Request() req) {
         return this.service.getTeams(req.user.tenantId);
+    }
+
+    @Put('teams/:id/members')
+    async addMembers(@Request() req, @Param('id') teamId: string, @Body() data: { memberIds: string[] }) {
+        return this.service.addMembersToTeam(req.user.tenantId, teamId, data.memberIds);
     }
 }
