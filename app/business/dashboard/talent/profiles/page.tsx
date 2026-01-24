@@ -97,9 +97,16 @@ export default function ProfilesPage() {
         try {
             const token = localStorage.getItem('accessToken');
 
-            // Merge facets into idealScores payload if needed, or send as separate field
+            // FIX: Pack facets inside idealScores because Backend JobProfile model 
+            // has no 'facets' field, but 'idealScores' is a JSON type.
             const payload = {
-                ...formData,
+                name: formData.name,
+                department: formData.department,
+                level: formData.level,
+                idealScores: {
+                    ...formData.idealScores,
+                    facets: formData.facets
+                }
             };
 
             const response = await fetch(`${getApiUrl()}/business/job-profiles`, {
