@@ -16,7 +16,9 @@ export default function PerformancePage() {
 
     const getApiUrl = () => {
         const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
-        return url.startsWith('http') ? url : `https://${url}`;
+        const baseUrl = url.startsWith('http') ? url : `https://${url}`;
+        if (baseUrl.includes('/api/v1')) return baseUrl;
+        return `${baseUrl}/api/v1`;
     };
 
     // Placeholder mock for chart

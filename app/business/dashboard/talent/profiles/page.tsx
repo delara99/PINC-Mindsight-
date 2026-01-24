@@ -28,7 +28,13 @@ export default function JobProfilesPage() {
     // Helper para URL da API
     const getApiUrl = () => {
         const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
-        return url.startsWith('http') ? url : `https://${url}`;
+        const baseUrl = url.startsWith('http') ? url : `https://${url}`;
+
+        // Se já tiver /api/v1, retorna. Se não, adiciona.
+        if (baseUrl.includes('/api/v1')) return baseUrl;
+
+        // Em produção no Railway, o prefixo é obrigatório
+        return `${baseUrl}/api/v1`;
     };
 
     // Fetch Profiles
