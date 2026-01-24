@@ -100,6 +100,17 @@ const getTranslatedFacetName = (name: string) => {
     return FACET_TRANSLATIONS[normalized] || name;
 };
 
+const getUniqueFacets = (facets: any[]) => {
+    if (!facets || !Array.isArray(facets)) return [];
+    const seen = new Set();
+    return facets.filter((f) => {
+        const name = getTranslatedFacetName(f.facetName || f.name);
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+    });
+};
+
 // --- COMPONENTS ---
 
 // SafeRender para evitar crashes
@@ -528,7 +539,7 @@ export default function MyReportPage() {
                                                     {/* CASE 1: REAL FACETS AVAILABLE (From Modern Engine) */}
                                                     {detailedScore?.facets && detailedScore.facets.length > 0 ? (
                                                         <div className="space-y-3">
-                                                            {detailedScore.facets.map((facet: any, fIdx: number) => (
+                                                            {getUniqueFacets(detailedScore.facets).map((facet: any, fIdx: number) => (
                                                                 <div key={fIdx}>
                                                                     <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
                                                                         <span>{getTranslatedFacetName(facet.facetName)}</span>
@@ -649,7 +660,7 @@ export default function MyReportPage() {
 
                                                 {score.facets && score.facets.length > 0 && (
                                                     <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
-                                                        {score.facets.map((f: any, fi: number) => (
+                                                        {getUniqueFacets(score.facets).map((f: any, fi: number) => (
                                                             <div key={fi} className="flex justify-between items-center text-xs">
                                                                 <span className="text-gray-400">{getTranslatedFacetName(f.facetName)}</span>
                                                                 <span className="font-mono text-gray-300">{f.score}%</span>
