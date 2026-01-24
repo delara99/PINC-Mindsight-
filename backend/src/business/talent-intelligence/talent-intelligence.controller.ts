@@ -22,7 +22,7 @@ export class TalentIntelligenceController {
                 status: 'COMPLETED',
                 result: { isNot: null }
             },
-            include: { user: true }
+            include: { user: true, result: true }
         });
 
         // 2. Calcular fit para cada um
