@@ -104,7 +104,8 @@ const FACET_TRANSLATIONS: Record<string, string> = {
 const getTranslatedFacetName = (name: string) => {
     if (!name) return '';
     const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
-    return FACET_TRANSLATIONS[normalized] || name;
+    const translated = FACET_TRANSLATIONS[normalized] || name;
+    return translated.toUpperCase();
 };
 
 const getUniqueFacets = (facets: any[]) => {
