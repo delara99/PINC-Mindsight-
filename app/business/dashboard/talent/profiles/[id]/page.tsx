@@ -233,6 +233,13 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                                                                         const real = scores[trait.k] || 0;
                                                                         const gapColor = getGapColor(ideal, real);
 
+                                                                        // Facets Data
+                                                                        // Check both profile ideal facets and candidate real facets
+                                                                        const idealFacets = profile.idealScores?.facets?.[trait.k] || {};
+                                                                        const realFacets = scores.facets?.[trait.k] || {};
+                                                                        // Merge keys to show all relevant facets
+                                                                        const facetKeys = Array.from(new Set([...Object.keys(idealFacets), ...Object.keys(realFacets)]));
+
                                                                         return (
                                                                             <div key={trait.k} className="relative">
                                                                                 <div className="flex justify-between items-end mb-1 text-xs">
@@ -243,21 +250,60 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                                                                                     </div>
                                                                                 </div>
 
-                                                                                {/* Visual Comparison Bar */}
-                                                                                <div className="relative h-3 bg-slate-200 rounded-full w-full">
-                                                                                    {/* Real Score Bar */}
+                                                                                {/* Main Trait Bar */}
+                                                                                <div className="relative h-3 bg-slate-200 rounded-full w-full mb-3">
                                                                                     <div
                                                                                         className={`absolute top-0 left-0 h-full rounded-full transition-all ${gapColor} opacity-80`}
                                                                                         style={{ width: `${real}%` }}
                                                                                     ></div>
-
-                                                                                    {/* Ideal Marker */}
                                                                                     <div
                                                                                         className="absolute top-0 h-4 w-1 bg-purple-600 border-x border-white -translate-y-0.5 z-10 shadow-sm"
                                                                                         title={`Ideal: ${ideal}`}
                                                                                         style={{ left: `${ideal}%` }}
                                                                                     ></div>
                                                                                 </div>
+
+                                                                                {/* Facets Sub-bars */}
+                                                                                {facetKeys.length > 0 && (
+                                                                                    <div className="pl-4 space-y-2 border-l-2 border-slate-100 ml-1 mb-4">
+                                                                                        {facetKeys.map(fKey => {
+                                                                                            const fIdeal = idealFacets[fKey] || 50;
+                                                                                            const fRealRaw = realFacets[fKey] || 0;
+                                                                                            // Normalize Facet Real if needed (assuming same scale logic)
+                                                                                            // If candidate scores were normalized in controller, facets might not have been?
+                                                                                            // The controller code: facets: rawScores.facets || {}
+                                                                                            // Controller normalization only touched main traits O,C,E,A,N.
+                                                                                            // We need to normalize facets here visually if they look like Likert (<=6)
+                                                                                            let fReal = fRealRaw;
+                                                                                            // Simple heuristic: if value <= 6, assume Likert and normalize
+                                                                                            if (fReal > 0 && fReal <= 6) fReal = Math.round(((fReal - 1) / 4) * 100);
+
+                                                                                            const fGapColor = getGapColorText(fIdeal, fReal); // Use text color helper for label, or bg for bar
+
+                                                                                            return (
+                                                                                                <div key={fKey} className="text-[10px]">
+                                                                                                    <div className="flex justify-between mb-0.5">
+                                                                                                        <span className="text-slate-500 font-medium truncate w-1/2" title={fKey}>{fKey}</span>
+                                                                                                        <div className="flex gap-2">
+                                                                                                            <span className="text-slate-300">Target: {fIdeal}</span>
+                                                                                                            <span className={`font-bold ${getGapColorText(fIdeal, fReal)}`}>{fRealRaw} ({fReal}%)</span>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                    <div className="relative h-1.5 bg-slate-100 rounded-full w-full">
+                                                                                                        <div
+                                                                                                            className={`absolute top-0 left-0 h-full rounded-full transition-all ${getGapColor(fIdeal, fReal)} opacity-60`}
+                                                                                                            style={{ width: `${fReal}%` }}
+                                                                                                        ></div>
+                                                                                                        <div
+                                                                                                            className="absolute top-0 h-2 w-0.5 bg-purple-400 -translate-y-px z-10"
+                                                                                                            style={{ left: `${fIdeal}%` }}
+                                                                                                        ></div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )
+                                                                                        })}
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         );
                                                                     })}
