@@ -143,7 +143,16 @@ export default function TakeAssessmentPage() {
                 }
             } catch (e) { }
 
-            router.push(`/dashboard/assessments/results/${data.result.assignmentId}`);
+            // Safe navigation handling for varied backend responses
+            const assignmentId = data.assignmentId || (data.result && data.result.assignmentId);
+
+            if (assignmentId) {
+                router.push(`/dashboard/assessments/results/${assignmentId}`);
+            } else {
+                // Fallback if ID missing (e.g. calculation delayed/error message)
+                alert('Avaliação enviada com sucesso! Seus resultados estarão disponíveis em breve.');
+                router.push('/dashboard/my-assessments');
+            }
         },
         onError: (error: any) => {
             alert(error.message || 'Erro ao submeter avaliação');
