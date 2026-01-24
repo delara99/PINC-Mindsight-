@@ -6,10 +6,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { TalkingToModule } from '../talking-to/talking-to.module';
 import { ReportsModule } from '../reports/reports.module';
 
+import { TalentIntelligenceModule } from './talent-intelligence/talent-intelligence.module';
+
 @Module({
-    imports: [PrismaModule, TalkingToModule, ReportsModule],
+    imports: [PrismaModule, TalkingToModule, ReportsModule, TalentIntelligenceModule],
     controllers: [BusinessController],
     providers: [BusinessService],
-    exports: [BusinessService]
+    exports: [BusinessService, TalentIntelligenceModule]
 })
 export class BusinessModule { }

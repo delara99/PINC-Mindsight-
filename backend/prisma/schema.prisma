@@ -334,8 +334,18 @@ model JobProfile {
   // JSON: { "OPENNESS": 4.5, "EXTRAVERSION": 4.0 }
   idealScores Json
 
+  // Business 2.0 Fields (Optional for backward compatibility)
+  department  String?
+  level       String?
+  weights     Json?     // Pesos por dimensão
+  minScores   Json?     // Scores mínimos aceitáveis
+  maxScores   Json?     // Scores máximos aceitáveis
+
   // Margem de tolerância padrão (ex: 0.5)
   tolerance Float @default(0.5)
+
+  // Relations
+  fitAnalyses CandidateFitAnalysis[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1109,4 +1119,106 @@ model CalculationSimulation {
   createdAt   DateTime @default(now())
   
   @@map("calculation_simulations")
+}
+
+// ==========================================
+// PINC BUSINESS 2.0 (Talent Intelligence)
+// ==========================================
+
+model CandidateFitAnalysis {
+  id              String   @id @default(uuid())
+  candidateId     String   
+  jobProfileId    String
+  jobProfile      JobProfile @relation(fields: [jobProfileId], references: [id])
+  
+  overallFit      Float
+  dimensionFits   Json
+  
+  strengths       Json
+  concerns        Json
+  recommendations Json
+  
+  calculatedAt    DateTime @default(now())
+  
+  @@map("candidate_fit_analysis")
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  managerId   String?  
+  
+  // JSON array das IDs dos membros
+  memberIds   Json
+
+  // Dados agregados cacheados
+  avgScores   Json?
+  diversity   Float?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  fitAnalyses TeamFitAnalysis[]
+
+  @@map("teams")
+}
+
+model TeamFitAnalysis {
+  id              String   @id @default(uuid())
+  candidateId     String
+  teamId          String
+  team            Team     @relation(fields: [teamId], references: [id])
+  
+  culturalFit     Float
+  complementarity Float
+  conflictRisk    Float
+  
+  synergies       Json
+  risks           Json
+  
+  calculatedAt    DateTime @default(now())
+  
+  @@map("team_fit_analysis")
+}
+
+model ActionPlan {
+  id              String   @id @default(uuid())
+  employeeId      String   
+  managerId       String   
+  type            String   // ONBOARDING, DEVELOPMENT, PERFORMANCE
+  title           String
+
+  objectives      Json
+  actions         Json
+  milestones      Json
+  
+  progress        Float    @default(0)
+  status          String   @default("ACTIVE") 
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("action_plans")
+}
+
+model PerformanceSnapshot {
+  id              String   @id @default(uuid())
+  employeeId      String
+  period          String   
+  
+  bigFiveScores   Json
+  jobFitScore     Float?
+  teamFitScore    Float?
+  
+  managerRating   Float?
+  managerNotes    String? @db.Text
+  
+  goalsCompleted  Int     @default(0)
+  goalsTotal      Int     @default(0)
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("performance_snapshots")
 }
