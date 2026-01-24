@@ -50,12 +50,26 @@ export class TalentIntelligenceController {
                 // No service eu pus: candidateId: assignment.user.id
                 // Então aponta para User.
                 const user = assignments.find(a => a.user.id === result.candidateId)?.user;
+                const assignmentData = assignments.find(a => a.user.id === result.candidateId);
+                const rawScores = assignmentData?.result?.scores as any || {};
+
+                // Normalize scores keys to capital letters just in case
+                const candidateScores = {
+                    O: rawScores.O || rawScores.OPENNESS || 0,
+                    C: rawScores.C || rawScores.CONSCIENTIOUSNESS || 0,
+                    E: rawScores.E || rawScores.EXTRAVERSION || 0,
+                    A: rawScores.A || rawScores.AGREEABLENESS || 0,
+                    N: rawScores.N || rawScores.NEUROTICISM || 0,
+                    // Pass facets if available in rawScores
+                    facets: rawScores.facets || {}
+                };
 
                 return {
                     ...result,
                     candidateName: user?.name,
                     candidateEmail: user?.email,
-                    candidateRole: 'Colaborador' // Placeholder
+                    candidateRole: 'Colaborador',
+                    candidateScores: candidateScores // Expose scores for Matrix/Detail view
                 };
             })
             .sort((a, b) => b.overallFit - a.overallFit);
