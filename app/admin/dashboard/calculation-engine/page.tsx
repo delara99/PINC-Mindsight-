@@ -173,6 +173,7 @@ function OverviewTab() {
 function QuestionMappingsTab() {
     const [mappings, setMappings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedDimension, setSelectedDimension] = useState<string>('EXTRAVERSION');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
@@ -190,14 +191,23 @@ function QuestionMappingsTab() {
     const fetchMappings = async () => {
         try {
             const token = useAuthStore.getState().token;
+            if (!token) {
+                setError('Token de autenticação não encontrado');
+                setLoading(false);
+                return;
+            }
+
             const response = await axios.get(
                 `${API_URL}/calculation-engine/question-mappings`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            console.log('Mapeamentos carregados:', response.data.length);
             setMappings(response.data);
+            setError(null);
             setLoading(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao buscar mapeamentos:', error);
+            setError(error.response?.data?.message || 'Erro ao carregar mapeamentos');
             setLoading(false);
         }
     };
@@ -250,6 +260,8 @@ function QuestionMappingsTab() {
         .sort((a, b) => a.questionId - b.questionId);
 
     if (loading) return <div className="text-center py-12">⏳ Carregando mapeamentos...</div>;
+    if (error) return <div className="text-center py-12 text-red-600">❌ {error}</div>;
+    if (mappings.length === 0) return <div className="text-center py-12 text-gray-500">Nenhum mapeamento encontrado. Execute o seed do banco de dados.</div>;
 
     return (
         <div className="space-y-6">

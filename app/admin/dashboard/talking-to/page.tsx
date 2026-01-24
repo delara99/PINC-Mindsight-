@@ -29,7 +29,14 @@ export default function TalkingToManager() {
                             Central de controle PINC: Gerencie regras, calibrações e conteúdo.
                         </p>
                     </div>
-                    <div>
+                    <div className="flex gap-3">
+                        <Link
+                            href="/admin/dashboard/calculation-engine"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all hover:scale-105 shadow-sm"
+                        >
+                            <BrainCircuit size={16} />
+                            Motor de Cálculo
+                        </Link>
                         <Link
                             href="/dashboard"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-sm font-medium transition-all hover:scale-105 shadow-sm"
