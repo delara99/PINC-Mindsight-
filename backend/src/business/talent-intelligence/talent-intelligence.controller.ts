@@ -64,6 +64,17 @@ export class TalentIntelligenceController {
                     facets: rawScores.facets || {}
                 };
 
+                // Normalize for Visualization if scale is low (1-5 Likert)
+                // This ensures frontend receives percentual scores (0-100) even if DB has raw scores
+                const maxScore = Math.max(candidateScores.O, candidateScores.C, candidateScores.E, candidateScores.A, candidateScores.N);
+                if (maxScore > 0 && maxScore <= 6) {
+                    ['O', 'C', 'E', 'A', 'N'].forEach(k => {
+                        // Cast to number just in case
+                        const val = Math.max(1, Math.min(5, Number(candidateScores[k])));
+                        candidateScores[k] = Math.round(((val - 1) / 4) * 100);
+                    });
+                }
+
                 return {
                     ...result,
                     candidateName: user?.name,

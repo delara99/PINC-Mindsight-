@@ -232,13 +232,35 @@ export class TalentIntelligenceService {
     private extractScores(result: any): Record<string, number> {
         const scores = result.scores || {};
         // Tenta mapear tanto siglas quanto nomes completos
-        return {
-            O: scores.O || scores.OPENNESS || 50,
-            C: scores.C || scores.CONSCIENTIOUSNESS || 50,
-            E: scores.E || scores.EXTRAVERSION || 50,
-            A: scores.A || scores.AGREEABLENESS || 50,
-            N: scores.N || scores.NEUROTICISM || 50
+        const raw = {
+            O: Number(scores.O || scores.OPENNESS || 0),
+            C: Number(scores.C || scores.CONSCIENTIOUSNESS || 0),
+            E: Number(scores.E || scores.EXTRAVERSION || 0),
+            A: Number(scores.A || scores.AGREEABLENESS || 0),
+            N: Number(scores.N || scores.NEUROTICISM || 0)
         };
+
+        // Auto-detectar escala Likert (1-5) e normalizar para Percentual (0-100)
+        // Se o maior valor for <= 6, assumimos que é escala bruta e precisamos converter.
+        const maxVal = Math.max(raw.O, raw.C, raw.E, raw.A, raw.N);
+
+        if (maxVal > 0 && maxVal <= 6) {
+            Object.keys(raw).forEach(key => {
+                // Converter 1-5 para 0-100
+                // (val - 1) / 4 * 100
+                // Clamp entre 1 e 5 antes
+                const val = Math.max(1, Math.min(5, raw[key]));
+                raw[key] = Math.round(((val - 1) / 4) * 100);
+            });
+        }
+
+        // Se por acaso vier 0 (valor default), manter ou definir padrão? 50 é neutro seguro.
+        // Mas se validamos acima > 0, ok. Se maxVal for 0, retorna tudo 0 ou 50?
+        if (maxVal === 0) {
+            return { O: 50, C: 50, E: 50, A: 50, N: 50 };
+        }
+
+        return raw;
     }
 
     // --- ACTION PLANS ---
