@@ -225,10 +225,57 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                 // Cor da barra segue a cor do pai
                                                 const fillColor = getTraitColor(trait.key, 'fill');
 
+                                                // Dicionário de Tradução B2B
+                                                const translateFacet = (name: string) => {
+                                                    const map: Record<string, string> = {
+                                                        // Neuroticismo
+                                                        'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade',
+                                                        'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade',
+                                                        'depression': 'Depressão', 'depressao': 'Depressão',
+                                                        'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência',
+                                                        'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade',
+                                                        'vulnerability': 'Vulnerabilidade',
+
+                                                        // Extroversão
+                                                        'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento',
+                                                        'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo',
+                                                        'assertiveness': 'Assertividade',
+                                                        'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade',
+                                                        'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção',
+                                                        'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas',
+
+                                                        // Abertura
+                                                        'fantasy': 'Fantasia', 'fantasia': 'Fantasia',
+                                                        'aesthetics': 'Estética', 'estetica': 'Estética',
+                                                        'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos',
+                                                        'actions': 'Ações', 'acoes': 'Ações',
+                                                        'ideas': 'Ideias',
+                                                        'values': 'Valores',
+
+                                                        // Amabilidade
+                                                        'trust': 'Confiança', 'confianca': 'Confiança',
+                                                        'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza',
+                                                        'altruism': 'Altruísmo', 'altruismo': 'Altruísmo',
+                                                        'compliance': 'Complacência', 'complacencia': 'Complacência',
+                                                        'modesty': 'Modéstia', 'modestia': 'Modéstia',
+                                                        'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade',
+
+                                                        // Conscienciosidade
+                                                        'competence': 'Competência', 'competencia': 'Competência',
+                                                        'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização',
+                                                        'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever',
+                                                        'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização',
+                                                        'selfdiscipline': 'Autodisciplina',
+                                                        'deliberation': 'Deliberação'
+                                                    };
+                                                    const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+                                                    return map[normalized] || name;
+                                                };
+
                                                 return (
                                                     <div key={idx} className="space-y-1">
                                                         <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                                                            <span>{fName}</span>
+                                                            <span>{translateFacet(fName)}</span>
                                                             <span className="text-slate-500">{fScore}%</span>
                                                         </div>
                                                         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">

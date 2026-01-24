@@ -479,20 +479,69 @@ export default function MyReportPage() {
                                                     {/* CASE 1: REAL FACETS AVAILABLE (From Modern Engine) */}
                                                     {detailedScore?.facets && detailedScore.facets.length > 0 ? (
                                                         <div className="space-y-3">
-                                                            {detailedScore.facets.map((facet: any, fIdx: number) => (
-                                                                <div key={fIdx}>
-                                                                    <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
-                                                                        <span>{facet.facetName}</span>
-                                                                        <span className="text-purple-600">{facet.score}%</span>
+                                                            {detailedScore.facets.map((facet: any, fIdx: number) => {
+                                                                // Tradução de Facetas (PT-BR)
+                                                                const translateFacet = (name: string) => {
+                                                                    const map: Record<string, string> = {
+                                                                        // Neuroticismo
+                                                                        'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade',
+                                                                        'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade',
+                                                                        'depression': 'Depressão', 'depressao': 'Depressão',
+                                                                        'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência',
+                                                                        'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade',
+                                                                        'vulnerability': 'Vulnerabilidade',
+
+                                                                        // Extroversão
+                                                                        'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento',
+                                                                        'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo',
+                                                                        'assertiveness': 'Assertividade',
+                                                                        'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade',
+                                                                        'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção',
+                                                                        'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas',
+
+                                                                        // Abertura
+                                                                        'fantasy': 'Fantasia', 'fantasia': 'Fantasia',
+                                                                        'aesthetics': 'Estética', 'estetica': 'Estética',
+                                                                        'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos',
+                                                                        'actions': 'Ações', 'acoes': 'Ações',
+                                                                        'ideas': 'Ideias',
+                                                                        'values': 'Valores',
+
+                                                                        // Amabilidade
+                                                                        'trust': 'Confiança', 'confianca': 'Confiança',
+                                                                        'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza',
+                                                                        'altruism': 'Altruísmo', 'altruismo': 'Altruísmo',
+                                                                        'compliance': 'Complacência', 'complacencia': 'Complacência',
+                                                                        'modesty': 'Modéstia', 'modestia': 'Modéstia',
+                                                                        'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade',
+
+                                                                        // Conscienciosidade
+                                                                        'competence': 'Competência', 'competencia': 'Competência',
+                                                                        'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização',
+                                                                        'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever',
+                                                                        'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização',
+                                                                        'selfdiscipline': 'Autodisciplina',
+                                                                        'deliberation': 'Deliberação'
+                                                                    };
+                                                                    const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+                                                                    return map[normalized] || name; // Fallback para original
+                                                                };
+
+                                                                return (
+                                                                    <div key={fIdx}>
+                                                                        <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+                                                                            <span>{translateFacet(facet.facetName)}</span>
+                                                                            <span className="text-purple-600">{facet.score}%</span>
+                                                                        </div>
+                                                                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-purple-500 rounded-full transition-all duration-1000"
+                                                                                style={{ width: `${facet.score}%` }}
+                                                                            ></div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                                        <div
-                                                                            className="h-full bg-purple-500 rounded-full transition-all duration-1000"
-                                                                            style={{ width: `${facet.score}%` }}
-                                                                        ></div>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
                                                     ) : (
                                                         /* CASE 2: LEGACY FALLBACK (Simulated from Main Score) */
