@@ -36,11 +36,27 @@ export class ScoreCalculationService {
         const assignment = await this.prisma.assessmentAssignment.findUnique({
             where: { id: assignmentId },
             include: {
-                responses: true
+                responses: true,
+                assessment: {
+                    include: {
+                        questions: {
+                            orderBy: { createdAt: 'asc' }
+                        }
+                    }
+                }
             }
         });
 
         if (!assignment) throw new Error('Assignment não encontrado');
+
+        // Mapear UUID da questão para índice sequencial (1 a N)
+        // Isso é necessário porque o AssessmentResponse usa UUID (string) mas o Calculation Engine usa sequence ID (int)
+        const questionIdToSequence = new Map<string, number>();
+        if (assignment.assessment?.questions) {
+            assignment.assessment.questions.forEach((q, index) => {
+                questionIdToSequence.set(q.id, index + 1);
+            });
+        }
 
         // 2. Fetch Calculation Engine Configs (Mappings & Classifications)
         const [mappings, classifications] = await Promise.all([
@@ -58,46 +74,55 @@ export class ScoreCalculationService {
         }
 
         // 3. Process Responses & Normalize
-        const normalizedResponses: Record<string, number> = {}; // QuestionID -> Normalized Value (0-100)
+        const normalizedResponses: Record<string, number> = {}; // QuestionSequence (String key) -> Normalized Value (0-100)
 
         assignment.responses.forEach(r => {
-            const qId = r.questionId;
-            let rawVal = r.value || 0;
+            const qUUID = r.questionId;
+            const qSeq = questionIdToSequence.get(qUUID);
+
+            if (!qSeq) {
+                // Se o mapeamento de ID para sequência falhar (ex: questão deletada), ignora
+                return;
+            }
+
+            // Correção de Tipo: API retorna 'answer', não 'value'
+            let rawVal = r.answer || 0;
 
             // Validação básica de range 1-6
             if (rawVal < 1) rawVal = 1;
             if (rawVal > 6) rawVal = 6;
 
-            const mapping = mappings.find(m => m.questionId === qId);
+            const mapping = mappings.find(m => m.questionId === qSeq);
 
             if (mapping && mapping.isReversed) {
-                // Inversão: 7 - valor
+                // Inversão: 7 - valor (para escala 1-6)
                 const inverted = 7 - rawVal;
                 // Normalização: (val - 1) / 5 * 100
-                normalizedResponses[qId] = Math.round(((inverted - 1) / 5) * 100);
+                normalizedResponses[qSeq.toString()] = Math.round(((inverted - 1) / 5) * 100);
             } else {
                 // Normalização direta
-                normalizedResponses[qId] = Math.round(((rawVal - 1) / 5) * 100);
+                normalizedResponses[qSeq.toString()] = Math.round(((rawVal - 1) / 5) * 100);
             }
         });
 
         // 4. Calculate Facet Scores (Weighted Average)
-        const facetScores: Record<string, {
-            dimension: string,
-            score: number,
-            sum: number,
-            weightSum: number,
-            count: number
-        }> = {};
+        interface FacetCalc {
+            dimension: string;
+            score: number;
+            sum: number;
+            weightSum: number;
+            count: number;
+        }
+        const facetScores: Record<string, FacetCalc> = {};
 
         mappings.forEach(mapping => {
-            const qId = mapping.questionId;
-            const normVal = normalizedResponses[qId];
+            const qSeq = mapping.questionId;
+            const normVal = normalizedResponses[qSeq.toString()];
 
             // Se não tem resposta para esta questão mapeada, ignoramos
             if (normVal === undefined) return;
 
-            const facetKey = `${mapping.dimension}_${mapping.facet}`; // Ex: EXTRAVERSION_ENTUSIASMO
+            const facetKey = `${mapping.dimension}_${mapping.facet}`;
 
             if (!facetScores[facetKey]) {
                 facetScores[facetKey] = {
@@ -114,110 +139,93 @@ export class ScoreCalculationService {
             facetScores[facetKey].count++;
         });
 
-        // Finalize Facet Scores
-        Object.values(facetScores).forEach(f => {
+        // Finalizar cálculo de facetas (média ponderada)
+        Object.keys(facetScores).forEach(key => {
+            const f = facetScores[key];
             if (f.weightSum > 0) {
                 f.score = Math.round(f.sum / f.weightSum);
             }
         });
 
         // 5. Calculate Dimension Scores (Simple Average of Facets)
-        const dimensionScores: Record<string, { score: number, facets: number[] }> = {};
+        const dimensionScores: Record<string, number> = {};
 
-        // Initialize Dimensions
-        ['EXTRAVERSION', 'AGREEABLENESS', 'CONSCIENTIOUSNESS', 'OPENNESS', 'NEUROTICISM'].forEach(dim => {
-            dimensionScores[dim] = { score: 0, facets: [] };
+        // Agrupar facetas por dimensão
+        const facetsByDimension: Record<string, number[]> = {};
+
+        Object.keys(facetScores).forEach(key => {
+            const f = facetScores[key];
+            if (!facetsByDimension[f.dimension]) {
+                facetsByDimension[f.dimension] = [];
+            }
+            facetsByDimension[f.dimension].push(f.score);
         });
 
-        Object.values(facetScores).forEach(f => {
-            if (dimensionScores[f.dimension]) {
-                dimensionScores[f.dimension].facets.push(f.score);
+        // Calcular média das facetas para cada dimensão
+        Object.keys(facetsByDimension).forEach(dim => {
+            const scores = facetsByDimension[dim];
+            if (scores.length > 0) {
+                const sum = scores.reduce((a, b) => a + b, 0);
+                dimensionScores[dim] = Math.round(sum / scores.length);
+            } else {
+                dimensionScores[dim] = 0;
             }
         });
 
-        // Finalize Dimension Scores
-        Object.keys(dimensionScores).forEach(dim => {
-            const facets = dimensionScores[dim].facets;
-            if (facets.length > 0) {
-                const sum = facets.reduce((a, b) => a + b, 0);
-                dimensionScores[dim].score = Math.round(sum / facets.length);
-            }
-        });
-
-        // 6. Build Final Result Structure
+        // 6. Formatar Saída (Scores + Classificação)
         const finalScores: Record<string, ScoreResult> = {};
 
-        // Map Dimensions names to PT-BR (Visual)
-        const traitNames: Record<string, string> = {
-            'EXTRAVERSION': 'Extroversão',
-            'AGREEABLENESS': 'Amabilidade',
-            'CONSCIENTIOUSNESS': 'Conscienciosidade',
-            'OPENNESS': 'Abertura à Experiência',
-            'NEUROTICISM': 'Estabilidade Emocional'
+        const dimensionNames: Record<string, string> = {
+            'O': 'Abertura à Experiência',
+            'C': 'Conscienciosidade',
+            'E': 'Extroversão',
+            'A': 'Amabilidade',
+            'N': 'Neuroticismo'
         };
 
-        // Determine Levels based on DB Classifications
-        Object.entries(dimensionScores).forEach(([dimKey, data]) => {
-            const score = data.score;
+        const dimensionKeysMap: Record<string, string> = {
+            'O': 'OPENNESS',
+            'C': 'CONSCIENTIOUSNESS',
+            'E': 'EXTRAVERSION',
+            'A': 'AGREEABLENESS',
+            'N': 'NEUROTICISM'
+        };
 
-            // Find matching classification
-            const dimClassifs = classifications.filter(c => c.dimension === dimKey);
-            const match = dimClassifs.find(c => score >= c.minScore && score <= c.maxScore);
+        Object.keys(dimensionScores).forEach(dimKey => {
+            const score = dimensionScores[dimKey];
+            // Mapeia O->OPENNESS, etc.
+            const fullKey = dimensionKeysMap[dimKey] || dimKey;
 
-            const level = (match?.level as any) || 'AVERAGE';
-            const label = match?.label || 'Médio';
-            const description = match?.description || '';
+            // Encontrar classificação baseada no range
+            const classification = classifications.find(c =>
+                c.dimension === fullKey &&
+                score >= c.minScore &&
+                score <= c.maxScore
+            );
 
-            // Get Facets details for this dimension
-            const dimFacets = Object.entries(facetScores)
-                .filter(([_, fData]) => fData.dimension === dimKey)
-                .map(([key, fData]) => ({
-                    facetKey: key,
-                    facetName: key.split('_')[1], // Simple name extraction
-                    score: fData.score,
-                    rawScore: (fData.score / 100) * 5 + 1 // Aproximate back to 1-6 for legacy compatibility if needed
-                }));
+            const level = (classification?.level as any) || 'AVERAGE';
+            const label = classification?.label || 'Médio';
 
-            finalScores[dimKey] = {
-                traitKey: dimKey,
-                traitName: traitNames[dimKey] || dimKey,
+            finalScores[fullKey] = {
+                traitKey: fullKey,
+                traitName: dimensionNames[dimKey] || dimKey,
                 score: score,
                 normalizedScore: score,
                 level: level,
                 levelLabel: label,
-                interpretation: description, // Usando a descrição do range como interpretação básica
-                facets: dimFacets
+                interpretation: classification?.description || ''
             };
         });
-
-        // 7. Adapters for Legacy Props (concept, subtrait, etc)
-        // O frontend antigo pode olhar para esses objetos. Vamos populá-los com as facetas.
-        const legacySubtraitScores: Record<string, any> = {};
-
-        Object.entries(facetScores).forEach(([key, data]) => {
-            const legacyKey = key.split('_')[1] || key;
-            legacySubtraitScores[legacyKey] = {
-                name: legacyKey,
-                score: (data.score / 100) * 5 + 1, // Legacy often expects 1-6 scale here
-                normalizedScore: data.score,
-                level: 'AVERAGE' // Dummy
-            };
-        });
-
-        const dummyConfig = {
-            veryLowLabel: 'Muito Baixo',
-            lowLabel: 'Baixo',
-            averageLabel: 'Médio',
-            highLabel: 'Alto',
-            veryHighLabel: 'Muito Alto'
-        };
 
         return {
             scores: finalScores,
-            conceptScores: {}, // Deprecated
-            subtraitScores: legacySubtraitScores, // Mapped to Facets
-            dichotomyScores: {}, // Deprecated
-            config: dummyConfig
+            conceptScores: {},
+            subtraitScores: {},
+            dichotomyScores: {},
+            config: {
+                mappingsCount: mappings.length,
+                classificationsCount: classifications.length
+            }
         };
     }
 }
