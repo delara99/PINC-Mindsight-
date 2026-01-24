@@ -470,44 +470,57 @@ export default function MyReportPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* FACET SLIDERS (Visual Balance) */}
-                                                {facetPairs.length > 0 && detailedScore?.normalizedScore !== undefined && (
-                                                    <div className="space-y-4 px-2">
-                                                        <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Equilíbrio (Facetas)</h5>
-                                                        {facetPairs.map((pair, idx) => {
-                                                            // Heuristic: Use main score to simulate facet spread if individual facet scores aren't perfectly mapped by key yet
-                                                            // In a perfect v2, we would map exact facet score.
-                                                            // For now, if "High", skew right. If "Low", skew left. If "Flex", center.
-                                                            // PLUS: Add some random variation derived from the index/dimension to make it look organic but consistent
-                                                            let percent = 50;
-                                                            if (detailedScore) {
-                                                                // Try to find exact facet score if available
-                                                                if (detailedScore.facets && detailedScore.facets[idx]) {
-                                                                    percent = detailedScore.facets[idx].score;
-                                                                } else {
-                                                                    // Fallback to main score
-                                                                    percent = detailedScore.normalizedScore;
-                                                                }
-                                                            }
+                                                {/* FACET DATA (Real or Simulated) */}
+                                                <div className="space-y-5 px-2 mt-4">
+                                                    <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-3">
+                                                        Composição do Traço
+                                                    </h5>
 
-                                                            return (
-                                                                <div key={idx} className="flex flex-col gap-1">
-                                                                    <div className="flex justify-between text-[10px] font-bold text-gray-500 uppercase">
-                                                                        <span>{pair[0]}</span>
-                                                                        <span>{pair[1]}</span>
+                                                    {/* CASE 1: REAL FACETS AVAILABLE (From Modern Engine) */}
+                                                    {detailedScore?.facets && detailedScore.facets.length > 0 ? (
+                                                        <div className="space-y-3">
+                                                            {detailedScore.facets.map((facet: any, fIdx: number) => (
+                                                                <div key={fIdx}>
+                                                                    <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+                                                                        <span>{facet.facetName}</span>
+                                                                        <span className="text-purple-600">{facet.score}%</span>
                                                                     </div>
-                                                                    <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                                                                         <div
-                                                                            className="absolute top-0 bottom-0 w-2 h-2 rounded-full bg-purple-500 shadow-md transform -translate-x-1/2 transition-all duration-1000"
-                                                                            style={{ left: `${percent}%` }}
+                                                                            className="h-full bg-purple-500 rounded-full transition-all duration-1000"
+                                                                            style={{ width: `${facet.score}%` }}
                                                                         ></div>
-                                                                        <div className={`h-full bg-purple-100/50 w-full`}></div>
                                                                     </div>
                                                                 </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        /* CASE 2: LEGACY FALLBACK (Simulated from Main Score) */
+                                                        facetPairs.length > 0 && detailedScore?.normalizedScore !== undefined && (
+                                                            <div className="space-y-4">
+                                                                {facetPairs.map((pair, idx) => {
+                                                                    // Fallback: Use main score
+                                                                    const percent = detailedScore.normalizedScore;
+
+                                                                    return (
+                                                                        <div key={idx} className="flex flex-col gap-1 opacity-80" title="Valor estimado baseado no traço principal">
+                                                                            <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
+                                                                                <span>{pair[0]}</span>
+                                                                                <span>{pair[1]}</span>
+                                                                            </div>
+                                                                            <div className="relative h-2 bg-gray-50 rounded-full overflow-hidden border border-gray-100">
+                                                                                <div
+                                                                                    className="absolute top-0 bottom-0 w-2 h-2 rounded-full bg-purple-300 shadow-sm transform -translate-x-1/2 transition-all duration-1000"
+                                                                                    style={{ left: `${percent}%` }}
+                                                                                ></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                <p className="text-[10px] text-gray-300 italic text-center mt-2">* Detalhamento estimado</p>
+                                                            </div>
+                                                        ))}
+                                                </div>
                                             </div>
 
                                             {/* Right: Text */}

@@ -181,22 +181,43 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                     </div>
                                 )}
 
-                                {/* Facetas em Grid (SEM FALLBACK) */}
-                                {trait.facets && trait.facets.length > 0 && (
-                                    <div className="mt-8 pt-6 border-t border-slate-100">
-                                        <h5 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Facetas Detalhadas</h5>
-                                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {trait.facets.map((facet: any, idx: number) => (
-                                                <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                    <span className="text-sm font-medium text-slate-700">{facet.name}</span>
-                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${getLevelColor(facet.level)}`}>
-                                                        {getLevelLabel(facet.level)}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                {/* Facetas em Grid com Barras de Progresso */}
+                                <div className="mt-8 pt-6 border-t border-slate-100">
+                                    <h5 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Composição do Traço (Facetas)</h5>
+
+                                    {/* CASE 1: REAL FACETS */}
+                                    {trait.facets && trait.facets.length > 0 ? (
+                                        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                                            {trait.facets.map((facet: any, idx: number) => {
+                                                const fName = facet.name || facet.facetName;
+                                                const fScore = facet.score || facet.normalizedScore || 0;
+                                                // Cor da barra segue a cor do pai
+                                                const fillColor = getTraitColor(trait.key, 'fill');
+
+                                                return (
+                                                    <div key={idx} className="space-y-1">
+                                                        <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+                                                            <span>{fName}</span>
+                                                            <span className="text-slate-500">{fScore}%</span>
+                                                        </div>
+                                                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all duration-1000 ${fillColor}`}
+                                                                style={{ width: `${fScore}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        /* CASE 2: LEGACY FALLBACK (Simulated) */
+                                        <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400 text-sm italic">
+                                            Detalhamento de facetas indisponível para esta versão do inventário.
+                                            {/* Poderíamos simular aqui, mas no B2B é melhor ser honesto ou mostrar nada do que mostrar dado estimado sem aviso claro */}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
