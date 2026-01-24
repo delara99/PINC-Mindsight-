@@ -663,8 +663,8 @@ function ClassificationsTab({ classifications, onUpdate }: { classifications: an
                         key={dim}
                         onClick={() => setSelectedDimension(dim)}
                         className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${selectedDimension === dim
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                     >
                         {dimensionNames[dim]}
@@ -720,8 +720,8 @@ function ClassificationsTab({ classifications, onUpdate }: { classifications: an
                                 <div
                                     key={classif.id}
                                     className={`p-4 rounded-lg border-2 transition-all ${editingClassification?.id === classif.id
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     {editingClassification?.id === classif.id ? (
@@ -860,8 +860,8 @@ function ClassificationsTab({ classifications, onUpdate }: { classifications: an
                                                     onClick={handleSave}
                                                     disabled={validationErrors.length > 0 || !saveReason.trim() || isSaving}
                                                     className={`flex-1 py-2 px-4 rounded-lg font-medium ${validationErrors.length > 0 || !saveReason.trim() || isSaving
-                                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                            : 'bg-green-600 text-white hover:bg-green-700'
+                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        : 'bg-green-600 text-white hover:bg-green-700'
                                                         }`}
                                                 >
                                                     {isSaving ? '⏳ Salvando...' : '💾 Salvar'}
@@ -932,16 +932,474 @@ function ClassificationsTab({ classifications, onUpdate }: { classifications: an
 // SIMULATOR TAB
 // ============================================
 function SimulatorTab() {
+    const [simulationName, setSimulationName] = useState('');
+    const [responses, setResponses] = useState<Record<string, number>>({});
+    const [isRunning, setIsRunning] = useState(false);
+    const [results, setResults] = useState<any>(null);
+    const [activeStep, setActiveStep] = useState(0);
+    const [inputMode, setInputMode] = useState<'manual' | 'random' | 'assessment'>('manual');
+    const [assessmentId, setAssessmentId] = useState('');
+
+    // Gerar respostas aleatórias
+    const generateRandomResponses = () => {
+        const random: Record<string, number> = {};
+        for (let i = 1; i <= 126; i++) {
+            random[i.toString()] = Math.floor(Math.random() * 6) + 1;
+        }
+        setResponses(random);
+    };
+
+    // Carregar de um assessment existente
+    const loadFromAssessment = async () => {
+        if (!assessmentId.trim()) {
+            alert('Por favor, informe o ID do assessment');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(
+                `${API_URL}/assessment/${assessmentId}/responses`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const loadedResponses: Record<string, number> = {};
+            response.data.forEach((r: any, index: number) => {
+                loadedResponses[(index + 1).toString()] = r.value;
+            });
+
+            setResponses(loadedResponses);
+            alert(`✅ ${Object.keys(loadedResponses).length} respostas carregadas!`);
+        } catch (error) {
+            console.error('Erro ao carregar assessment:', error);
+            alert('❌ Erro ao carregar assessment. Verifique o ID.');
+        }
+    };
+
+    // Executar simulação
+    const runSimulation = async () => {
+        if (!simulationName.trim()) {
+            alert('Por favor, informe um nome para a simulação');
+            return;
+        }
+
+        const responseCount = Object.keys(responses).length;
+        if (responseCount < 126) {
+            const confirm = window.confirm(
+                `Você preencheu apenas ${responseCount}/126 questões. Deseja continuar mesmo assim?`
+            );
+            if (!confirm) return;
+        }
+
+        setIsRunning(true);
+        setResults(null);
+        setActiveStep(0);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${API_URL}/calculation-engine/simulate`,
+                { name: simulationName, inputs: responses },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setResults(response.data);
+            alert('✅ Simulação concluída com sucesso!');
+        } catch (error) {
+            console.error('Erro na simulação:', error);
+            alert('❌ Erro ao executar simulação');
+        } finally {
+            setIsRunning(false);
+        }
+    };
+
+    // Resetar simulação
+    const resetSimulation = () => {
+        setSimulationName('');
+        setResponses({});
+        setResults(null);
+        setActiveStep(0);
+    };
+
     return (
-        <div className="text-center py-12">
-            <div className="text-6xl mb-4">🧪</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Simulador de Cálculo</h2>
-            <p className="text-gray-600 mb-6">
-                Em desenvolvimento - Permite testar cálculos com diferentes inputs
-            </p>
-            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Criar Nova Simulação
-            </button>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">🧪 Simulador de Cálculo</h2>
+                {results && (
+                    <button
+                        onClick={resetSimulation}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                    >
+                        🔄 Nova Simulação
+                    </button>
+                )}
+            </div>
+
+            {!results ? (
+                // CONFIGURAÇÃO DA SIMULAÇÃO
+                <div className="space-y-6">
+                    {/* Nome da Simulação */}
+                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nome da Simulação *
+                        </label>
+                        <input
+                            type="text"
+                            value={simulationName}
+                            onChange={(e) => setSimulationName(e.target.value)}
+                            placeholder="Ex: Teste de Validação - 23/01/2026"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    {/* Modo de Input */}
+                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Modo de Input de Respostas
+                        </h3>
+                        <div className="grid grid-cols-3 gap-4 mb-4">
+                            <button
+                                onClick={() => setInputMode('manual')}
+                                className={`p-4 rounded-lg border-2 transition-all ${inputMode === 'manual'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="text-3xl mb-2">✍️</div>
+                                <div className="font-semibold">Manual</div>
+                                <div className="text-xs text-gray-600">Preencher manualmente</div>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setInputMode('random');
+                                    generateRandomResponses();
+                                }}
+                                className={`p-4 rounded-lg border-2 transition-all ${inputMode === 'random'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="text-3xl mb-2">🎲</div>
+                                <div className="font-semibold">Aleatório</div>
+                                <div className="text-xs text-gray-600">Gerar automaticamente</div>
+                            </button>
+                            <button
+                                onClick={() => setInputMode('assessment')}
+                                className={`p-4 rounded-lg border-2 transition-all ${inputMode === 'assessment'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="text-3xl mb-2">📋</div>
+                                <div className="font-semibold">Assessment</div>
+                                <div className="text-xs text-gray-600">Carregar existente</div>
+                            </button>
+                        </div>
+
+                        {inputMode === 'assessment' && (
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={assessmentId}
+                                    onChange={(e) => setAssessmentId(e.target.value)}
+                                    placeholder="ID do Assessment"
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                                />
+                                <button
+                                    onClick={loadFromAssessment}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    Carregar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Grid de Respostas */}
+                    {inputMode === 'manual' && (
+                        <div className="bg-white rounded-lg p-6 border border-gray-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    Respostas ({Object.keys(responses).length}/126)
+                                </h3>
+                                <button
+                                    onClick={generateRandomResponses}
+                                    className="text-sm text-blue-600 hover:text-blue-700"
+                                >
+                                    Preencher com valores aleatórios
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-10 gap-2 max-h-96 overflow-y-auto">
+                                {Array.from({ length: 126 }, (_, i) => i + 1).map((qNum) => (
+                                    <div key={qNum} className="flex flex-col items-center">
+                                        <label className="text-xs text-gray-600 mb-1">Q{qNum}</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="6"
+                                            value={responses[qNum.toString()] || ''}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (val >= 1 && val <= 6) {
+                                                    setResponses({ ...responses, [qNum.toString()]: val });
+                                                }
+                                            }}
+                                            className="w-12 h-10 text-center border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Resumo e Botão de Execução */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                    Pronto para Simular?
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                    {Object.keys(responses).length} questões preenchidas
+                                    {Object.keys(responses).length < 126 && (
+                                        <span className="text-orange-600 ml-2">
+                                            ⚠️ Faltam {126 - Object.keys(responses).length} questões
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+                            <button
+                                onClick={runSimulation}
+                                disabled={isRunning || !simulationName.trim()}
+                                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${isRunning || !simulationName.trim()
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                    }`}
+                            >
+                                {isRunning ? '⏳ Calculando...' : '🚀 Executar Simulação'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                // RESULTADOS DA SIMULAÇÃO
+                <div className="space-y-6">
+                    {/* Header dos Resultados */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-900">{results.name}</h3>
+                                <p className="text-sm text-gray-600">
+                                    Simulação ID: {results.id} | {new Date(results.createdAt).toLocaleString('pt-BR')}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4">
+                            <div className="bg-white rounded-lg p-4">
+                                <div className="text-2xl font-bold text-blue-600">
+                                    {results.summary.totalQuestions}
+                                </div>
+                                <div className="text-sm text-gray-600">Questões</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-4">
+                                <div className="text-2xl font-bold text-purple-600">
+                                    {results.summary.reversedQuestions}
+                                </div>
+                                <div className="text-sm text-gray-600">Reversas</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-4">
+                                <div className="text-2xl font-bold text-orange-600">
+                                    {results.summary.facetsCalculated}
+                                </div>
+                                <div className="text-sm text-gray-600">Facetas</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-4">
+                                <div className="text-2xl font-bold text-green-600">
+                                    {results.summary.dimensionsCalculated}
+                                </div>
+                                <div className="text-sm text-gray-600">Dimensões</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navegação de Passos */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex gap-2 overflow-x-auto">
+                            {results.steps.map((step: any, index: number) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setActiveStep(index)}
+                                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${activeStep === index
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    {step.step}. {step.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Detalhes do Passo Ativo */}
+                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                        {(() => {
+                            const step = results.steps[activeStep];
+                            return (
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                        Passo {step.step}: {step.name}
+                                    </h3>
+                                    <p className="text-gray-600 mb-4">{step.description}</p>
+
+                                    {step.formula && (
+                                        <div className="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+                                            <div className="text-sm font-semibold text-blue-900 mb-2">
+                                                📐 Fórmula Utilizada:
+                                            </div>
+                                            <div className="font-mono text-sm text-gray-700">
+                                                {step.formula.name}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Renderizar detalhes específicos de cada passo */}
+                                    {step.details && (
+                                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                                            {step.details.slice(0, 20).map((detail: any, idx: number) => (
+                                                <div key={idx} className="flex items-center gap-4 p-2 bg-gray-50 rounded">
+                                                    <span className="text-sm font-mono text-gray-600">
+                                                        Q{detail.questionId}
+                                                    </span>
+                                                    {detail.isReversed ? (
+                                                        <>
+                                                            <span className="text-sm">{detail.original}</span>
+                                                            <span className="text-blue-600">→</span>
+                                                            <span className="text-sm font-bold text-blue-600">
+                                                                {detail.reversed}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500">(reversa)</span>
+                                                        </>
+                                                    ) : detail.normalized !== undefined ? (
+                                                        <>
+                                                            <span className="text-sm">{detail.input}</span>
+                                                            <span className="text-green-600">→</span>
+                                                            <span className="text-sm font-bold text-green-600">
+                                                                {detail.normalized}%
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-sm">{detail.value}</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {step.details.length > 20 && (
+                                                <div className="text-center text-sm text-gray-500 py-2">
+                                                    ... e mais {step.details.length - 20} questões
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {step.facets && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {Object.entries(step.facets).map(([key, data]: [string, any]) => (
+                                                <div key={key} className="bg-gray-50 rounded-lg p-4">
+                                                    <div className="font-semibold text-gray-900 mb-2">{key}</div>
+                                                    <div className="text-sm text-gray-600">
+                                                        {data.questions.length} questões | Peso total: {data.totalWeight}
+                                                    </div>
+                                                    <div className="text-2xl font-bold text-blue-600 mt-2">
+                                                        {data.finalScore}%
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {step.dimensions && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {Object.entries(step.dimensions).map(([key, data]: [string, any]) => (
+                                                <div key={key} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                                                    <div className="text-lg font-bold text-gray-900 mb-2">{key}</div>
+                                                    <div className="text-sm text-gray-600 mb-2">
+                                                        {data.count} facetas | Soma: {data.sum}
+                                                    </div>
+                                                    <div className="text-3xl font-bold text-blue-600">
+                                                        {data.average}%
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {step.classifications && (
+                                        <div className="space-y-4">
+                                            {Object.entries(step.classifications).map(([key, data]: [string, any]) => (
+                                                <div key={key} className="bg-gray-50 rounded-lg p-4">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="text-lg font-bold text-gray-900">{key}</div>
+                                                        <div className="text-2xl font-bold" style={{ color: data.selected.color }}>
+                                                            {data.score}%
+                                                        </div>
+                                                    </div>
+                                                    <div className="h-8 rounded-lg overflow-hidden flex mb-2">
+                                                        {data.ranges.map((range: any, idx: number) => {
+                                                            const width = range.max - range.min;
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    style={{
+                                                                        width: `${width}%`,
+                                                                        backgroundColor: range.isMatch ? data.selected.color : '#e5e7eb',
+                                                                        opacity: range.isMatch ? 1 : 0.3
+                                                                    }}
+                                                                    className="flex items-center justify-center text-xs font-semibold text-white"
+                                                                >
+                                                                    {range.isMatch && range.label}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div
+                                                        className="inline-block px-3 py-1 rounded-full text-sm font-semibold text-white"
+                                                        style={{ backgroundColor: data.selected.color }}
+                                                    >
+                                                        {data.selected.label}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    {/* Resultados Finais */}
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-200">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Resultados Finais</h3>
+                        <div className="grid grid-cols-5 gap-4">
+                            {Object.entries(results.results.dimensions).map(([dim, score]: [string, any]) => {
+                                const classif = results.results.classifications[dim];
+                                return (
+                                    <div key={dim} className="bg-white rounded-lg p-4 text-center">
+                                        <div className="text-2xl font-bold mb-1">{dim}</div>
+                                        <div className="text-3xl font-bold mb-2" style={{ color: classif?.color }}>
+                                            {score}%
+                                        </div>
+                                        <div
+                                            className="text-xs font-semibold px-2 py-1 rounded-full text-white"
+                                            style={{ backgroundColor: classif?.color }}
+                                        >
+                                            {classif?.label}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -156,46 +156,206 @@ export class CalculationEngineService {
     async simulate(name: string, inputs: Record<string, number>, userId?: string) {
         // Simula o cálculo completo passo a passo
         const steps: any[] = [];
-        const results: any = {};
+        const results: any = {
+            dimensions: {},
+            facets: {},
+            classifications: {}
+        };
 
-        // 1. Normalização
+        // Buscar mapeamentos e configurações
+        const [mappings, formulas, classifications] = await Promise.all([
+            this.prisma.calculationQuestionMapping.findMany({
+                where: { isActive: true },
+                orderBy: { questionId: 'asc' }
+            }),
+            this.prisma.calculationFormula.findMany({
+                where: { isActive: true }
+            }),
+            this.prisma.calculationClassification.findMany({
+                where: { isActive: true },
+                orderBy: [{ dimension: 'asc' }, { priority: 'asc' }]
+            })
+        ]);
+
+        // PASSO 1: Inversão de Questões Reversas
         steps.push({
             step: 1,
+            name: 'Inversão de Questões Reversas',
+            description: 'Questões marcadas como reversas são invertidas usando a fórmula: 7 - valor',
+            formula: formulas.find(f => f.name === 'REVERSE_SCORING_1_6'),
+            details: []
+        });
+
+        const reversedInputs: Record<string, number> = {};
+        Object.entries(inputs).forEach(([qId, value]) => {
+            const mapping = mappings.find(m => m.questionId === parseInt(qId));
+            if (mapping?.isReversed) {
+                const reversed = 7 - value;
+                reversedInputs[qId] = reversed;
+                steps[0].details.push({
+                    questionId: qId,
+                    original: value,
+                    reversed: reversed,
+                    isReversed: true
+                });
+            } else {
+                reversedInputs[qId] = value;
+                steps[0].details.push({
+                    questionId: qId,
+                    value: value,
+                    isReversed: false
+                });
+            }
+        });
+
+        // PASSO 2: Normalização (1-6 para 0-100)
+        steps.push({
+            step: 2,
             name: 'Normalização de Respostas',
-            description: 'Converte respostas 1-6 para 0-100',
-            inputs: inputs,
-            outputs: {}
+            description: 'Converte respostas da escala 1-6 para percentual 0-100',
+            formula: formulas.find(f => f.name === 'NORMALIZATION_1_6_TO_0_100'),
+            details: []
         });
 
         const normalized: Record<string, number> = {};
-        Object.entries(inputs).forEach(([qId, value]) => {
+        Object.entries(reversedInputs).forEach(([qId, value]) => {
             const norm = Math.round(((value - 1) / 5) * 100);
             normalized[qId] = norm;
-            steps[0].outputs[qId] = { original: value, normalized: norm };
+            steps[1].details.push({
+                questionId: qId,
+                input: value,
+                normalized: norm
+            });
         });
 
-        // 2. Agrupamento por Facetas (simplificado para demo)
+        // PASSO 3: Agrupamento por Facetas e Cálculo de Média Ponderada
         steps.push({
-            step: 2,
-            name: 'Agrupamento por Facetas',
-            description: 'Agrupa questões por faceta e calcula média',
+            step: 3,
+            name: 'Agregação de Facetas',
+            description: 'Calcula média ponderada das questões de cada faceta',
+            formula: formulas.find(f => f.name === 'FACET_WEIGHTED_AVERAGE'),
             facets: {}
         });
 
-        // 3. Agregação de Dimensões
+        const facetScores: Record<string, { dimension: string, score: number, questions: any[] }> = {};
+
+        // Agrupar por faceta
+        mappings.forEach(mapping => {
+            const qId = mapping.questionId.toString();
+            if (!normalized[qId]) return;
+
+            const facetKey = `${mapping.dimension}_${mapping.facet}`;
+            if (!facetScores[facetKey]) {
+                facetScores[facetKey] = {
+                    dimension: mapping.dimension,
+                    score: 0,
+                    questions: []
+                };
+            }
+
+            facetScores[facetKey].questions.push({
+                questionId: qId,
+                score: normalized[qId],
+                weight: mapping.weight
+            });
+        });
+
+        // Calcular média ponderada de cada faceta
+        Object.entries(facetScores).forEach(([facetKey, data]) => {
+            const totalWeight = data.questions.reduce((sum, q) => sum + q.weight, 0);
+            const weightedSum = data.questions.reduce((sum, q) => sum + (q.score * q.weight), 0);
+            const facetScore = Math.round(weightedSum / totalWeight);
+
+            facetScores[facetKey].score = facetScore;
+            results.facets[facetKey] = facetScore;
+
+            steps[2].facets[facetKey] = {
+                dimension: data.dimension,
+                questions: data.questions,
+                totalWeight,
+                weightedSum,
+                finalScore: facetScore
+            };
+        });
+
+        // PASSO 4: Agregação de Dimensões (Média Simples das Facetas)
         steps.push({
-            step: 3,
+            step: 4,
             name: 'Cálculo de Dimensões',
-            description: 'Média simples das facetas',
+            description: 'Calcula média simples das facetas de cada dimensão',
+            formula: formulas.find(f => f.name === 'DIMENSION_SIMPLE_AVERAGE'),
             dimensions: {}
         });
 
-        // 4. Classificação
+        const dimensionScores: Record<string, number> = {};
+        const dimensionsByFacet: Record<string, string[]> = {};
+
+        // Agrupar facetas por dimensão
+        Object.entries(facetScores).forEach(([facetKey, data]) => {
+            if (!dimensionsByFacet[data.dimension]) {
+                dimensionsByFacet[data.dimension] = [];
+            }
+            dimensionsByFacet[data.dimension].push(facetKey);
+        });
+
+        // Calcular média simples de cada dimensão
+        Object.entries(dimensionsByFacet).forEach(([dimension, facetKeys]) => {
+            const facetScoresArray = facetKeys.map(fk => facetScores[fk].score);
+            const sum = facetScoresArray.reduce((a, b) => a + b, 0);
+            const avg = Math.round(sum / facetScoresArray.length);
+
+            dimensionScores[dimension] = avg;
+            results.dimensions[dimension] = avg;
+
+            steps[3].dimensions[dimension] = {
+                facets: facetKeys.map(fk => ({
+                    key: fk,
+                    score: facetScores[fk].score
+                })),
+                sum,
+                count: facetScoresArray.length,
+                average: avg
+            };
+        });
+
+        // PASSO 5: Classificação de Níveis
         steps.push({
-            step: 4,
+            step: 5,
             name: 'Classificação de Níveis',
-            description: 'Determina nível baseado nos ranges',
+            description: 'Determina o nível (VERY_LOW, LOW, AVERAGE, HIGH, VERY_HIGH) baseado nos ranges',
             classifications: {}
+        });
+
+        Object.entries(dimensionScores).forEach(([dimension, score]) => {
+            const dimClassifications = classifications.filter(c => c.dimension === dimension);
+            const classification = dimClassifications.find(c =>
+                score >= c.minScore && score <= c.maxScore
+            );
+
+            if (classification) {
+                results.classifications[dimension] = {
+                    level: classification.level,
+                    label: classification.label,
+                    color: classification.color,
+                    score: score
+                };
+
+                steps[4].classifications[dimension] = {
+                    score,
+                    ranges: dimClassifications.map(c => ({
+                        level: c.level,
+                        label: c.label,
+                        min: c.minScore,
+                        max: c.maxScore,
+                        isMatch: c.id === classification.id
+                    })),
+                    selected: {
+                        level: classification.level,
+                        label: classification.label,
+                        color: classification.color
+                    }
+                };
+            }
         });
 
         // Salvar simulação
@@ -214,6 +374,12 @@ export class CalculationEngineService {
             name,
             steps,
             results,
+            summary: {
+                totalQuestions: Object.keys(inputs).length,
+                reversedQuestions: steps[0].details.filter((d: any) => d.isReversed).length,
+                facetsCalculated: Object.keys(facetScores).length,
+                dimensionsCalculated: Object.keys(dimensionScores).length
+            },
             createdAt: simulation.createdAt
         };
     }
