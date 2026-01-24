@@ -275,30 +275,37 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                                                                                     <div className="pl-4 space-y-2 border-l-2 border-slate-100 ml-1 mb-4">
                                                                                         {facetKeys.map(fKey => {
                                                                                             const fIdeal = idealFacets[fKey] || 50;
-                                                                                            const fRealRaw = realFacets[fKey] || 0;
+                                                                                            let fRealRaw = realFacets[fKey];
+                                                                                            const isInferred = fRealRaw === undefined;
+
+                                                                                            // Fallback: If facet data is missing, use main trait score
+                                                                                            if (isInferred) {
+                                                                                                fRealRaw = scores[trait.k] || 0;
+                                                                                            }
+
                                                                                             // Normalize Facet Real if needed (assuming same scale logic)
-                                                                                            // If candidate scores were normalized in controller, facets might not have been?
-                                                                                            // The controller code: facets: rawScores.facets || {}
-                                                                                            // Controller normalization only touched main traits O,C,E,A,N.
-                                                                                            // We need to normalize facets here visually if they look like Likert (<=6)
                                                                                             let fReal = fRealRaw;
                                                                                             // Simple heuristic: if value <= 6, assume Likert and normalize
                                                                                             if (fReal > 0 && fReal <= 6) fReal = Math.round(((fReal - 1) / 4) * 100);
 
-                                                                                            const fGapColor = getGapColorText(fIdeal, fReal); // Use text color helper for label, or bg for bar
+                                                                                            const fGapColor = getGapColorText(fIdeal, fReal);
 
                                                                                             return (
                                                                                                 <div key={fKey} className="text-[10px]">
                                                                                                     <div className="flex justify-between mb-0.5">
-                                                                                                        <span className="text-slate-500 font-medium truncate w-1/2" title={fKey}>{fKey}</span>
+                                                                                                        <span className="text-slate-500 font-medium truncate w-1/2" title={fKey}>
+                                                                                                            {fKey} {isInferred && <span className="text-slate-300 italic text-[9px]">(est.)</span>}
+                                                                                                        </span>
                                                                                                         <div className="flex gap-2">
                                                                                                             <span className="text-slate-300">Target: {fIdeal}</span>
-                                                                                                            <span className={`font-bold ${getGapColorText(fIdeal, fReal)}`}>{fRealRaw} ({fReal}%)</span>
+                                                                                                            <span className={`font-bold ${getGapColorText(fIdeal, fReal)}`}>
+                                                                                                                {fReal}% {isInferred ? '*' : ''}
+                                                                                                            </span>
                                                                                                         </div>
                                                                                                     </div>
                                                                                                     <div className="relative h-1.5 bg-slate-100 rounded-full w-full">
                                                                                                         <div
-                                                                                                            className={`absolute top-0 left-0 h-full rounded-full transition-all ${getGapColor(fIdeal, fReal)} opacity-60`}
+                                                                                                            className={`absolute top-0 left-0 h-full rounded-full transition-all ${getGapColor(fIdeal, fReal)} ${isInferred ? 'opacity-40' : 'opacity-80'}`}
                                                                                                             style={{ width: `${fReal}%` }}
                                                                                                         ></div>
                                                                                                         <div
