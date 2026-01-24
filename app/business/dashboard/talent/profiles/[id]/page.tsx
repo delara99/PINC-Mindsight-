@@ -34,6 +34,13 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
         return 'bg-red-500';
     };
 
+    const getGapColorText = (ideal: number, real: number) => {
+        const diff = Math.abs(ideal - real);
+        if (diff <= 10) return 'text-green-600';
+        if (diff <= 20) return 'text-yellow-600';
+        return 'text-red-500';
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
