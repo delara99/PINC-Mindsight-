@@ -989,32 +989,262 @@ function SimulatorTab() {
                         <SimulatorReportView reportData={getReportData()} simulationName={simulationName} />
                     ) : (
                         <>
-                            <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{results.name}</h3>
-                                <div className="grid grid-cols-4 gap-4 mt-4">
-                                    <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.totalQuestions}</div><div className="text-xs">Questões</div></div>
-                                    <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.facetsCalculated}</div><div className="text-xs">Facetas</div></div>
-                                    <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.dimensionsCalculated}</div><div className="text-xs">Dimensões</div></div>
+                            {/* Summary Header */}
+                            <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="text-3xl font-black mb-2">{results.name}</h3>
+                                        <p className="text-slate-300">Análise Detalhada do Processo de Cálculo</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm text-slate-400 mb-1">ID da Simulação</div>
+                                        <div className="text-xs font-mono bg-slate-700 px-3 py-1 rounded">{results.id}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-4 gap-4 mt-6">
+                                    <div className="bg-slate-700/50 rounded-xl p-4 backdrop-blur">
+                                        <div className="text-3xl font-black mb-1">{results.summary.totalQuestions}</div>
+                                        <div className="text-xs text-slate-300">Questões Processadas</div>
+                                    </div>
+                                    <div className="bg-slate-700/50 rounded-xl p-4 backdrop-blur">
+                                        <div className="text-3xl font-black mb-1">{results.summary.reversedQuestions}</div>
+                                        <div className="text-xs text-slate-300">Questões Reversas</div>
+                                    </div>
+                                    <div className="bg-slate-700/50 rounded-xl p-4 backdrop-blur">
+                                        <div className="text-3xl font-black mb-1">{results.summary.facetsCalculated}</div>
+                                        <div className="text-xs text-slate-300">Facetas Calculadas</div>
+                                    </div>
+                                    <div className="bg-slate-700/50 rounded-xl p-4 backdrop-blur">
+                                        <div className="text-3xl font-black mb-1">{results.summary.dimensionsCalculated}</div>
+                                        <div className="text-xs text-slate-300">Dimensões Finais</div>
+                                    </div>
                                 </div>
                             </div>
+
                             {/* Steps Navigation */}
-                            <div className="bg-white rounded-lg p-4 border border-gray-200 flex gap-2 overflow-x-auto">
-                                {results.steps.map((step: any, index: number) => (
-                                    <button key={index} onClick={() => setActiveStep(index)} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeStep === index ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                                        {step.step}. {step.name}
-                                    </button>
-                                ))}
+                            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                                <div className="flex gap-2 overflow-x-auto pb-2">
+                                    {results.steps.map((step: any, index: number) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setActiveStep(index)}
+                                            className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${activeStep === index
+                                                ? 'bg-blue-600 text-white shadow-lg scale-105'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${activeStep === index ? 'bg-white text-blue-600' : 'bg-gray-300 text-gray-600'
+                                                    }`}>
+                                                    {step.step}
+                                                </span>
+                                                {step.name}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            {/* Step Details */}
-                            <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                <h3 className="text-xl font-bold mb-2">{results.steps[activeStep].name}</h3>
-                                <p className="text-gray-600 mb-4">{results.steps[activeStep].description}</p>
-                                <pre className="bg-gray-50 p-4 rounded text-xs overflow-auto max-h-96">{JSON.stringify(results.steps[activeStep], null, 2)}</pre>
-                            </div>
+
+                            {/* Step Details - Modern View */}
+                            <DebugStepView step={results.steps[activeStep]} />
                         </>
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+// ============================================
+// DEBUG STEP VIEW (Modern Structured Display)
+// ============================================
+function DebugStepView({ step }: { step: any }) {
+    const renderValue = (value: any, depth = 0): React.ReactNode => {
+        if (value === null || value === undefined) {
+            return <span className="text-gray-400 italic">null</span>;
+        }
+
+        if (typeof value === 'boolean') {
+            return <span className={value ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{value.toString()}</span>;
+        }
+
+        if (typeof value === 'number') {
+            return <span className="text-blue-600 font-semibold">{value}</span>;
+        }
+
+        if (typeof value === 'string') {
+            return <span className="text-gray-800">{value}</span>;
+        }
+
+        if (Array.isArray(value)) {
+            if (value.length === 0) return <span className="text-gray-400 italic">[]</span>;
+
+            return (
+                <div className="space-y-2 mt-2">
+                    {value.map((item, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <div className="text-xs text-gray-500 font-semibold mb-2">Item {index + 1}</div>
+                            {renderValue(item, depth + 1)}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        if (typeof value === 'object') {
+            return (
+                <div className={`space-y-2 ${depth > 0 ? 'ml-4 mt-2' : ''}`}>
+                    {Object.entries(value).map(([key, val]) => (
+                        <div key={key} className={`${depth === 0 ? 'bg-white border border-gray-200 rounded-lg p-4' : 'bg-gray-50 rounded p-2'}`}>
+                            <div className="flex items-start gap-3">
+                                <span className="text-sm font-bold text-gray-700 min-w-[120px]">{key}:</span>
+                                <div className="flex-1">{renderValue(val, depth + 1)}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        return <span className="text-gray-600">{String(value)}</span>;
+    };
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-lg">
+            {/* Step Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center font-black text-lg">
+                        {step.step}
+                    </div>
+                    <h3 className="text-2xl font-black">{step.name}</h3>
+                </div>
+                {step.description && (
+                    <p className="text-blue-100 mt-2 leading-relaxed">{step.description}</p>
+                )}
+                {step.formula && (
+                    <div className="mt-4 bg-blue-700/30 rounded-lg p-4 backdrop-blur">
+                        <div className="text-xs text-blue-200 font-semibold mb-2">📐 Fórmula Utilizada</div>
+                        <div className="text-sm font-mono text-white">{step.formula.name}</div>
+                        {step.formula.description && (
+                            <div className="text-xs text-blue-100 mt-1">{step.formula.description}</div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Step Content */}
+            <div className="p-6">
+                {/* Details */}
+                {step.details && (
+                    <div className="mb-6">
+                        <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">📋</span>
+                            Detalhes do Processamento
+                        </h4>
+                        {renderValue(step.details)}
+                    </div>
+                )}
+
+                {/* Facets */}
+                {step.facets && Object.keys(step.facets).length > 0 && (
+                    <div className="mb-6">
+                        <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">🎯</span>
+                            Facetas Calculadas
+                        </h4>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {Object.entries(step.facets).map(([facetKey, facetData]: [string, any]) => (
+                                <div key={facetKey} className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                                    <div className="font-bold text-green-900 mb-2">{facetKey}</div>
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Score Final:</span>
+                                            <span className="font-bold text-green-700">{facetData.finalScore}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Peso Total:</span>
+                                            <span className="font-semibold">{facetData.totalWeight}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Questões:</span>
+                                            <span className="font-semibold">{facetData.questions?.length || 0}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Dimensions */}
+                {step.dimensions && Object.keys(step.dimensions).length > 0 && (
+                    <div className="mb-6">
+                        <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">📊</span>
+                            Dimensões Finais
+                        </h4>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {Object.entries(step.dimensions).map(([dimKey, dimData]: [string, any]) => (
+                                <div key={dimKey} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                                    <div className="font-bold text-purple-900 mb-3">{dimKey}</div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-600 text-sm">Score Médio:</span>
+                                            <span className="text-2xl font-black text-purple-700">{dimData.average}</span>
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            {dimData.count} faceta(s) • Soma: {dimData.sum}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Classifications */}
+                {step.classifications && Object.keys(step.classifications).length > 0 && (
+                    <div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">🏆</span>
+                            Classificações Aplicadas
+                        </h4>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {Object.entries(step.classifications).map(([dimKey, classData]: [string, any]) => (
+                                <div key={dimKey} className="bg-white rounded-xl p-4 border-2 border-orange-200 shadow-sm">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="font-bold text-gray-900">{dimKey}</div>
+                                        <div className="text-2xl font-black text-orange-600">{classData.score}</div>
+                                    </div>
+                                    <div className="bg-orange-50 rounded-lg p-3 mb-3">
+                                        <div className="text-xs text-orange-700 font-semibold mb-1">Classificação Selecionada:</div>
+                                        <div className="font-bold text-orange-900">{classData.selected?.label}</div>
+                                        <div className="text-xs text-orange-600 mt-1">{classData.selected?.level}</div>
+                                    </div>
+                                    {classData.ranges && (
+                                        <div className="space-y-1">
+                                            <div className="text-xs text-gray-500 font-semibold mb-2">Ranges Disponíveis:</div>
+                                            {classData.ranges.map((range: any, idx: number) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`text-xs p-2 rounded ${range.isMatch
+                                                            ? 'bg-orange-100 border border-orange-300 font-semibold'
+                                                            : 'bg-gray-50 text-gray-600'
+                                                        }`}
+                                                >
+                                                    {range.label}: {range.min}-{range.max} {range.isMatch && '✓'}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
