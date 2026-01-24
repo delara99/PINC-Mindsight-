@@ -8,6 +8,14 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
     const [analysis, setAnalysis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Helper para URL da API
+    const getApiUrl = () => {
+        const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
+        const baseUrl = url.startsWith('http') ? url : `https://${url}`;
+        if (baseUrl.includes('/api/v1')) return baseUrl;
+        return `${baseUrl}/api/v1`;
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -16,7 +24,7 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                 if (!token) return;
 
                 // 1. Fetch Profile Details
-                const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/job-profiles/${params.id}`, {
+                const profileRes = await fetch(`${getApiUrl()}/business/job-profiles/${params.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (profileRes.ok) {
@@ -24,7 +32,7 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                 }
 
                 // 2. Run Analysis
-                const analysisRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/analyze/${params.id}`, {
+                const analysisRes = await fetch(`${getApiUrl()}/business/talent-intelligence/analyze/${params.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (analysisRes.ok) {
@@ -138,8 +146,8 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                                                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                                                         <div
                                                             className={`h-full rounded-full transition-all duration-1000 ${item.overallFit >= 85 ? 'bg-gradient-to-r from-green-400 to-emerald-600' :
-                                                                    item.overallFit >= 60 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
-                                                                        'bg-gradient-to-r from-red-400 to-rose-600'
+                                                                item.overallFit >= 60 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                                                                    'bg-gradient-to-r from-red-400 to-rose-600'
                                                                 }`}
                                                             style={{ width: `${item.overallFit}%` }}
                                                         ></div>

@@ -14,6 +14,14 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Helper para URL da API
+    const getApiUrl = () => {
+        const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
+        const baseUrl = url.startsWith('http') ? url : `https://${url}`;
+        if (baseUrl.includes('/api/v1')) return baseUrl;
+        return `${baseUrl}/api/v1`;
+    };
+
     useEffect(() => {
         const fetchTeamData = async () => {
             setLoading(true);
@@ -21,9 +29,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                 const token = localStorage.getItem('accessToken');
                 if (!token) return;
 
-                // 1. Fetch "All Teams" and filter locally (MVP hack since we don't have getOne endpoint exposed yet)
-                // Or better: Implement getTeam in controller. But for now, let's filter.
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/teams`, {
+                const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -32,8 +38,6 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                     const foundTeam = teams.find((t: any) => t.id === params.id);
                     if (foundTeam) {
                         setTeam(foundTeam);
-                        // Fetch members details? We only have IDs in foundTeam.memberIds
-                        // Mocking member details for visualization
                         setMembers((foundTeam.memberIds || []).map((id: string) => ({ id, name: `User ${id.substring(0, 4)}`, role: 'Member' })));
                     }
                 }
@@ -51,7 +55,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
         setIsSaving(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/teams/${params.id}/members`, {
+            const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams/${params.id}/members`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -61,7 +65,6 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
             });
 
             if (response.ok) {
-                // Reload page or update state
                 window.location.reload();
             }
         } catch (e) {

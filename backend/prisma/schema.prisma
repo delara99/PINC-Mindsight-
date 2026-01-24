@@ -1192,8 +1192,8 @@ model ActionPlan {
   id              String   @id @default(uuid())
   employeeId      String   
   employee        User     @relation("PlanEmployee", fields: [employeeId], references: [id])
-  managerId       String   
-  manager         User     @relation("PlanManager", fields: [managerId], references: [id])
+  managerId       String?   
+  manager         User?    @relation("PlanManager", fields: [managerId], references: [id])
   type            String   // ONBOARDING, DEVELOPMENT, PERFORMANCE
   title           String
 
