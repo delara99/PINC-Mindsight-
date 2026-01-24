@@ -1,10 +1,13 @@
 "use client";
-import React from 'react';
-import { BarChart3, TrendingUp, Users, AlertTriangle, ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, TrendingUp, Users, AlertTriangle, ArrowUpRight, ArrowDownRight, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
 
 export default function PerformancePage() {
+    const [candidates, setCandidates] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
     // Helper para URL da API
     const getApiUrl = () => {
         const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
@@ -12,6 +15,29 @@ export default function PerformancePage() {
         if (baseUrl.includes('/api/v1')) return baseUrl;
         return `${baseUrl}/api/v1`;
     };
+
+    useEffect(() => {
+        const fetchCandidates = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) return;
+
+                const response = await fetch(`${getApiUrl()}/business/talent-intelligence/candidates-list`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    setCandidates(await response.json());
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCandidates();
+    }, []);
 
     // Placeholder mock for chart
     const data = [
@@ -148,6 +174,61 @@ export default function PerformancePage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Detailed Performance Table (Restored) */}
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                        <Users size={20} className="text-purple-600" />
+                        Análise Individual de Colaboradores
+                        <HelpTooltip text="Visão detalhada de performance e potencial por colaborador." />
+                    </h3>
+                </div>
+
+                {loading ? (
+                    <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-purple-600" size={32} /></div>
+                ) : (
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <th className="p-4">Colaborador</th>
+                                <th className="p-4">Departamento</th>
+                                <th className="p-4">Avaliação (9-Box)</th>
+                                <th className="p-4">Score Médio</th>
+                                <th className="p-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {candidates.length > 0 ? candidates.map((c) => (
+                                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="p-4">
+                                        <div className="font-bold text-slate-900">{c.name}</div>
+                                        <div className="text-xs text-slate-500">{c.email}</div>
+                                    </td>
+                                    <td className="p-4 text-sm text-slate-600">{c.department || 'Geral'}</td>
+                                    <td className="p-4">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            Alto Potencial
+                                        </span>
+                                    </td>
+                                    <td className="p-4 font-mono text-sm font-bold text-slate-700">
+                                        8.5
+                                    </td>
+                                    <td className="p-4">
+                                        <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600">
+                                            <TrendingUp size={12} /> Em Alta
+                                        </span>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-slate-500">Nenhum colaborador encontrado.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

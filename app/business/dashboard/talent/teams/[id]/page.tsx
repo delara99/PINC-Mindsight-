@@ -6,7 +6,6 @@ import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
 
 export default function TeamDetailsPage({ params }: { params: { id: string } }) {
     const [team, setTeam] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]); // Detalhes dos membros (mocked)
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -24,12 +23,21 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
     };
 
     useEffect(() => {
-        const fetchTeamData = async () => {
+        const fetchData = async () => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('accessToken');
                 if (!token) return;
 
+                // 1. Fetch Candidates (para cruzar dados e seleção)
+                const usersRes = await fetch(`${getApiUrl()}/business/talent-intelligence/candidates-list`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (usersRes.ok) {
+                    setAvailableUsers(await usersRes.json());
+                }
+
+                // 2. Fetch Team
                 const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -39,7 +47,6 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                     const foundTeam = teams.find((t: any) => t.id === params.id);
                     if (foundTeam) {
                         setTeam(foundTeam);
-                        setMembers((foundTeam.memberIds || []).map((id: string) => ({ id, name: `User ${id.substring(0, 4)}`, role: 'Member' })));
                     }
                 }
             } catch (error) {
@@ -49,7 +56,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
             }
         };
 
-        fetchTeamData();
+        fetchData();
     }, [params.id]);
 
     const handleAddMembers = async () => {
@@ -79,6 +86,16 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
     if (!team) return <div className="text-center py-20">Equipe não encontrada</div>;
 
     const avgScores = team.avgScores || { O: 50, C: 50, E: 50, A: 50, N: 50 };
+
+    // Resolve membros
+    const currentMemberIds = team.memberIds || [];
+    const memberDetails = currentMemberIds.map((id: string) => {
+        const user = availableUsers.find(u => u.id === id);
+        return { id, name: user ? user.name : `Usuário ${id.substring(0, 4)}`, email: user?.email };
+    });
+
+    // Filtra usuários disponíveis para adicionar (que não estão no time)
+    const usersToAdd = availableUsers.filter(u => !currentMemberIds.includes(u.id));
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -182,19 +199,22 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
 
             {/* Members List */}
             <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Membros ({members.length})</h3>
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Membros ({memberDetails.length})</h3>
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    {members.length === 0 ? (
+                    {memberDetails.length === 0 ? (
                         <div className="p-8 text-center text-slate-500">Nenhum membro adicionado.</div>
                     ) : (
                         <div className="divide-y divide-slate-100">
-                            {members.map(m => (
+                            {memberDetails.map((m: any) => (
                                 <div key={m.id} className="p-4 flex items-center justify-between hover:bg-slate-50">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">
-                                            {m.name.substring(0, 2)}
+                                            {m.name.substring(0, 2).toUpperCase()}
                                         </div>
-                                        <span className="font-medium text-slate-900">{m.name}</span>
+                                        <div>
+                                            <div className="font-medium text-slate-900">{m.name}</div>
+                                            <div className="text-xs text-slate-500">{m.email}</div>
+                                        </div>
                                     </div>
                                     <button className="text-slate-400 hover:text-red-600" title="Remover"><Trash2 size={16} /></button>
                                 </div>
@@ -204,41 +224,47 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                 </div>
             </div>
 
-            {/* Add Modal (Mocked selection) */}
+            {/* Add Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-                    <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                    <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                         <h2 className="text-xl font-bold mb-4">Adicionar Membros</h2>
                         <p className="text-sm text-slate-500 mb-4">Selecione os colaboradores para adicionar à equipe.</p>
 
-                        <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
-                            {/* Mock Users Selection */}
-                            {[1, 2, 3, 4].map(i => (
-                                <label key={i} className="flex items-center gap-3 p-3 border rounded hover:bg-slate-50 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded text-green-600"
-                                        checked={selectedUsers.includes(`user-${i}`)}
-                                        onChange={(e) => {
-                                            if (e.target.checked) setSelectedUsers([...selectedUsers, `user-${i}`]);
-                                            else setSelectedUsers(selectedUsers.filter(id => id !== `user-${i}`));
-                                        }}
-                                    />
-                                    <span>Colaborador Exemplo {i}</span>
-                                </label>
-                            ))}
+                        <div className="space-y-2 mb-6 overflow-y-auto flex-1">
+                            {usersToAdd.length === 0 ? (
+                                <p className="text-center text-slate-500 py-4">Todos os usuários disponíveis já estão na equipe.</p>
+                            ) : (
+                                usersToAdd.map(u => (
+                                    <label key={u.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
+                                            checked={selectedUsers.includes(u.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setSelectedUsers([...selectedUsers, u.id]);
+                                                else setSelectedUsers(selectedUsers.filter(id => id !== u.id));
+                                            }}
+                                        />
+                                        <div>
+                                            <div className="font-medium text-sm text-slate-900">{u.name}</div>
+                                            <div className="text-xs text-slate-500">{u.email}</div>
+                                        </div>
+                                    </label>
+                                ))
+                            )}
                         </div>
 
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Cancelar</button>
+                        <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
                             <button
                                 onClick={handleAddMembers}
                                 disabled={isSaving || selectedUsers.length === 0}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold shadow-lg shadow-green-100"
                             >
-                                {isSaving ? <Loader2 className="animate-spin" size={16} /> : null}
-                                {isSaving ? 'Salvando...' : 'Adicionar'}
+                                {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
+                                {isSaving ? 'Salvando...' : 'Adicionar Selecionados'}
                             </button>
                         </div>
                     </div>

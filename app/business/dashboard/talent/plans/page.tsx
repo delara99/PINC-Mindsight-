@@ -130,38 +130,44 @@ export default function PlansPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {plans.map((plan) => (
-                        <div key={plan.id} className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all group relative overflow-hidden">
+                        <div key={plan.id} className="bg-white rounded-xl border border-slate-200 hover:shadow-lg transition-all group relative overflow-hidden flex flex-col h-full">
+                            <Link href={`/business/dashboard/talent/plans/${plan.id}`} className="absolute inset-0 z-10">
+                                <span className="sr-only">Ver detalhes do plano</span>
+                            </Link>
                             {/* Status Stripe */}
                             <div className={`absolute top-0 left-0 w-1 h-full ${plan.type === 'ONBOARDING' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
 
-                            <div className="flex justify-between items-start mb-4 pl-2">
+                            <div className="flex justify-between items-start mb-4 pl-4 p-6 pb-2">
                                 <div>
                                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${plan.type === 'ONBOARDING' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                         {plan.type === 'ONBOARDING' ? 'Integração' : plan.type === 'PERFORMANCE' ? 'Correção de Performance' : 'Desenvolvimento'}
                                     </span>
-                                    <h3 className="text-lg font-bold text-slate-900 mt-2 line-clamp-1">{plan.title}</h3>
+                                    <h3 className="text-lg font-bold text-slate-900 mt-2 line-clamp-1 group-hover:text-orange-600 transition-colors">{plan.title}</h3>
                                 </div>
-                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 shrink-0">
                                     {plan.employee?.name ? plan.employee.name.substring(0, 2).toUpperCase() : '??'}
                                 </div>
                             </div>
 
-                            <div className="space-y-3 pl-2 mb-6">
+                            <div className="space-y-3 pl-4 p-6 pt-0 mb-auto">
                                 <div className="flex items-center text-sm text-slate-500">
-                                    <Target size={14} className="mr-2" />
-                                    <span>Colaborador: <span className="text-slate-900 font-medium">{plan.employee?.name || 'Desconhecido'}</span></span>
+                                    <Target size={14} className="mr-2 shrink-0" />
+                                    <span className="truncate">Colaborador: <span className="text-slate-900 font-medium">{plan.employee?.name || 'Desconhecido'}</span></span>
                                 </div>
                                 <div className="flex items-center text-sm text-slate-500">
-                                    <Calendar size={14} className="mr-2" />
+                                    <Calendar size={14} className="mr-2 shrink-0" />
                                     <span>Criado em: {new Date(plan.createdAt).toLocaleDateString('pt-BR')}</span>
                                 </div>
                             </div>
 
-                            <div className="pl-2 pt-4 border-t border-slate-100 flex justify-between items-center group-hover:pl-0 transition-all">
-                                <div className="text-xs text-slate-400 font-medium">{plan.progress || 0}% Concluído (Simulado)</div>
-                                <button className="text-sm font-medium text-orange-600 hover:text-orange-700 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 group-hover:bg-orange-50/30 transition-colors">
+                                <div className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                                    <CheckSquare size={12} />
+                                    {plan.progress || 0}% Concluído (Simulado)
+                                </div>
+                                <span className="text-sm font-bold text-orange-600 flex items-center gap-1 relative z-20 pointer-events-none">
                                     Ver Plano <ArrowRight size={14} />
-                                </button>
+                                </span>
                             </div>
                         </div>
                     ))}
