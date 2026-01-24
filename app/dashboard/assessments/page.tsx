@@ -410,8 +410,64 @@ export default function AssessmentsListPage() {
                 </div>
             )}
 
-            {/* Modal Candidates (Reused) */}
-            {/* ... existing code ... */}
+            {/* Modal de Visualizar Candidatos */}
+            {isViewCandidatesModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-start">
+                            <div>
+                                <h3 className="text-2xl font-bold">Candidatos Atribuídos</h3>
+                                <p className="text-gray-500 mt-1">Lista de pessoas que receberam esta avaliação.</p>
+                            </div>
+                            <button onClick={() => setIsViewCandidatesModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
+                            {assignedCandidates?.length === 0 ? (
+                                <div className="text-center py-12 text-gray-400">
+                                    <p>Nenhum candidato atribuído ainda.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {assignedCandidates?.map((assignment: any) => (
+                                        <div key={assignment.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold">
+                                                    {(assignment.user.name || assignment.user.email).charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900">{assignment.user.name || 'Sem nome'}</div>
+                                                    <div className="text-xs text-gray-500">{assignment.user.email}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <span className={`text-xs font-bold px-2 py-1 rounded uppercase ${assignment.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                                                        assignment.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' :
+                                                            'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                    {assignment.status === 'COMPLETED' ? 'Concluído' :
+                                                        assignment.status === 'IN_PROGRESS' ? 'Em Andamento' : 'Pendente'}
+                                                </span>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm('Remover atribuição deste candidato?')) {
+                                                            removeAssignment.mutate({ assessmentId: viewingAssessmentId!, userId: assignment.userId });
+                                                        }
+                                                    }}
+                                                    className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Remover candidato"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
