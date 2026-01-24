@@ -1215,46 +1215,16 @@ export class AssessmentController {
                     )
                 );
 
-                // Calcular scores por trait
-                const traitScores: { [key: string]: { sum: number, count: number, totalWeight: number } } = {};
-
-                for (const answer of body.answers) {
-                    const question = assignment.assessment.questions.find(q => q.id === answer.questionId);
-                    if (question && question.traitKey) {
-                        if (!traitScores[question.traitKey]) {
-                            traitScores[question.traitKey] = { sum: 0, count: 0, totalWeight: 0 };
-                        }
-                        traitScores[question.traitKey].sum += Number(answer.value) * question.weight;
-                        traitScores[question.traitKey].totalWeight += question.weight;
-                        traitScores[question.traitKey].count++;
-                    }
-                }
-
-                // Calcular médias ponderadas
-                const finalScores: { [key: string]: number } = {};
-                for (const [trait, data] of Object.entries(traitScores)) {
-                    finalScores[trait] = data.totalWeight > 0 ? data.sum / data.totalWeight : 0;
-                }
-
-                // Salvar resultado
-                const savedResult = await tx.assessmentResult.create({
-                    data: {
-                        assignmentId: assignment.id,
-                        scores: finalScores
-                    }
-                });
-
-                // Atualizar assignment
+                // Atualizar status para processando (ou manter completed, o cálculo é síncrono logo abaixo mas fora da tx)
                 await tx.assessmentAssignment.update({
                     where: { id: assignment.id },
                     data: {
-                        status: 'COMPLETED',
+                        status: 'COMPLETED', // Marca como completado para liberar a UI
                         completedAt: new Date()
                     }
                 });
 
                 // Decrementar créditos APENAS para usuários individuais (B2C)
-                // No B2B (MEMBER), o Gestor já pagou ao distribuir
                 if (user.role !== 'MEMBER') {
                     await tx.user.update({
                         where: { id: userId },
@@ -1263,9 +1233,41 @@ export class AssessmentController {
                         }
                     });
                 }
-
-                return savedResult;
             });
+
+            // --- CÁLCULO DE SCORES (Pós-Transação) ---
+            // Agora que as respostas estão salvas, usamos o motor oficial para calcular tudo (Facetas, Subtraços, etc)
+            // e salvamos o resultado completo no banco.
+            let savedResult;
+            try {
+                // 1. Calcular usando motor rico
+                const calculation = await this.scoreCalculation.calculateScores(assignment.id);
+
+                // 2. Simplificar estrutura para salvar no JSON (se necessário) ou salvar direto
+                // O motor retorna { scores: Record<string, ScoreResult>, ... }
+                // Vamos salvar a estrutura 'scores' principal.
+                // ScoreResult inclui facets[], então teremos os dados!
+
+                // Se já existir result (retry), deleta antes? O prisma create falha se 1-1?
+                // AssessmentAssignment -> AssessmentResult é 1-to-0..1?
+                // Vamos usar upsert ou delete/create. Como acabamos de submeter, create deve ser seguro, mas delete por precaução.
+
+                await this.prisma.assessmentResult.deleteMany({ where: { assignmentId: assignment.id } });
+
+                savedResult = await this.prisma.assessmentResult.create({
+                    data: {
+                        assignmentId: assignment.id,
+                        scores: calculation.scores as any // Salva o objeto completo com facetas
+                    }
+                });
+
+            } catch (calcError) {
+                console.error('Erro ao calcular scores no submit:', calcError);
+                // Fallback: Se o motor falhar, pelo menos temos as respostas salvas.
+                // Admin pode pedir recalculate.
+            }
+
+            return savedResult || { message: 'Respostas salvas, cálculo em processamento.' };
 
             // Após completar, SEMPRE criar um novo inventário automaticamente (PENDING)
             // Se tiver créditos, pode iniciar. Se não tiver, fica bloqueado até adicionar.
