@@ -816,6 +816,7 @@ function SimulatorTab() {
     const [activeStep, setActiveStep] = useState(0);
     const [inputMode, setInputMode] = useState<'manual' | 'random' | 'assessment'>('manual');
     const [assessmentId, setAssessmentId] = useState('');
+    const [viewMode, setViewMode] = useState<'steps' | 'report'>('steps');
 
     const generateRandomResponses = () => {
         const random: Record<string, number> = {};
@@ -864,6 +865,7 @@ function SimulatorTab() {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setResults(response.data);
+            setViewMode('report'); // Automatically show report after simulation
             alert('✅ Simulação concluída com sucesso!');
         } catch (error) {
             console.error('Erro na simulação:', error);
@@ -878,6 +880,39 @@ function SimulatorTab() {
         setResponses({});
         setResults(null);
         setActiveStep(0);
+        setViewMode('steps');
+    };
+
+    // Transform simulation results to report format
+    const getReportData = () => {
+        if (!results) return null;
+
+        const scores = Object.entries(results.results.dimensions).map(([key, score]) => {
+            const classification = results.results.classifications[key];
+            return {
+                key,
+                name: getDimensionName(key),
+                score: score as number,
+                level: classification?.level || 'AVERAGE',
+                interpretation: classification?.label || '',
+                facets: [] // Simulator doesn't calculate facets yet
+            };
+        });
+
+        return {
+            calculatedScores: { scores }
+        };
+    };
+
+    const getDimensionName = (key: string) => {
+        const names: Record<string, string> = {
+            'O': 'Abertura à Experiência',
+            'C': 'Conscienciosidade',
+            'E': 'Extroversão',
+            'A': 'Amabilidade',
+            'N': 'Neuroticismo'
+        };
+        return names[key] || key;
     };
 
     return (
@@ -934,30 +969,193 @@ function SimulatorTab() {
                 </div>
             ) : (
                 <div className="space-y-6">
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">{results.name}</h3>
-                        <div className="grid grid-cols-4 gap-4 mt-4">
-                            <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.totalQuestions}</div><div className="text-xs">Questões</div></div>
-                            <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.facetsCalculated}</div><div className="text-xs">Facetas</div></div>
-                            <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.dimensionsCalculated}</div><div className="text-xs">Dimensões</div></div>
-                        </div>
+                    {/* View Mode Toggle */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200 flex gap-2">
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${viewMode === 'report' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            📊 Visualização do Relatório (Cliente)
+                        </button>
+                        <button
+                            onClick={() => setViewMode('steps')}
+                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${viewMode === 'steps' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            🔬 Passos do Cálculo (Debug)
+                        </button>
                     </div>
-                    {/* Steps Navigation */}
-                    <div className="bg-white rounded-lg p-4 border border-gray-200 flex gap-2 overflow-x-auto">
-                        {results.steps.map((step: any, index: number) => (
-                            <button key={index} onClick={() => setActiveStep(index)} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeStep === index ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                                {step.step}. {step.name}
-                            </button>
-                        ))}
-                    </div>
-                    {/* Step Details */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
-                        <h3 className="text-xl font-bold mb-2">{results.steps[activeStep].name}</h3>
-                        <p className="text-gray-600 mb-4">{results.steps[activeStep].description}</p>
-                        <pre className="bg-gray-50 p-4 rounded text-xs overflow-auto max-h-96">{JSON.stringify(results.steps[activeStep], null, 2)}</pre>
-                    </div>
+
+                    {viewMode === 'report' ? (
+                        <SimulatorReportView reportData={getReportData()} simulationName={simulationName} />
+                    ) : (
+                        <>
+                            <div className="bg-white rounded-lg p-6 border border-gray-200">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{results.name}</h3>
+                                <div className="grid grid-cols-4 gap-4 mt-4">
+                                    <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.totalQuestions}</div><div className="text-xs">Questões</div></div>
+                                    <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.facetsCalculated}</div><div className="text-xs">Facetas</div></div>
+                                    <div className="bg-gray-50 p-4 rounded text-center"><div className="text-xl font-bold">{results.summary.dimensionsCalculated}</div><div className="text-xs">Dimensões</div></div>
+                                </div>
+                            </div>
+                            {/* Steps Navigation */}
+                            <div className="bg-white rounded-lg p-4 border border-gray-200 flex gap-2 overflow-x-auto">
+                                {results.steps.map((step: any, index: number) => (
+                                    <button key={index} onClick={() => setActiveStep(index)} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeStep === index ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                        {step.step}. {step.name}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Step Details */}
+                            <div className="bg-white rounded-lg p-6 border border-gray-200">
+                                <h3 className="text-xl font-bold mb-2">{results.steps[activeStep].name}</h3>
+                                <p className="text-gray-600 mb-4">{results.steps[activeStep].description}</p>
+                                <pre className="bg-gray-50 p-4 rounded text-xs overflow-auto max-h-96">{JSON.stringify(results.steps[activeStep], null, 2)}</pre>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
+        </div>
+    );
+}
+
+// ============================================
+// SIMULATOR REPORT VIEW (Client Experience)
+// ============================================
+function SimulatorReportView({ reportData, simulationName }: { reportData: any; simulationName: string }) {
+    if (!reportData) return <div>Nenhum dado disponível</div>;
+
+    const scores = reportData.calculatedScores.scores;
+
+    const getLevelLabel = (level: string) => {
+        const map: Record<string, string> = {
+            'VERY_HIGH': 'Muito Alto',
+            'HIGH': 'Alto',
+            'AVERAGE': 'Médio',
+            'LOW': 'Baixo',
+            'VERY_LOW': 'Muito Baixo'
+        };
+        return map[level] || level;
+    };
+
+    const getLevelColor = (level: string) => {
+        const map: Record<string, string> = {
+            'VERY_HIGH': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'HIGH': 'bg-blue-100 text-blue-700 border-blue-200',
+            'AVERAGE': 'bg-gray-100 text-gray-700 border-gray-200',
+            'LOW': 'bg-orange-100 text-orange-700 border-orange-200',
+            'VERY_LOW': 'bg-red-100 text-red-700 border-red-200'
+        };
+        return map[level] || 'bg-gray-100 text-gray-700 border-gray-200';
+    };
+
+    const getTraitColor = (key: string) => {
+        const colors: Record<string, string> = {
+            'O': 'from-yellow-500 to-amber-600',
+            'C': 'from-blue-500 to-indigo-600',
+            'E': 'from-orange-500 to-red-600',
+            'A': 'from-green-500 to-emerald-600',
+            'N': 'from-purple-500 to-pink-600'
+        };
+        return colors[key] || 'from-gray-500 to-gray-600';
+    };
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Header - Client View */}
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-2xl text-white p-8 md:p-12">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-black opacity-10 rounded-full -ml-48 -mb-48 blur-3xl"></div>
+
+                <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-sm font-bold uppercase tracking-wider mb-6">
+                        🧪 Simulação de Teste
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Relatório PINC</h1>
+                    <p className="text-blue-100 text-xl opacity-90">Análise de Perfil Comportamental • {simulationName}</p>
+                </div>
+            </div>
+
+            {/* Scores Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {scores.map((trait: any) => (
+                    <div key={trait.key} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                        {/* Gradient Header */}
+                        <div className={`h-2 bg-gradient-to-r ${getTraitColor(trait.key)}`}></div>
+
+                        <div className="p-6">
+                            {/* Score Display */}
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-1">{trait.name}</h3>
+                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getLevelColor(trait.level)}`}>
+                                        {getLevelLabel(trait.level)}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-4xl font-black text-gray-900">{trait.score}</div>
+                                    <div className="text-xs text-gray-500">de 100</div>
+                                </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-4">
+                                <div
+                                    className={`h-full bg-gradient-to-r ${getTraitColor(trait.key)} transition-all duration-1000 ease-out`}
+                                    style={{ width: `${trait.score}%` }}
+                                ></div>
+                            </div>
+
+                            {/* Interpretation */}
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                {trait.interpretation || 'Interpretação detalhada será exibida aqui baseada no nível calculado.'}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Summary Card */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+                        ✨
+                    </span>
+                    Resumo da Simulação
+                </h2>
+                <div className="grid md:grid-cols-3 gap-6">
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                        <div className="text-3xl font-black text-blue-600 mb-2">{scores.length}</div>
+                        <div className="text-sm text-gray-600">Dimensões Avaliadas</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                        <div className="text-3xl font-black text-green-600 mb-2">
+                            {scores.filter((s: any) => s.level === 'HIGH' || s.level === 'VERY_HIGH').length}
+                        </div>
+                        <div className="text-sm text-gray-600">Pontos Fortes</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                        <div className="text-3xl font-black text-orange-600 mb-2">
+                            {scores.filter((s: any) => s.level === 'LOW' || s.level === 'VERY_LOW').length}
+                        </div>
+                        <div className="text-sm text-gray-600">Áreas de Desenvolvimento</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Info Banner */}
+            <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-6">
+                <div className="flex items-start gap-4">
+                    <div className="text-3xl">ℹ️</div>
+                    <div>
+                        <h3 className="font-bold text-blue-900 mb-2">Visualização de Cliente</h3>
+                        <p className="text-blue-800 text-sm leading-relaxed">
+                            Esta é a visualização que seus clientes verão ao acessar o relatório.
+                            Use esta tela para validar a apresentação dos dados, cores, textos e layout geral do relatório.
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
