@@ -4,10 +4,11 @@ import { CrossProfileController } from './cross-profile.controller';
 import { CrossProfileService } from './cross-profile.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AssessmentModule } from '../../assessment/assessment.module';
+import { ScoreCalculationService } from '../score-calculation.service';
 
 @Module({
     imports: [PrismaModule, AssessmentModule],
     controllers: [CrossProfileController],
-    providers: [CrossProfileService],
+    providers: [CrossProfileService, ScoreCalculationService],
 })
-export class CrossProfileModule {}
+export class CrossProfileModule { }
