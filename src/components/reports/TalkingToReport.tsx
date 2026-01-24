@@ -169,8 +169,39 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                 </h4>
 
                                 {trait.customTexts ? (
-                                    <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
-                                        {trait.customTexts.text_interpretation}
+                                    <div className="space-y-6">
+                                        <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
+                                            {trait.customTexts.text_interpretation}
+                                        </div>
+
+                                        {/* Detalhes Extras: Ambiente e Riscos (Padrão B2C) */}
+                                        {(trait.customTexts.needs || trait.customTexts.risk) && (
+                                            <div className="grid md:grid-cols-2 gap-4 pt-4">
+                                                {/* Ambiente Ideal */}
+                                                {(trait.customTexts.needs || trait.customTexts.environment) && (
+                                                    <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 hover:border-blue-200 transition-colors">
+                                                        <h5 className="text-xs font-bold text-blue-600 uppercase mb-3 flex items-center gap-2">
+                                                            <Sparkles size={14} /> Ambiente Ideal
+                                                        </h5>
+                                                        <p className="text-sm text-slate-700 font-medium leading-relaxed text-justify">
+                                                            {trait.customTexts.needs || trait.customTexts.environment}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Pontos de Atenção */}
+                                                {(trait.customTexts.risk || trait.customTexts.risks) && (
+                                                    <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-100 hover:border-amber-200 transition-colors">
+                                                        <h5 className="text-xs font-bold text-amber-600 uppercase mb-3 flex items-center gap-2">
+                                                            <Zap size={14} /> Pontos de Atenção
+                                                        </h5>
+                                                        <p className="text-sm text-slate-700 font-medium leading-relaxed text-justify">
+                                                            {trait.customTexts.risk || trait.customTexts.risks}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : trait.interpretation ? (
                                     <p className="text-slate-600 leading-relaxed text-justify">{trait.interpretation}</p>
