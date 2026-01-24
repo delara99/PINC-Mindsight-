@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BigFiveCalculatorService } from '../../assessment/big-five-calculator.service';
+import { ScoreCalculationService } from '../../reports/score-calculation.service';
 
 @Injectable()
 export class CrossProfileService {
     constructor(
         private prisma: PrismaService,
-        private calculator: BigFiveCalculatorService
+        private scoreCalculation: ScoreCalculationService
     ) { }
 
     // Método principal para gerar o relatório
@@ -158,41 +158,18 @@ export class CrossProfileService {
 
         // 3. AUTO-REPAIR: Se tem respostas mas não tem resultado, calcula agora.
         if (assignment.responses && assignment.responses.length > 0) {
-            console.log(`[CrossProfile] Repairing missing result for assignment ${assignment.id}`);
+            console.log(`[CrossProfile] Repairing missing result for assignment ${assignment.id} using Modern Engine`);
 
             try {
-                // Formatar respostas
-                const formattedResponses = assignment.responses.map((r: any) => ({
-                    questionId: r.questionId,
-                    value: Number(r.answer)
-                }));
+                // Calcular usando Motor Moderno (TalkingTo)
+                // Não precisa formatar respostas, o service lê do banco pelo ID
+                const calculated = await this.scoreCalculation.calculateScores(assignment.id);
 
-                // Calcular
-                const calculated = await this.calculator.calculateBigFiveScores(
-                    assignment.assessmentId,
-                    formattedResponses
-                );
-
-                // Mapeamento PT -> EN
-                const traitMap: Record<string, string> = {
-                    'Abertura à Experiência': 'OPENNESS',
-                    'Conscienciosidade': 'CONSCIENTIOUSNESS',
-                    'Extroversão': 'EXTRAVERSION',
-                    'Amabilidade': 'AGREEABLENESS',
-                    'Estabilidade Emocional': 'NEUROTICISM'
-                };
-
-                const finalScores: any = {};
-                calculated.traits.forEach(t => {
-                    const enKey = traitMap[t.trait];
-                    if (enKey) finalScores[enKey] = t.normalizedScore;
-                });
-
-                // Salvar resultado recuperado
+                // Salvar resultado recuperado COMPLETO (com facetas)
                 const newResult = await this.prisma.assessmentResult.create({
                     data: {
                         assignmentId: assignment.id,
-                        scores: finalScores
+                        scores: calculated.scores as any
                     }
                 });
 
