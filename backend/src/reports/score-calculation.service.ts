@@ -205,15 +205,82 @@ export class ScoreCalculationService {
             const level = (classification?.level as any) || 'AVERAGE';
             const label = classification?.label || 'Médio';
 
-            // Recuperar facetas desta dimensão
-            const relevantFacets = Object.keys(facetScores)
+            // Recuperar e Limpar Facetas desta dimensão (Deduplicação + Tradução Backend)
+            const facetMap = new Map<string, { name: string, scoreSum: number, count: number, rawSum: number }>();
+
+            const translationMap: Record<string, string> = {
+                // Neuroticismo
+                'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
+                'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
+                'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
+                'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
+                'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
+                'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
+
+                // Extroversão
+                'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
+                'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
+                'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
+                'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
+                'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
+                'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
+
+                // Abertura
+                'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
+                'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
+                'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
+                'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
+                'ideas': 'Ideias', 'factors_ideas': 'Ideias',
+                'values': 'Valores', 'factors_values': 'Valores',
+
+                // Amabilidade
+                'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
+                'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
+                'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
+                'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
+                'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
+                'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
+
+                // Conscienciosidade
+                'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
+                'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
+                'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
+                'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
+                'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
+                'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
+            };
+
+            Object.keys(facetScores)
                 .filter(fk => facetScores[fk].dimension === dimKey)
-                .map(fk => ({
-                    facetKey: fk,
-                    facetName: fk.split('_')[1] || fk,
-                    score: facetScores[fk].score,
-                    rawScore: facetScores[fk].sum
-                }));
+                .forEach(fk => {
+                    const rawNameComp = fk.split('_')[1] || fk; // Ex: O_Fantasia -> Fantasia
+                    const nameKey = rawNameComp.toLowerCase().replace(/[^a-z]/g, '');
+                    const translatedName = translationMap[nameKey] || rawNameComp; // Fallback para nome original
+
+                    if (!facetMap.has(translatedName)) {
+                        facetMap.set(translatedName, {
+                            name: translatedName,
+                            scoreSum: 0,
+                            count: 0,
+                            rawSum: 0
+                        });
+                    }
+
+                    const entry = facetMap.get(translatedName);
+                    if (entry) {
+                        entry.scoreSum += facetScores[fk].score;
+                        entry.rawSum += facetScores[fk].sum;
+                        entry.count++;
+                    }
+                });
+
+            // Gerar lista final única e com média dos duplicados (se houver)
+            const relevantFacets = Array.from(facetMap.values()).map(entry => ({
+                facetKey: entry.name, // Usamos o nome traduzido como chave para consistência
+                facetName: entry.name,
+                score: Math.round(entry.scoreSum / entry.count),
+                rawScore: Math.round(entry.rawSum / entry.count)
+            }));
 
             finalScores[fullKey] = {
                 traitKey: fullKey,
