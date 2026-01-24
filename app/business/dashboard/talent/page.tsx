@@ -59,31 +59,41 @@ export default function TalentIntelligenceDashboard() {
                     </div>
                 </Link>
 
-                {/* Card 3: Planos de Ação (Coming Soon) */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-not-allowed relative group">
-                    <div className="absolute top-4 right-4 text-[10px] font-bold bg-slate-200 text-slate-500 px-2 py-1 rounded uppercase tracking-wide">Em Breve</div>
+                {/* Card 3: Planos de Ação */}
+                <Link href="/business/dashboard/talent/plans" className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-100/50 transition-all duration-300 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-50 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
-                    <div className="w-12 h-12 bg-white text-orange-600 rounded-xl flex items-center justify-center mb-4 border border-slate-100 shadow-sm">
-                        <ClipboardList size={24} />
+                    <div className="relative">
+                        <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+                            <ClipboardList size={24} />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-orange-700 transition-colors">Planos de Ação</h3>
+                        <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+                            Geração automática de planos de desenvolvimento (PDI) baseados em gaps de competência reais.
+                        </p>
+                        <div className="flex items-center text-sm font-bold text-orange-600 group-hover:translate-x-1 transition-transform">
+                            Gerenciar PDIs <ArrowRight size={16} className="ml-1" />
+                        </div>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">Planos de Ação</h3>
-                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">
-                        Geração automática de planos de desenvolvimento (PDI) baseados em gaps de competência reais.
-                    </p>
-                </div>
+                </Link>
 
-                {/* Card 4: Performance (Coming Soon) */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-not-allowed relative group">
-                    <div className="absolute top-4 right-4 text-[10px] font-bold bg-slate-200 text-slate-500 px-2 py-1 rounded uppercase tracking-wide">Em Breve</div>
+                {/* Card 4: Performance */}
+                <Link href="/business/dashboard/talent/performance" className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-100/50 transition-all duration-300 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-50 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
-                    <div className="w-12 h-12 bg-white text-purple-600 rounded-xl flex items-center justify-center mb-4 border border-slate-100 shadow-sm">
-                        <TrendingUp size={24} />
+                    <div className="relative">
+                        <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+                            <TrendingUp size={24} />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-purple-700 transition-colors">Performance Tracking</h3>
+                        <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+                            Acompanhe a evolução do Fit Cultural e das competências comportamentais ao longo do tempo.
+                        </p>
+                        <div className="flex items-center text-sm font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
+                            Ver Métricas <ArrowRight size={16} className="ml-1" />
+                        </div>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">Performance Tracking</h3>
-                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">
-                        Acompanhe a evolução do Fit Cultural e das competências comportamentais ao longo do tempo.
-                    </p>
-                </div>
+                </Link>
             </div>
 
             {/* Getting Started Section */}

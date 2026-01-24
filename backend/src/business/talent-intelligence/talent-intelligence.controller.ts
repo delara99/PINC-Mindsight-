@@ -75,8 +75,29 @@ export class TalentIntelligenceController {
         return this.service.getTeams(req.user.tenantId);
     }
 
+    @Get('candidates-list')
+    async getCandidatesList(@Request() req) {
+        return this.prisma.user.findMany({
+            where: { tenantId: req.user.tenantId },
+            select: { id: true, name: true, email: true }
+        });
+    }
+
     @Put('teams/:id/members')
     async addMembers(@Request() req, @Param('id') teamId: string, @Body() data: { memberIds: string[] }) {
         return this.service.addMembersToTeam(req.user.tenantId, teamId, data.memberIds);
+    }
+
+    // --- ACTION PLAN ENDPOINTS ---
+
+    @Post('plans')
+    async createPlan(@Request() req, @Body() data: any) {
+        // Manager ID vem do user logado
+        return this.service.createActionPlan(req.user.id, data);
+    }
+
+    @Get('plans')
+    async getPlans(@Request() req) {
+        return this.service.getActionPlans(req.user.tenantId);
     }
 }

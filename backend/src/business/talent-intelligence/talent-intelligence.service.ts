@@ -231,6 +231,7 @@ export class TalentIntelligenceService {
 
     private extractScores(result: any): Record<string, number> {
         const scores = result.scores || {};
+        // Tenta mapear tanto siglas quanto nomes completos
         return {
             O: scores.O || scores.OPENNESS || 50,
             C: scores.C || scores.CONSCIENTIOUSNESS || 50,
@@ -238,5 +239,54 @@ export class TalentIntelligenceService {
             A: scores.A || scores.AGREEABLENESS || 50,
             N: scores.N || scores.NEUROTICISM || 50
         };
+    }
+
+    // --- ACTION PLANS ---
+
+    async createActionPlan(managerId: string, data: any) {
+        // Sugestão automática básica (Mock de IA Generativa)
+        let actions = data.actions || [];
+        if (actions.length === 0) {
+            if (data.type === 'ONBOARDING') {
+                actions = [
+                    { id: '1', title: 'Leitura do Manual de Cultura', status: 'PENDING' },
+                    { id: '2', title: 'Reunião 1:1 com Gestor', status: 'PENDING' },
+                    { id: '3', title: 'Configuração de Ferramentas', status: 'PENDING' }
+                ];
+            } else if (data.type === 'DEVELOPMENT') {
+                actions = [
+                    { id: '1', title: 'Identificar Gap Principal', status: 'COMPLETED' },
+                    { id: '2', title: 'Sessão de Mentoria (2x/mês)', status: 'PENDING' },
+                    { id: '3', title: 'Curso Online Sugerido', status: 'PENDING' }
+                ];
+            }
+        }
+
+        return this.prisma.actionPlan.create({
+            data: {
+                managerId,
+                employeeId: data.employeeId,
+                title: data.title,
+                type: data.type,
+                objectives: data.objectives || [],
+                actions: actions,
+                milestones: data.milestones || [],
+                status: 'ACTIVE'
+            }
+        });
+    }
+
+    async getActionPlans(tenantId: string) {
+        // Busca planos onde o empregado pertence ao tenant
+        return this.prisma.actionPlan.findMany({
+            where: {
+                employee: { tenantId }
+            },
+            include: {
+                employee: { select: { id: true, name: true, email: true } },
+                manager: { select: { id: true, name: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
     }
 }

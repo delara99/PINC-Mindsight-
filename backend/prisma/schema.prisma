@@ -96,6 +96,11 @@ model User {
   calculationAudits      CalculationConfigAudit[]
   calculationSimulations CalculationSimulation[]
 
+  // Business 2.0 Relations
+  actionPlansAsEmployee ActionPlan[] @relation("PlanEmployee")
+  actionPlansAsManager  ActionPlan[] @relation("PlanManager")
+  performanceSnapshots  PerformanceSnapshot[]
+
   @@map("users")
 }
 
@@ -1186,7 +1191,9 @@ model TeamFitAnalysis {
 model ActionPlan {
   id              String   @id @default(uuid())
   employeeId      String   
+  employee        User     @relation("PlanEmployee", fields: [employeeId], references: [id])
   managerId       String   
+  manager         User     @relation("PlanManager", fields: [managerId], references: [id])
   type            String   // ONBOARDING, DEVELOPMENT, PERFORMANCE
   title           String
 
@@ -1206,6 +1213,7 @@ model ActionPlan {
 model PerformanceSnapshot {
   id              String   @id @default(uuid())
   employeeId      String
+  employee        User     @relation(fields: [employeeId], references: [id])
   period          String   
   
   bigFiveScores   Json
