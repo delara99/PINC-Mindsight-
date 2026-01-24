@@ -29,7 +29,7 @@ async function bootstrap() {
         ].filter(Boolean),
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
-        allowedHeaders: 'Content-Type, Accept, Authorization',
+        allowedHeaders: 'Content-Type, Accept, Authorization, Cache-Control, X-Requested-With',
     });
     // Global Prefix
     app.setGlobalPrefix('api/v1');
