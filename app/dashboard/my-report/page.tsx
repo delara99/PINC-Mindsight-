@@ -53,12 +53,19 @@ const TALKING_TO_FACETS: Record<string, string[][]> = {
 
 // --- TRANSLATION UTILS ---
 const FACET_TRANSLATIONS: Record<string, string> = {
+    // Traços Principais (caso apareçam como facetas)
+    'extraversion': 'Extroversão', 'introversion': 'Introversão',
+    'neuroticism': 'Neuroticismo', 'emotional stability': 'Estabilidade Emocional',
+    'agreeableness': 'Amabilidade',
+    'conscientiousness': 'Conscienciosidade',
+    'openness': 'Abertura à Experiência', 'openness to experience': 'Abertura à Experiência',
+
     // Neuroticismo
     'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
-    'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
+    'angryhostility': 'Raiva / Hostilidade', 'hostilidade': 'Raiva / Hostilidade', 'factors_angryhostility': 'Raiva / Hostilidade', 'raiva': 'Raiva / Hostilidade', 'angry_hostility': 'Raiva / Hostilidade',
     'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
-    'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
-    'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
+    'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência', 'self_consciousness': 'Autoconsciência',
+    'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade', 'imoderacao': 'Imoderação', 'immoderation': 'Imoderação',
     'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
 
     // Extroversão
@@ -66,8 +73,8 @@ const FACET_TRANSLATIONS: Record<string, string> = {
     'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
     'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
     'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
-    'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
-    'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
+    'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção', 'busca': 'Busca por Emoção', 'excitement_seeking': 'Busca por Emoção',
+    'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas', 'emocoes': 'Emoções Positivas', 'positive_emotions': 'Emoções Positivas',
 
     // Abertura
     'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
@@ -83,15 +90,15 @@ const FACET_TRANSLATIONS: Record<string, string> = {
     'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
     'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
     'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
-    'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
+    'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade', 'tender_mindedness': 'Sensibilidade',
 
     // Conscienciosidade
     'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
     'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
-    'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
-    'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
-    'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
-    'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
+    'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever', 'senso': 'Senso de Dever',
+    'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização', 'esforco': 'Esforço por Realização', 'achievement_striving': 'Esforço por Realização',
+    'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina', 'self_discipline': 'Autodisciplina',
+    'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação', 'ponderacao': 'Deliberação / Ponderação'
 };
 
 const getTranslatedFacetName = (name: string) => {
