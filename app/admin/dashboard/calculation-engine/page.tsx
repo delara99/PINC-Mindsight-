@@ -487,6 +487,7 @@ function FormulasTab() {
         if (selectedFormula && isEditing) {
             setEditedFormula({ ...selectedFormula });
             validateFormula(selectedFormula);
+            generatePreview(selectedFormula);
         }
     }, [selectedFormula, isEditing]);
 
@@ -513,14 +514,26 @@ function FormulasTab() {
     const generatePreview = (formula: any) => {
         try {
             const testValues = [1, 2, 3, 4, 5, 6];
+            const expression = formula.formula?.expression || '';
+
+            if (!expression) {
+                setPreviewResults(null);
+                return;
+            }
+
             const results = testValues.map(val => {
-                let result = val;
-                if (formula.name.includes('NORMALIZATION')) {
-                    result = Math.round(((val - 1) / 5) * 100);
-                } else if (formula.name.includes('REVERSE')) {
-                    result = 7 - val;
+                try {
+                    // Evaluate expression safely (replace x with actual value)
+                    const expr = expression.replace(/x/g, val.toString());
+                    // Use Function constructor for safe evaluation (better than eval)
+                    const result = new Function(`return ${expr}`)();
+                    const rounded = formula.precision !== undefined
+                        ? parseFloat(result.toFixed(formula.precision))
+                        : result;
+                    return { input: val, output: rounded };
+                } catch (e) {
+                    return { input: val, output: 'Erro' };
                 }
-                return { input: val, output: result };
             });
             setPreviewResults(results);
         } catch (error) {
@@ -625,6 +638,71 @@ function FormulasTab() {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
                                     <textarea value={editedFormula?.description || ''} onChange={(e) => handleFormulaChange('description', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" rows={4} />
                                 </div>
+
+                                {/* Formula Expression Editor */}
+                                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                                    <label className="block text-sm font-bold text-blue-900 mb-3">📐 Expressão da Fórmula</label>
+
+                                    {/* Expression Field */}
+                                    <div className="mb-3">
+                                        <label className="block text-xs font-medium text-blue-700 mb-1">Expression (fórmula matemática)</label>
+                                        <input
+                                            type="text"
+                                            value={editedFormula?.formula?.expression || ''}
+                                            onChange={(e) => {
+                                                const updated = {
+                                                    ...editedFormula,
+                                                    formula: {
+                                                        ...editedFormula.formula,
+                                                        expression: e.target.value
+                                                    }
+                                                };
+                                                setEditedFormula(updated);
+                                                validateFormula(updated);
+                                            }}
+                                            placeholder="Ex: 7 - x  ou  ((x - 1) / 5) * 100"
+                                            className="w-full px-3 py-2 border border-blue-300 rounded-lg font-mono text-sm bg-white"
+                                        />
+                                        <p className="text-xs text-blue-600 mt-1">💡 Use 'x' como variável de entrada</p>
+                                    </div>
+
+                                    {/* Description Field */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-blue-700 mb-1">Description (descrição curta)</label>
+                                        <input
+                                            type="text"
+                                            value={editedFormula?.formula?.description || ''}
+                                            onChange={(e) => {
+                                                const updated = {
+                                                    ...editedFormula,
+                                                    formula: {
+                                                        ...editedFormula.formula,
+                                                        description: e.target.value
+                                                    }
+                                                };
+                                                setEditedFormula(updated);
+                                            }}
+                                            placeholder="Ex: Inverte escala 1-6"
+                                            className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white"
+                                        />
+                                    </div>
+
+                                    {/* Preview */}
+                                    {previewResults && (
+                                        <div className="mt-3 bg-white rounded-lg p-3 border border-blue-200">
+                                            <div className="text-xs font-semibold text-blue-800 mb-2">🔍 Preview (teste com valores 1-6):</div>
+                                            <div className="grid grid-cols-6 gap-2 text-xs">
+                                                {previewResults.map((r: any, i: number) => (
+                                                    <div key={i} className="text-center bg-blue-50 rounded p-1">
+                                                        <div className="text-gray-600">{r.input}</div>
+                                                        <div className="text-blue-700 font-bold">→ {r.output}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="grid grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Mín</label>
