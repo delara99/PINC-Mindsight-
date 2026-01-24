@@ -221,18 +221,18 @@ function QuestionMappingsTab() {
     const [mappings, setMappings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedDimension, setSelectedDimension] = useState<string>('EXTRAVERSION');
+    const [selectedDimension, setSelectedDimension] = useState<string>('E');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
     const [saveReason, setSaveReason] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     const dimensionNames: Record<string, string> = {
-        'EXTRAVERSION': 'Extroversão',
-        'AGREEABLENESS': 'Amabilidade',
-        'CONSCIENTIOUSNESS': 'Conscienciosidade',
-        'OPENNESS': 'Abertura',
-        'NEUROTICISM': 'Neuroticismo'
+        'E': 'Extroversão',
+        'A': 'Amabilidade',
+        'C': 'Conscienciosidade',
+        'O': 'Abertura',
+        'N': 'Neuroticismo'
     };
 
     const fetchMappings = async () => {
@@ -315,7 +315,7 @@ function QuestionMappingsTab() {
             <h2 className="text-2xl font-bold text-gray-900">Mapeamento de Questões</h2>
 
             <div className="flex gap-2 overflow-x-auto pb-2">
-                {['EXTRAVERSION', 'AGREEABLENESS', 'CONSCIENTIOUSNESS', 'OPENNESS', 'NEUROTICISM'].map((dim) => (
+                {['E', 'A', 'C', 'O', 'N'].map((dim) => (
                     <button
                         key={dim}
                         onClick={() => setSelectedDimension(dim)}
