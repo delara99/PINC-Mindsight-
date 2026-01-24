@@ -64,6 +64,42 @@ export class TalentIntelligenceController {
                     facets: rawScores.facets || {}
                 };
 
+                // Deep extraction for Facets if using ScoreCalculationService structure (nested inside dimensions)
+                if (Object.keys(candidateScores.facets).length === 0) {
+                    const DIM_MAP = {
+                        'OPENNESS': 'O', 'O': 'O',
+                        'CONSCIENTIOUSNESS': 'C', 'C': 'C',
+                        'EXTRAVERSION': 'E', 'E': 'E',
+                        'AGREEABLENESS': 'A', 'A': 'A',
+                        'NEUROTICISM': 'N', 'N': 'N'
+                    };
+
+                    Object.keys(rawScores).forEach(key => {
+                        const dimData = rawScores[key];
+                        // If dimension has facets array inside
+                        if (dimData && typeof dimData === 'object' && Array.isArray(dimData.facets)) {
+                            const shortKey = DIM_MAP[key];
+                            if (shortKey) {
+                                if (!candidateScores.facets[shortKey]) candidateScores.facets[shortKey] = {};
+
+                                dimData.facets.forEach((f: any) => {
+                                    // Use facetName (display) or facetKey
+                                    // Note: Frontend expects facetName as key in the Record.
+                                    // But frontend iterate over profile.idealScores.facets keys primarily? 
+                                    // Front uses: const facetKeys = Array.from(new Set([...Object.keys(idealFacets), ...Object.keys(realFacets)]));
+                                    // So we better use a readable name if available.
+                                    const fName = f.facetName || f.facetKey;
+                                    const fScore = f.score || f.normalizedScore || 0;
+
+                                    // Normalize facet score if Likert detected locally
+                                    // We'll normalize later globally, but let's store raw for now.
+                                    candidateScores.facets[shortKey][fName] = fScore;
+                                });
+                            }
+                        }
+                    });
+                }
+
                 // Normalize for Visualization if scale is low (1-5 Likert)
                 // This ensures frontend receives percentual scores (0-100) even if DB has raw scores
                 const maxScore = Math.max(candidateScores.O, candidateScores.C, candidateScores.E, candidateScores.A, candidateScores.N);
