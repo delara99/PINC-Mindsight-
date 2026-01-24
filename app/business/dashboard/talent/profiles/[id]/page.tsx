@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { BadgeCheck, User, ArrowLeft, MoreHorizontal, Mail, Phone, Calendar, Briefcase, Target, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
 
 export default function ProfileDetailsPage({ params }: { params: { id: string } }) {
     const [profile, setProfile] = useState<any>(null);
@@ -82,12 +83,22 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
 
             {/* Profile Required Config (Mini View) */}
             <div className="grid grid-cols-5 gap-4">
-                {['O', 'C', 'E', 'A', 'N'].map((trait) => (
-                    <div key={trait} className="bg-white p-4 rounded-xl border border-slate-200 text-center">
-                        <div className="text-2xl font-bold text-slate-900 mb-1">{profile.idealScores?.[trait] || 50}</div>
-                        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">{trait} Fit</div>
-                        <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-                            <div className="bg-purple-500 h-full rounded-full" style={{ width: `${profile.idealScores?.[trait] || 50}%` }}></div>
+                {[
+                    { k: 'O', label: 'Abertura' },
+                    { k: 'C', label: 'Consciência' },
+                    { k: 'E', label: 'Extroversão' },
+                    { k: 'A', label: 'Amabilidade' },
+                    { k: 'N', label: 'Estabilidade' }
+                ].map((trait) => (
+                    <div key={trait.k} className="bg-white p-4 rounded-xl border border-slate-200 text-center hover:border-purple-200 transition-colors cursor-help group relative" title={trait.label}>
+                        <div className="text-2xl font-bold text-slate-900 mb-1">{profile.idealScores?.[trait.k] || 50}</div>
+                        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">{trait.k}</div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-purple-500 h-full rounded-full" style={{ width: `${profile.idealScores?.[trait.k] || 50}%` }}></div>
+                        </div>
+                        {/* Simple tooltip on hover */}
+                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none transition-opacity z-10">
+                            {trait.label} Ideal
                         </div>
                     </div>
                 ))}
@@ -98,6 +109,7 @@ export default function ProfileDetailsPage({ params }: { params: { id: string } 
                 <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <User size={20} className="text-purple-600" />
                     Compatibilidade da Equipe
+                    <HelpTooltip text="Ranking de colaboradores baseado na aderência (Fit) ao perfil ideal configurado acima." />
                 </h2>
 
                 {analysis.length === 0 ? (

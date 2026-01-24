@@ -2,10 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { Users, ArrowLeft, Plus, UserPlus, Trash2, PieChart, ShieldAlert, Sparkles, Loader2, Check } from 'lucide-react';
 import Link from 'next/link';
+import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
 
 export default function TeamDetailsPage({ params }: { params: { id: string } }) {
     const [team, setTeam] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]); // Detalhes dos membros
+    const [members, setMembers] = useState<any[]>([]); // Detalhes dos membros (mocked)
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -94,7 +95,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-slate-900 mb-1">{team.name}</h1>
-                            <p className="text-slate-500 max-w-2xl">{team.description || "Dynamics report."}</p>
+                            <p className="text-slate-500 max-w-2xl">{team.description || "Sem descrição definida."}</p>
                         </div>
                     </div>
                     <button
@@ -114,6 +115,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                     <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <PieChart size={20} className="text-green-600" />
                         DNA da Equipe (Média)
+                        <HelpTooltip text="A média comportamental de todos os membros. Indica a tendência de comportamento do grupo." />
                     </h3>
 
                     <div className="space-y-6">
@@ -133,7 +135,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                                     <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                                         <div className={`h-full bg-${item.color}-500 rounded-full transition-all duration-1000`} style={{ width: `${item.val}%` }}></div>
                                     </div>
-                                    <span className="w-8 text-right font-mono font-bold text-slate-900">{item.val}</span>
+                                    <span className="w-8 text-right font-mono font-bold text-slate-900">{Math.round(item.val)}</span>
                                 </div>
                             </div>
                         ))}
@@ -145,6 +147,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <Sparkles size={20} className="text-purple-600" />
                         Insights Culturais
+                        <HelpTooltip text="Análise automática baseada nos scores médios da equipe." />
                     </h3>
 
                     {/* Dynamic Insights based on scores */}
@@ -193,7 +196,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                                         </div>
                                         <span className="font-medium text-slate-900">{m.name}</span>
                                     </div>
-                                    <button className="text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                    <button className="text-slate-400 hover:text-red-600" title="Remover"><Trash2 size={16} /></button>
                                 </div>
                             ))}
                         </div>
@@ -207,7 +210,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
                     <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
                         <h2 className="text-xl font-bold mb-4">Adicionar Membros</h2>
-                        <p className="text-sm text-slate-500 mb-4">Funcionalidade simulada no MVP (seleção de usuários).</p>
+                        <p className="text-sm text-slate-500 mb-4">Selecione os colaboradores para adicionar à equipe.</p>
 
                         <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
                             {/* Mock Users Selection */}
@@ -228,12 +231,13 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                         </div>
 
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600">Cancelar</button>
+                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Cancelar</button>
                             <button
                                 onClick={handleAddMembers}
                                 disabled={isSaving || selectedUsers.length === 0}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
+                                {isSaving ? <Loader2 className="animate-spin" size={16} /> : null}
                                 {isSaving ? 'Salvando...' : 'Adicionar'}
                             </button>
                         </div>

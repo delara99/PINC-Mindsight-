@@ -1,19 +1,11 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { TrendingUp, Award, AlertCircle, ArrowUp, ArrowDown, Activity, User, Star, Loader2 } from 'lucide-react';
+import React from 'react';
+import { BarChart3, TrendingUp, Users, AlertTriangle, ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
 
 export default function PerformancePage() {
-    const [loading, setLoading] = useState(true);
-    const [metrics, setMetrics] = useState({
-        avgFit: 0,
-        avgFitTrend: '+0%',
-        assessmentsCount: 0,
-        topPerformers: 0,
-        needsAttention: 0
-    });
-    const [performers, setPerformers] = useState<any[]>([]);
-
+    // Helper para URL da API
     const getApiUrl = () => {
         const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
         const baseUrl = url.startsWith('http') ? url : `https://${url}`;
@@ -22,51 +14,13 @@ export default function PerformancePage() {
     };
 
     // Placeholder mock for chart
-    const evolutionData = [
-        { month: 'Set', fit: 65 },
-        { month: 'Out', fit: 68 },
-        { month: 'Nov', fit: 72 },
-        { month: 'Dez', fit: 71 },
-        { month: 'Jan', fit: 78 },
-        { month: 'Fev', fit: 82 },
+    const data = [
+        { name: 'Jan', value: 400 },
+        { name: 'Fev', value: 300 },
+        { name: 'Mar', value: 600 },
+        { name: 'Abr', value: 800 },
+        { name: 'Mai', value: 500 },
     ];
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('accessToken');
-                if (!token) return;
-
-                const res = await fetch(`${getApiUrl()}/business/talent-intelligence/analytics`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-
-                    if (data.metrics) {
-                        setMetrics({
-                            avgFit: data.metrics.avgFit,
-                            avgFitTrend: '+4.2%', // Fixed mock since historic data isn't available yet
-                            assessmentsCount: data.metrics.assessmentsCount,
-                            topPerformers: data.metrics.topPerformers,
-                            needsAttention: data.metrics.needsAttention
-                        });
-                    }
-
-                    if (data.performers) {
-                        setPerformers(data.performers);
-                    }
-                }
-            } catch (e) {
-                console.error("Error fetching analytics", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -77,137 +31,124 @@ export default function PerformancePage() {
                     <span>/</span>
                     <span className="text-slate-900 font-medium">Performance</span>
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <TrendingUp className="text-purple-600" size={28} />
-                    Performance Tracking
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center">
+                    Indicadores de Performance
+                    <HelpTooltip text="Visualize a saúde da sua organização através de métricas de engajamento, retenção e riscos." />
                 </h1>
-                <p className="text-slate-500">Acompanhamento da evolução comportamental e cultural da organização.</p>
+                <p className="text-slate-500">Métricas consolidadas de engajamento e resultados.</p>
             </div>
 
-            {loading ? (
-                <div className="flex justify-center py-20"><Loader2 className="animate-spin text-purple-600" size={32} /></div>
-            ) : (
-                <>
-                    {/* KPI Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                            <div className="absolute right-0 top-0 p-4 opacity-10">
-                                <Activity size={64} className="text-purple-600" />
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                    { label: 'Engajamento Geral', value: '87%', trend: '+2.5%', trendUp: true, icon: TrendingUp, color: 'text-green-600', help: 'Média de interesse e participação dos colaboradores nas inovações.' },
+                    { label: 'Alto Potencial', value: '12', trend: '+4', trendUp: true, icon: Users, color: 'text-purple-600', help: 'Colaboradores identificados com alta performance e alto potencial (9-Box).' },
+                    { label: 'Risco de Saída', value: '3', trend: '-1', trendUp: false, icon: AlertTriangle, color: 'text-amber-600', help: 'Colaboradores com baixo engajamento ou fit cultural declinante.' },
+                    { label: 'Planos Ativos', value: '24', trend: '+12', trendUp: true, icon: BarChart3, color: 'text-blue-600', help: 'Número de PDIs em andamento neste momento.' }
+                ].map((kpi, i) => (
+                    <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className={`p-3 rounded-lg bg-slate-50 ${kpi.color}`}>
+                                <kpi.icon size={24} />
                             </div>
-                            <p className="text-slate-500 text-sm font-medium mb-1">Fit Cultural Médio</p>
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-3xl font-bold text-slate-900">{metrics.avgFit}%</h3>
-                                <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center">
-                                    <ArrowUp size={12} className="mr-0.5" /> {metrics.avgFitTrend}
-                                </span>
+                            <div className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${kpi.trendUp ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                {kpi.trendUp ? <ArrowUpRight size={14} className="mr-1" /> : <ArrowDownRight size={14} className="mr-1" />}
+                                {kpi.trend}
                             </div>
                         </div>
+                        <div className="flex items-center">
+                            <h3 className="text-slate-500 text-sm font-medium">{kpi.label}</h3>
+                            <HelpTooltip text={kpi.help} />
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900 mt-1">{kpi.value}</div>
+                    </div>
+                ))}
+            </div>
 
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p className="text-slate-500 text-sm font-medium mb-1">Colaboradores Monitorados</p>
-                            <h3 className="text-3xl font-bold text-slate-900">{metrics.assessmentsCount}</h3>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p className="text-slate-500 text-sm font-medium mb-1">Top Talentos</p>
-                            <div className="flex items-center gap-2 text-yellow-600 font-bold">
-                                <Award size={24} />
-                                <span className="text-2xl">{metrics.topPerformers}</span>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p className="text-slate-500 text-sm font-medium mb-1">Pontos de Atenção</p>
-                            <div className="flex items-center gap-2 text-red-600 font-bold">
-                                <AlertCircle size={24} />
-                                <span className="text-2xl">{metrics.needsAttention}</span>
-                            </div>
-                        </div>
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Evolution Chart */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold text-slate-900">Evolução de Competências</h3>
+                        <select className="text-sm border-none bg-slate-50 rounded-lg px-2 py-1 text-slate-600 outline-none">
+                            <option>Últimos 6 meses</option>
+                            <option>Este Ano</option>
+                        </select>
                     </div>
 
-                    {/* Charts Section */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6">Evolução de Compatibilidade (Semestral)</h3>
-
-                        <div className="h-64 flex items-end justify-between gap-2 px-4">
-                            {evolutionData.map((d, i) => (
-                                <div key={i} className="flex flex-col items-center flex-1 group">
-                                    <div className="relative w-full max-w-[60px] flex items-end justify-center h-full">
-                                        <div
-                                            className="w-full bg-purple-500 rounded-t-lg transition-all duration-1000 group-hover:bg-purple-600 group-hover:shadow-lg relative"
-                                            style={{ height: `${d.fit}%` }}
-                                        >
-                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold">
-                                                {d.fit}%
-                                            </span>
+                    <div className="h-64 flex items-end justify-between px-4 pb-4 border-b border-l border-slate-100 relative">
+                        {/* Mock Bars */}
+                        {data.map((d, i) => (
+                            <div key={i} className="flex flex-col items-center gap-2 group w-full mx-2">
+                                <div className="w-full bg-purple-100 rounded-t-lg relative group-hover:bg-purple-200 transition-colors h-full flex items-end">
+                                    <div
+                                        className="w-full bg-purple-500 rounded-t-lg transition-all duration-1000 group-hover:bg-purple-600 relative"
+                                        style={{ height: `${(d.value / 1000) * 100}%` }}
+                                    >
+                                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none whitespace-nowrap">
+                                            {d.value} pts
                                         </div>
                                     </div>
-                                    <span className="text-xs text-slate-500 font-medium mt-3">{d.month}</span>
                                 </div>
-                            ))}
-                        </div>
+                                <span className="text-xs text-slate-400 font-medium">{d.name}</span>
+                            </div>
+                        ))}
                     </div>
+                    <p className="text-center text-xs text-slate-400 mt-4">Pontuação média de avaliações por mês</p>
+                </div>
 
-                    {/* Performers List */}
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">Ranking de Performance</h3>
-                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    <tr>
-                                        <th className="p-4">Colaborador</th>
-                                        <th className="p-4">Fit Atual</th>
-                                        <th className="p-4">Tendência</th>
-                                        <th className="p-4">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {performers.length > 0 ? performers.map((p, i) => (
-                                        <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                            <td className="p-4 font-medium text-slate-900 flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                                                    {p.name.substring(0, 2).toUpperCase()}
-                                                </div>
-                                                {p.name}
-                                                {i < 3 && p.fit > 80 && <Star size={14} className="text-yellow-400 fill-yellow-400" />}
-                                            </td>
-                                            <td className="p-4 font-bold text-slate-700">
-                                                {p.hasAnalysis ? `${p.fit}%` : <span className="text-xs text-slate-400 font-normal">N/A</span>}
-                                            </td>
-                                            <td className="p-4">
-                                                {p.hasAnalysis ? (
-                                                    p.trend === 'up' ? (
-                                                        <span className="text-green-600 flex items-center text-xs font-bold"><ArrowUp size={14} className="mr-1" /> Estável</span>
-                                                    ) : (
-                                                        <span className="text-red-500 flex items-center text-xs font-bold"><ArrowDown size={14} className="mr-1" /> Queda</span>
-                                                    )
-                                                ) : '-'}
-                                            </td>
-                                            <td className="p-4">
-                                                {!p.hasAnalysis ? (
-                                                    <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-bold">Sem Análise</span>
-                                                ) : p.fit >= 80 ? (
-                                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">High Potential</span>
-                                                ) : p.fit >= 60 ? (
-                                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">Core Contributor</span>
-                                                ) : (
-                                                    <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">Needs Support</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    )) : (
-                                        <tr>
-                                            <td colSpan={4} className="p-8 text-center text-slate-500">
-                                                Nenhum colaborador encontrado no painel.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                {/* Risk Radar */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 mb-2">Distribuição de Talentos (9-Box)</h3>
+                    <p className="text-sm text-slate-500 mb-6">Matriz de Potencial vs Desempenho (Simulação)</p>
+
+                    <div className="grid grid-cols-3 gap-2 h-64">
+                        {/* Row 1 */}
+                        <div className="bg-orange-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-orange-100">
+                            <span className="text-xs font-bold text-orange-800 uppercase">Enigma</span>
+                            <span className="text-2xl font-bold text-orange-600">4</span>
+                        </div>
+                        <div className="bg-green-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-green-100">
+                            <span className="text-xs font-bold text-green-800 uppercase">Forte Desempenho</span>
+                            <span className="text-2xl font-bold text-green-600">8</span>
+                        </div>
+                        <div className="bg-purple-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-purple-100 ring-2 ring-purple-100 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-1"><Sparkles size={12} className="text-purple-400" /></div>
+                            <span className="text-xs font-bold text-purple-800 uppercase">Alto Potencial</span>
+                            <span className="text-2xl font-bold text-purple-600">12</span>
+                        </div>
+
+                        {/* Row 2 */}
+                        <div className="bg-slate-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-slate-100">
+                            <span className="text-xs font-bold text-slate-600 uppercase">Dilema</span>
+                            <span className="text-2xl font-bold text-slate-400">2</span>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-slate-100">
+                            <span className="text-xs font-bold text-slate-600 uppercase">Mantenedor</span>
+                            <span className="text-2xl font-bold text-slate-400">15</span>
+                        </div>
+                        <div className="bg-green-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-green-100">
+                            <span className="text-xs font-bold text-green-800 uppercase">Forte Desempenho</span>
+                            <span className="text-2xl font-bold text-green-600">6</span>
+                        </div>
+
+                        {/* Row 3 */}
+                        <div className="bg-red-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-red-100">
+                            <span className="text-xs font-bold text-red-800 uppercase">Risco</span>
+                            <span className="text-2xl font-bold text-red-600">3</span>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-slate-100">
+                            <span className="text-xs font-bold text-slate-600 uppercase">Eficaz</span>
+                            <span className="text-2xl font-bold text-slate-400">5</span>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-slate-100">
+                            <span className="text-xs font-bold text-slate-600 uppercase">Eficaz+</span>
+                            <span className="text-2xl font-bold text-slate-400">7</span>
                         </div>
                     </div>
-                </>
-            )}
+                </div>
+            </div>
         </div>
     );
 }

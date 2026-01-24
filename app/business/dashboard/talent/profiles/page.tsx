@@ -1,39 +1,29 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, MoreVertical, Target, Briefcase, Trash2, Edit2, CheckCircle, X, Save, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, Briefcase, MoreHorizontal, Target, TrendingUp, Save, X, Loader2, Edit2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
 
-const MOCK_PROFILES = [
-    { id: '1', name: 'Analista de Marketing', department: 'Marketing', level: 'Pleno', idealScores: { O: 80, C: 60, E: 75, A: 70, N: 40 }, tolerance: 0.5 },
-    { id: '2', name: 'Desenvolvedor Senior', department: 'Tech', level: 'Senior', idealScores: { O: 90, C: 80, E: 40, A: 60, N: 30 }, tolerance: 0.5 },
-];
-
-export default function JobProfilesPage() {
-    const router = useRouter();
-    const [profiles, setProfiles] = useState<any[]>(MOCK_PROFILES);
-    const [loading, setLoading] = useState(false);
+export default function ProfilesPage() {
+    const [profiles, setProfiles] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Form State
+    // Form Data
     const [formData, setFormData] = useState({
         name: '',
         department: '',
         level: 'Pleno',
-        idealScores: { O: 50, C: 50, E: 50, A: 50, N: 50 }
+        idealScores: { O: 50, C: 50, E: 50, A: 50, N: 50 } as Record<string, number>
     });
 
     // Helper para URL da API
     const getApiUrl = () => {
         const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
         const baseUrl = url.startsWith('http') ? url : `https://${url}`;
-
-        // Se já tiver /api/v1, retorna. Se não, adiciona.
         if (baseUrl.includes('/api/v1')) return baseUrl;
-
-        // Em produção no Railway, o prefixo é obrigatório
         return `${baseUrl}/api/v1`;
     };
 
@@ -56,13 +46,11 @@ export default function JobProfilesPage() {
                     }
                 }
             } catch (error) {
-                console.error("Error fetching profiles:", error);
+                console.error("Erro ao buscar perfis:", error);
             } finally {
                 setLoading(false);
             }
         };
-
-        // Uncomment to enable real fetching
         fetchProfiles();
     }, []);
 
@@ -90,7 +78,6 @@ export default function JobProfilesPage() {
                 const newProfile = await response.json();
                 setProfiles(prev => [newProfile, ...prev]);
                 setShowCreateModal(false);
-                // Reset form
                 setFormData({
                     name: '',
                     department: '',
@@ -101,7 +88,7 @@ export default function JobProfilesPage() {
                 alert("Erro ao salvar perfil");
             }
         } catch (error) {
-            console.error("Error saving profile:", error);
+            console.error("Erro ao salvar perfil:", error);
             alert("Erro de conexão");
         } finally {
             setIsSaving(false);
@@ -141,7 +128,10 @@ export default function JobProfilesPage() {
                         <span>/</span>
                         <span className="text-slate-900 font-medium">Perfis de Cargo</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900">Perfis de Cargo e Fit Cultural</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center">
+                        Perfis de Cargo e Fit Cultural
+                        <HelpTooltip text="Crie perfis ideais para cada cargo e compare com os testes dos colaboradores para encontrar a melhor compatibilidade (Fit)." />
+                    </h1>
                     <p className="text-slate-500">Defina o DNA comportamental ideal para cada função.</p>
                 </div>
                 <button
@@ -210,12 +200,12 @@ export default function JobProfilesPage() {
                             {/* Mini Metrics Visualization */}
                             <div className="space-y-3 mb-6">
                                 {[
-                                    { k: 'O', val: profile.idealScores?.O || 0, colorClass: 'bg-indigo-500' },
-                                    { k: 'C', val: profile.idealScores?.C || 0, colorClass: 'bg-blue-500' },
-                                    { k: 'E', val: profile.idealScores?.E || 0, colorClass: 'bg-green-500' }
+                                    { k: 'O', label: 'Abertura', val: profile.idealScores?.O || 0, colorClass: 'bg-indigo-500' },
+                                    { k: 'C', label: 'Consciência', val: profile.idealScores?.C || 0, colorClass: 'bg-blue-500' },
+                                    { k: 'E', label: 'Extroversão', val: profile.idealScores?.E || 0, colorClass: 'bg-green-500' }
                                 ].map((item) => (
                                     <div key={item.k} className="flex items-center gap-2 text-xs">
-                                        <span className="w-8 text-slate-500 font-bold">{item.k}</span>
+                                        <span className="w-20 text-slate-500 font-bold truncate" title={item.label}>{item.label}</span>
                                         <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                             <div className={`h-full ${item.colorClass} rounded-full`} style={{ width: `${item.val}%` }}></div>
                                         </div>
@@ -251,7 +241,9 @@ export default function JobProfilesPage() {
                             {/* Basic Info */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Nome do Cargo <span className="text-red-500">*</span></label>
+                                    <label className="text-sm font-medium text-slate-700 flex items-center">
+                                        Nome do Cargo <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         placeholder="Ex: Analista de Vendas"
@@ -293,6 +285,7 @@ export default function JobProfilesPage() {
                                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                                     <Target className="text-purple-600" size={20} />
                                     Perfil Comportamental Ideal (Big Five)
+                                    <HelpTooltip text="Ajuste os sliders para definir o nível esperado de cada traço comportamental para este cargo com base na metodologia Big Five." />
                                 </h3>
                                 <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 space-y-6">
                                     {(['O', 'C', 'E', 'A', 'N'] as const).map((key) => {
@@ -317,7 +310,6 @@ export default function JobProfilesPage() {
                                                     </span>
                                                 </div>
                                                 <div className="relative h-2 w-full rounded-lg bg-slate-200">
-                                                    {/* Custom Slider Track Background could go here */}
                                                     <input
                                                         type="range"
                                                         min="0"
