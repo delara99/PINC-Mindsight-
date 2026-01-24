@@ -25,6 +25,12 @@ export default function JobProfilesPage() {
         idealScores: { O: 50, C: 50, E: 50, A: 50, N: 50 }
     });
 
+    // Helper para URL da API
+    const getApiUrl = () => {
+        const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
+        return url.startsWith('http') ? url : `https://${url}`;
+    };
+
     // Fetch Profiles
     useEffect(() => {
         const fetchProfiles = async () => {
@@ -33,7 +39,7 @@ export default function JobProfilesPage() {
                 const token = localStorage.getItem('accessToken');
                 if (!token) return;
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/job-profiles`, {
+                const response = await fetch(`${getApiUrl()}/business/job-profiles`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -65,7 +71,7 @@ export default function JobProfilesPage() {
         setIsSaving(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/job-profiles`, {
+            const response = await fetch(`${getApiUrl()}/business/job-profiles`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -101,6 +107,23 @@ export default function JobProfilesPage() {
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.department && p.department.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    // Color Maps for Tailwind
+    const TRAIT_COLORS: Record<string, string> = {
+        indigo: 'bg-indigo-500',
+        blue: 'bg-blue-500',
+        green: 'bg-green-500',
+        yellow: 'bg-yellow-500',
+        pink: 'bg-pink-500'
+    };
+
+    const TRAIT_BORDERS: Record<string, string> = {
+        indigo: 'border-indigo-500',
+        blue: 'border-blue-500',
+        green: 'border-green-500',
+        yellow: 'border-yellow-500',
+        pink: 'border-pink-500'
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -181,23 +204,23 @@ export default function JobProfilesPage() {
                             {/* Mini Metrics Visualization */}
                             <div className="space-y-3 mb-6">
                                 {[
-                                    { k: 'O', val: profile.idealScores?.O || 0, color: 'indigo' },
-                                    { k: 'C', val: profile.idealScores?.C || 0, color: 'blue' },
-                                    { k: 'E', val: profile.idealScores?.E || 0, color: 'green' }
+                                    { k: 'O', val: profile.idealScores?.O || 0, colorClass: 'bg-indigo-500' },
+                                    { k: 'C', val: profile.idealScores?.C || 0, colorClass: 'bg-blue-500' },
+                                    { k: 'E', val: profile.idealScores?.E || 0, colorClass: 'bg-green-500' }
                                 ].map((item) => (
                                     <div key={item.k} className="flex items-center gap-2 text-xs">
                                         <span className="w-8 text-slate-500 font-bold">{item.k}</span>
                                         <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className={`h-full bg-${item.color}-500 rounded-full`} style={{ width: `${item.val}%` }}></div>
+                                            <div className={`h-full ${item.colorClass} rounded-full`} style={{ width: `${item.val}%` }}></div>
                                         </div>
                                         <span className="w-6 text-right font-mono text-slate-600">{item.val}</span>
                                     </div>
                                 ))}
                             </div>
 
-                            <button className="w-full py-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-purple-50 hover:text-purple-700 font-medium text-sm transition-colors border border-slate-200 hover:border-purple-200">
+                            <Link href={`/business/dashboard/talent/profiles/${profile.id}`} className="block w-full text-center py-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-purple-50 hover:text-purple-700 font-medium text-sm transition-colors border border-slate-200 hover:border-purple-200">
                                 Ver Detalhes & Compatibilidade
-                            </button>
+                            </Link>
                         </div>
                     ))}
                 </div>
@@ -280,7 +303,7 @@ export default function JobProfilesPage() {
                                             <div key={trait.key} className="space-y-2">
                                                 <div className="flex justify-between items-center">
                                                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                                        <div className={`w-3 h-3 rounded-full bg-${trait.color}-500`}></div>
+                                                        <div className={`w-3 h-3 rounded-full ${TRAIT_COLORS[trait.color]}`}></div>
                                                         {trait.label}
                                                     </label>
                                                     <span className="text-sm font-mono font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm w-12 text-center">
@@ -299,13 +322,13 @@ export default function JobProfilesPage() {
                                                     />
                                                     {/* Visible Track */}
                                                     <div
-                                                        className={`absolute h-full rounded-lg bg-${trait.color}-500 transition-all`}
+                                                        className={`absolute h-full rounded-lg ${TRAIT_COLORS[trait.color]} transition-all`}
                                                         style={{ width: `${formData.idealScores[key]}%` }}
                                                     ></div>
                                                     {/* Thumb Handle visualization */}
                                                     <div
-                                                        className="absolute h-4 w-4 bg-white border-2 border-slate-300 rounded-full shadow top-1/2 -translate-y-1/2 -ml-2 pointer-events-none transition-all"
-                                                        style={{ left: `${formData.idealScores[key]}%`, borderColor: trait.color }}
+                                                        className={`absolute h-4 w-4 bg-white border-2 ${TRAIT_BORDERS[trait.color]} rounded-full shadow top-1/2 -translate-y-1/2 -ml-2 pointer-events-none transition-all`}
+                                                        style={{ left: `${formData.idealScores[key]}%` }}
                                                     ></div>
                                                 </div>
                                                 <p className="text-xs text-slate-500 pt-1">{trait.desc}</p>

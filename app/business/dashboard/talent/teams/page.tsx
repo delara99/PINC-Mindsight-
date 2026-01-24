@@ -16,6 +16,11 @@ export default function TeamsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({ name: '', description: '' });
 
+    const getApiUrl = () => {
+        const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
+        return url.startsWith('http') ? url : `https://${url}`;
+    };
+
     useEffect(() => {
         const fetchTeams = async () => {
             setLoading(true);
@@ -23,14 +28,13 @@ export default function TeamsPage() {
                 const token = localStorage.getItem('accessToken');
                 if (!token) return;
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/teams`, {
+                const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     if (data && data.length > 0) {
-                        // Adaptar dados do backend se necessário
                         setTeams(data.map((t: any) => ({
                             ...t,
                             memberCount: t.memberIds ? (t.memberIds as string[]).length : 0
@@ -50,7 +54,7 @@ export default function TeamsPage() {
         setIsSaving(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/teams`, {
+            const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

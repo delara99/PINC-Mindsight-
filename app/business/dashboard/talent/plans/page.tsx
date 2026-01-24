@@ -17,6 +17,11 @@ export default function ActionPlansPage() {
         type: 'DEVELOPMENT'
     });
 
+    const getApiUrl = () => {
+        const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
+        return url.startsWith('http') ? url : `https://${url}`;
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -25,13 +30,13 @@ export default function ActionPlansPage() {
                 if (!token) return;
 
                 // Fetch Plans
-                const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/plans`, {
+                const plansRes = await fetch(`${getApiUrl()}/business/talent-intelligence/plans`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (plansRes.ok) setPlans(await plansRes.json());
 
                 // Fetch Candidates for Select
-                const candidatesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/candidates-list`, {
+                const candidatesRes = await fetch(`${getApiUrl()}/business/talent-intelligence/candidates-list`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (candidatesRes.ok) setCandidates(await candidatesRes.json());
@@ -56,7 +61,7 @@ export default function ActionPlansPage() {
                 title: formData.title || `PDI: ${formData.type === 'ONBOARDING' ? 'Integração' : 'Desenvolvimento'}`
             };
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/business/talent-intelligence/plans`, {
+            const response = await fetch(`${getApiUrl()}/business/talent-intelligence/plans`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

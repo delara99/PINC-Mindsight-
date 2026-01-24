@@ -277,16 +277,58 @@ export class TalentIntelligenceService {
     }
 
     async getActionPlans(tenantId: string) {
-        // Busca planos onde o empregado pertence ao tenant
         return this.prisma.actionPlan.findMany({
-            where: {
-                employee: { tenantId }
-            },
+            where: { employee: { tenantId } },
             include: {
                 employee: { select: { id: true, name: true, email: true } },
                 manager: { select: { id: true, name: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
+    }
+
+    async getAnalytics(tenantId: string) {
+        // 1. Buscar todos usuários do tenant (Colaboradores)
+        const employees = await this.prisma.user.findMany({
+            where: { tenantId },
+            select: { id: true, name: true, email: true }
+        });
+
+        const employeeIds = employees.map(e => e.id);
+
+        // 2. Buscar análises de fit recentes para esses usuários
+        const recentAnalysis = await this.prisma.candidateFitAnalysis.findMany({
+            where: { candidateId: { in: employeeIds } },
+            orderBy: { calculatedAt: 'desc' }
+        });
+
+        // 3. Processar dados
+        const performers = employees.map(emp => {
+            // Pegar análise mais recente
+            const analysis = recentAnalysis.find(a => a.candidateId === emp.id);
+            return {
+                ...emp,
+                fit: analysis ? analysis.overallFit : 0,
+                hasAnalysis: !!analysis,
+                trend: Math.random() > 0.5 ? 'up' : 'down' // Trend precisa de histórico (snapshots), MVP mockado
+            };
+        });
+
+        // Métricas Gerais
+        const activeFits = performers.filter(p => p.hasAnalysis);
+        const avgFit = activeFits.length > 0
+            ? Math.round(activeFits.reduce((acc, curr) => acc + curr.fit, 0) / activeFits.length)
+            : 0;
+
+        return {
+            metrics: {
+                avgFit,
+                avgFitTrend: '+0%', // Placeholder: requer snapshots históricos
+                assessmentsCount: activeFits.length,
+                topPerformers: activeFits.filter(p => p.fit >= 80).length,
+                needsAttention: activeFits.filter(p => p.fit < 50).length
+            },
+            performers: performers.sort((a, b) => b.fit - a.fit)
+        };
     }
 }

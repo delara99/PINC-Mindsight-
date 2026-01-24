@@ -100,4 +100,9 @@ export class TalentIntelligenceController {
     async getPlans(@Request() req) {
         return this.service.getActionPlans(req.user.tenantId);
     }
+
+    @Get('analytics')
+    async getAnalytics(@Request() req) {
+        return this.service.getAnalytics(req.user.tenantId);
+    }
 }
