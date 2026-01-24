@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuthStore } from '@/src/store/auth-store';
 
 const getApiUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -12,6 +13,11 @@ const getApiUrl = () => {
 };
 
 const API_URL = getApiUrl();
+
+// Helper function to create axios config with auth
+const getAxiosConfig = (token: string | null) => ({
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+});
 
 export default function CalculationEnginePage() {
     const [activeTab, setActiveTab] = useState('overview');
@@ -69,29 +75,39 @@ export default function CalculationEnginePage() {
 // OVERVIEW TAB
 // ============================================
 function OverviewTab() {
+    const token = useAuthStore((state) => state.token);
     const [documentation, setDocumentation] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchDocumentation = async () => {
+            if (!token) {
+                setError('Token de autenticação não encontrado');
+                setLoading(false);
+                return;
+            }
+
             try {
-                const token = localStorage.getItem('token');
                 const response = await axios.get(
                     `${API_URL}/calculation-engine/documentation`,
-                    { headers: { Authorization: `Bearer ${token}` } }
+                    getAxiosConfig(token)
                 );
                 setDocumentation(response.data);
-            } catch (error) {
+                setError(null);
+            } catch (error: any) {
                 console.error('Erro ao buscar documentação:', error);
+                setError(error.response?.data?.message || 'Erro ao carregar documentação');
             } finally {
                 setLoading(false);
             }
         };
         fetchDocumentation();
-    }, []);
+    }, [token]);
 
-    if (loading) return <div>⏳ Carregando documentação...</div>;
-    if (!documentation) return <div>Erro ao carregar documentação.</div>;
+    if (loading) return <div className="text-center py-8">⏳ Carregando documentação...</div>;
+    if (error) return <div className="text-center py-8 text-red-600">❌ {error}</div>;
+    if (!documentation) return <div className="text-center py-8">Nenhuma documentação disponível.</div>;
 
     return (
         <div className="space-y-6">
@@ -173,7 +189,7 @@ function QuestionMappingsTab() {
 
     const fetchMappings = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             const response = await axios.get(
                 `${API_URL}/calculation-engine/question-mappings`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -210,7 +226,7 @@ function QuestionMappingsTab() {
 
         setIsSaving(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             await axios.put(
                 `${API_URL}/calculation-engine/question-mappings/${editForm.id}`,
                 { ...editForm, reason: saveReason },
@@ -391,7 +407,7 @@ function FormulasTab() {
 
     const fetchFormulas = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             const response = await axios.get(
                 `${API_URL}/calculation-engine/formulas`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -465,7 +481,7 @@ function FormulasTab() {
 
         setIsSaving(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             await axios.put(
                 `${API_URL}/calculation-engine/formulas/${editedFormula.id}`,
                 { ...editedFormula, reason: saveReason },
@@ -605,7 +621,7 @@ function ClassificationsTab() {
 
     const fetchClassifications = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             const response = await axios.get(
                 `${API_URL}/calculation-engine/classifications`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -657,7 +673,7 @@ function ClassificationsTab() {
 
         setIsSaving(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             await axios.put(
                 `${API_URL}/calculation-engine/classifications/${editedValues.id}`,
                 { ...editedValues, reason: saveReason },
@@ -803,7 +819,7 @@ function SimulatorTab() {
             return;
         }
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             const response = await axios.get(
                 `${API_URL}/assessment/${assessmentId}/responses`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -829,7 +845,7 @@ function SimulatorTab() {
         setResults(null);
         setActiveStep(0);
         try {
-            const token = localStorage.getItem('token');
+            const token = useAuthStore.getState().token;
             const response = await axios.post(
                 `${API_URL}/calculation-engine/simulate`,
                 { name: simulationName, inputs: responses },
@@ -944,7 +960,7 @@ function AuditTab() {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = useAuthStore.getState().token;
                 const response = await axios.get(
                     `${API_URL}/calculation-engine/audit`,
                     { headers: { Authorization: `Bearer ${token}` } }
