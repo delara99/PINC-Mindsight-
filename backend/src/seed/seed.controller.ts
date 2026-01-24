@@ -1,38 +1,26 @@
-import { PrismaClient } from '@prisma/client';
+import { Controller, Post, UseGuards, Request } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { PrismaService } from '../prisma/prisma.service';
 
-// Use production database URL
-const DATABASE_URL = process.env.DATABASE_URL || 'mysql://root:bjaxTxAWIBBniBfYxGwRGJXluqiKxsva@yamanote.proxy.rlwy.net:50133/railway';
+@Controller('admin/seed')
+@UseGuards(AuthGuard('jwt'))
+export class SeedController {
+    constructor(private prisma: PrismaService) { }
 
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: DATABASE_URL
+    @Post('calculation-engine')
+    async seedCalculationEngine(@Request() req) {
+        // Verificar se é admin
+        if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'TENANT_ADMIN') {
+            throw new Error('Acesso negado');
         }
-    }
-});
 
-async function seedCalculationEngine() {
-    console.log('🌱 Iniciando seed do Motor de Cálculo...\n');
-
-    try {
-        // Verificar se já existem dados
-        const existingMappings = await prisma.calculationQuestionMapping.count();
-        const existingFormulas = await prisma.calculationFormula.count();
-        const existingClassifications = await prisma.calculationClassification.count();
-
-        console.log('📊 Status atual:');
-        console.log(`   Mapeamentos: ${existingMappings}`);
-        console.log(`   Fórmulas: ${existingFormulas}`);
-        console.log(`   Classificações: ${existingClassifications}\n`);
-
-        if (existingMappings > 0 || existingFormulas > 0 || existingClassifications > 0) {
-            console.log('⚠️  Dados já existem. Deseja sobrescrever? (Ctrl+C para cancelar)');
-            await new Promise(resolve => setTimeout(resolve, 3000));
-        }
+        const results = {
+            formulas: 0,
+            classifications: 0,
+            mappings: 0
+        };
 
         // 1. FÓRMULAS
-        console.log('📐 Criando fórmulas...');
-
         const formulas = [
             {
                 name: 'REVERSE_SCORING_1_6',
@@ -77,17 +65,15 @@ async function seedCalculationEngine() {
         ];
 
         for (const formula of formulas) {
-            await prisma.calculationFormula.upsert({
+            await this.prisma.calculationFormula.upsert({
                 where: { name: formula.name },
                 update: formula,
                 create: formula
             });
+            results.formulas++;
         }
-        console.log(`✅ ${formulas.length} fórmulas criadas\n`);
 
         // 2. CLASSIFICAÇÕES
-        console.log('📈 Criando classificações...');
-
         const dimensions = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
         const levels = [
             { level: 'VERY_LOW', label: 'Muito Baixo', minScore: 0, maxScore: 20, color: '#EF4444', priority: 1 },
@@ -97,10 +83,9 @@ async function seedCalculationEngine() {
             { level: 'VERY_HIGH', label: 'Muito Alto', minScore: 81, maxScore: 100, color: '#10B981', priority: 5 }
         ];
 
-        let classCount = 0;
         for (const dimension of dimensions) {
             for (const level of levels) {
-                await prisma.calculationClassification.upsert({
+                await this.prisma.calculationClassification.upsert({
                     where: {
                         dimension_level: {
                             dimension,
@@ -125,15 +110,11 @@ async function seedCalculationEngine() {
                         priority: level.priority
                     }
                 });
-                classCount++;
+                results.classifications++;
             }
         }
-        console.log(`✅ ${classCount} classificações criadas\n`);
 
-        // 3. MAPEAMENTOS DE QUESTÕES (126 questões do Big Five)
-        console.log('📋 Criando mapeamentos de questões...');
-
-        // Mapeamento baseado no IPIP-NEO (International Personality Item Pool)
+        // 3. MAPEAMENTOS DE QUESTÕES
         const mappings = [
             // OPENNESS (O) - 26 questões
             ...Array.from({ length: 26 }, (_, i) => ({
@@ -141,7 +122,7 @@ async function seedCalculationEngine() {
                 dimension: 'O',
                 facet: ['FANTASIA', 'ESTÉTICA', 'SENTIMENTOS', 'AÇÕES', 'IDEIAS', 'VALORES'][Math.floor(i / 4.33)],
                 weight: 1.0,
-                isReversed: i % 2 === 1 // Alterna reversas
+                isReversed: i % 2 === 1
             })),
             // CONSCIENTIOUSNESS (C) - 25 questões
             ...Array.from({ length: 25 }, (_, i) => ({
@@ -178,7 +159,7 @@ async function seedCalculationEngine() {
         ];
 
         for (const mapping of mappings) {
-            await prisma.calculationQuestionMapping.upsert({
+            await this.prisma.calculationQuestionMapping.upsert({
                 where: {
                     questionId_dimension: {
                         questionId: mapping.questionId,
@@ -192,30 +173,13 @@ async function seedCalculationEngine() {
                     description: `Questão ${mapping.questionId} - ${mapping.dimension} - ${mapping.facet}`
                 }
             });
+            results.mappings++;
         }
-        console.log(`✅ ${mappings.length} mapeamentos criados\n`);
 
-        // Verificação final
-        const finalMappings = await prisma.calculationQuestionMapping.count();
-        const finalFormulas = await prisma.calculationFormula.count();
-        const finalClassifications = await prisma.calculationClassification.count();
-
-        console.log('✨ Seed concluído com sucesso!\n');
-        console.log('📊 Totais:');
-        console.log(`   ✅ Mapeamentos: ${finalMappings}`);
-        console.log(`   ✅ Fórmulas: ${finalFormulas}`);
-        console.log(`   ✅ Classificações: ${finalClassifications}\n`);
-
-    } catch (error) {
-        console.error('❌ Erro ao executar seed:', error);
-        throw error;
-    } finally {
-        await prisma.$disconnect();
+        return {
+            success: true,
+            message: 'Motor de Cálculo populado com sucesso!',
+            results
+        };
     }
 }
-
-seedCalculationEngine()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    });

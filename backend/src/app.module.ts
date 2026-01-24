@@ -22,7 +22,7 @@ import { InterpretationModule } from './interpretation/interpretation.module';
 import { TalkingToModule } from './talking-to/talking-to.module';
 import { BusinessModule } from './business/business.module';
 import { CalculationEngineModule } from './calculation-engine/calculation-engine.module';
-import { SeedController } from './admin/seed.controller';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
     imports: [
@@ -45,9 +45,10 @@ import { SeedController } from './admin/seed.controller';
         InterpretationModule,
         TalkingToModule,
         BusinessModule,
-        CalculationEngineModule
+        CalculationEngineModule,
+        SeedModule
     ],
-    controllers: [SeedController],
+    controllers: [],
     providers: [
         {
             provide: APP_INTERCEPTOR,
