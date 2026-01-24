@@ -219,74 +219,86 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                     {/* CASE 1: REAL FACETS */}
                                     {trait.facets && trait.facets.length > 0 ? (
                                         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
-                                            {trait.facets.map((facet: any, idx: number) => {
-                                                const fName = facet.name || facet.facetName;
-                                                const fScore = facet.score || facet.normalizedScore || 0;
-                                                // Cor da barra segue a cor do pai
-                                                const fillColor = getTraitColor(trait.key, 'fill');
-
+                                            {(() => {
                                                 // Dicionário de Tradução B2B
                                                 const translateFacet = (name: string) => {
                                                     const map: Record<string, string> = {
                                                         // Neuroticismo
-                                                        'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade',
-                                                        'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade',
-                                                        'depression': 'Depressão', 'depressao': 'Depressão',
-                                                        'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência',
-                                                        'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade',
-                                                        'vulnerability': 'Vulnerabilidade',
+                                                        'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
+                                                        'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
+                                                        'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
+                                                        'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
+                                                        'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
+                                                        'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
 
                                                         // Extroversão
-                                                        'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento',
-                                                        'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo',
-                                                        'assertiveness': 'Assertividade',
-                                                        'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade',
-                                                        'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção',
-                                                        'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas',
+                                                        'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
+                                                        'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
+                                                        'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
+                                                        'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
+                                                        'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
+                                                        'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
 
                                                         // Abertura
-                                                        'fantasy': 'Fantasia', 'fantasia': 'Fantasia',
-                                                        'aesthetics': 'Estética', 'estetica': 'Estética',
-                                                        'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos',
-                                                        'actions': 'Ações', 'acoes': 'Ações',
-                                                        'ideas': 'Ideias',
-                                                        'values': 'Valores',
+                                                        'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
+                                                        'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
+                                                        'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
+                                                        'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
+                                                        'ideas': 'Ideias', 'factors_ideas': 'Ideias',
+                                                        'values': 'Valores', 'factors_values': 'Valores',
 
                                                         // Amabilidade
-                                                        'trust': 'Confiança', 'confianca': 'Confiança',
-                                                        'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza',
-                                                        'altruism': 'Altruísmo', 'altruismo': 'Altruísmo',
-                                                        'compliance': 'Complacência', 'complacencia': 'Complacência',
-                                                        'modesty': 'Modéstia', 'modestia': 'Modéstia',
-                                                        'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade',
+                                                        'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
+                                                        'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
+                                                        'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
+                                                        'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
+                                                        'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
+                                                        'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
 
                                                         // Conscienciosidade
-                                                        'competence': 'Competência', 'competencia': 'Competência',
-                                                        'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização',
-                                                        'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever',
-                                                        'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização',
-                                                        'selfdiscipline': 'Autodisciplina',
-                                                        'deliberation': 'Deliberação'
+                                                        'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
+                                                        'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
+                                                        'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
+                                                        'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
+                                                        'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
+                                                        'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
                                                     };
-                                                    const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+                                                    const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
                                                     return map[normalized] || name;
                                                 };
 
-                                                return (
-                                                    <div key={idx} className="space-y-1">
-                                                        <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                                                            <span>{translateFacet(fName)}</span>
-                                                            <span className="text-slate-500">{fScore}%</span>
+                                                // Deduplicação
+                                                const seen = new Set();
+                                                const uniqueFacets = trait.facets.filter((f: any) => {
+                                                    const fName = f.name || f.facetName;
+                                                    const translated = translateFacet(fName);
+                                                    if (seen.has(translated)) return false;
+                                                    seen.add(translated);
+                                                    return true;
+                                                });
+
+                                                return uniqueFacets.map((facet: any, idx: number) => {
+                                                    const fName = facet.name || facet.facetName;
+                                                    const fScore = facet.score || facet.normalizedScore || 0;
+                                                    // Cor da barra segue a cor do pai
+                                                    const fillColor = getTraitColor(trait.key, 'fill');
+
+                                                    return (
+                                                        <div key={idx} className="space-y-1">
+                                                            <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+                                                                <span>{translateFacet(fName)}</span>
+                                                                <span className="text-slate-500">{fScore}%</span>
+                                                            </div>
+                                                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full rounded-full transition-all duration-1000 ${fillColor}`}
+                                                                    style={{ width: `${fScore}%` }}
+                                                                ></div>
+                                                            </div>
                                                         </div>
-                                                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all duration-1000 ${fillColor}`}
-                                                                style={{ width: `${fScore}%` }}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                    );
+                                                });
+                                            })()}
                                         </div>
                                     ) : (
                                         /* CASE 2: LEGACY FALLBACK (Simulated) */
