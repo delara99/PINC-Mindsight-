@@ -41,19 +41,23 @@ export default function TalentIntelligenceDashboard() {
                     </div>
                 </Link>
 
-                {/* Card 2: Análise de Equipe (Coming Soon) */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-not-allowed relative overflow-hidden group">
-                    {/* Badge Coming Soon */}
-                    <div className="absolute top-4 right-4 text-[10px] font-bold bg-slate-200 text-slate-500 px-2 py-1 rounded uppercase tracking-wide">Em Breve</div>
+                {/* Card 2: Análise de Equipe */}
+                <Link href="/business/dashboard/talent/teams" className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-green-400 hover:shadow-xl hover:shadow-green-100/50 transition-all duration-300 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-50 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
-                    <div className="w-12 h-12 bg-white text-green-600 rounded-xl flex items-center justify-center mb-4 border border-slate-100 shadow-sm">
-                        <Users size={24} />
+                    <div className="relative">
+                        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+                            <Users size={24} />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-green-700 transition-colors">Análise de Equipe</h3>
+                        <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+                            Descubra como um novo membro impacta a dinâmica e cultura do time existente. Preveja conflitos e sinergias.
+                        </p>
+                        <div className="flex items-center text-sm font-bold text-green-600 group-hover:translate-x-1 transition-transform">
+                            Gerenciar Equipes <ArrowRight size={16} className="ml-1" />
+                        </div>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">Análise de Equipe</h3>
-                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">
-                        Descubra como um novo membro impacta a dinâmica e cultura do time existente. Preveja conflitos e sinergias.
-                    </p>
-                </div>
+                </Link>
 
                 {/* Card 3: Planos de Ação (Coming Soon) */}
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-not-allowed relative group">

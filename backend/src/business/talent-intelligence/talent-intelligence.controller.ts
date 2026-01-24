@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TalentIntelligenceService } from './talent-intelligence.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -61,5 +61,17 @@ export class TalentIntelligenceController {
             .sort((a, b) => b.overallFit - a.overallFit);
 
         return validResults;
+    }
+
+    // --- TEAM ENDPOINTS ---
+
+    @Post('teams')
+    async createTeam(@Request() req, @Body() data: { name: string; description?: string; memberIds?: string[] }) {
+        return this.service.createTeam(req.user.tenantId, data);
+    }
+
+    @Get('teams')
+    async getTeams(@Request() req) {
+        return this.service.getTeams(req.user.tenantId);
     }
 }
