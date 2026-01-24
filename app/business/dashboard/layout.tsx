@@ -42,6 +42,7 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
         { name: 'Inventário', href: '/business/dashboard/inventory', icon: BrainCircuit },
         { name: 'Colaboradores', href: '/business/dashboard/candidates', icon: Users },
         { name: 'Relatórios de Perfil', href: '/business/dashboard/reports', icon: FileText },
+        { name: 'Inteligência de Talento', href: '/business/dashboard/talent', icon: BrainCircuit },
         // { name: 'Configurações', href: '/business/dashboard/settings', icon: Settings },
     ];
 
