@@ -79,6 +79,29 @@ function OverviewTab() {
     const [documentation, setDocumentation] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [seeding, setSeeding] = useState(false);
+
+    const handleSeed = async () => {
+        if (!confirm('Isso irá popular o banco de dados com os mapeamentos, fórmulas e classificações padrão. Continuar?')) {
+            return;
+        }
+
+        setSeeding(true);
+        try {
+            const response = await axios.post(
+                `${API_URL}/admin/seed/calculation-engine`,
+                {},
+                getAxiosConfig(token)
+            );
+            alert(`✅ ${response.data.message}\n\nMapeamentos: ${response.data.results.mappings}\nFórmulas: ${response.data.results.formulas}\nClassificações: ${response.data.results.classifications}`);
+            window.location.reload();
+        } catch (error: any) {
+            console.error('Erro ao popular dados:', error);
+            alert('❌ Erro ao popular dados: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setSeeding(false);
+        }
+    };
 
     useEffect(() => {
         const fetchDocumentation = async () => {
@@ -111,6 +134,30 @@ function OverviewTab() {
 
     return (
         <div className="space-y-6">
+            {/* Seed Button */}
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="text-lg font-bold text-yellow-900 mb-2">🌱 Popular Banco de Dados</h3>
+                        <p className="text-yellow-800 text-sm mb-4">
+                            Se o Mapeamento de Questões estiver vazio, clique aqui para popular o banco com os dados padrão do Motor de Cálculo.
+                        </p>
+                        <ul className="text-xs text-yellow-700 space-y-1 mb-4">
+                            <li>• 126 mapeamentos de questões (Big Five)</li>
+                            <li>• 4 fórmulas de cálculo</li>
+                            <li>• 25 classificações de níveis</li>
+                        </ul>
+                    </div>
+                    <button
+                        onClick={handleSeed}
+                        disabled={seeding}
+                        className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold transition-all disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                        {seeding ? '⏳ Populando...' : '🌱 Popular Dados'}
+                    </button>
+                </div>
+            </div>
+
             {/* Pipeline de Cálculo */}
             <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Pipeline de Cálculo</h2>
@@ -1230,8 +1277,8 @@ function DebugStepView({ step }: { step: any }) {
                                                 <div
                                                     key={idx}
                                                     className={`text-xs p-2 rounded ${range.isMatch
-                                                            ? 'bg-orange-100 border border-orange-300 font-semibold'
-                                                            : 'bg-gray-50 text-gray-600'
+                                                        ? 'bg-orange-100 border border-orange-300 font-semibold'
+                                                        : 'bg-gray-50 text-gray-600'
                                                         }`}
                                                 >
                                                     {range.label}: {range.min}-{range.max} {range.isMatch && '✓'}
