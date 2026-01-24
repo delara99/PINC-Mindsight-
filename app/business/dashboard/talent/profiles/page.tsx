@@ -266,47 +266,52 @@ export default function JobProfilesPage() {
                                     Perfil Comportamental Ideal (Big Five)
                                 </h3>
                                 <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 space-y-6">
-                                    {[
-                                        { key: 'O', label: 'Abertura (Openness)', desc: 'Criatividade, curiosidade e aceitação de novas ideias.', color: 'indigo' },
-                                        { key: 'C', label: 'Conscienciosidade', desc: 'Organização, disciplina e foco em resultados.', color: 'blue' },
-                                        { key: 'E', label: 'Extroversão', desc: 'Sociabilidade, energia e assertividade.', color: 'green' },
-                                        { key: 'A', label: 'Amabilidade', desc: 'Empatia, cooperação e confiança nos outros.', color: 'yellow' },
-                                        { key: 'N', label: 'Estabilidade', desc: 'Controle emocional e resiliência ao estresse.', color: 'pink' }
-                                    ].map((trait) => (
-                                        <div key={trait.key} className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                                    <div className={`w-3 h-3 rounded-full bg-${trait.color}-500`}></div>
-                                                    {trait.label}
-                                                </label>
-                                                <span className="text-sm font-mono font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm w-12 text-center">
-                                                    {formData.idealScores[trait.key]}
-                                                </span>
+                                    {(['O', 'C', 'E', 'A', 'N'] as const).map((key) => {
+                                        const traitsConfig = {
+                                            O: { label: 'Abertura (Openness)', desc: 'Criatividade, curiosidade e aceitação de novas ideias.', color: 'indigo' },
+                                            C: { label: 'Conscienciosidade', desc: 'Organização, disciplina e foco em resultados.', color: 'blue' },
+                                            E: { label: 'Extroversão', desc: 'Sociabilidade, energia e assertividade.', color: 'green' },
+                                            A: { label: 'Amabilidade', desc: 'Empatia, cooperação e confiança nos outros.', color: 'yellow' },
+                                            N: { label: 'Estabilidade', desc: 'Controle emocional e resiliência ao estresse.', color: 'pink' }
+                                        };
+                                        const trait = { key, ...traitsConfig[key] };
+
+                                        return (
+                                            <div key={trait.key} className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                        <div className={`w-3 h-3 rounded-full bg-${trait.color}-500`}></div>
+                                                        {trait.label}
+                                                    </label>
+                                                    <span className="text-sm font-mono font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm w-12 text-center">
+                                                        {formData.idealScores[key]}
+                                                    </span>
+                                                </div>
+                                                <div className="relative h-2 w-full rounded-lg bg-slate-200">
+                                                    {/* Custom Slider Track Background could go here */}
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="100"
+                                                        value={formData.idealScores[key]}
+                                                        onChange={(e) => handleScoreChange(key, parseInt(e.target.value))}
+                                                        className={`absolute w-full h-full opacity-0 cursor-pointer z-10`}
+                                                    />
+                                                    {/* Visible Track */}
+                                                    <div
+                                                        className={`absolute h-full rounded-lg bg-${trait.color}-500 transition-all`}
+                                                        style={{ width: `${formData.idealScores[key]}%` }}
+                                                    ></div>
+                                                    {/* Thumb Handle visualization */}
+                                                    <div
+                                                        className="absolute h-4 w-4 bg-white border-2 border-slate-300 rounded-full shadow top-1/2 -translate-y-1/2 -ml-2 pointer-events-none transition-all"
+                                                        style={{ left: `${formData.idealScores[key]}%`, borderColor: trait.color }}
+                                                    ></div>
+                                                </div>
+                                                <p className="text-xs text-slate-500 pt-1">{trait.desc}</p>
                                             </div>
-                                            <div className="relative h-2 w-full rounded-lg bg-slate-200">
-                                                {/* Custom Slider Track Background could go here */}
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max="100"
-                                                    value={formData.idealScores[trait.key]}
-                                                    onChange={(e) => handleScoreChange(trait.key, parseInt(e.target.value))}
-                                                    className={`absolute w-full h-full opacity-0 cursor-pointer z-10`}
-                                                />
-                                                {/* Visible Track */}
-                                                <div
-                                                    className={`absolute h-full rounded-lg bg-${trait.color}-500 transition-all`}
-                                                    style={{ width: `${formData.idealScores[trait.key]}%` }}
-                                                ></div>
-                                                {/* Thumb Handle visualization */}
-                                                <div
-                                                    className="absolute h-4 w-4 bg-white border-2 border-slate-300 rounded-full shadow top-1/2 -translate-y-1/2 -ml-2 pointer-events-none transition-all"
-                                                    style={{ left: `${formData.idealScores[trait.key]}%`, borderColor: trait.color }} // This is tricky with colors, keeping simple 
-                                                ></div>
-                                            </div>
-                                            <p className="text-xs text-slate-500 pt-1">{trait.desc}</p>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </div>
                         </div>
