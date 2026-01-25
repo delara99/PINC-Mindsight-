@@ -24,6 +24,16 @@ export class PaymentController {
         private stripeService: StripeService
     ) { }
 
+    @Get('health')
+    getHealth() {
+        return {
+            status: 'Payment Controller Active',
+            timestamp: new Date().toISOString(),
+            hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+            env: process.env.NODE_ENV
+        };
+    }
+
     /**
      * Criar uma cobrança PIX para um plano
      */
