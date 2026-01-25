@@ -79,8 +79,9 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
             // Fallback de Emergência
             if (finalKey === 'UNKNOWN') {
-                // Debug visual discreto se falhar (ajuda a diagnosticar sem quebrar layout)
-                displayName = `${displayName} (?)`;
+                // DEBUG MODE: Mostra EXATAMENTE o que o sistema recebeu para podermos corrigir
+                displayName = `DEBUG: [${rawKey}] | [${val.traitName}] | [${val.name}]`;
+                console.log('Trait Identification Failed:', { rawKey, val });
             }
 
             return {
