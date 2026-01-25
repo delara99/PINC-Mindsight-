@@ -23,57 +23,69 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         // FORMATO B2B (Array OK)
         scores = reportData.calculatedScores.scores;
     } else if (reportData?.unifiedScores) {
-        // FORMATO B2C Legacy (Objeto)
+        // FORMATO B2C Legacy / Misto (Objeto)
         scores = Object.entries(reportData.unifiedScores).map(([rawKey, val]: [string, any]) => {
-            // Tenta identificar a chave correta usando várias fontes
-            const possibleKeys = [val.traitKey, val.traitName, rawKey].filter(Boolean);
+            // Tenta identificar a chave correta usando TODAS as fontes possíveis (Name, TraitName, Dimension, Key)
+            const possibleKeys = [
+                val.traitKey,
+                val.traitName,
+                val.name,
+                val.dimension,
+                rawKey
+            ].filter(Boolean);
 
             let finalKey = 'UNKNOWN';
-            let traitName = val.traitName || rawKey;
+            let displayName = val.traitName || val.name || val.dimension || rawKey;
 
             // Mapa de Normalização Agressivo
             const keyMap: Record<string, string> = {
                 // Extroversão
                 'energia social': 'EXTRAVERSION', 'extroversao': 'EXTRAVERSION', 'extraversion': 'EXTRAVERSION',
-                'social': 'EXTRAVERSION',
+                'social': 'EXTRAVERSION', 'energia': 'EXTRAVERSION',
                 // Amabilidade
                 'estilo relacional': 'AGREEABLENESS', 'amabilidade': 'AGREEABLENESS', 'agreeableness': 'AGREEABLENESS',
-                'agradabilidade': 'AGREEABLENESS', 'relacional': 'AGREEABLENESS',
+                'agradabilidade': 'AGREEABLENESS', 'relacional': 'AGREEABLENESS', 'colaboracao': 'AGREEABLENESS',
                 // Conscienciosidade
                 'estilo de trabalho': 'CONSCIENTIOUSNESS', 'conscienciosidade': 'CONSCIENTIOUSNESS', 'conscientiousness': 'CONSCIENTIOUSNESS',
-                'estrutura': 'CONSCIENTIOUSNESS', 'trabalho': 'CONSCIENTIOUSNESS',
+                'estrutura': 'CONSCIENTIOUSNESS', 'trabalho': 'CONSCIENTIOUSNESS', 'organizacao': 'CONSCIENTIOUSNESS',
                 // Abertura
                 'mentalidade': 'OPENNESS', 'abertura': 'OPENNESS', 'openness': 'OPENNESS',
-                'abertura a experiencia': 'OPENNESS', 'inovacao': 'OPENNESS',
+                'abertura a experiencia': 'OPENNESS', 'inovacao': 'OPENNESS', 'criatividade': 'OPENNESS',
                 // Estabilidade
                 'resiliencia': 'NEUROTICISM', 'estabilidade': 'NEUROTICISM', 'neuroticism': 'NEUROTICISM',
-                'estabilidade emocional': 'NEUROTICISM', 'emocional': 'NEUROTICISM'
+                'estabilidade emocional': 'NEUROTICISM', 'emocional': 'NEUROTICISM', 'equilibrio': 'NEUROTICISM'
             };
 
             for (const k of possibleKeys) {
-                const normalized = String(k).toLowerCase().trim().split(' (')[0]; // Remove parenteses ex: "Mentalidade (Abertura)" -> "mentalidade"
+                // Remove parenteses e caracteres extras para limpar a string (ex: "Mentalidade (Abertura)" -> "mentalidade")
+                const normalized = String(k).toLowerCase().trim().split(' (')[0].replace(/[^a-z\s]/g, '');
+
+                // Tentativa 1: Match Exato
                 if (keyMap[normalized]) {
                     finalKey = keyMap[normalized];
                     break;
                 }
+
+                // Tentativa 2: Match Parcial dentro do loop
+                const parts = normalized.split(' ');
+                for (const p of parts) {
+                    if (keyMap[p]) {
+                        finalKey = keyMap[p];
+                        break;
+                    }
+                }
+                if (finalKey !== 'UNKNOWN') break;
             }
 
-            // Fallback se ainda for UNKNOWN mas tiver chave parecida
+            // Fallback de Emergência
             if (finalKey === 'UNKNOWN') {
-                // Tentar matching parcial
-                possibleKeys.forEach(k => {
-                    const s = String(k).toLowerCase();
-                    if (s.includes('abertura') || s.includes('mentalidade')) finalKey = 'OPENNESS';
-                    if (s.includes('trabalho') || s.includes('estrutura')) finalKey = 'CONSCIENTIOUSNESS';
-                    if (s.includes('social') || s.includes('extroversao')) finalKey = 'EXTRAVERSION';
-                    if (s.includes('relacional') || s.includes('amabilidade')) finalKey = 'AGREEABLENESS';
-                    if (s.includes('resiliencia') || s.includes('estabilidade')) finalKey = 'NEUROTICISM';
-                });
+                // Debug visual discreto se falhar (ajuda a diagnosticar sem quebrar layout)
+                displayName = `${displayName} (?)`;
             }
 
             return {
                 key: finalKey,
-                name: traitName,
+                name: displayName,
                 score: val.normalizedScore || val.score || 0,
                 level: val.level,
                 interpretation: val.interpretation,
