@@ -285,7 +285,7 @@ export class BusinessService {
         if (admin.tenantId !== tenantId) throw new ForbiddenException();
         await this.validateEmployee(tenantId, targetUserId);
 
-        return this.prisma.$transaction(async (tx) => {
+        await this.prisma.$transaction(async (tx) => {
             // Debita Gestor
             await tx.user.update({
                 where: { id: adminUserId },
@@ -296,26 +296,26 @@ export class BusinessService {
                 where: { id: targetUserId },
                 data: { credits: { increment: amount } }
             });
-            return { success: true, amount };
         });
+
+        // AUTO-ASSIGN: Se o colaborador recebeu crédito e não tem teste, cria um agora.
+        try {
+            await this.createAssignmentFromWallet(tenantId, targetUserId);
+        } catch (e) {
+            console.log('Auto-assign on transfer skipped:', e.message);
+        }
+
+        return { success: true, amount };
     }
 
-    // NOVO: Criar Assignment Usando Saldo do Colaborador
+    // NOVO: Criar Assignment (FREE - Cobrança no Submit)
     async createAssignmentFromWallet(tenantId: string, targetUserId: string) {
         const target = await this.validateEmployee(tenantId, targetUserId);
 
-        // Validação de Saldo Individual
-        if (target.credits < 1) {
-            throw new BadRequestException('SALDO_INSUFICIENTE: O colaborador não possui créditos atribuídos. Por favor, transfira créditos antes de liberar o teste.');
-        }
+        // Não cobramos mais na criação. Apenas garantimos que o assignment exista.
+        // A cobrança será feita no Submit, verificando se o user tem créditos.
 
         return this.prisma.$transaction(async (tx) => {
-            // Debita Colaborador
-            await tx.user.update({
-                where: { id: targetUserId },
-                data: { credits: { decrement: 1 } }
-            });
-
             // Busca Modelo Padrão
             let assessment = await tx.assessmentModel.findFirst({
                 where: { tenantId, isDefault: true }
@@ -329,7 +329,13 @@ export class BusinessService {
 
             if (!assessment) throw new NotFoundException('Nenhuma avaliação configurada.');
 
-            // Cria Assignment
+            // Check if exists
+            const existing = await tx.assessmentAssignment.findFirst({
+                where: { userId: targetUserId, assessmentId: assessment.id, status: { not: 'COMPLETED' } }
+            });
+            if (existing) return existing;
+
+            // Cria Assignment (FREE)
             const assignment = await tx.assessmentAssignment.create({
                 data: {
                     userId: targetUserId,

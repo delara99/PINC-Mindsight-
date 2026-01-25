@@ -291,12 +291,31 @@ export default function CandidatesPage() {
                                                         <Clock size={14} /> Liberado
                                                     </div>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => handleReleaseTest(emp)}
-                                                        className="flex items-center gap-2 text-white font-bold text-xs bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg transition-all shadow-sm hover:shadow"
-                                                    >
-                                                        <Shield size={14} /> Liberar Teste
-                                                    </button>
+                                                    // Lógica Inteligente de Ação
+                                                    (emp.credits || 0) > 0 ? (
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const token = localStorage.getItem('accessToken');
+                                                                    await axios.post(`${API_URL}/api/v1/business/employees/${emp.id}/distribute-credit`, {}, {
+                                                                        headers: { Authorization: `Bearer ${token}` }
+                                                                    });
+                                                                    fetchEmployees();
+                                                                    alert('Teste ativado com sucesso!');
+                                                                } catch (e) { alert('Erro ao ativar.'); }
+                                                            }}
+                                                            className="flex items-center gap-2 text-white font-bold text-xs bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition-all shadow-sm w-full justify-center"
+                                                        >
+                                                            <Shield size={14} /> Ativar Teste
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => openTransferModal(emp)}
+                                                            className="flex items-center gap-2 text-slate-600 font-bold text-xs hover:text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-purple-200 transition-all shadow-sm bg-white"
+                                                        >
+                                                            <Coins size={14} /> Adicionar Créditos
+                                                        </button>
+                                                    )
                                                 )}
                                             </td>
 

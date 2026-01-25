@@ -999,7 +999,7 @@ export class AssessmentController {
 
 
     // Aplicar avaliação a múltiplos usuários
-    // Aplicar avaliação a múltiplos usuários (COM VALIDAÇÃO DE CRÉDITOS)
+    // Aplicar avaliação a múltiplos usuários (FREE - Cobrança no Submit)
     @Post(':id/assign')
     async assignToUsers(
         @Param('id') id: string,
@@ -1014,59 +1014,26 @@ export class AssessmentController {
             throw new BadRequestException('Avaliação não encontrada');
         }
 
-        // 2. Buscar Usuários e Validar Saldo
-        const users = await this.prisma.user.findMany({
-            where: {
-                id: { in: body.userIds },
-                tenantId
-            }
-        });
-
-        // Filtrar quem não tem crédito (apenas MEMBERS precisam pagar com sua carteira)
-        const usersWithoutCredit = users.filter(u => u.role === 'MEMBER' && u.credits < 1);
-
-        if (usersWithoutCredit.length > 0) {
-            const names = usersWithoutCredit.map(u => u.name).join(', ');
-            throw new BadRequestException(`Operação cancelada. Os seguintes colaboradores não possuem créditos: ${names}. Por favor, transfira créditos na tela de Colaboradores antes de distribuir.`);
-        }
-
-        // 3. Executar Distribuição em Transação
-        // Para cada usuário: Decrementar Saldo e Criar Assignment
-        const assignments = await this.prisma.$transaction(async (tx) => {
-            const results = [];
-
-            for (const user of users) {
-                // Check idempotent (se já existe PENDING/IN_PROGRESS, não cobra nem recria)
-                const existing = await tx.assessmentAssignment.findFirst({
-                    where: { userId: user.id, assessmentId: id, status: { not: 'COMPLETED' } }
+        // 2. Criar atribuições (Sem cobrar agora)
+        // A cobrança ocorrerá apenas quando o usuário SUBMETER a avaliação.
+        const assignments = await Promise.all(
+            body.userIds.map(async (userId) => {
+                // Check idempotent
+                const existing = await this.prisma.assessmentAssignment.findFirst({
+                    where: { userId, assessmentId: id, status: { not: 'COMPLETED' } }
                 });
+                if (existing) return existing;
 
-                if (existing) {
-                    results.push(existing);
-                    continue;
-                }
-
-                // Debitar (se MEMBER)
-                if (user.role === 'MEMBER') {
-                    await tx.user.update({
-                        where: { id: user.id },
-                        data: { credits: { decrement: 1 } }
-                    });
-                }
-
-                // Criar
-                const newAssign = await tx.assessmentAssignment.create({
+                return this.prisma.assessmentAssignment.create({
                     data: {
                         assessmentId: id,
-                        userId: user.id,
+                        userId: userId,
                         status: 'PENDING',
                         assignedAt: new Date()
                     }
                 });
-                results.push(newAssign);
-            }
-            return results;
-        });
+            })
+        );
 
         return {
             message: `Avaliação atribuída a ${assignments.length} usuário(s)`,
@@ -1224,16 +1191,14 @@ export class AssessmentController {
 
             // Executar tudo em uma transação para garantir consistência
             const result = await this.prisma.$transaction(async (tx) => {
-                // Verificar créditos APENAS para usuários individuais (B2C)
-                // No B2B (MEMBER), o Gestor já pagou ao distribuir o inventário
+                // Verificar créditos (GLOBALMENTE - Todos pagam no submit)
+                // Isso consome o crédito "alocado" na carteira do usuário.
                 const user = await tx.user.findUnique({
                     where: { id: userId }
                 });
 
-                // MEMBER = Colaborador B2B (não paga)
-                // Outros roles (TENANT_ADMIN, SPECIALIST) em contexto individual = pagam
-                if (user.role !== 'MEMBER' && user.credits < 1) {
-                    throw new BadRequestException('Créditos insuficientes para completar a avaliação.');
+                if (user.credits < 1) {
+                    throw new BadRequestException('Créditos insuficientes para processar o resultado da avaliação.');
                 }
 
                 // Limpar respostas/resultados anteriores caso existam (retry)
@@ -1257,24 +1222,22 @@ export class AssessmentController {
                     )
                 );
 
-                // Atualizar status para processando (ou manter completed, o cálculo é síncrono logo abaixo mas fora da tx)
+                // Atualizar status para processando
                 await tx.assessmentAssignment.update({
                     where: { id: assignment.id },
                     data: {
-                        status: 'COMPLETED', // Marca como completado para liberar a UI
+                        status: 'COMPLETED',
                         completedAt: new Date()
                     }
                 });
 
-                // Decrementar créditos APENAS para usuários individuais (B2C)
-                if (user.role !== 'MEMBER') {
-                    await tx.user.update({
-                        where: { id: userId },
-                        data: {
-                            credits: { decrement: 1 }
-                        }
-                    });
-                }
+                // Decrementar créditos de TODOS
+                await tx.user.update({
+                    where: { id: userId },
+                    data: {
+                        credits: { decrement: 1 }
+                    }
+                });
             });
 
             // --- CÁLCULO DE SCORES (Pós-Transação) ---
