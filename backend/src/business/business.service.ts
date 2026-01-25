@@ -57,6 +57,7 @@ export class BusinessService {
             select: {
                 id: true, name: true, email: true, status: true,
                 createdAt: true, lastActivityAt: true,
+                credits: true, // Inclui créditos na listagem
                 assignments: {
                     select: { status: true, assignedAt: true, completedAt: true },
                     orderBy: { assignedAt: 'desc' },
@@ -69,12 +70,8 @@ export class BusinessService {
     }
 
     async deleteEmployee(tenantId: string, userId: string) {
-        const user = await this.validateEmployee(tenantId, userId);
-
-        // Soft delete ou Hard delete? Hard delete limpa tudo.
-        // Precisamos deletar assignments e responses primeiro ou usar cascade.
-        // Como é dev, vamos tentar delete direto, se falhar por FK, fazemos transação.
-        // Prisma schema geralmente tem cascade se configurado. Se não, deletamos dependents.
+        // Valida antes
+        await this.validateEmployee(tenantId, userId);
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Limpar relações de Conexões e Reports (Ordem importa devido FKs)
@@ -127,7 +124,7 @@ export class BusinessService {
 
         // Gerar novo código
         const newCode = 'PINC-' + Math.floor(1000 + Math.random() * 9000);
-        const dummyEmail = `${newCode.toLowerCase()}.${Date.now()}@func.pinc.app`;
+        // const dummyEmail = `${newCode.toLowerCase()}.${Date.now()}@func.pinc.app`;
         const hashedPassword = await bcrypt.hash(newCode, 10);
 
         return this.prisma.user.update({
@@ -135,15 +132,12 @@ export class BusinessService {
             data: {
                 companyName: newCode, // Guarda o código visível
                 password: hashedPassword, // Atualiza a senha
-                // email: dummyEmail // Opcional: mudar email para garantir sync, mas talvez nao precise se o login é por código puramente via companyName lookup hack.
-                // Melhor não mudar o email se não for estritamente necessário para manter histórico, mas como o email é dummy... tanto faz.
             }
         });
     }
 
-    async createEmployee(tenantId: string, data: { name: string; accessCode?: string }) {
+    async createEmployee(tenantId: string, data: { name: string; accessCode?: string, initialCredits?: number }) {
         // Gera um email fictício para unicidade no banco se não fornecido
-        // Formato: codigo.empresa@pinc.app (mas precisamos garantir unicidade)
         const accessCode = data.accessCode || Math.random().toString(36).slice(-6).toUpperCase();
 
         // Email placeholder único
@@ -163,11 +157,12 @@ export class BusinessService {
                 status: UserStatus.active,
                 plan: PlanType.BUSINESS,
                 mustChangePassword: false, // Código é fixo
-                companyName: accessCode // Usamos companyName temporariamente
+                companyName: accessCode, // Usamos companyName temporariamente
+                credits: data.initialCredits || 0
             }
         });
 
-        // Retorna o usuário com o código (guardado em companyName ou re-injetado)
+        // Retorna o usuário com o código
         return { ...newUser, accessCode };
     }
 
@@ -193,15 +188,6 @@ export class BusinessService {
         });
 
         console.log(`[getAllReports] Encontrados ${reports.length} relatórios`);
-
-        if (reports.length > 0) {
-            console.log(`[getAllReports] Exemplo do primeiro:`, {
-                userId: reports[0].user.id,
-                userName: reports[0].user.name,
-                assessmentTitle: reports[0].assessment.title,
-                status: reports[0].status
-            });
-        }
 
         return reports.map(r => ({
             reportId: r.id,
@@ -276,7 +262,7 @@ export class BusinessService {
         return user;
     }
 
-    // --- ACCESS CONTROL & CREDITS ---
+    // --- ACCESS CONTROL & CREDITS & ASSIGNMENTS ---
 
     async toggleEmployeeStatus(tenantId: string, userId: string) {
         const user = await this.validateEmployee(tenantId, userId);
@@ -288,28 +274,45 @@ export class BusinessService {
         });
     }
 
-    async distributeCredit(tenantId: string, adminUserId: string, targetUserId: string) {
-        // 1. Validar Admin (Fonte)
+    // NOVO: Transferir Créditos do Gestor -> Colaborador
+    async transferCredits(tenantId: string, adminUserId: string, targetUserId: string, amount: number) {
+        if (amount < 1) throw new BadRequestException('Quantidade inválida.');
+
         const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
-        if (!admin || admin.credits < 1) {
-            throw new BadRequestException('Saldo insuficiente para distribuir créditos.');
+        if (!admin || admin.credits < amount) {
+            throw new BadRequestException('Saldo insuficiente na conta do gestor.');
         }
-
         if (admin.tenantId !== tenantId) throw new ForbiddenException();
-
-        // 2. Validar Alvo
-        const target = await this.validateEmployee(tenantId, targetUserId);
-
-        // 3. Transação: Tira de Admin -> Cria Assignment (Usa crédito)
-        // Nota: O sistema atual não põe créditos no Member, ele CRIA a avaliação PAGA.
-        // Se o pedido for "dar créditos para o membro redistribuir", seria diferente.
-        // Mas o pedido diz "redistribuir para seus colaboradores... poderem realizar o inventario".
-        // Isso significa: Gastar 1 crédito do Admin para criar 1 Assignment para o Member.
+        await this.validateEmployee(tenantId, targetUserId);
 
         return this.prisma.$transaction(async (tx) => {
-            // Decrementa Admin
+            // Debita Gestor
             await tx.user.update({
                 where: { id: adminUserId },
+                data: { credits: { decrement: amount } }
+            });
+            // Credita Colaborador
+            await tx.user.update({
+                where: { id: targetUserId },
+                data: { credits: { increment: amount } }
+            });
+            return { success: true, amount };
+        });
+    }
+
+    // NOVO: Criar Assignment Usando Saldo do Colaborador
+    async createAssignmentFromWallet(tenantId: string, targetUserId: string) {
+        const target = await this.validateEmployee(tenantId, targetUserId);
+
+        // Validação de Saldo Individual
+        if (target.credits < 1) {
+            throw new BadRequestException('SALDO_INSUFICIENTE: O colaborador não possui créditos atribuídos. Por favor, transfira créditos antes de liberar o teste.');
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            // Debita Colaborador
+            await tx.user.update({
+                where: { id: targetUserId },
                 data: { credits: { decrement: 1 } }
             });
 
@@ -338,6 +341,14 @@ export class BusinessService {
 
             return assignment;
         });
+    }
+
+    /**
+     * @deprecated Legacy method name kept for controller compatibility, but now uses wallet logic.
+     */
+    async distributeCredit(tenantId: string, adminUserId: string, targetUserId: string) {
+        // Redireciona para o novo fluxo
+        return this.createAssignmentFromWallet(tenantId, targetUserId);
     }
 
     // --- UNIFIED REPORT (TALKING TO ENGINE) ---
@@ -455,4 +466,3 @@ export class BusinessService {
         };
     }
 }
-

@@ -1,21 +1,27 @@
-
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key, FileText } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key, FileText, Coins, ArrowRight } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function CandidatesPage() {
     const [employees, setEmployees] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [credits, setCredits] = useState(0);
+    const [stats, setStats] = useState({ credits: 0 });
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-    // Create Form
+    // Create Modal State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [newName, setNewName] = useState('');
     const [accessCode, setAccessCode] = useState('');
+    const [initialCredits, setInitialCredits] = useState(0); // Novo campo
     const [createLoading, setCreateLoading] = useState(false);
+
+    // Transfer Modal State
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+    const [transferAmount, setTransferAmount] = useState(1);
+    const [transferLoading, setTransferLoading] = useState(false);
 
     const fetchEmployees = async () => {
         try {
@@ -25,11 +31,11 @@ export default function CandidatesPage() {
             });
             setEmployees(res.data);
 
-            // Fetch stats for credits
+            // Fetch global stats
             const resStats = await axios.get(`${API_URL}/api/v1/business/dashboard`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setCredits(resStats.data.credits || 0);
+            setStats(resStats.data);
 
         } catch (error) {
             console.error(error);
@@ -48,8 +54,10 @@ export default function CandidatesPage() {
     };
 
     useEffect(() => {
-        if (isModalOpen && !accessCode) generateCode();
-    }, [isModalOpen]);
+        if (isCreateModalOpen && !accessCode) generateCode();
+    }, [isCreateModalOpen]);
+
+    // HANDLERS
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,13 +66,15 @@ export default function CandidatesPage() {
             const token = localStorage.getItem('accessToken');
             await axios.post(`${API_URL}/api/v1/business/employees`, {
                 name: newName,
-                accessCode: accessCode
+                accessCode: accessCode,
+                initialCredits: Number(initialCredits)
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setIsModalOpen(false);
+            setIsCreateModalOpen(false);
             setNewName('');
             setAccessCode('');
+            setInitialCredits(0);
             fetchEmployees();
             alert('Colaborador criado com sucesso!');
         } catch (error) {
@@ -86,24 +96,72 @@ export default function CandidatesPage() {
         }
     };
 
-    const handleDistributeCredit = async (id: string, empName: string) => {
-        // Validation visually
-        if (credits <= 0) {
-            alert('Você não tem créditos suficientes para liberar esta avaliação.');
+    // Nova Lógica: Transferir Créditos
+    const openTransferModal = (employee: any) => {
+        setSelectedEmployee(employee);
+        setTransferAmount(1);
+        setIsTransferModalOpen(true);
+        setOpenMenuId(null);
+    };
+
+    const handleTransferCredits = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedEmployee) return;
+        setTransferLoading(true);
+
+        if (stats.credits < transferAmount) {
+            alert('Você não possui saldo de créditos suficientes.');
+            setTransferLoading(false);
             return;
         }
 
-        if (!confirm(`Deseja utilizar 1 crédito para liberar o teste de ${empName}? Saldo atual: ${credits}`)) return;
+        try {
+            const token = localStorage.getItem('accessToken');
+            await axios.post(`${API_URL}/api/v1/business/employees/${selectedEmployee.id}/transfer-credit`, {
+                amount: Number(transferAmount)
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert(`Sucesso! ${transferAmount} créditos transferidos para ${selectedEmployee.name}.`);
+            setIsTransferModalOpen(false);
+            fetchEmployees();
+        } catch (error: any) {
+            alert(error.response?.data?.message || 'Erro ao transferir créditos.');
+        } finally {
+            setTransferLoading(false);
+        }
+    };
+
+    // Liberar Teste (Consome da carteira do colaborador)
+    const handleReleaseTest = async (emp: any) => {
+        // Validation: Colaborador tem crédito?
+        if ((emp.credits || 0) < 1) {
+            // BLOQUEIO COM POPUP
+            if (confirm(`⚠️ AÇÃO NECESSÁRIA\n\nO colaborador "${emp.name}" não possui créditos atribuídos.\n\nÉ necessário transferir créditos para ele antes de liberar o teste.\n\nDeseja abrir a tela de transferência agora?`)) {
+                openTransferModal(emp);
+            }
+            return;
+        }
+
+        if (!confirm(`Confirmar liberação de teste para "${emp.name}"?\nIsso consumirá 1 crédito do saldo DO COLABORADOR.`)) return;
 
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${API_URL}/api/v1/business/employees/${id}/distribute-credit`, {}, {
+            // Chama o endpoint antigo (que agora usa a nova lógica interna "createAssignmentFromWallet")
+            await axios.post(`${API_URL}/api/v1/business/employees/${emp.id}/distribute-credit`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchEmployees();
             alert('Teste liberado com sucesso!');
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Erro ao liberar crédito.');
+            // Se der erro de saldo insuficiente vindo do backend (garantia extra)
+            if (error.response?.data?.message?.includes('SALDO_INSUFICIENTE') || error.response?.status === 400) {
+                if (confirm(`O colaborador não tem saldo suficiente. Deseja transferir agora?`)) {
+                    openTransferModal(emp);
+                }
+            } else {
+                alert(error.response?.data?.message || 'Erro ao liberar teste.');
+            }
         }
     };
 
@@ -142,10 +200,10 @@ export default function CandidatesPage() {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Colaboradores</h1>
-                    <p className="text-slate-500">Gerencie o acesso (Créditos Disponíveis: <span className="font-bold text-purple-600">{credits}</span>)</p>
+                    <p className="text-slate-500">Gerencie o acesso (Seu Saldo Global: <span className="font-bold text-purple-600">{stats.credits}</span>)</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => setIsCreateModalOpen(true)}
                     className="bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-black transition-all flex items-center gap-2 shadow-lg hover:shadow-xl"
                 >
                     <Plus size={16} /> Adicionar Colaborador
@@ -169,10 +227,10 @@ export default function CandidatesPage() {
                         <thead className="bg-slate-50 border-b border-slate-200">
                             <tr>
                                 <th className="px-6 py-4 font-semibold text-slate-700">Nome</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Código de Acesso</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700">Código</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700 text-center">Saldo (Créditos)</th>
                                 <th className="px-6 py-4 font-semibold text-slate-700">Status</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Avaliação</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Data Criação</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700">Situação Teste</th>
                                 <th className="px-6 py-4 text-right">Ações</th>
                             </tr>
                         </thead>
@@ -191,30 +249,33 @@ export default function CandidatesPage() {
                                                 <div className="font-bold text-slate-900">{emp.name || 'Sem nome'}</div>
                                                 <div className="text-xs text-slate-400">ID: {emp.id.slice(0, 8)}...</div>
                                             </td>
-                                            <td className="px-6 py-4 font-mono font-bold text-slate-600 bg-slate-50 rounded-lg select-all text-center border border-slate-100">
-                                                {emp.companyName || 'PINC-????'}
+                                            <td className="px-6 py-4 font-mono font-bold text-slate-600">
+                                                <span className="bg-slate-100 px-2 py-1 rounded">{emp.companyName || '???'}</span>
                                             </td>
+
+                                            {/* Coluna Saldo */}
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="inline-flex items-center gap-1 font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+                                                    <Coins size={14} className="text-yellow-600" />
+                                                    {emp.credits || 0}
+                                                </div>
+                                            </td>
+
                                             <td className="px-6 py-4">
                                                 <button
                                                     onClick={() => handleToggleStatus(emp.id)}
                                                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${emp.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
                                                 >
-                                                    {emp.status === 'active' ? <CheckCircle size={12} /> : <XCircle size={12} />}
                                                     {emp.status === 'active' ? 'Ativo' : 'Inativo'}
                                                 </button>
                                             </td>
                                             <td className="px-6 py-4">
                                                 {status === 'COMPLETED' ? (
                                                     <div className="flex flex-col items-start gap-1">
-                                                        <div className="flex items-center gap-2 text-green-600 font-medium text-xs bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
-                                                            <CheckCircle size={12} /> Concluído
+                                                        <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
+                                                            <CheckCircle size={14} /> Concluído
                                                         </div>
-                                                        <a
-                                                            href={`/business/dashboard/reports/${emp.id}`}
-                                                            className="flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-1 rounded transition-colors group"
-                                                        >
-                                                            <FileText size={12} className="group-hover:scale-110 transition-transform" /> Ver Relatório
-                                                        </a>
+                                                        <a href={`/business/dashboard/reports/${emp.id}`} className="text-[10px] text-purple-600 hover:underline">Ver Relatório</a>
                                                     </div>
                                                 ) : status === 'IN_PROGRESS' || status === 'PENDING' ? (
                                                     <div className="flex items-center gap-2 text-blue-600 font-medium text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100 w-fit">
@@ -222,50 +283,43 @@ export default function CandidatesPage() {
                                                     </div>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleDistributeCredit(emp.id, emp.name)}
-                                                        className="flex items-center gap-2 text-slate-500 font-bold text-xs hover:text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded transition-all border border-slate-200 hover:border-purple-200 bg-white shadow-sm hover:shadow"
+                                                        onClick={() => handleReleaseTest(emp)}
+                                                        className="flex items-center gap-2 text-white font-bold text-xs bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg transition-all shadow-sm hover:shadow"
                                                     >
-                                                        <Shield size={14} /> Liberar Teste (-1 Crédito)
+                                                        <Shield size={14} /> Liberar Teste
                                                     </button>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-500 text-xs font-mono">
-                                                {new Date(emp.createdAt).toLocaleDateString()}
-                                            </td>
+
                                             <td className="px-6 py-4 text-right relative">
                                                 <button
                                                     onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
-                                                    className="text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 active:bg-slate-200"
+                                                    className="text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100"
                                                 >
                                                     <MoreHorizontal size={18} />
                                                 </button>
 
                                                 {/* Dropdown Menu */}
                                                 {openMenuId === emp.id && (
-                                                    <div className="absolute right-8 top-8 z-20 w-52 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col">
-                                                        {status === 'COMPLETED' && (
-                                                            <>
-                                                                <a
-                                                                    href={`/business/dashboard/reports/${emp.id}`}
-                                                                    className="w-full text-left px-4 py-3 text-sm text-purple-700 font-bold hover:bg-purple-50 flex items-center gap-2 bg-purple-50/30"
-                                                                >
-                                                                    <FileText size={14} /> Acessar Relatório
-                                                                </a>
-                                                                <div className="h-px bg-slate-100"></div>
-                                                            </>
-                                                        )}
+                                                    <div className="absolute right-8 top-8 z-20 w-56 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col p-1">
+                                                        <button
+                                                            onClick={() => openTransferModal(emp)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2 rounded-md transition-colors"
+                                                        >
+                                                            <Coins size={14} /> Transferir Créditos
+                                                        </button>
+                                                        <div className="h-px bg-slate-100 my-1"></div>
                                                         <button
                                                             onClick={() => handleResetCode(emp.id, emp.name)}
-                                                            className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded-md"
                                                         >
-                                                            <RefreshCw size={14} className="text-blue-500" /> Resetar Código
+                                                            <RefreshCw size={14} /> Resetar Código
                                                         </button>
-                                                        <div className="h-px bg-slate-100"></div>
                                                         <button
                                                             onClick={() => handleDelete(emp.id, emp.name)}
-                                                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-md"
                                                         >
-                                                            <Trash2 size={14} /> Excluir Colaborador
+                                                            <Trash2 size={14} /> Excluir
                                                         </button>
                                                     </div>
                                                 )}
@@ -279,61 +333,77 @@ export default function CandidatesPage() {
                 </div>
             </div>
 
-            {/* MODAL */}
-            {isModalOpen && (
+            {/* CREATE MODAL */}
+            {isCreateModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-900">Novo Colaborador</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle size={24} /></button>
+                            <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle size={24} /></button>
                         </div>
 
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:outline-none"
-                                    value={newName}
-                                    onChange={e => setNewName(e.target.value)}
-                                    placeholder="Ex: Maria Silva"
-                                />
+                                <input type="text" required className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:outline-none"
+                                    value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ex: Maria Silva" />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Código de Acesso (Login)</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono font-bold text-slate-600 bg-slate-50 focus:outline-none text-center tracking-widest"
-                                        value={accessCode}
-                                        readOnly
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={generateCode}
-                                        className="text-xs font-bold text-purple-600 hover:bg-purple-50 px-3 py-1 rounded cursor-pointer border border-transparent hover:border-purple-100 whitespace-nowrap"
-                                    >
-                                        Gerar Novo
-                                    </button>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Créditos Iniciais</label>
+                                    <input type="number" min="0" max={stats.credits} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:outline-none"
+                                        value={initialCredits} onChange={e => setInitialCredits(Number(e.target.value))} />
+                                    <p className="text-[10px] text-slate-400 mt-1">Seu saldo: {stats.credits}</p>
                                 </div>
-                                <p className="text-[11px] text-slate-400 mt-2 bg-yellow-50 p-2 rounded text-yellow-700 border border-yellow-100">
-                                    ⚠️ Copie este código e envie para o colaborador. Ele será usado como senha de acesso.
-                                </p>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Código (Auto)</label>
+                                    <input type="text" readOnly className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-mono text-center font-bold text-slate-500" value={accessCode} />
+                                </div>
                             </div>
 
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold hover:bg-slate-50">Cancelar</button>
-                                <button
-                                    type="submit"
-                                    disabled={createLoading}
-                                    className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-black disabled:opacity-70 flex items-center justify-center gap-2"
-                                >
-                                    {createLoading ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> : 'Criar Acesso'}
+                                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold hover:bg-slate-50">Cancelar</button>
+                                <button type="submit" disabled={createLoading} className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-black disabled:opacity-70 flex items-center justify-center gap-2">
+                                    {createLoading ? 'Criando...' : 'Criar Acesso'}
                                 </button>
                             </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* TRANSFER MODAL */}
+            {isTransferModalOpen && selectedEmployee && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-slate-900">Transferir Créditos</h3>
+                            <button onClick={() => setIsTransferModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle size={24} /></button>
+                        </div>
+
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-3 text-purple-600">
+                                <Coins size={32} />
+                            </div>
+                            <p className="text-sm text-slate-500">Para: <span className="font-bold text-slate-900">{selectedEmployee.name}</span></p>
+                            <p className="text-xs text-slate-400">Saldo atual dele: {selectedEmployee.credits || 0}</p>
+                        </div>
+
+                        <form onSubmit={handleTransferCredits} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Quantidade a Transferir</label>
+                                <div className="flex items-center gap-2">
+                                    <input type="number" min="1" max={stats.credits} required className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none text-center font-bold text-lg"
+                                        value={transferAmount} onChange={e => setTransferAmount(Number(e.target.value))} />
+                                </div>
+                                <p className="text-xs text-center mt-2 text-slate-500">Disponível na sua conta: <span className="font-bold text-slate-900">{stats.credits}</span></p>
+                            </div>
+
+                            <button type="submit" disabled={transferLoading} className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg hover:shadow-purple-200/50 transition-all">
+                                {transferLoading ? 'Transferindo...' : 'Confirmar Transferência'} <ArrowRight size={18} />
+                            </button>
                         </form>
                     </div>
                 </div>

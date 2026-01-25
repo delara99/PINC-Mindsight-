@@ -49,7 +49,14 @@ export class BusinessController {
     async distributeCredit(@Request() req, @Param('id') targetId: string) {
         this.validateCompanyAccess(req.user);
         // O Admin é quem está logado (req.user)
+        // Lógica atualizada no Service para usar Wallet do Colaborador
         return this.service.distributeCredit(req.user.tenantId, req.user.userId, targetId);
+    }
+
+    @Post('employees/:id/transfer-credit')
+    async transferCredit(@Request() req, @Param('id') targetId: string, @Body() body: { amount: number }) {
+        this.validateCompanyAccess(req.user);
+        return this.service.transferCredits(req.user.tenantId, req.user.userId, targetId, body.amount);
     }
 
     @Post('employees/:id/reset-code')
