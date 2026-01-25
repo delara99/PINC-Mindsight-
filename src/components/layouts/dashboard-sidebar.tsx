@@ -28,6 +28,17 @@ import clsx from 'clsx';
 import { UpgradeModal } from '../../../src/components/common/upgrade-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// --- CRITICAL CORE ACCESS - DO NOT REMOVE OR MODIFY WITHOUT AUTHORIZATION ---
+const CRITICAL_ADMIN_ITEMS = [
+    {
+        label: 'Gerenciar TalkingTO',
+        href: '/admin/dashboard/talking-to',
+        icon: BrainCircuit,
+        roles: ['TENANT_ADMIN', 'SUPER_ADMIN']
+    }
+];
+// ---------------------------------------------------------------------------
+
 const menuItems = [
     { label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
     { label: 'Meu Perfil TalkingTo', href: '/dashboard/my-report', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
@@ -36,7 +47,10 @@ const menuItems = [
     { label: 'Clientes', href: '/dashboard/clients', icon: Users, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], notificationKey: 'clientes' },
     { label: 'Devolutivas', href: '/dashboard/devolutivas', icon: MessageSquare, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], premium: true, notificationKey: 'devolutivas' },
     { label: 'Minhas Conexões', href: '/dashboard/connections', icon: UserPlus, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'], notificationKey: 'conexoes' },
-    { label: 'Gerenciar TalkingTO', href: '/admin/dashboard/talking-to', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
+
+    // Inserção dos Itens Críticos (Blindados)
+    ...CRITICAL_ADMIN_ITEMS,
+
     { label: 'Central de Controle', href: '/dashboard/pinc-control', icon: Sliders, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Responder', href: '/dashboard/my-assessments', icon: PlayCircle, roles: ['MEMBER'] },
