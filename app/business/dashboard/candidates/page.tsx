@@ -29,6 +29,7 @@ export default function CandidatesPage() {
             const res = await axios.get(`${API_URL}/api/v1/business/employees`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            console.log('DEBUG: Employees Data Received:', res.data); // LOG 1
             setEmployees(res.data);
 
             // Fetch global stats
@@ -134,14 +135,21 @@ export default function CandidatesPage() {
 
     // Liberar Teste (Consome da carteira do colaborador)
     const handleReleaseTest = async (emp: any) => {
+        const currentCredits = typeof emp.credits === 'number' ? emp.credits : 0;
+        console.log(`DEBUG: handleReleaseTest for ${emp.name} (ID: ${emp.id})`);
+        console.log(`DEBUG: Raw Credits: ${emp.credits}, Processed: ${currentCredits}`);
+
         // Validation: Colaborador tem crédito?
-        if ((emp.credits || 0) < 1) {
+        if (currentCredits < 1) {
+            console.log('DEBUG: Block triggered. Opening logic.');
             // BLOQUEIO COM POPUP
-            if (confirm(`⚠️ AÇÃO NECESSÁRIA\n\nO colaborador "${emp.name}" não possui créditos atribuídos.\n\nÉ necessário transferir créditos para ele antes de liberar o teste.\n\nDeseja abrir a tela de transferência agora?`)) {
+            if (confirm(`⚠️ AÇÃO NECESSÁRIA\n\nO colaborador "${emp.name}" não possui créditos atribuídos. (Saldo: ${currentCredits})\n\nÉ necessário transferir créditos para ele antes de liberar o teste.\n\nDeseja abrir a tela de transferência agora?`)) {
                 openTransferModal(emp);
             }
             return;
         }
+
+        console.log('DEBUG: Block passed. Proceeding to API.');
 
         if (!confirm(`Confirmar liberação de teste para "${emp.name}"?\nIsso consumirá 1 crédito do saldo DO COLABORADOR.`)) return;
 
@@ -154,9 +162,10 @@ export default function CandidatesPage() {
             fetchEmployees();
             alert('Teste liberado com sucesso!');
         } catch (error: any) {
+            console.error('DEBUG: API Error:', error.response?.data);
             // Se der erro de saldo insuficiente vindo do backend (garantia extra)
             if (error.response?.data?.message?.includes('SALDO_INSUFICIENTE') || error.response?.status === 400) {
-                if (confirm(`O colaborador não tem saldo suficiente. Deseja transferir agora?`)) {
+                if (confirm(`O colaborador não tem saldo suficiente (Backend Reject). Deseja transferir agora?`)) {
                     openTransferModal(emp);
                 }
             } else {
