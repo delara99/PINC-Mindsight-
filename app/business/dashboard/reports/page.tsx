@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Download, Search, FileText } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
 
 export default function ReportsPage() {
     const [reports, setReports] = useState<any[]>([]);
@@ -13,7 +14,7 @@ export default function ReportsPage() {
         const fetchReports = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/reports`, {
+                const res = await axios.get(`${API_URL}/api/v1/business/reports`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setReports(res.data);
@@ -31,7 +32,7 @@ export default function ReportsPage() {
         try {
             const token = localStorage.getItem('accessToken');
             const res = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/business/reports/${userId}/pdf`,
+                `${API_URL}/api/v1/business/reports/${userId}/pdf`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                     responseType: 'blob'
