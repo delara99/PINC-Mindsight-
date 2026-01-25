@@ -1,132 +1,78 @@
 'use client';
 
 import React, { useState } from 'react';
-import PersonalityCube from '@/src/components/3d/PersonalityCube';
-import { Sparkles, Box, RefreshCw } from 'lucide-react';
-
-const MOCK_PROFILES = {
-    'equilibrado': {
-        label: 'Perfil Equilibrado',
-        description: 'Scores médios, indicando flexibilidade e adaptabilidade.',
-        scores: {
-            EXTRAVERSION: 50,
-            AGREEABLENESS: 55,
-            CONSCIENTIOUSNESS: 48,
-            OPENNESS: 52,
-            NEUROTICISM: 45
-        }
-    },
-    'lider': {
-        label: 'Líder Executor (Dominante)',
-        description: 'Alta Extroversão e Baixo Neuroticismo (Alta Estabilidade).',
-        scores: {
-            EXTRAVERSION: 85,
-            AGREEABLENESS: 40,
-            CONSCIENTIOUSNESS: 70,
-            OPENNESS: 60,
-            NEUROTICISM: 20 // Alta Estabilidade = Baixo N
-        }
-    },
-    'criativo': {
-        label: 'Criativo Inovador',
-        description: 'Alta Abertura e Baixa Conscienciosidade (Flexível).',
-        scores: {
-            EXTRAVERSION: 60,
-            AGREEABLENESS: 70,
-            CONSCIENTIOUSNESS: 30,
-            OPENNESS: 90,
-            NEUROTICISM: 60
-        }
-    }
-};
+import PersonalityOrigami from '@/src/components/3d/PersonalityOrigami';
+import { Box, Maximize, Cuboid } from 'lucide-react';
 
 export default function CubeDemoPage() {
-    const [currentProfile, setCurrentProfile] = useState<keyof typeof MOCK_PROFILES>('lider');
-    const [autoRotate, setAutoRotate] = useState(true);
+    const [foldProgress, setFoldProgress] = useState(0); // 0 = Aberto, 1 = Fechado
+    const [autoRotate, setAutoRotate] = useState(false);
 
     return (
-        <div className="min-h-screen bg-slate-50 p-8 pt-24 space-y-12">
+        <div className="min-h-screen bg-slate-50 p-6 md:p-12 pt-24 space-y-12">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-12 text-center space-y-4">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-widest">
                         <Box size={14} /> New Feature Concept
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight">
-                        Cubo Holográfico <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-purple-500">TalkingTO 3D</span>
+                        Mapa <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">Origami 3D</span>
                     </h1>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Uma representação tridimensional, interativa e viva dos 5 Grandes Traços de Personalidade.
-                        O cubo reage aos dados, pulsando as faces dominantes e revelando a estrutura psíquica única de cada indivíduo.
+                        Do plano ao tridimensional. Visualize como os traços se conectam e formam a estrutura completa da personalidade.
                     </p>
                 </header>
 
-                <div className="grid lg:grid-cols-2 gap-12 items-center">
-                    {/* CONTROLES */}
-                    <div className="space-y-8 order-2 lg:order-1">
-                        <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
-                            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <RefreshCw size={20} className="text-slate-400" /> Simular Perfis
-                            </h3>
-
-                            <div className="space-y-4">
-                                {(Object.entries(MOCK_PROFILES) as [string, any][]).map(([key, profile]) => (
-                                    <button
-                                        key={key}
-                                        onClick={() => setCurrentProfile(key as any)}
-                                        className={`w-full text-left p-5 rounded-xl transition-all border-2 group relative overflow-hidden ${currentProfile === key
-                                                ? 'border-indigo-500 bg-indigo-50/50 shadow-indigo-100 shadow-lg'
-                                                : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        <div className="relative z-10">
-                                            <div className="font-bold text-slate-900 flex justify-between items-center">
-                                                {profile.label}
-                                                {currentProfile === key && <Sparkles size={16} className="text-indigo-500 animate-pulse" />}
-                                            </div>
-                                            <div className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
-                                                {profile.description}
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
+                <div className="flex flex-col gap-8">
+                    {/* CONTROLE DESLIZANTE (SLIDER) */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-xl mx-auto w-full flex items-center gap-4">
+                        <Maximize size={20} className="text-slate-400" />
+                        <div className="flex-1">
+                            <label className="text-xs font-bold text-slate-500 uppercase flex justify-between mb-2">
+                                <span>Mapa Plano (2D)</span>
+                                <span>Cubo (3D)</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={foldProgress}
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setFoldProgress(val);
+                                    if (val < 0.8) setAutoRotate(false);
+                                }}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
                         </div>
-
-                        <div className="bg-slate-900 text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20"></div>
-
-                            <h4 className="font-bold text-lg mb-2 relative z-10">Como Funciona?</h4>
-                            <p className="text-slate-400 text-sm leading-relaxed relative z-10 mb-6">
-                                Cada face representa uma dimensão do Big 5 (OCEAN) + Neuroticismo (frente/trás).
-                                A intensidade da cor e o brilho ("Glow") são determinados pelo score.
-                                Faces dominantes (High Score) pulsam, chamando atenção visual imediata para os pontos fortes do perfil.
-                            </p>
-
-                            <button
-                                onClick={() => setAutoRotate(!autoRotate)}
-                                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${autoRotate ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/30'}`}
-                            >
-                                {autoRotate ? 'Pausar Rotação' : 'Girar Automaticamente'}
-                            </button>
-                        </div>
+                        <Cuboid size={20} className={`transition-colors ${foldProgress > 0.9 ? 'text-indigo-600' : 'text-slate-300'}`} />
                     </div>
 
-                    {/* PALCO 3D */}
-                    <div className="h-[600px] bg-slate-100 rounded-[3rem] relative flex items-center justify-center overflow-hidden inner-shadow shadow-inner order-1 lg:order-2 border border-slate-200">
-                        <div className="absolute inset-0 pattern-grid-lg opacity-5"></div>
+                    {/* PALCO 3D (ZONA DE ORIGAMI) */}
+                    <div className="h-[700px] md:h-[800px] bg-slate-100 rounded-[3rem] relative flex items-center justify-center overflow-hidden inner-shadow shadow-inner border border-slate-200 group">
 
-                        {/* Cubo Component */}
-                        <div className="scale-75 md:scale-100 transition-transform duration-700 ease-spring">
-                            <PersonalityCube
-                                scores={MOCK_PROFILES[currentProfile].scores}
+                        {/* Componente Origami */}
+                        <div className="scale-[0.5] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-500">
+                            <PersonalityOrigami
+                                progress={foldProgress}
                                 autoRotate={autoRotate}
                             />
                         </div>
 
-                        {/* Legenda Flutuante */}
-                        <div className="absolute bottom-8 left-0 w-full text-center pointer-events-none">
-                            <span className="inline-block bg-white/50 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-slate-500 border border-white/50 shadow-sm">
-                                Renderizado via CSS3D + Framer Motion (GPU Accelerated)
+                        {/* Controles Flutuantes e Legenda */}
+                        <div className="absolute bottom-8 left-0 w-full flex flex-col items-center gap-4 pointer-events-none">
+                            {foldProgress > 0.8 && (
+                                <button
+                                    onClick={() => setAutoRotate(!autoRotate)}
+                                    className="pointer-events-auto px-6 py-2 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg flex items-center gap-2"
+                                >
+                                    {autoRotate ? 'Pausar Rotação' : 'Girar Cubo'}
+                                </button>
+                            )}
+
+                            <span className="inline-block bg-white/80 backdrop-blur-md px-6 py-3 rounded-full text-sm font-bold text-slate-600 border border-white/50 shadow-lg animate-fade-in-up">
+                                {foldProgress < 0.1 ? '👆 Arraste o slider para dobrar o mapa' : foldProgress > 0.9 ? '✨ Estrutura Completa!' : '📐 Dobrando estrutura...'}
                             </span>
                         </div>
                     </div>
