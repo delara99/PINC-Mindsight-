@@ -141,11 +141,6 @@ model Payment {
   gateway      String? // 'BTG' | 'STRIPE'
   stripeIntentId String? @unique
 
-  // Dados BTG
-  btgChargeId  String? @unique
-  pixCopyPaste String? @db.Text
-  qrCodeBase64 String? @db.Text
-
   expiresAt DateTime
   paidAt    DateTime?
 
