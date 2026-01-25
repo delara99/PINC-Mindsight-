@@ -20,8 +20,12 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     let scores: any[] = [];
 
     if (reportData?.calculatedScores?.scores && Array.isArray(reportData.calculatedScores.scores)) {
-        // FORMATO B2B (Array OK)
-        scores = reportData.calculatedScores.scores;
+        // FORMATO B2B (Array OK) - Normalizar traitKey para key
+        scores = reportData.calculatedScores.scores.map((s: any) => ({
+            ...s,
+            key: s.traitKey || s.key || 'UNKNOWN',
+            name: s.traitName || s.name || 'Sem Nome'
+        }));
     } else if (reportData?.unifiedScores) {
         // FORMATO B2C Legacy / Misto (Objeto)
         scores = Object.entries(reportData.unifiedScores).map(([rawKey, val]: [string, any]) => {
@@ -103,9 +107,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     // Ordenar scores para consistência visual (O-C-E-A-N)
     const orderMap: Record<string, number> = { 'OPENNESS': 1, 'CONSCIENTIOUSNESS': 2, 'EXTRAVERSION': 3, 'AGREEABLENESS': 4, 'NEUROTICISM': 5 };
     scores.sort((a, b) => (orderMap[a.key] || 99) - (orderMap[b.key] || 99));
-
-    // Log Final para Debug no Console do Cliente
-    console.log('📊 TALKING TO REPORT - FINAL SCORES:', scores);
 
     // Dados para o Radar Chart
     const radarData = scores.map((s: any) => ({
