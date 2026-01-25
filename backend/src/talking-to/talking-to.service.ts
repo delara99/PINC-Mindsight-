@@ -18,6 +18,7 @@ export interface TalkingToInput {
 }
 
 export interface TalkingToDimensionResult {
+    traitKey: string; // Adicionado para merge
     dimension: string;
     classification: 'BAIXO' | 'FLEX' | 'ALTO';
     labels: string[];
@@ -270,6 +271,7 @@ export class TalkingToService {
         }
 
         return {
+            traitKey: 'EXTRAVERSION',
             dimension: 'Energia Social (Extroversão)',
             classification,
             labels,
@@ -318,6 +320,7 @@ export class TalkingToService {
         }
 
         return {
+            traitKey: 'AGREEABLENESS',
             dimension: 'Estilo Relacional (Agradabilidade)',
             classification,
             labels,
@@ -366,6 +369,7 @@ export class TalkingToService {
         }
 
         return {
+            traitKey: 'CONSCIENTIOUSNESS',
             dimension: 'Estilo de Trabalho (Estrutura)',
             classification,
             labels,
@@ -414,6 +418,7 @@ export class TalkingToService {
         }
 
         return {
+            traitKey: 'OPENNESS',
             dimension: 'Mentalidade (Abertura)',
             classification,
             labels,
@@ -463,6 +468,7 @@ export class TalkingToService {
         }
 
         return {
+            traitKey: 'NEUROTICISM',
             dimension: 'Resiliência (Estabilidade)',
             classification,
             labels,

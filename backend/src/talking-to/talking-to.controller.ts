@@ -232,6 +232,22 @@ export class TalkingToController {
         // 3. Gerar Análise Narrativa
         const analysis = await this.service.analyzeProfile(talkingToInput);
 
+        // --- MERGE CRUCIAL: Injetar textos do TalkingTo dentro dos Scores (Flattened para evitar erro React #31) ---
+        if (analysis && analysis.talkingto_analysis) {
+            analysis.talkingto_analysis.forEach((dimResult: any) => {
+                const key = dimResult.traitKey; // EXTRAVERSION, etc.
+                if (scores[key]) {
+                    (scores[key] as any).customTexts = {
+                        text_interpretation: dimResult.text_interpretation,
+                        // Flattening 'needs' object to strings because Frontend expects strings e.g. {trait.customTexts.risk}
+                        environment: dimResult.needs.environment,
+                        risk: dimResult.needs.risk,
+                        needs: dimResult.needs.primary // Frontend uses (needs || environment), so primary fits perfectly here
+                    };
+                }
+            });
+        }
+
         return {
             id: assignment.id,
             title: assignment.assessment?.title || 'Relatório Unificado',
@@ -242,6 +258,7 @@ export class TalkingToController {
 
             // Dados Quantitativos (Para o Radar e Detalhes)
             unifiedScores: scores,
+            calculatedScores: { scores: Object.values(scores) }, // Fallback para frontends antigos que esperam array em calculatedScores.scores
 
             // Metadados para UI
             radarData: [
