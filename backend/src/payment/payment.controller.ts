@@ -14,11 +14,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
 import { BtgService } from './btg.service';
 
+import { StripeService } from './stripe.service';
+
 @Controller('api/v1/payment')
 export class PaymentController {
     constructor(
         private prisma: PrismaService,
-        private btgService: BtgService
+        private btgService: BtgService,
+        private stripeService: StripeService
     ) { }
 
     /**
@@ -98,6 +101,72 @@ export class PaymentController {
             });
 
             throw new BadRequestException(error.message || 'Erro ao criar cobrança PIX');
+        }
+    }
+
+    /**
+     * Criar Intent de Pagamento STRIPE (Cartão)
+     */
+    @Post('create-stripe-intent')
+    @UseGuards(AuthGuard('jwt'))
+    async createStripeIntent(@Body() body: { planId: string }, @Request() req) {
+        const user = req.user;
+
+        // Configuração de Preços B2C (Hardcoded por enquanto)
+        const plans = {
+            'essential': 2990,    // R$ 29,90
+            'professional': 5990, // R$ 59,90
+            // Aliases para garantir compatibilidade
+            'starter': 2990,
+            'pro': 5990
+        };
+
+        // Normalize planId
+        const cleanPlanId = body.planId.toLowerCase().trim();
+        const amount = plans[cleanPlanId];
+
+        if (!amount) {
+            console.error(`Plano inválido solicitado: ${body.planId}`);
+            throw new BadRequestException('Plano inválido ou não encontrado.');
+        }
+
+        // Criar registro de pagamento no banco
+        const payment = await this.prisma.payment.create({
+            data: {
+                userId: user.userId,
+                planId: cleanPlanId,
+                planName: cleanPlanId.charAt(0).toUpperCase() + cleanPlanId.slice(1),
+                amount: amount / 100,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h para pagar
+                status: 'PENDING',
+                gateway: 'STRIPE'
+            }
+        });
+
+        // Criar Intent no Stripe
+        try {
+            const intent = await this.stripeService.createPaymentIntent(amount, 'brl', {
+                userId: user.userId,
+                paymentId: payment.id,
+                planId: cleanPlanId,
+                integration_type: 'b2c_modal'
+            });
+
+            // Atualizar pagamento com o ID do Intent
+            await this.prisma.payment.update({
+                where: { id: payment.id },
+                data: { stripeIntentId: intent.id }
+            });
+
+            return {
+                clientSecret: intent.client_secret,
+                paymentId: payment.id
+            };
+        } catch (error) {
+            console.error('Erro ao criar Stripe Intent:', error);
+            // Cleanup: Se falhar no Stripe, cancela no banco
+            await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'CANCELED' } });
+            throw new BadRequestException('Erro ao iniciar pagamento com Stripe.');
         }
     }
 

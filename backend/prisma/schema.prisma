@@ -137,6 +137,10 @@ model Payment {
 
   status PaymentStatus @default(PENDING)
 
+  // Gateway Info
+  gateway      String? // 'BTG' | 'STRIPE'
+  stripeIntentId String? @unique
+
   // Dados BTG
   btgChargeId  String? @unique
   pixCopyPaste String? @db.Text
