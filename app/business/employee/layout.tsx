@@ -93,7 +93,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
 
             {/* MAIN CONTENT */}
             <main className="flex-1 ml-64 p-8 overflow-y-auto">
-                <div className="max-w-5xl mx-auto">
+                <div className="max-w-7xl mx-auto">
                     {children}
                 </div>
             </main>

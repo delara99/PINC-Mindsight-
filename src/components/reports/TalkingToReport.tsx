@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
-import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, RefreshCw } from 'lucide-react';
+import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, RefreshCw, BarChart3, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 
@@ -45,145 +45,179 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 font-sans">
-            {/* Header com Gradiente Moderno */}
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-xl text-white p-8 md:p-12">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-black opacity-10 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+        <div className="space-y-10 animate-in fade-in duration-700 font-sans">
+            {/* --- HEADER PREMIUM --- */}
+            <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 shadow-2xl text-white p-10 md:p-14">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-[128px] opacity-20 -mr-32 -mt-32 mix-blend-screen"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-[128px] opacity-20 -ml-32 -mb-32 mix-blend-screen"></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-xs font-bold uppercase tracking-wider mb-4">
-                            <Sparkles size={14} /> Relatório Oficial
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
+                    <div className="space-y-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold uppercase tracking-widest shadow-inner">
+                            <Sparkles size={14} className="text-yellow-400" /> Relatório Oficial Business
                         </div>
-                        <h1 className="text-3xl md:text-5xl font-bold mb-2 tracking-tight">Arquétipo TalkingTO</h1>
-                        <p className="text-purple-100 text-lg opacity-90">Análise de Perfil Comportamental • {userName}</p>
+                        <div>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">Arquétipo <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-pink-200">TalkingTO</span></h1>
+                            <p className="text-slate-300 text-lg md:text-xl font-medium mt-2 max-w-2xl text-pretty">
+                                Análise de Perfil Comportamental Avançada de <strong className="text-white">{userName}</strong>
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-4">
                         {missingTexts && (
                             <button
                                 onClick={handleRepair}
                                 disabled={seeding}
-                                className="flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                                className="flex items-center gap-2 px-6 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-sm transition-all shadow-xl hover:shadow-amber-500/20 hover:-translate-y-1"
                             >
                                 <RefreshCw size={18} className={seeding ? "animate-spin" : ""} />
-                                {seeding ? 'Reparando...' : 'Reparar Textos'}
+                                {seeding ? 'Restaurando...' : 'Reparar Textos'}
                             </button>
                         )}
 
                         <button
                             onClick={onDownloadPdf}
-                            className="flex items-center gap-2 px-6 py-3 bg-white text-purple-900 rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                            className="flex items-center gap-2 px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95"
                         >
-                            <Download size={18} /> Baixar PDF
+                            <Download size={20} /> Baixar PDF Completo
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Coluna Esquerda: Radar Chart */}
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 lg:col-span-1 flex flex-col items-center justify-center min-h-[400px]">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <Target className="text-purple-500" /> Mapa de Competências
-                    </h3>
-                    <div className="w-full h-[350px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                                <PolarGrid stroke="#e2e8f0" />
-                                <PolarAngleAxis dataKey="trait" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                <Radar
-                                    name="Perfil"
-                                    dataKey="A"
-                                    stroke="#8b5cf6"
-                                    strokeWidth={3}
-                                    fill="#8b5cf6"
-                                    fillOpacity={0.3}
-                                />
-                            </RadarChart>
-                        </ResponsiveContainer>
+            {/* --- MAPA E RESUMO (GRID ASSIMÉTRICO) --- */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                {/* RADAR CHART (STICKY LEFT) */}
+                <div className="xl:col-span-5 flex flex-col">
+                    <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex-1 flex flex-col justify-center min-h-[500px] relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-500 to-indigo-500"></div>
+
+                        <div className="mb-8 flex items-center justify-between">
+                            <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                                <Target className="text-purple-600" size={28} /> Mapa de Competências
+                            </h3>
+                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1 rounded-full">Visão 360º</span>
+                        </div>
+
+                        <div className="w-full h-[400px] relative z-10">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                                    <PolarAngleAxis
+                                        dataKey="trait"
+                                        tick={{ fill: '#475569', fontSize: 13, fontWeight: 700 }}
+                                    />
+                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                    <Radar
+                                        name="Perfil"
+                                        dataKey="A"
+                                        stroke="#8b5cf6"
+                                        strokeWidth={4}
+                                        fill="#8b5cf6"
+                                        fillOpacity={0.25}
+                                    />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100 text-center text-sm text-slate-500 font-medium">
+                            Este gráfico representa a distribuição do seu perfil nas 5 grandes dimensões da personalidade.
+                        </div>
                     </div>
                 </div>
 
-                {/* Coluna Direita: Cards dos Traits (Resumo) */}
-                <div className="lg:col-span-2 grid sm:grid-cols-2 gap-4 h-fit">
+                {/* RESUMO CARDS (RIGHT) */}
+                <div className="xl:col-span-7 grid sm:grid-cols-2 gap-5 h-fit content-start">
                     {scores.map((trait: any) => (
-                        <div key={trait.key} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group h-full">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${getTraitColor(trait.key, 'bg')}`}>
-                                        {getTraitIcon(trait.key)}
+                        <div key={trait.key} className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-xl hover:border-purple-200 hover:-translate-y-1 transition-all group flex flex-col justify-between h-full">
+                            <div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-2xl shadow-inner ${getTraitColor(trait.key, 'light-bg')}`}>
+                                            {getTraitIcon(trait.key)}
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-lg leading-tight">{trait.name}</h4>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest mt-1 inline-block px-2 py-0.5 rounded-md ${getLevelColor(trait.level)}`}>
+                                                {getLevelLabel(trait.level)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-800">{trait.name}</h4>
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getLevelColor(trait.level)}`}>
-                                            {getLevelLabel(trait.level)}
-                                        </span>
-                                    </div>
+                                    <span className="text-3xl font-black text-slate-900 opacity-20 group-hover:opacity-100 transition-opacity">{trait.score}</span>
                                 </div>
-                                <span className="text-2xl font-black text-slate-900">{trait.score}</span>
-                            </div>
 
-                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-1000 ${getTraitColor(trait.key, 'fill')}`}
-                                    style={{ width: `${trait.score}%` }}
-                                ></div>
-                            </div>
+                                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-4">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ${getTraitColor(trait.key, 'fill')}`}
+                                        style={{ width: `${trait.score}%` }}
+                                    ></div>
+                                </div>
 
-                            <p className="text-xs text-slate-500 leading-relaxed text-justify mt-2">
-                                {trait.customTexts?.text_interpretation || trait.interpretation || <span className="text-slate-400 italic">Interpretação não disponível.</span>}
-                            </p>
+                                <p className="text-sm text-slate-600 leading-relaxed line-clamp-4 font-medium">
+                                    {safeRender(trait.customTexts?.text_interpretation) || trait.interpretation || <span className="text-slate-400 italic">Interpretação não disponível.</span>}
+                                </p>
+                            </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* SEÇÃO DETALHADA: Desdobrando seu Tipo */}
-            <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3 mt-8">
-                    <span className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white">
-                        <BrainCircuit size={18} />
-                    </span>
-                    Desdobrando seu Tipo
-                </h2>
+            {/* --- DETALHAMENTO EXPANDIDO (FULL WIDTH CARDS) --- */}
+            <div className="space-y-12 py-8">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="h-px bg-slate-200 flex-1"></div>
+                    <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                        <span className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg">
+                            <BrainCircuit size={22} />
+                        </span>
+                        Desdobrando seu Tipo
+                    </h2>
+                    <div className="h-px bg-slate-200 flex-1"></div>
+                </div>
 
                 {scores.map((trait: any) => (
-                    <div key={trait.key} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
-                        <div className="grid md:grid-cols-[200px_1fr] min-h-[200px]">
-                            {/* Lado Esquerdo: Score Grande */}
-                            <div className={`p-8 flex flex-col justify-center items-center text-center ${getTraitColor(trait.key, 'light-bg')}`}>
-                                <h3 className={`text-xl font-bold mb-2 ${getTraitColor(trait.key, 'text')}`}>{trait.name}</h3>
-                                <div className="text-5xl font-black text-slate-900 mb-2">{trait.score}</div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-600 shadow-sm`}>
+                    <div key={trait.key} className="bg-white rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 border border-slate-100 group">
+                        <div className="grid lg:grid-cols-[320px_1fr] min-h-[400px]">
+                            {/* COLUNA ESQUERDA: VISUAL SCORE */}
+                            <div className={`p-10 flex flex-col justify-center items-center text-center relative overflow-hidden ${getTraitColor(trait.key, 'light-bg')}`}>
+                                <div className="absolute inset-0 opacity-10 pattern-dots-md"></div> {/* Pattern opcional */}
+
+                                <div className={`w-24 h-24 mb-6 rounded-3xl flex items-center justify-center shadow-xl ${getTraitColor(trait.key, 'bg')} ${getTraitColor(trait.key, 'text-dark')}`}>
+                                    {React.cloneElement(getTraitIcon(trait.key) as React.ReactElement, { size: 48 })}
+                                </div>
+
+                                <h3 className={`text-2xl font-black mb-2 text-slate-900 leading-tight`}>{trait.name}</h3>
+
+                                <div className="text-8xl font-black text-slate-900 tracking-tighter mb-4 scale-110 group-hover:scale-125 transition-transform duration-500 ease-out">{trait.score}</div>
+
+                                <span className={`px-4 py-1.5 rounded-full text-sm font-bold bg-white/80 backdrop-blur-sm shadow-sm border border-black/5 text-slate-700 uppercase tracking-wider`}>
                                     {getLevelLabel(trait.level)}
                                 </span>
                             </div>
 
-                            {/* Lado Direito: Texto */}
-                            <div className="p-8">
-                                <h4 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    Interpretação Comportamental
+                            {/* COLUNA DIREITA: CONTEÚDO RICO */}
+                            <div className="p-10 lg:p-14 bg-white flex flex-col justify-center">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <BarChart3 size={16} /> Análise Comportamental Detalhada
                                 </h4>
 
                                 {trait.customTexts ? (
-                                    <div className="space-y-6">
-                                        <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
+                                    <div className="space-y-8">
+                                        <div className="prose prose-lg prose-slate max-w-none text-slate-600 font-medium leading-loose text-justify">
                                             {safeRender(trait.customTexts.text_interpretation)}
                                         </div>
 
-                                        {/* Detalhes Extras: Ambiente e Riscos (Padrão B2C) */}
-                                        {(trait.customTexts.needs || trait.customTexts.risk) && (
-                                            <div className="grid md:grid-cols-2 gap-4 pt-4">
+                                        {/* Detalhes Extras: Cards Internos */}
+                                        {(trait.customTexts.needs || trait.customTexts.risk || trait.customTexts.environment) && (
+                                            <div className="grid md:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                                                 {/* Ambiente Ideal */}
                                                 {(trait.customTexts.needs || trait.customTexts.environment) && (
-                                                    <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 hover:border-blue-200 transition-colors">
-                                                        <h5 className="text-xs font-bold text-blue-600 uppercase mb-3 flex items-center gap-2">
-                                                            <Sparkles size={14} /> Ambiente Ideal
+                                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 p-6 rounded-2xl border border-blue-100/50 hover:border-blue-200 transition-colors">
+                                                        <h5 className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2 tracking-wide">
+                                                            <Sparkles size={14} className="text-blue-500" /> Potencializadores & Ambiente
                                                         </h5>
-                                                        <p className="text-sm text-slate-700 font-medium leading-relaxed text-justify">
+                                                        <p className="text-sm md:text-base text-slate-700 font-medium leading-relaxed text-justify">
                                                             {safeRender(trait.customTexts.needs || trait.customTexts.environment)}
                                                         </p>
                                                     </div>
@@ -191,11 +225,11 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
                                                 {/* Pontos de Atenção */}
                                                 {(trait.customTexts.risk || trait.customTexts.risks) && (
-                                                    <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-100 hover:border-amber-200 transition-colors">
-                                                        <h5 className="text-xs font-bold text-amber-600 uppercase mb-3 flex items-center gap-2">
-                                                            <Zap size={14} /> Pontos de Atenção
+                                                    <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 p-6 rounded-2xl border border-amber-100/50 hover:border-amber-200 transition-colors">
+                                                        <h5 className="text-xs font-bold text-amber-700 uppercase mb-3 flex items-center gap-2 tracking-wide">
+                                                            <AlertTriangle size={14} className="text-amber-500" /> Pontos de Atenção
                                                         </h5>
-                                                        <p className="text-sm text-slate-700 font-medium leading-relaxed text-justify">
+                                                        <p className="text-sm md:text-base text-slate-700 font-medium leading-relaxed text-justify">
                                                             {safeRender(trait.customTexts.risk || trait.customTexts.risks)}
                                                         </p>
                                                     </div>
@@ -204,58 +238,52 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                         )}
                                     </div>
                                 ) : trait.interpretation ? (
-                                    <p className="text-slate-600 leading-relaxed text-justify">{trait.interpretation}</p>
+                                    <p className="text-slate-600 leading-relaxed text-justify text-lg">{trait.interpretation}</p>
                                 ) : (
-                                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 text-amber-800 text-sm flex items-center gap-3">
-                                        <RefreshCw size={16} />
-                                        Texto interpretativo pendente. Clique em "Reparar Textos" no topo da página.
+                                    <div className="p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400">
+                                        <RefreshCw size={32} className="mx-auto mb-2 opacity-20" />
+                                        Interpretação pendente.
                                     </div>
                                 )}
 
-                                {/* Facetas em Grid com Barras de Progresso */}
-                                <div className="mt-8 pt-6 border-t border-slate-100">
-                                    <h5 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Composição do Traço (Facetas)</h5>
+                                {/* Facetas */}
+                                <div className="mt-10">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <CheckCircle2 size={16} className="text-green-500" />
+                                        <h5 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Composição (Facetas)</h5>
+                                    </div>
 
-                                    {/* CASE 1: REAL FACETS */}
                                     {trait.facets && trait.facets.length > 0 ? (
-                                        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                                        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
                                             {(() => {
-                                                // Dicionário de Tradução B2B
+                                                // (Lógica de Facetas Mantida)
+                                                // Minified for brevity in thinking, but full code below
                                                 const translateFacet = (name: string) => {
                                                     const map: Record<string, string> = {
-                                                        // Neuroticismo
                                                         'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
                                                         'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
                                                         'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
                                                         'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
                                                         'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
                                                         'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
-
-                                                        // Extroversão
                                                         'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
                                                         'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
                                                         'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
                                                         'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
                                                         'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
                                                         'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
-
-                                                        // Abertura
                                                         'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
                                                         'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
                                                         'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
                                                         'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
                                                         'ideas': 'Ideias', 'factors_ideas': 'Ideias',
                                                         'values': 'Valores', 'factors_values': 'Valores',
-
-                                                        // Amabilidade
                                                         'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
                                                         'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
                                                         'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
                                                         'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
                                                         'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
                                                         'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
-
-                                                        // Conscienciosidade
                                                         'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
                                                         'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
                                                         'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
@@ -267,7 +295,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                     return map[normalized] || name;
                                                 };
 
-                                                // Deduplicação
                                                 const seen = new Set();
                                                 const uniqueFacets = trait.facets.filter((f: any) => {
                                                     const fName = f.name || f.facetName;
@@ -280,16 +307,15 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                 return uniqueFacets.map((facet: any, idx: number) => {
                                                     const fName = facet.name || facet.facetName;
                                                     const fScore = facet.score || facet.normalizedScore || 0;
-                                                    // Cor da barra segue a cor do pai
                                                     const fillColor = getTraitColor(trait.key, 'fill');
 
                                                     return (
-                                                        <div key={idx} className="space-y-1">
-                                                            <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+                                                        <div key={idx} className="space-y-1.5">
+                                                            <div className="flex justify-between items-center text-xs font-bold text-slate-600">
                                                                 <span>{translateFacet(fName)}</span>
-                                                                <span className="text-slate-500">{fScore}%</span>
+                                                                <span className="text-slate-400 font-mono">{fScore}</span>
                                                             </div>
-                                                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                                 <div
                                                                     className={`h-full rounded-full transition-all duration-1000 ${fillColor}`}
                                                                     style={{ width: `${fScore}%` }}
@@ -301,10 +327,8 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                             })()}
                                         </div>
                                     ) : (
-                                        /* CASE 2: LEGACY FALLBACK (Simulated) */
-                                        <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400 text-sm italic">
-                                            Detalhamento de facetas indisponível para esta versão do inventário.
-                                            {/* Poderíamos simular aqui, mas no B2B é melhor ser honesto ou mostrar nada do que mostrar dado estimado sem aviso claro */}
+                                        <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400 text-xs italic font-medium">
+                                            Detalhamento de facetas indisponível.
                                         </div>
                                     )}
                                 </div>
@@ -317,7 +341,16 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     );
 }
 
-// --- Helpers (Sem getDefaultFacets) ---
+// --- HELPERS E SAFERENDER ---
+
+function safeRender(content: any) {
+    if (content === null || content === undefined) return null;
+    if (typeof content === 'string') return content;
+    if (typeof content === 'object') {
+        return content.content || content.primary || JSON.stringify(content);
+    }
+    return String(content);
+}
 
 function mapTraitToLabel(key: string) {
     const map: Record<string, string> = {
@@ -343,44 +376,34 @@ function getLevelLabel(level: string) {
 
 function getLevelColor(level: string) {
     const map: Record<string, string> = {
-        'VERY_HIGH': 'bg-purple-100 text-purple-700',
-        'HIGH': 'bg-blue-100 text-blue-700',
-        'AVERAGE': 'bg-gray-100 text-gray-700',
-        'LOW': 'bg-orange-100 text-orange-700',
-        'VERY_LOW': 'bg-red-100 text-red-700'
+        'VERY_HIGH': 'bg-purple-100 text-purple-700 border-purple-200',
+        'HIGH': 'bg-blue-100 text-blue-700 border-blue-200',
+        'AVERAGE': 'bg-slate-100 text-slate-700 border-slate-200',
+        'LOW': 'bg-amber-100 text-amber-700 border-amber-200',
+        'VERY_LOW': 'bg-rose-100 text-rose-700 border-rose-200'
     };
-    return map[level] || 'bg-gray-100 text-gray-700';
+    return map[level] || 'bg-slate-100 text-slate-700';
 }
 
-function getTraitColor(key: string, type: 'bg' | 'text' | 'fill' | 'light-bg') {
+function getTraitColor(key: string, type: 'bg' | 'text' | 'text-dark' | 'fill' | 'light-bg') {
     const colors: Record<string, any> = {
-        'OPENNESS': { bg: 'bg-yellow-100', text: 'text-yellow-700', fill: 'bg-yellow-500', 'light-bg': 'bg-yellow-50' },
-        'CONSCIENTIOUSNESS': { bg: 'bg-blue-100', text: 'text-blue-700', fill: 'bg-blue-500', 'light-bg': 'bg-blue-50' },
-        'EXTRAVERSION': { bg: 'bg-orange-100', text: 'text-orange-700', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
-        'AGREEABLENESS': { bg: 'bg-green-100', text: 'text-green-700', fill: 'bg-green-500', 'light-bg': 'bg-green-50' },
-        'NEUROTICISM': { bg: 'bg-purple-100', text: 'text-purple-700', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' }
+        'OPENNESS': { bg: 'bg-yellow-400', text: 'text-yellow-600', 'text-dark': 'text-yellow-900', fill: 'bg-yellow-500', 'light-bg': 'bg-yellow-50' },
+        'CONSCIENTIOUSNESS': { bg: 'bg-blue-400', text: 'text-blue-600', 'text-dark': 'text-blue-900', fill: 'bg-blue-500', 'light-bg': 'bg-blue-50' },
+        'EXTRAVERSION': { bg: 'bg-orange-400', text: 'text-orange-600', 'text-dark': 'text-orange-900', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
+        'AGREEABLENESS': { bg: 'bg-emerald-400', text: 'text-emerald-600', 'text-dark': 'text-emerald-900', fill: 'bg-emerald-500', 'light-bg': 'bg-emerald-50' },
+        'NEUROTICISM': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' }
     };
-    const def = { bg: 'bg-gray-100', text: 'text-gray-700', fill: 'bg-gray-500', 'light-bg': 'bg-gray-50' };
+    const def = { bg: 'bg-slate-200', text: 'text-slate-600', 'text-dark': 'text-slate-800', fill: 'bg-slate-500', 'light-bg': 'bg-slate-50' };
     return (colors[key] || def)[type];
 }
 
 function getTraitIcon(key: string) {
     const icons: Record<string, React.ReactNode> = {
-        'OPENNESS': <Sparkles size={20} className="text-yellow-600" />,
-        'CONSCIENTIOUSNESS': <ShieldCheck size={20} className="text-blue-600" />,
-        'EXTRAVERSION': <Zap size={20} className="text-orange-600" />,
-        'AGREEABLENESS': <Users size={20} className="text-green-600" />,
-        'NEUROTICISM': <BrainCircuit size={20} className="text-purple-600" />
+        'OPENNESS': <Sparkles />,
+        'CONSCIENTIOUSNESS': <ShieldCheck />,
+        'EXTRAVERSION': <Zap />,
+        'AGREEABLENESS': <Users />,
+        'NEUROTICISM': <BrainCircuit />
     };
-    return icons[key] || <Target size={20} />;
-}
-
-function safeRender(content: any) {
-    if (content === null || content === undefined) return null;
-    if (typeof content === 'string') return content;
-    if (typeof content === 'object') {
-        // Tentativa de recuperação de campos conhecidos se um objeto vazar
-        return content.content || content.primary || JSON.stringify(content);
-    }
-    return String(content);
+    return icons[key] || <Target />;
 }
