@@ -171,7 +171,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                 {trait.customTexts ? (
                                     <div className="space-y-6">
                                         <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
-                                            {trait.customTexts.text_interpretation}
+                                            {safeRender(trait.customTexts.text_interpretation)}
                                         </div>
 
                                         {/* Detalhes Extras: Ambiente e Riscos (Padrão B2C) */}
@@ -184,7 +184,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                             <Sparkles size={14} /> Ambiente Ideal
                                                         </h5>
                                                         <p className="text-sm text-slate-700 font-medium leading-relaxed text-justify">
-                                                            {trait.customTexts.needs || trait.customTexts.environment}
+                                                            {safeRender(trait.customTexts.needs || trait.customTexts.environment)}
                                                         </p>
                                                     </div>
                                                 )}
@@ -196,7 +196,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                             <Zap size={14} /> Pontos de Atenção
                                                         </h5>
                                                         <p className="text-sm text-slate-700 font-medium leading-relaxed text-justify">
-                                                            {trait.customTexts.risk || trait.customTexts.risks}
+                                                            {safeRender(trait.customTexts.risk || trait.customTexts.risks)}
                                                         </p>
                                                     </div>
                                                 )}
@@ -373,4 +373,14 @@ function getTraitIcon(key: string) {
         'NEUROTICISM': <BrainCircuit size={20} className="text-purple-600" />
     };
     return icons[key] || <Target size={20} />;
+}
+
+function safeRender(content: any) {
+    if (content === null || content === undefined) return null;
+    if (typeof content === 'string') return content;
+    if (typeof content === 'object') {
+        // Tentativa de recuperação de campos conhecidos se um objeto vazar
+        return content.content || content.primary || JSON.stringify(content);
+    }
+    return String(content);
 }
