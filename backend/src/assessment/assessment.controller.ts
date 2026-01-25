@@ -999,7 +999,7 @@ export class AssessmentController {
 
 
     // Aplicar avaliação a múltiplos usuários
-    // Aplicar avaliação a múltiplos usuários (FREE - Cobrança no Submit)
+    // Aplicar avaliação a múltiplos usuários (VALIDA SALDO mas COBRA NO SUBMIT)
     @Post(':id/assign')
     async assignToUsers(
         @Param('id') id: string,
@@ -1014,8 +1014,23 @@ export class AssessmentController {
             throw new BadRequestException('Avaliação não encontrada');
         }
 
-        // 2. Criar atribuições (Sem cobrar agora)
-        // A cobrança ocorrerá apenas quando o usuário SUBMETER a avaliação.
+        // 2. Buscar Usuários e Validar Saldo PREVIAMENTE
+        const users = await this.prisma.user.findMany({
+            where: {
+                id: { in: body.userIds },
+                tenantId
+            }
+        });
+
+        // Filtrar quem não tem crédito (Bloqueio Rigoroso na Entrada)
+        const usersWithoutCredit = users.filter(u => u.role === 'MEMBER' && u.credits < 1);
+
+        if (usersWithoutCredit.length > 0) {
+            const names = usersWithoutCredit.map(u => u.name).join(', ');
+            throw new BadRequestException(`Operação cancelada. Os seguintes colaboradores não possuem créditos: ${names}. É necessário ter saldo para receber um inventário.`);
+        }
+
+        // 3. Criar atribuições (Sem cobrar agora - Cobra no Submit)
         const assignments = await Promise.all(
             body.userIds.map(async (userId) => {
                 // Check idempotent
