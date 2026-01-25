@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, RefreshCw, BarChart3, AlertTriangle, CheckCircle2, Maximize2, X } from 'lucide-react';
 import axios from 'axios';
@@ -15,6 +16,12 @@ interface TalkingToReportProps {
 export default function TalkingToReport({ reportData, userName, onDownloadPdf, isAdmin }: TalkingToReportProps) {
     const [seeding, setSeeding] = useState(false);
     const [selectedTrait, setSelectedTrait] = useState<any>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
 
     // --- DATA NORMALIZATION ADAPTER (B2B vs B2C Support) ---
     let scores: any[] = [];
@@ -438,84 +445,87 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                 ))}
             </div>
 
-            {/* MODAL POPUP */}
-            <AnimatePresence>
-                {selectedTrait && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setSelectedTrait(null)}
-                    >
+            {/* MODAL POPUP (PORTAL TO BODY) */}
+            {mounted && createPortal(
+                <AnimatePresence>
+                    {selectedTrait && (
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white w-full max-w-3xl max-h-[85vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative my-8"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setSelectedTrait(null)}
                         >
-                            {/* Header Popup */}
-                            <div className={`p-8 pb-6 flex items-start justify-between ${getTraitColor(selectedTrait.key, 'light-bg')} border-b border-black/5`}>
-                                <div className="flex items-center gap-5">
-                                    <div className={`p-4 rounded-2xl bg-white/80 backdrop-blur shadow-sm ${getTraitColor(selectedTrait.key, 'text')}`}>
-                                        {React.cloneElement(getTraitIcon(selectedTrait.key) as React.ReactElement, { size: 36 })}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">{selectedTrait.name}</h3>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/60 border border-black/5 uppercase tracking-wide text-slate-700`}>
-                                                Score: {selectedTrait.score}
-                                            </span>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${getLevelColor(selectedTrait.level)} uppercase tracking-wide`}>
-                                                {getLevelLabel(selectedTrait.level)}
-                                            </span>
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-white w-full max-w-3xl max-h-[85vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative my-8"
+                            >
+                                {/* Header Popup */}
+                                <div className={`p-8 pb-6 flex items-start justify-between ${getTraitColor(selectedTrait.key, 'light-bg')} border-b border-black/5`}>
+                                    <div className="flex items-center gap-5">
+                                        <div className={`p-4 rounded-2xl bg-white/80 backdrop-blur shadow-sm ${getTraitColor(selectedTrait.key, 'text')}`}>
+                                            {React.cloneElement(getTraitIcon(selectedTrait.key) as React.ReactElement, { size: 36 })}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">{selectedTrait.name}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/60 border border-black/5 uppercase tracking-wide text-slate-700`}>
+                                                    Score: {selectedTrait.score}
+                                                </span>
+                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getLevelColor(selectedTrait.level)} uppercase tracking-wide`}>
+                                                    {getLevelLabel(selectedTrait.level)}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <button
-                                    onClick={() => setSelectedTrait(null)}
-                                    className="p-3 bg-white/50 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-500 hover:shadow-md"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            {/* Content Scrollable */}
-                            <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-100 pb-2">
-                                    Análise Detalhada
-                                </h4>
-
-                                <div className="text-slate-600 text-lg leading-relaxed text-justify whitespace-pre-line font-medium mb-8">
-                                    {safeRender(selectedTrait.customTexts?.text_interpretation) || selectedTrait.interpretation}
+                                    <button
+                                        onClick={() => setSelectedTrait(null)}
+                                        className="p-3 bg-white/50 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-500 hover:shadow-md"
+                                    >
+                                        <X size={24} />
+                                    </button>
                                 </div>
 
-                                {(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment) && (
-                                    <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                                        <h5 className="text-sm font-bold text-blue-600 uppercase mb-3 flex items-center gap-2">
-                                            <Sparkles size={16} /> Potencializadores de Ambiente
-                                        </h5>
-                                        <p className="text-slate-700 leading-relaxed text-base">
-                                            {safeRender(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment)}
-                                        </p>
+                                {/* Content Scrollable */}
+                                <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-100 pb-2">
+                                        Análise Detalhada
+                                    </h4>
+
+                                    <div className="text-slate-600 text-lg leading-relaxed text-justify whitespace-pre-line font-medium mb-8">
+                                        {safeRender(selectedTrait.customTexts?.text_interpretation) || selectedTrait.interpretation}
                                     </div>
-                                )}
-                            </div>
 
-                            {/* Footer */}
-                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 z-10">
-                                <button
-                                    onClick={() => setSelectedTrait(null)}
-                                    className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-                                >
-                                    Fechar Análise
-                                </button>
-                            </div>
+                                    {(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment) && (
+                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                            <h5 className="text-sm font-bold text-blue-600 uppercase mb-3 flex items-center gap-2">
+                                                <Sparkles size={16} /> Potencializadores de Ambiente
+                                            </h5>
+                                            <p className="text-slate-700 leading-relaxed text-base">
+                                                {safeRender(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment)}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 z-10">
+                                    <button
+                                        onClick={() => setSelectedTrait(null)}
+                                        className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+                                    >
+                                        Fechar Análise
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 }
