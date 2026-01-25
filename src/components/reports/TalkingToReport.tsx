@@ -453,42 +453,50 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative"
+                            className="bg-white w-full max-w-3xl max-h-[85vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative my-8"
                         >
                             {/* Header Popup */}
-                            <div className={`p-8 pb-6 flex items-start justify-between ${getTraitColor(selectedTrait.key, 'light-bg')}`}>
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-4 rounded-2xl bg-white shadow-sm ${getTraitColor(selectedTrait.key, 'text')}`}>
-                                        {React.cloneElement(getTraitIcon(selectedTrait.key) as React.ReactElement, { size: 32 })}
+                            <div className={`p-8 pb-6 flex items-start justify-between ${getTraitColor(selectedTrait.key, 'light-bg')} border-b border-black/5`}>
+                                <div className="flex items-center gap-5">
+                                    <div className={`p-4 rounded-2xl bg-white/80 backdrop-blur shadow-sm ${getTraitColor(selectedTrait.key, 'text')}`}>
+                                        {React.cloneElement(getTraitIcon(selectedTrait.key) as React.ReactElement, { size: 36 })}
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-black text-slate-900">{selectedTrait.name}</h3>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/60 border border-black/5 uppercase tracking-wide`}>
-                                            Score: {selectedTrait.score} • {getLevelLabel(selectedTrait.level)}
-                                        </span>
+                                        <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">{selectedTrait.name}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/60 border border-black/5 uppercase tracking-wide text-slate-700`}>
+                                                Score: {selectedTrait.score}
+                                            </span>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${getLevelColor(selectedTrait.level)} uppercase tracking-wide`}>
+                                                {getLevelLabel(selectedTrait.level)}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setSelectedTrait(null)}
-                                    className="p-2 bg-white/50 hover:bg-white rounded-full transition-colors text-slate-500 hover:text-red-500"
+                                    className="p-3 bg-white/50 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-500 hover:shadow-md"
                                 >
                                     <X size={24} />
                                 </button>
                             </div>
 
                             {/* Content Scrollable */}
-                            <div className="p-8 overflow-y-auto">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Interpretação Completa</h4>
-                                <div className="prose prose-lg prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
+                            <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-100 pb-2">
+                                    Análise Detalhada
+                                </h4>
+
+                                <div className="text-slate-600 text-lg leading-relaxed text-justify whitespace-pre-line font-medium mb-8">
                                     {safeRender(selectedTrait.customTexts?.text_interpretation) || selectedTrait.interpretation}
                                 </div>
 
                                 {(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment) && (
-                                    <div className="mt-8 pt-6 border-t border-slate-100">
-                                        <h5 className="text-sm font-bold text-blue-600 uppercase mb-2 flex items-center gap-2">
-                                            <Sparkles size={16} /> Ambiente Ideal
+                                    <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                        <h5 className="text-sm font-bold text-blue-600 uppercase mb-3 flex items-center gap-2">
+                                            <Sparkles size={16} /> Potencializadores de Ambiente
                                         </h5>
-                                        <p className="text-slate-600 leading-relaxed">
+                                        <p className="text-slate-700 leading-relaxed text-base">
                                             {safeRender(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment)}
                                         </p>
                                     </div>
@@ -496,12 +504,12 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                             </div>
 
                             {/* Footer */}
-                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 z-10">
                                 <button
                                     onClick={() => setSelectedTrait(null)}
-                                    className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg"
+                                    className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
                                 >
-                                    Entendi
+                                    Fechar Análise
                                 </button>
                             </div>
                         </motion.div>
