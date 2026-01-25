@@ -148,7 +148,6 @@ model Payment {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([btgChargeId])
   @@index([status])
   @@map("payments")
 }
