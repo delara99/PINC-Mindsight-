@@ -239,8 +239,8 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                             <div>
                                 <div className="flex justify-between items-start mb-4 pr-6">
                                     <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl shadow-inner ${getTraitColor(trait.key, 'light-bg')}`}>
-                                            {getTraitIcon(trait.key)}
+                                        <div className={`p-3 rounded-2xl shadow-inner ${getTraitColor(trait.key, 'light-bg')} ${getTraitColor(trait.key, 'text')}`}>
+                                            {React.cloneElement(getTraitIcon(trait.key) as React.ReactElement, { size: 24, strokeWidth: 2.5 })}
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-slate-800 text-lg leading-tight">{trait.name}</h4>
