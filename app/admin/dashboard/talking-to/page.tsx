@@ -52,7 +52,7 @@ export default function TalkingToManager() {
                     {[
                         { id: 'RULES', label: 'Regras de Inteligência', icon: BrainCircuit },
                         { id: 'STRUCTURE', label: 'Estrutura do Modelo', icon: Database },
-                        { id: 'TEXTS', label: 'Biblioteca de Conteúdo', icon: Layers },
+                        { id: 'TEXTS', label: 'Conteúdo & Narrativas', icon: Layers },
                         { id: 'LAB', label: 'Simulador (Lab)', icon: Activity },
                     ].map(tab => (
                         <button

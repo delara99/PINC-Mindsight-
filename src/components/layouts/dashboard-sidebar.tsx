@@ -51,7 +51,7 @@ const menuItems = [
     // Inserção dos Itens Críticos (Blindados)
     ...CRITICAL_ADMIN_ITEMS,
 
-    { label: 'Central de Controle', href: '/dashboard/pinc-control', icon: Sliders, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
+
     { label: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Responder', href: '/dashboard/my-assessments', icon: PlayCircle, roles: ['MEMBER'] },
     { label: 'Meus Resultados', href: '/dashboard/my-assessments', icon: FileText, roles: ['MEMBER'] },
