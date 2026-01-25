@@ -999,6 +999,7 @@ export class AssessmentController {
 
 
     // Aplicar avaliação a múltiplos usuários
+    // Aplicar avaliação a múltiplos usuários (COM VALIDAÇÃO DE CRÉDITOS)
     @Post(':id/assign')
     async assignToUsers(
         @Param('id') id: string,
@@ -1007,24 +1008,65 @@ export class AssessmentController {
     ) {
         const tenantId = req.user.tenantId;
 
-        // Verificar se a avaliação pertence ao tenant
+        // 1. Validar Avaliação
         const assessment = await this.assessmentService.findOne(id, tenantId);
         if (!assessment) {
-            throw new Error('Avaliação não encontrada');
+            throw new BadRequestException('Avaliação não encontrada');
         }
 
-        // Criar atribuições para cada usuário
-        const assignments = await Promise.all(
-            body.userIds.map(userId =>
-                this.prisma.assessmentAssignment.create({
+        // 2. Buscar Usuários e Validar Saldo
+        const users = await this.prisma.user.findMany({
+            where: {
+                id: { in: body.userIds },
+                tenantId
+            }
+        });
+
+        // Filtrar quem não tem crédito (apenas MEMBERS precisam pagar com sua carteira)
+        const usersWithoutCredit = users.filter(u => u.role === 'MEMBER' && u.credits < 1);
+
+        if (usersWithoutCredit.length > 0) {
+            const names = usersWithoutCredit.map(u => u.name).join(', ');
+            throw new BadRequestException(`Operação cancelada. Os seguintes colaboradores não possuem créditos: ${names}. Por favor, transfira créditos na tela de Colaboradores antes de distribuir.`);
+        }
+
+        // 3. Executar Distribuição em Transação
+        // Para cada usuário: Decrementar Saldo e Criar Assignment
+        const assignments = await this.prisma.$transaction(async (tx) => {
+            const results = [];
+
+            for (const user of users) {
+                // Check idempotent (se já existe PENDING/IN_PROGRESS, não cobra nem recria)
+                const existing = await tx.assessmentAssignment.findFirst({
+                    where: { userId: user.id, assessmentId: id, status: { not: 'COMPLETED' } }
+                });
+
+                if (existing) {
+                    results.push(existing);
+                    continue;
+                }
+
+                // Debitar (se MEMBER)
+                if (user.role === 'MEMBER') {
+                    await tx.user.update({
+                        where: { id: user.id },
+                        data: { credits: { decrement: 1 } }
+                    });
+                }
+
+                // Criar
+                const newAssign = await tx.assessmentAssignment.create({
                     data: {
                         assessmentId: id,
-                        userId: userId,
-                        status: 'PENDING'
+                        userId: user.id,
+                        status: 'PENDING',
+                        assignedAt: new Date()
                     }
-                })
-            )
-        );
+                });
+                results.push(newAssign);
+            }
+            return results;
+        });
 
         return {
             message: `Avaliação atribuída a ${assignments.length} usuário(s)`,
