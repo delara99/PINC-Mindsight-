@@ -2,13 +2,18 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Download, Search, FileText } from 'lucide-react';
+import { Download, Search, FileText, Loader2 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
+import TalkingToReport from '@/src/components/reports/TalkingToReport';
+import { generateClientPDF } from '@/src/utils/generateClientPDF';
 
 export default function ReportsPage() {
     const [reports, setReports] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [downloading, setDownloading] = useState<string | null>(null);
+
+    // PDF Generation State
+    const [pdfGenerating, setPdfGenerating] = useState<string | null>(null);
+    const [pdfData, setPdfData] = useState<any>(null); // Full data for hidden report
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -27,36 +32,62 @@ export default function ReportsPage() {
         fetchReports();
     }, []);
 
-    const handleDownload = async (userId: string, userName: string) => {
-        setDownloading(userId);
+    const handleGeneratePDF = async (userId: string, userName: string) => {
+        if (pdfGenerating) return; // Prevent double click
+        setPdfGenerating(userId);
+        setPdfData(null);
+
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(
-                `${API_URL}/api/v1/business/reports/${userId}/pdf`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                    responseType: 'blob'
-                }
-            );
 
-            // Create Blob URL
-            const url = window.URL.createObjectURL(new Blob([res.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Relatorio_${userName.replace(/\s+/g, '_')}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
+            // 1. Fetch Full Report Data (Detalhado)
+            const res = await axios.get(`${API_URL}/api/v1/business/reports/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // 2. Set Data -> Trigger Render of Hidden Component
+            setPdfData({
+                data: res.data,
+                userName: userName
+            });
+
+            // 3. Aguarda renderização (via setTimeout para garantir DOM update)
+            setTimeout(async () => {
+                const success = await generateClientPDF('report-hidden-container', `Relatorio_${userName.replace(/\s+/g, '_')}`);
+                if (!success) alert('Erro ao gerar PDF. Tente novamente.');
+
+                // Cleanup
+                setPdfGenerating(null);
+                setPdfData(null);
+            }, 2500); // Tempo para imagens carregarem no hidden container
+
         } catch (error) {
-            alert('Erro ao baixar PDF. Verifique se o relatório está completo.');
-            console.error(error);
-        } finally {
-            setDownloading(null);
+            console.error('Erro ao buscar dados completos:', error);
+            alert('Erro ao buscar dados do relatório.');
+            setPdfGenerating(null);
         }
     };
 
     return (
         <div>
+            {/* --- HIDDEN CONTAINER FOR PDF GENERATION --- */}
+            {pdfData && (
+                <div style={{ position: 'absolute', top: '-10000px', left: '-10000px', width: '1200px', zIndex: -1 }}>
+                    <div id="report-hidden-container" className="p-8 bg-slate-50">
+                        <TalkingToReport
+                            reportData={pdfData.data}
+                            userName={pdfData.userName}
+                            isAdmin={true}
+                        // onDownloadPdf prop removida no modo passivo
+                        />
+                        {/* Footer for PDF */}
+                        <div className="mt-8 text-center text-xs text-slate-400 border-t border-slate-200 pt-4">
+                            Relatório gerado automaticamente por PINC Mindsight - TalkingTO AI Technology
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">Relatórios de Perfil</h1>
                 <p className="text-slate-500">Acesse as análises detalhadas de seus colaboradores.</p>
@@ -113,16 +144,16 @@ export default function ReportsPage() {
                                                 Visualizar
                                             </button>
                                             <button
-                                                onClick={() => handleDownload(report.userId, report.userName)}
-                                                disabled={downloading === report.userId}
-                                                className="inline-flex items-center gap-2 text-slate-600 hover:text-purple-600 font-bold disabled:opacity-50 transition-colors"
+                                                onClick={() => handleGeneratePDF(report.userId, report.userName)}
+                                                disabled={pdfGenerating !== null}
+                                                className={`inline-flex items-center gap-2 font-bold transition-colors ${pdfGenerating === report.userId ? 'text-purple-600 cursor-wait' : 'text-slate-600 hover:text-purple-600 disabled:opacity-30'}`}
                                             >
-                                                {downloading === report.userId ? (
-                                                    <span className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></span>
+                                                {pdfGenerating === report.userId ? (
+                                                    <Loader2 size={18} className="animate-spin" />
                                                 ) : (
                                                     <Download size={18} />
                                                 )}
-                                                PDF
+                                                {pdfGenerating === report.userId ? 'Gerando...' : 'PDF'}
                                             </button>
                                         </div>
                                     </td>
