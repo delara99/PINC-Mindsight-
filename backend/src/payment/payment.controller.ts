@@ -200,7 +200,77 @@ export class PaymentController {
     }
 
     /**
-     * Webhook para receber notificações do BTG
+     * Webhook para processar eventos do Stripe
+     * URL: /api/v1/payment/webhook-stripe
+     * Eventos: payment_intent.succeeded
+     */
+    @Post('webhook-stripe')
+    async stripeWebhook(@Body() event: any) {
+        // Em produção, deveria validar a assinatura (stripe-signature)
+        // Mas para simplificar neste MVP, vamos confiar no ID do evento por enquanto
+        // ou validar apenas se o ID existe.
+
+        console.log(`[STRIPE WEBHOOK] Recebido evento: ${event.type}`);
+
+        if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = event.data.object;
+            const metadata = paymentIntent.metadata;
+
+            // Log para debug
+            console.log(`[STRIPE WEBHOOK] Sucesso! Intent: ${paymentIntent.id}, Meta:`, metadata);
+
+            if (metadata && metadata.paymentId && metadata.userId) {
+                try {
+                    // 1. Atualizar Status do Pagamento
+                    await this.prisma.payment.update({
+                        where: { id: metadata.paymentId },
+                        data: {
+                            status: 'PAID',
+                            paidAt: new Date(),
+                            stripeIntentId: paymentIntent.id // Garantir sync
+                        }
+                    });
+
+                    // 2. Liberar Créditos para o Usuário
+                    const creditsToAdd = Number(metadata.credits || 1);
+
+                    // Preparar update do usuário
+                    const userUpdateData: any = {
+                        credits: { increment: creditsToAdd }
+                    };
+
+                    // 3. Atualizar Plano (Se aplicável)
+                    if (metadata.planId) {
+                        const planId = metadata.planId.toLowerCase();
+                        if (planId.includes('professional') || planId === '2') {
+                            userUpdateData.plan = 'PRO';
+                        } else if (planId.includes('business') || planId === '3') {
+                            userUpdateData.plan = 'BUSINESS';
+                        }
+                    }
+
+                    await this.prisma.user.update({
+                        where: { id: metadata.userId },
+                        data: userUpdateData
+                    });
+
+                    console.log(`[STRIPE WEBHOOK] ✅ Créditos liberados: +${creditsToAdd} para User ${metadata.userId}`);
+
+                } catch (error) {
+                    console.error('[STRIPE WEBHOOK] ❌ Erro ao processar:', error);
+                    // Não lançar erro para não fazer o Stripe tentar de novo infinitamente se for erro de lógica
+                    // Mas em produção idealmente tratamos retry.
+                }
+            } else {
+                console.warn('[STRIPE WEBHOOK] Metadata incompleto. Ignorando.');
+            }
+        }
+
+        return { received: true };
+    }
+
+    /**
+     * Webhook para receber notificações do BTG (LEGADO)
      */
     @Post('webhook-btg')
     async handleWebhook(@Body() webhook: any) {
