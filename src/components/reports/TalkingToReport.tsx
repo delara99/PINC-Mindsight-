@@ -20,43 +20,70 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     let scores: any[] = [];
 
     if (reportData?.calculatedScores?.scores && Array.isArray(reportData.calculatedScores.scores)) {
-        // FORMATO 1: B2B / Novo Engine (Array Nativo)
+        // FORMATO B2B (Array OK)
         scores = reportData.calculatedScores.scores;
     } else if (reportData?.unifiedScores) {
-        // FORMATO 2: B2C / Legacy (Objeto Indexado) -> Converter para Array
-        scores = Object.values(reportData.unifiedScores).map((s: any) => {
-            // Mapeamento de chaves para garantir ícones
-            let traitKey = s.traitKey || s.traitName;
+        // FORMATO B2C Legacy (Objeto)
+        scores = Object.entries(reportData.unifiedScores).map(([rawKey, val]: [string, any]) => {
+            // Tenta identificar a chave correta usando várias fontes
+            const possibleKeys = [val.traitKey, val.traitName, rawKey].filter(Boolean);
 
-            // Map legacy identifiers to standard uppercase keys
+            let finalKey = 'UNKNOWN';
+            let traitName = val.traitName || rawKey;
+
+            // Mapa de Normalização Agressivo
             const keyMap: Record<string, string> = {
-                'energia social': 'EXTRAVERSION', 'extroversao': 'EXTRAVERSION',
-                'estilo relacional': 'AGREEABLENESS', 'gradabilidade': 'AGREEABLENESS', 'amabilidade': 'AGREEABLENESS',
-                'estilo de trabalho': 'CONSCIENTIOUSNESS', 'estrutura': 'CONSCIENTIOUSNESS', 'conscienciosidade': 'CONSCIENTIOUSNESS',
-                'mentalidade': 'OPENNESS', 'abertura': 'OPENNESS', 'abertura a experiencia': 'OPENNESS',
-                'resiliencia': 'NEUROTICISM', 'estabilidade': 'NEUROTICISM', 'estabilidade emocional': 'NEUROTICISM'
+                // Extroversão
+                'energia social': 'EXTRAVERSION', 'extroversao': 'EXTRAVERSION', 'extraversion': 'EXTRAVERSION',
+                'social': 'EXTRAVERSION',
+                // Amabilidade
+                'estilo relacional': 'AGREEABLENESS', 'amabilidade': 'AGREEABLENESS', 'agreeableness': 'AGREEABLENESS',
+                'agradabilidade': 'AGREEABLENESS', 'relacional': 'AGREEABLENESS',
+                // Conscienciosidade
+                'estilo de trabalho': 'CONSCIENTIOUSNESS', 'conscienciosidade': 'CONSCIENTIOUSNESS', 'conscientiousness': 'CONSCIENTIOUSNESS',
+                'estrutura': 'CONSCIENTIOUSNESS', 'trabalho': 'CONSCIENTIOUSNESS',
+                // Abertura
+                'mentalidade': 'OPENNESS', 'abertura': 'OPENNESS', 'openness': 'OPENNESS',
+                'abertura a experiencia': 'OPENNESS', 'inovacao': 'OPENNESS',
+                // Estabilidade
+                'resiliencia': 'NEUROTICISM', 'estabilidade': 'NEUROTICISM', 'neuroticism': 'NEUROTICISM',
+                'estabilidade emocional': 'NEUROTICISM', 'emocional': 'NEUROTICISM'
             };
 
-            if (traitKey && keyMap[traitKey.toLowerCase()]) {
-                traitKey = keyMap[traitKey.toLowerCase()];
-            } else if (traitKey) {
-                traitKey = traitKey.toUpperCase();
+            for (const k of possibleKeys) {
+                const normalized = String(k).toLowerCase().trim().split(' (')[0]; // Remove parenteses ex: "Mentalidade (Abertura)" -> "mentalidade"
+                if (keyMap[normalized]) {
+                    finalKey = keyMap[normalized];
+                    break;
+                }
+            }
+
+            // Fallback se ainda for UNKNOWN mas tiver chave parecida
+            if (finalKey === 'UNKNOWN') {
+                // Tentar matching parcial
+                possibleKeys.forEach(k => {
+                    const s = String(k).toLowerCase();
+                    if (s.includes('abertura') || s.includes('mentalidade')) finalKey = 'OPENNESS';
+                    if (s.includes('trabalho') || s.includes('estrutura')) finalKey = 'CONSCIENTIOUSNESS';
+                    if (s.includes('social') || s.includes('extroversao')) finalKey = 'EXTRAVERSION';
+                    if (s.includes('relacional') || s.includes('amabilidade')) finalKey = 'AGREEABLENESS';
+                    if (s.includes('resiliencia') || s.includes('estabilidade')) finalKey = 'NEUROTICISM';
+                });
             }
 
             return {
-                key: traitKey,
-                name: s.traitName,
-                score: s.normalizedScore || s.score,
-                level: s.level,
-                interpretation: s.interpretation,
-                // Adapter para textos
-                customTexts: s.customTexts || {
-                    text_interpretation: s.text_interpretation,
-                    environment: s.needs?.environment,
-                    risk: s.needs?.risk,
-                    needs: s.needs?.primary
+                key: finalKey,
+                name: traitName,
+                score: val.normalizedScore || val.score || 0,
+                level: val.level,
+                interpretation: val.interpretation,
+                customTexts: val.customTexts || {
+                    text_interpretation: val.text_interpretation,
+                    environment: val.needs?.environment,
+                    risk: val.needs?.risk,
+                    needs: val.needs?.primary
                 },
-                facets: s.facets
+                facets: val.facets
             };
         });
     }
