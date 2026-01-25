@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
-import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, RefreshCw, BarChart3, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, RefreshCw, BarChart3, AlertTriangle, CheckCircle2, Maximize2, X } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TalkingToReportProps {
     reportData: any;
@@ -13,6 +14,7 @@ interface TalkingToReportProps {
 
 export default function TalkingToReport({ reportData, userName, onDownloadPdf, isAdmin }: TalkingToReportProps) {
     const [seeding, setSeeding] = useState(false);
+    const [selectedTrait, setSelectedTrait] = useState<any>(null); // State for Modal
 
     const { calculatedScores } = reportData;
     const scores = calculatedScores?.scores || [];
@@ -45,7 +47,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 font-sans">
+        <div className="space-y-10 animate-in fade-in duration-700 font-sans relative">
             {/* --- HEADER PREMIUM --- */}
             <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 shadow-2xl text-white p-10 md:p-14">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-[128px] opacity-20 -mr-32 -mt-32 mix-blend-screen"></div>
@@ -130,9 +132,16 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                 {/* RESUMO CARDS (RIGHT) */}
                 <div className="xl:col-span-7 grid sm:grid-cols-2 gap-5 h-fit content-start">
                     {scores.map((trait: any) => (
-                        <div key={trait.key} className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-xl hover:border-purple-200 hover:-translate-y-1 transition-all group flex flex-col justify-between h-full">
+                        <div
+                            key={trait.key}
+                            onClick={() => setSelectedTrait(trait)}
+                            className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-xl hover:border-purple-200 hover:-translate-y-1 transition-all group flex flex-col justify-between h-full cursor-pointer relative overflow-hidden"
+                        >
+                            <div className="absolute top-4 right-4 text-slate-300 group-hover:text-purple-400 transition-colors">
+                                <Maximize2 size={16} />
+                            </div>
                             <div>
-                                <div className="flex justify-between items-start mb-4">
+                                <div className="flex justify-between items-start mb-4 pr-6">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-2xl shadow-inner ${getTraitColor(trait.key, 'light-bg')}`}>
                                             {getTraitIcon(trait.key)}
@@ -337,6 +346,76 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                     </div>
                 ))}
             </div>
+            {/* MODAL POPUP */}
+            <AnimatePresence>
+                {selectedTrait && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setSelectedTrait(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative"
+                        >
+                            {/* Header */}
+                            <div className={`p-8 pb-6 flex items-start justify-between ${getTraitColor(selectedTrait.key, 'light-bg')}`}>
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-4 rounded-2xl bg-white shadow-sm ${getTraitColor(selectedTrait.key, 'text')}`}>
+                                        {React.cloneElement(getTraitIcon(selectedTrait.key) as React.ReactElement, { size: 32 })}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-900">{selectedTrait.name}</h3>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/60 border border-black/5 uppercase tracking-wide`}>
+                                            Score: {selectedTrait.score} • {getLevelLabel(selectedTrait.level)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedTrait(null)}
+                                    className="p-2 bg-white/50 hover:bg-white rounded-full transition-colors text-slate-500 hover:text-red-500"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            {/* Content Scrollable */}
+                            <div className="p-8 overflow-y-auto">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Interpretação Completa</h4>
+                                <div className="prose prose-lg prose-slate max-w-none text-slate-600 leading-relaxed text-justify">
+                                    {safeRender(selectedTrait.customTexts?.text_interpretation) || selectedTrait.interpretation}
+                                </div>
+
+                                {(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment) && (
+                                    <div className="mt-8 pt-6 border-t border-slate-100">
+                                        <h5 className="text-sm font-bold text-blue-600 uppercase mb-2 flex items-center gap-2">
+                                            <Sparkles size={16} /> Ambiente Ideal
+                                        </h5>
+                                        <p className="text-slate-600 leading-relaxed">
+                                            {safeRender(selectedTrait.customTexts?.needs || selectedTrait.customTexts?.environment)}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                                <button
+                                    onClick={() => setSelectedTrait(null)}
+                                    className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg"
+                                >
+                                    Entendi
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
