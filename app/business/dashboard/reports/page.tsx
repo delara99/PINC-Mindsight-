@@ -1,5 +1,5 @@
+'use client';
 
-"use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Download, Search, FileText, Loader2 } from 'lucide-react';
@@ -32,16 +32,17 @@ export default function ReportsPage() {
         fetchReports();
     }, []);
 
-    const handleGeneratePDF = async (userId: string, userName: string) => {
+    const handleGeneratePDF = async (reportId: string, userName: string) => {
         if (pdfGenerating) return; // Prevent double click
-        setPdfGenerating(userId);
+        setPdfGenerating(reportId);
         setPdfData(null);
 
         try {
             const token = localStorage.getItem('accessToken');
 
-            // 1. Fetch Full Report Data (Detalhado)
-            const res = await axios.get(`${API_URL}/api/v1/business/reports/${userId}`, {
+            // 1. Fetch Full Report Data (Detalhado / Unified)
+            // Use reportId (que é o ID da avaliação) + /unified endpoint para garantir layout correto
+            const res = await axios.get(`${API_URL}/api/v1/business/reports/${reportId}/unified`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -63,7 +64,7 @@ export default function ReportsPage() {
 
         } catch (error) {
             console.error('Erro ao buscar dados completos:', error);
-            alert('Erro ao buscar dados do relatório.');
+            alert('Erro ao buscar dados do relatório. Verifique se a conexão está ativa.');
             setPdfGenerating(null);
         }
     };
@@ -144,16 +145,16 @@ export default function ReportsPage() {
                                                 Visualizar
                                             </button>
                                             <button
-                                                onClick={() => handleGeneratePDF(report.userId, report.userName)}
+                                                onClick={() => handleGeneratePDF(report.reportId, report.userName)}
                                                 disabled={pdfGenerating !== null}
-                                                className={`inline-flex items-center gap-2 font-bold transition-colors ${pdfGenerating === report.userId ? 'text-purple-600 cursor-wait' : 'text-slate-600 hover:text-purple-600 disabled:opacity-30'}`}
+                                                className={`inline-flex items-center gap-2 font-bold transition-colors ${pdfGenerating === report.reportId ? 'text-purple-600 cursor-wait' : 'text-slate-600 hover:text-purple-600 disabled:opacity-30'}`}
                                             >
-                                                {pdfGenerating === report.userId ? (
+                                                {pdfGenerating === report.reportId ? (
                                                     <Loader2 size={18} className="animate-spin" />
                                                 ) : (
                                                     <Download size={18} />
                                                 )}
-                                                {pdfGenerating === report.userId ? 'Gerando...' : 'PDF'}
+                                                {pdfGenerating === report.reportId ? 'Gerando...' : 'PDF'}
                                             </button>
                                         </div>
                                     </td>
