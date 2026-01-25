@@ -79,9 +79,8 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
             // Fallback de Emergência
             if (finalKey === 'UNKNOWN') {
-                // DEBUG MODE: Mostra EXATAMENTE o que o sistema recebeu para podermos corrigir
-                displayName = `DEBUG: [${rawKey}] | [${val.traitName}] | [${val.name}]`;
-                console.log('Trait Identification Failed:', { rawKey, val });
+                console.warn('Trait Identification Failed:', { rawKey, val });
+                // Mantém o nome original se não conseguir identificar, sem poluir a UI
             }
 
             return {
@@ -104,6 +103,9 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     // Ordenar scores para consistência visual (O-C-E-A-N)
     const orderMap: Record<string, number> = { 'OPENNESS': 1, 'CONSCIENTIOUSNESS': 2, 'EXTRAVERSION': 3, 'AGREEABLENESS': 4, 'NEUROTICISM': 5 };
     scores.sort((a, b) => (orderMap[a.key] || 99) - (orderMap[b.key] || 99));
+
+    // Log Final para Debug no Console do Cliente
+    console.log('📊 TALKING TO REPORT - FINAL SCORES:', scores);
 
     // Dados para o Radar Chart
     const radarData = scores.map((s: any) => ({
