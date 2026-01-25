@@ -16,7 +16,7 @@ import { BtgService } from './btg.service';
 
 import { StripeService } from './stripe.service';
 
-@Controller('api/v1/payment')
+@Controller('payment')
 export class PaymentController {
     constructor(
         private prisma: PrismaService,
