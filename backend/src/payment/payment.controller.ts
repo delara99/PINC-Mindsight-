@@ -116,44 +116,57 @@ export class PaymentController {
 
     /**
      * Criar Intent de Pagamento STRIPE (Cartão)
+     * Suporta quantidade dinâmica de créditos.
      */
     @Post('create-stripe-intent')
     @UseGuards(AuthGuard('jwt'))
-    async createStripeIntent(@Body() body: { planId: string }, @Request() req) {
+    async createStripeIntent(@Body() body: { planId: string; credits?: number }, @Request() req) {
         const user = req.user;
+        const EXTRA_CREDIT_PRICE = 2990; // R$ 29,90 por crédito adicional
 
-        // Configuração de Preços B2C (Hardcoded por enquanto)
-        const plans = {
-            'essential': 2990,    // R$ 29,90
-            'professional': 5990, // R$ 59,90
+        // Configuração de Planos (Base)
+        // Cada plano tem um preço base e crédito(s) incluso(s)
+        const plansCheck = {
+            'essential': { price: 2990, includedCredits: 1, name: 'Essential' },
+            'professional': { price: 5990, includedCredits: 1, name: 'Professional' },
 
-            // Aliases para garantir compatibilidade com IDs numéricos do Banco
-            '1': 2990, // ID 1 -> Essential
-            '2': 5990, // ID 2 -> Professional
-            '3': 9990, // ID 3 -> Business/Enterprise?
+            // Mapeamento de IDs
+            '1': { price: 2990, includedCredits: 1, name: 'Essential' },
+            '2': { price: 5990, includedCredits: 1, name: 'Professional' },
+            '3': { price: 9990, includedCredits: 10, name: 'Business' },
 
-            // Aliases Strings
-            'starter': 2990,
-            'pro': 5990
+            // Aliases
+            'starter': { price: 2990, includedCredits: 1, name: 'Essential' },
+            'pro': { price: 5990, includedCredits: 1, name: 'Professional' }
         };
 
         // Normalize planId
-        const cleanPlanId = body.planId.toLowerCase().trim();
-        const amount = plans[cleanPlanId];
+        const cleanPlanId = body.planId.toString().toLowerCase().trim();
+        const selectedPlan = plansCheck[cleanPlanId];
 
-        if (!amount) {
-            console.error(`Plano inválido solicitado: ${body.planId}`);
+        if (!selectedPlan) {
+            console.error(`Plano inválido solicitado: ${cleanPlanId}`);
             throw new BadRequestException('Plano inválido ou não encontrado.');
         }
+
+        // Lógica de Cálculo de Preço
+        // Se o frontend mandou 'credits', usamos para calcular extras.
+        // Se não mandou, usamos o padrão do plano.
+        const requestedCredits = body.credits ? Number(body.credits) : selectedPlan.includedCredits;
+        const extraCredits = Math.max(0, requestedCredits - selectedPlan.includedCredits);
+
+        const totalAmount = selectedPlan.price + (extraCredits * EXTRA_CREDIT_PRICE);
+
+        console.log(`[STRIPE] Criando Intent. Plano: ${selectedPlan.name}, Créditos: ${requestedCredits} (Extra: ${extraCredits}), Total: ${totalAmount / 100}`);
 
         // Criar registro de pagamento no banco
         const payment = await this.prisma.payment.create({
             data: {
                 userId: user.userId,
                 planId: cleanPlanId,
-                planName: cleanPlanId.charAt(0).toUpperCase() + cleanPlanId.slice(1),
-                amount: amount / 100,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h para pagar
+                planName: `${selectedPlan.name} (${requestedCredits} Créditos)`,
+                amount: totalAmount / 100, // Salva float no banco
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
                 status: 'PENDING',
                 gateway: 'STRIPE'
             }
@@ -161,11 +174,12 @@ export class PaymentController {
 
         // Criar Intent no Stripe
         try {
-            const intent = await this.stripeService.createPaymentIntent(amount, 'brl', {
+            const intent = await this.stripeService.createPaymentIntent(totalAmount, 'brl', {
                 userId: user.userId,
                 paymentId: payment.id,
                 planId: cleanPlanId,
-                integration_type: 'b2c_modal'
+                credits: requestedCredits.toString(), // Metadata importante para o Webhook saber quantos créditos liberar
+                type: 'credit_purchase'
             });
 
             // Atualizar pagamento com o ID do Intent
@@ -180,7 +194,6 @@ export class PaymentController {
             };
         } catch (error) {
             console.error('Erro ao criar Stripe Intent:', error);
-            // Cleanup: Se falhar no Stripe, cancela no banco
             await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'CANCELED' } });
             throw new BadRequestException('Erro ao iniciar pagamento com Stripe.');
         }

@@ -55,7 +55,10 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ planId: plan.id })
+                body: JSON.stringify({
+                    planId: plan.id,
+                    credits: plan.credits
+                })
             })
                 .then(res => res.json())
                 .then(data => {
