@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, RefreshCw, BarChart3, AlertTriangle, CheckCircle2, Maximize2, X } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
@@ -14,10 +14,56 @@ interface TalkingToReportProps {
 
 export default function TalkingToReport({ reportData, userName, onDownloadPdf, isAdmin }: TalkingToReportProps) {
     const [seeding, setSeeding] = useState(false);
-    const [selectedTrait, setSelectedTrait] = useState<any>(null); // State for Modal
+    const [selectedTrait, setSelectedTrait] = useState<any>(null);
 
-    const { calculatedScores } = reportData;
-    const scores = calculatedScores?.scores || [];
+    // --- DATA NORMALIZATION ADAPTER (B2B vs B2C Support) ---
+    let scores: any[] = [];
+
+    if (reportData?.calculatedScores?.scores && Array.isArray(reportData.calculatedScores.scores)) {
+        // FORMATO 1: B2B / Novo Engine (Array Nativo)
+        scores = reportData.calculatedScores.scores;
+    } else if (reportData?.unifiedScores) {
+        // FORMATO 2: B2C / Legacy (Objeto Indexado) -> Converter para Array
+        scores = Object.values(reportData.unifiedScores).map((s: any) => {
+            // Mapeamento de chaves para garantir ícones
+            let traitKey = s.traitKey || s.traitName;
+
+            // Map legacy identifiers to standard uppercase keys
+            const keyMap: Record<string, string> = {
+                'energia social': 'EXTRAVERSION', 'extroversao': 'EXTRAVERSION',
+                'estilo relacional': 'AGREEABLENESS', 'gradabilidade': 'AGREEABLENESS', 'amabilidade': 'AGREEABLENESS',
+                'estilo de trabalho': 'CONSCIENTIOUSNESS', 'estrutura': 'CONSCIENTIOUSNESS', 'conscienciosidade': 'CONSCIENTIOUSNESS',
+                'mentalidade': 'OPENNESS', 'abertura': 'OPENNESS', 'abertura a experiencia': 'OPENNESS',
+                'resiliencia': 'NEUROTICISM', 'estabilidade': 'NEUROTICISM', 'estabilidade emocional': 'NEUROTICISM'
+            };
+
+            if (traitKey && keyMap[traitKey.toLowerCase()]) {
+                traitKey = keyMap[traitKey.toLowerCase()];
+            } else if (traitKey) {
+                traitKey = traitKey.toUpperCase();
+            }
+
+            return {
+                key: traitKey,
+                name: s.traitName,
+                score: s.normalizedScore || s.score,
+                level: s.level,
+                interpretation: s.interpretation,
+                // Adapter para textos
+                customTexts: s.customTexts || {
+                    text_interpretation: s.text_interpretation,
+                    environment: s.needs?.environment,
+                    risk: s.needs?.risk,
+                    needs: s.needs?.primary
+                },
+                facets: s.facets
+            };
+        });
+    }
+
+    // Ordenar scores para consistência visual (O-C-E-A-N)
+    const orderMap: Record<string, number> = { 'OPENNESS': 1, 'CONSCIENTIOUSNESS': 2, 'EXTRAVERSION': 3, 'AGREEABLENESS': 4, 'NEUROTICISM': 5 };
+    scores.sort((a, b) => (orderMap[a.key] || 99) - (orderMap[b.key] || 99));
 
     // Dados para o Radar Chart
     const radarData = scores.map((s: any) => ({
@@ -56,7 +102,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                 <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
                     <div className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold uppercase tracking-widest shadow-inner">
-                            <Sparkles size={14} className="text-yellow-400" /> Relatório Oficial Business
+                            <Sparkles size={14} className="text-yellow-400" /> Relatório Oficial
                         </div>
                         <div>
                             <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">Arquétipo <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-pink-200">TalkingTO</span></h1>
@@ -77,13 +123,14 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                 {seeding ? 'Restaurando...' : 'Reparar Textos'}
                             </button>
                         )}
-
-                        <button
-                            onClick={onDownloadPdf}
-                            className="flex items-center gap-2 px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95"
-                        >
-                            <Download size={20} /> Baixar PDF Completo
-                        </button>
+                        {onDownloadPdf && (
+                            <button
+                                onClick={onDownloadPdf}
+                                className="flex items-center gap-2 px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95"
+                            >
+                                <Download size={20} /> Baixar PDF Completo
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -103,24 +150,30 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                         </div>
 
                         <div className="w-full h-[400px] relative z-10">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-                                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                                    <PolarAngleAxis
-                                        dataKey="trait"
-                                        tick={{ fill: '#475569', fontSize: 13, fontWeight: 700 }}
-                                    />
-                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                    <Radar
-                                        name="Perfil"
-                                        dataKey="A"
-                                        stroke="#8b5cf6"
-                                        strokeWidth={4}
-                                        fill="#8b5cf6"
-                                        fillOpacity={0.25}
-                                    />
-                                </RadarChart>
-                            </ResponsiveContainer>
+                            {radarData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                                        <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                                        <PolarAngleAxis
+                                            dataKey="trait"
+                                            tick={{ fill: '#475569', fontSize: 13, fontWeight: 700 }}
+                                        />
+                                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                        <Radar
+                                            name="Perfil"
+                                            dataKey="A"
+                                            stroke="#8b5cf6"
+                                            strokeWidth={4}
+                                            fill="#8b5cf6"
+                                            fillOpacity={0.25}
+                                        />
+                                    </RadarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-slate-400 italic">
+                                    Gráfico indisponível
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100 text-center text-sm text-slate-500 font-medium">
@@ -190,7 +243,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                         <div className="grid lg:grid-cols-[320px_1fr] min-h-[400px]">
                             {/* COLUNA ESQUERDA: VISUAL SCORE */}
                             <div className={`p-10 flex flex-col justify-center items-center text-center relative overflow-hidden ${getTraitColor(trait.key, 'light-bg')}`}>
-                                <div className="absolute inset-0 opacity-10 pattern-dots-md"></div> {/* Pattern opcional */}
+                                <div className="absolute inset-0 opacity-10 pattern-dots-md"></div>
 
                                 <div className={`w-24 h-24 mb-6 rounded-3xl flex items-center justify-center shadow-xl ${getTraitColor(trait.key, 'bg')} ${getTraitColor(trait.key, 'text-dark')}`}>
                                     {React.cloneElement(getTraitIcon(trait.key) as React.ReactElement, { size: 48 })}
@@ -217,10 +270,8 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                             {safeRender(trait.customTexts.text_interpretation)}
                                         </div>
 
-                                        {/* Detalhes Extras: Cards Internos */}
                                         {(trait.customTexts.needs || trait.customTexts.risk || trait.customTexts.environment) && (
                                             <div className="grid md:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
-                                                {/* Ambiente Ideal */}
                                                 {(trait.customTexts.needs || trait.customTexts.environment) && (
                                                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 p-6 rounded-2xl border border-blue-100/50 hover:border-blue-200 transition-colors">
                                                         <h5 className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2 tracking-wide">
@@ -232,7 +283,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                     </div>
                                                 )}
 
-                                                {/* Pontos de Atenção */}
                                                 {(trait.customTexts.risk || trait.customTexts.risks) && (
                                                     <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 p-6 rounded-2xl border border-amber-100/50 hover:border-amber-200 transition-colors">
                                                         <h5 className="text-xs font-bold text-amber-700 uppercase mb-3 flex items-center gap-2 tracking-wide">
@@ -265,8 +315,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                     {trait.facets && trait.facets.length > 0 ? (
                                         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
                                             {(() => {
-                                                // (Lógica de Facetas Mantida)
-                                                // Minified for brevity in thinking, but full code below
                                                 const translateFacet = (name: string) => {
                                                     const map: Record<string, string> = {
                                                         'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
@@ -346,6 +394,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                     </div>
                 ))}
             </div>
+
             {/* MODAL POPUP */}
             <AnimatePresence>
                 {selectedTrait && (
@@ -363,7 +412,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                             onClick={(e) => e.stopPropagation()}
                             className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative"
                         >
-                            {/* Header */}
+                            {/* Header Popup */}
                             <div className={`p-8 pb-6 flex items-start justify-between ${getTraitColor(selectedTrait.key, 'light-bg')}`}>
                                 <div className="flex items-center gap-4">
                                     <div className={`p-4 rounded-2xl bg-white shadow-sm ${getTraitColor(selectedTrait.key, 'text')}`}>
