@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key, FileText } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
 
 export default function CandidatesPage() {
@@ -205,36 +205,55 @@ export default function CandidatesPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 {status === 'COMPLETED' ? (
-                                                    <div className="flex items-center gap-2 text-green-600 font-medium text-xs">
-                                                        <CheckCircle size={14} /> Concluído
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <div className="flex items-center gap-2 text-green-600 font-medium text-xs bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                                                            <CheckCircle size={12} /> Concluído
+                                                        </div>
+                                                        <a
+                                                            href={`/business/dashboard/reports/${emp.id}`}
+                                                            className="flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-1 rounded transition-colors group"
+                                                        >
+                                                            <FileText size={12} className="group-hover:scale-110 transition-transform" /> Ver Relatório
+                                                        </a>
                                                     </div>
                                                 ) : status === 'IN_PROGRESS' || status === 'PENDING' ? (
-                                                    <div className="flex items-center gap-2 text-blue-600 font-medium text-xs">
+                                                    <div className="flex items-center gap-2 text-blue-600 font-medium text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100 w-fit">
                                                         <Clock size={14} /> Liberado
                                                     </div>
                                                 ) : (
                                                     <button
                                                         onClick={() => handleDistributeCredit(emp.id, emp.name)}
-                                                        className="flex items-center gap-2 text-slate-500 font-bold text-xs hover:text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded transition-all border border-slate-200 hover:border-purple-200 bg-white"
+                                                        className="flex items-center gap-2 text-slate-500 font-bold text-xs hover:text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded transition-all border border-slate-200 hover:border-purple-200 bg-white shadow-sm hover:shadow"
                                                     >
                                                         <Shield size={14} /> Liberar Teste (-1 Crédito)
                                                     </button>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-500">
+                                            <td className="px-6 py-4 text-slate-500 text-xs font-mono">
                                                 {new Date(emp.createdAt).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 text-right relative">
                                                 <button
                                                     onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
-                                                    className="text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100"
+                                                    className="text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 active:bg-slate-200"
                                                 >
                                                     <MoreHorizontal size={18} />
                                                 </button>
 
                                                 {/* Dropdown Menu */}
                                                 {openMenuId === emp.id && (
-                                                    <div className="absolute right-8 top-8 z-10 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                                    <div className="absolute right-8 top-8 z-20 w-52 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                                                        {status === 'COMPLETED' && (
+                                                            <>
+                                                                <a
+                                                                    href={`/business/dashboard/reports/${emp.id}`}
+                                                                    className="w-full text-left px-4 py-3 text-sm text-purple-700 font-bold hover:bg-purple-50 flex items-center gap-2 bg-purple-50/30"
+                                                                >
+                                                                    <FileText size={14} /> Acessar Relatório
+                                                                </a>
+                                                                <div className="h-px bg-slate-100"></div>
+                                                            </>
+                                                        )}
                                                         <button
                                                             onClick={() => handleResetCode(emp.id, emp.name)}
                                                             className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
