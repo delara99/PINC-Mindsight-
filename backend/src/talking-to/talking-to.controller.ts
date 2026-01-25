@@ -248,10 +248,7 @@ export class TalkingToController {
             });
         }
 
-        // DEBUG CRÍTICO: Verificar se customTexts está limpo (sem objetos aninhados)
-        if (scores['EXTRAVERSION']) {
-            console.log('DEBUG EXTRAVERSION SCORE:', JSON.stringify(scores['EXTRAVERSION'].customTexts, null, 2));
-        }
+
 
         return {
             id: assignment.id,
