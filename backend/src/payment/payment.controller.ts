@@ -126,7 +126,13 @@ export class PaymentController {
         const plans = {
             'essential': 2990,    // R$ 29,90
             'professional': 5990, // R$ 59,90
-            // Aliases para garantir compatibilidade
+
+            // Aliases para garantir compatibilidade com IDs numéricos do Banco
+            '1': 2990, // ID 1 -> Essential
+            '2': 5990, // ID 2 -> Professional
+            '3': 9990, // ID 3 -> Business/Enterprise?
+
+            // Aliases Strings
             'starter': 2990,
             'pro': 5990
         };
