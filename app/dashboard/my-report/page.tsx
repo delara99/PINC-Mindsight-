@@ -1,10 +1,12 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { API_URL } from '../../../src/config/api';
 import { useAuthStore } from '../../../src/store/auth-store';
 import Link from 'next/link';
-import { Calendar, Clock, History, Sparkles, ArrowUpRight } from 'lucide-react';
-import TalkingToReport from '@/src/components/reports/TalkingToReport'; // Novo Componente Unificado
+import { Calendar, History, Sparkles, ArrowUpRight } from 'lucide-react';
+import TalkingToReport from '@/src/components/reports/TalkingToReport';
+import { AIPincWidget } from '../../../src/components/ai/AIPincWidget';
 
 export default function MyReportPage() {
     const [history, setHistory] = useState<any[]>([]);
@@ -131,15 +133,6 @@ export default function MyReportPage() {
         try {
             const reportId = selectedReportId === 'current' ? 'latest' : selectedReportId;
 
-            // Feedback visual básico
-            const btn = document.activeElement as HTMLButtonElement;
-            const originalText = btn ? btn.innerHTML : '';
-            if (btn && btn.tagName === 'BUTTON') {
-                // Apenas altera se for botão (o componente report usa botão customizado, mas aqui passamos a função)
-                // O componente TalkingToReport cuida do botão, mas a prop é passada daqui. 
-                // Se quisermos feedback, melhor gerenciar estado de 'downloading' aqui.
-            }
-
             const res = await fetch(`${API_URL}/api/v1/talking-to/export/pdf/${reportId}`, {
                 headers: { 'Authorization': `Bearer ${t}` }
             });
@@ -252,6 +245,17 @@ export default function MyReportPage() {
                     onDownloadPdf={handleDownloadPdf}
                 />
             </div>
+
+            {/* AI COACH WIDGET */}
+            {report && (
+                <AIPincWidget
+                    userProfile={{
+                        name: user?.name,
+                        role: user?.userType === 'COMPANY' ? user?.role : 'Membro',
+                        factors: report.factors || {}
+                    }}
+                />
+            )}
         </div>
     );
 }
