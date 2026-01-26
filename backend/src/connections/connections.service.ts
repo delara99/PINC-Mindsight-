@@ -208,24 +208,11 @@ export class ConnectionsService {
             return map;
         };
 
-        const myRichTexts = await this.fetchRichTextsForScores(myScores);
-        const partnerRichTexts = await this.fetchRichTextsForScores(partnerScores);
 
 
 
-        // 3. Hydrate Analysis with Stored Texts (Override generic generation)
-        const hydrate = (analysis: any, storedMap: Record<string, string>) => {
-            if (!analysis.talkingto_analysis) return;
-            analysis.talkingto_analysis.forEach((dim: any) => {
-                const key = dim.traitKey;
-                if (storedMap[key]) {
-                    dim.text_interpretation = storedMap[key];
-                }
-            });
-        };
 
-        hydrate(myAnalysis, myRichTexts);
-        hydrate(partnerAnalysis, partnerRichTexts);
+
 
         // Prepare Radar Data (Normalized)
         const radarData = [
