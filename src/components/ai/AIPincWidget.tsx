@@ -130,7 +130,7 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
                         initial={{ opacity: 0, y: 100, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="fixed bottom-6 right-6 z-50 w-[90vw] md:w-[400px] h-[600px] max-h-[80vh] bg-white rounded-2xl shadow-2xl flex flex-col border border-slate-200 overflow-hidden"
+                        className="fixed bottom-0 right-0 md:bottom-6 md:right-6 z-50 w-full h-full md:w-[480px] md:h-[750px] md:max-h-[85vh] bg-white md:rounded-2xl shadow-2xl flex flex-col border border-slate-200 overflow-hidden"
                     >
                         {/* HEADER */}
                         <div className="bg-slate-900 p-4 flex items-center justify-between border-b border-purple-900/50">
@@ -162,8 +162,8 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
                                 >
                                     <div
                                         className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
-                                                ? 'bg-slate-900 text-white rounded-br-none'
-                                                : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'
+                                            ? 'bg-slate-900 text-white rounded-br-none'
+                                            : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'
                                             }`}
                                     >
                                         {msg.content}
