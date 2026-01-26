@@ -89,7 +89,26 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
         setTimeout(() => window.location.reload(), 3000);
     };
 
-    // ... (Mantendo handleActivateFree e handleNotifyPayment se necessário, mas focando no Payment)
+    const handleValidateCoupon = () => {
+        setValidatingCoupon(true);
+        setCouponMessage(null);
+
+        // Simulação de delay de rede
+        setTimeout(() => {
+            setValidatingCoupon(false);
+
+            // Mock de lógica de validação
+            // No futuro, substituir por fetch(`${API_URL}/api/v1/coupons/validate`, ...)
+            if (['TESTE100', 'VIP2025', 'PINC2025', 'BETA'].includes(couponCode)) {
+                setCouponMessage({ type: 'success', text: 'Cupom aplicado com sucesso!' });
+                setValidatedCoupon({ code: couponCode, discount: 100 });
+                // Simular sucesso do checkout se for 100% de desconto
+                setTimeout(() => setActivated(true), 1000);
+            } else {
+                setCouponMessage({ type: 'error', text: 'Cupom inválido ou expirado.' });
+            }
+        }, 1500);
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
@@ -119,7 +138,7 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
                             onClick={() => setMethod('PIX')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all ${method === 'PIX' ? 'bg-white text-primary shadow-sm border' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <Banknote size={16} /> Pix Manual
+                            <Ticket size={16} /> Cupom
                         </button>
                     </div>
                 )}
@@ -152,30 +171,56 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
                             )}
                         </div>
                     ) : (
-                        /* PIX MANUAL BODY (LEGACY) */
-                        <div className="space-y-6">
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-xs text-yellow-800">
-                                ℹ️ Para liberação imediata, recomendamos usar a opção <strong>Cartão</strong>. O Pix manual requer aprovação do time financeiro.
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Chave Pix (CNPJ)</label>
-                                <div className="flex gap-2">
-                                    <input type="text" readOnly value={PIX_KEY} className="flex-1 bg-gray-100 border-none rounded-lg text-gray-600 font-mono text-sm px-4 py-2" />
-                                    <button onClick={handleCopyPix} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                        {copied ? 'Copiado!' : 'Copiar'}
-                                    </button>
+                        /* COUPON BODY */
+                        <div className="space-y-6 animate-in slide-in-from-right-4">
+                            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800 flex items-start gap-3">
+                                <Ticket className="shrink-0 mt-0.5 text-purple-600" size={18} />
+                                <div>
+                                    <strong className="block text-purple-900 mb-1">Tem um código promocional?</strong>
+                                    Insira seu cupom abaixo para validar e liberar seu acesso ao plano <strong>{plan.name}</strong>.
                                 </div>
                             </div>
 
-                            {/* Botão de Notificar */}
-                            <button className="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl" disabled>
-                                Notificar Pagamento (Em manutenção)
-                            </button>
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Código do Cupom</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={couponCode}
+                                        onChange={(e) => {
+                                            setCouponCode(e.target.value.toUpperCase());
+                                            setCouponMessage(null);
+                                        }}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
+                                        placeholder="EX: VIP2025"
+                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none uppercase font-mono tracking-wider transition-all"
+                                    />
+                                    <button
+                                        onClick={handleValidateCoupon}
+                                        disabled={validatingCoupon || !couponCode}
+                                        className="bg-slate-900 text-white px-6 rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black transition-all shadow-lg hover:shadow-xl active:scale-95"
+                                    >
+                                        {validatingCoupon ? <Loader2 size={18} className="animate-spin" /> : 'Aplicar'}
+                                    </button>
+                                </div>
+                                {couponMessage && (
+                                    <div className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${couponMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                                        {couponMessage.type === 'success' ? <CheckCircle2 size={14} /> : <X size={14} />}
+                                        {couponMessage.text}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100">
+                                <p className="text-xs text-center text-gray-400">
+                                    Dúvidas? Entre em contato com o suporte em <a href="mailto:ajuda@pinc.app.br" className="text-purple-600 hover:underline">ajuda@pinc.app.br</a>
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
