@@ -1,11 +1,15 @@
+
 'use client';
+
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle, ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2, Menu, X } from 'lucide-react';
 import { MethodologySection } from '../src/components/landing/methodology-section';
 import { FeaturesGrid } from '../src/components/landing/features-grid';
 import { TalkingToTeaser } from '../src/components/landing/talking-to-teaser';
+import { PincCoachSection } from '../src/components/landing/PincCoachSection';
 import { API_URL } from '../src/config/api';
+import { useState } from 'react';
 
 // Icon mapping
 const iconMap: any = {
@@ -19,10 +23,6 @@ const iconMap: any = {
     'brain': BrainCircuit
 };
 
-// Add Mobile Menu state and imports
-import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
-
 export default function Home() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -30,8 +30,13 @@ export default function Home() {
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
         queryFn: async () => {
-            const res = await fetch(`${API_URL}/api/v1/site-settings`);
-            return res.json();
+            try {
+                const res = await fetch(`${API_URL}/api/v1/site-settings`);
+                if (!res.ok) return {}; // Fallback empty
+                return res.json();
+            } catch (e) {
+                return {}; // Fallback
+            }
         }
     });
 
@@ -151,7 +156,6 @@ export default function Home() {
                             >
                                 {settings?.primaryButtonText || 'Ver Degustação'} <ArrowRight size={20} />
                             </Link>
-                            {/* Button removed as per user request */}
                         </div>
                     </div>
 
@@ -201,6 +205,9 @@ export default function Home() {
             {settings?.showFeatures && settings?.features?.length > 0 && (
                 <FeaturesGrid features={settings.features} />
             )}
+
+            {/* PINC COACH SECTION - NEW AI FEATURE */}
+            <PincCoachSection />
 
             {/* PRICING SECTION - DYNAMIC */}
             {settings?.showPricing && settings?.pricingPlans?.length > 0 && (
