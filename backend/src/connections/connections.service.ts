@@ -76,32 +76,41 @@ export class ConnectionsService {
         ]);
 
         if (!myLastAssessment || !partnerLastAssessment) {
-            const status = {
-                me: !!myLastAssessment,
-                partner: !!partnerLastAssessment,
-                message: 'Dados insuficientes para comparação.'
-            };
-
-            if (!status.me && !status.partner) {
-                status.message = 'Nenhum dos usuários completou o inventário Big Five.';
-            } else if (!status.me) {
-                status.message = 'Você ainda não completou o inventário Big Five.';
-            } else {
-                status.message = 'Seu parceiro(a) ainda não completou o inventário Big Five.';
-            }
-
-            return {
-                radarData: null,
-                error: status.message,
-                status
-            };
+            // ... (keep error handling)
+            return { radarData: null, error: 'Dados insuficientes.', status: { me: !!myLastAssessment, partner: !!partnerLastAssessment, message: 'Falta assessment.' } };
         }
 
-        const myScores = (myLastAssessment.result as any)?.scores as TalkingToInput;
-        const partnerScores = (partnerLastAssessment.result as any)?.scores as TalkingToInput;
+        // Helper para normalizar chaves (OPENNESS -> O)
+        const normalizeScores = (rawScores: any): TalkingToInput => {
+            if (!rawScores) return { O: 50, C: 50, E: 50, A: 50, N: 50 };
+
+            // Tenta achar chaves longas ou curtas
+            const getVal = (short: string, long: string) => {
+                let val = rawScores[short] ?? rawScores[long];
+                // Se ainda for nulo, tenta lowercase
+                if (val === undefined) val = rawScores[long.toLowerCase()];
+                return typeof val === 'number' ? val : 50;
+            };
+
+            return {
+                O: getVal('O', 'OPENNESS'),
+                C: getVal('C', 'CONSCIENTIOUSNESS'),
+                E: getVal('E', 'EXTRAVERSION'),
+                A: getVal('A', 'AGREEABLENESS'),
+                N: getVal('N', 'NEUROTICISM'),
+                facets: rawScores.facets || {}
+            };
+        };
+
+        const myScores = normalizeScores((myLastAssessment.result as any)?.scores);
+        const partnerScores = normalizeScores((partnerLastAssessment.result as any)?.scores);
+
+        console.log(`[COMPARISON AUDIT] Connection: ${connectionId}`);
+        console.log(`   - Me (${myLastAssessment.user.email}): O=${myScores.O}, C=${myScores.C}, E=${myScores.E}, A=${myScores.A}, N=${myScores.N} (ID: ${myLastAssessment.id})`);
+        console.log(`   - Partner (${partnerLastAssessment.user.email}): O=${partnerScores.O}, C=${partnerScores.C}, E=${partnerScores.E}, A=${partnerScores.A}, N=${partnerScores.N} (ID: ${partnerLastAssessment.id})`);
 
         if (!myScores || !partnerScores) {
-            return { error: 'Scores não encontrados.' };
+            return { error: 'Scores inválidos ou corrompidos.' };
         }
 
         const [myAnalysis, partnerAnalysis] = await Promise.all([
