@@ -1,14 +1,8 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { BrainCircuit, Share2, Sparkles, ArrowRight } from 'lucide-react';
+import { Share2, Sparkles, ArrowRight, Layers, Users, BrainCircuit } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock Data for the Visual
-const data = [
-    { subject: 'Abertura', A: 90, B: 65, fullMark: 100 },
-    { subject: 'Conscienciosidade', A: 85, B: 90, fullMark: 100 },
-    { subject: 'Extroversão', A: 50, B: 90, fullMark: 100 },
 export function MethodologySection() {
     return (
         <section className="py-24 bg-slate-900 relative overflow-hidden">
