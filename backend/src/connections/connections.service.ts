@@ -89,7 +89,16 @@ export class ConnectionsService {
                 let val = rawScores[short] ?? rawScores[long];
                 // Se ainda for nulo, tenta lowercase
                 if (val === undefined) val = rawScores[long.toLowerCase()];
-                return typeof val === 'number' ? val : 50;
+
+                // Se for um objeto (formato novo do result builder), extrai o score numérico
+                if (typeof val === 'object' && val !== null && 'score' in val) {
+                    val = val.score;
+                }
+
+                // Se ainda for string numérico, converte
+                if (typeof val === 'string') val = Number(val);
+
+                return typeof val === 'number' && !isNaN(val) ? val : 50;
             };
 
             return {
