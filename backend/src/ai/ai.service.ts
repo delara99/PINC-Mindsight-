@@ -27,7 +27,7 @@ export class AiService {
             // @ts-ignore
             return await this.prisma.aiChatHistory.findMany({
                 where: { userId },
-                orderBy: { createdAt: 'asc' }, // Antigas primeiro
+                orderBy: { createdAt: 'asc' },
                 take: 50
             });
         } catch (e) {
@@ -36,7 +36,7 @@ export class AiService {
     }
 
     async generateChatResponse(userId: string, userProfile: any, messages: any[], userPlan: string) {
-        // 1. Validação de Plano
+        // Validation
         const normalizedPlan = (userPlan || '').toUpperCase().trim();
         const allowedPlans = ['PRO', 'BUSINESS', 'SUPER_ADMIN', 'ENTERPRISE'];
 
@@ -48,7 +48,7 @@ export class AiService {
         };
 
         try {
-            // A. Salvar mensagem do usuário (se houver e for a última)
+            // Save User Update
             const lastUserMsg = messages[messages.length - 1];
             if (lastUserMsg && lastUserMsg.role === 'user') {
                 // @ts-ignore
@@ -57,10 +57,8 @@ export class AiService {
                 }).catch(e => console.error("Erro salvando msg user", e));
             }
 
-            // 2. Construção do System Prompt (Personalidade Prática)
             const systemPrompt = this.buildSystemPrompt(userProfile);
 
-            // 3. Chamada para OpenAI
             const completion = await this.openai.chat.completions.create({
                 messages: [
                     { role: 'system', content: systemPrompt },
@@ -73,7 +71,6 @@ export class AiService {
 
             const aiMsg = completion.choices[0].message;
 
-            // B. Salvar resposta da IA
             if (aiMsg && aiMsg.content) {
                 // @ts-ignore
                 await this.prisma.aiChatHistory.create({
@@ -108,35 +105,33 @@ export class AiService {
 
         return `
       🏛️ PERSONA: VOCÊ É A PINC, MENTORA PRÁTICA DE CARREIRA
-      Esqueça a linguagem acadêmica. Seu objetivo é traduzir a psicologia complexa para a "Lingua do Povo".
-      Você conversa como uma mentora experiente, direta e amiga, que dá conselhos reais para problemas reais.
+      Esqueça termos acadêmicos difíceis. Traduza a psicologia para a vida real.
+      Você é direta, empática e focada em sucesso profissional.
 
-      📊 DADOS DO CLIENTE (Scores Reais):
+      📊 DADOS DO CLIENTE (Do Relatório na Tela):
       Nome: ${profile?.name || 'Cliente'}
       Cargo: ${profile?.role || 'Profissional'}
 
-      --- PERFIL COMPORTAMENTAL ---
+      --- PERFIL (BIG FIVE) ---
       1. EXTROVERSÃO: ${factors.extroversion} (${getLevel(factors.extroversion)})
-         (Habilidade de socializar, falar em público)
       2. AMABILIDADE: ${factors.agreeableness} (${getLevel(factors.agreeableness)})
-         (Capacidade de trabalhar em equipe)
       3. CONSCIENCIOSIDADE: ${factors.conscientiousness} (${getLevel(factors.conscientiousness)})
-         (Organização, foco e entrega)
-      4. ESTABILIDADE EMOCIONAL: ${factors.neuroticism ? (100 - factors.neuroticism) : 'N/A'} (Calma em crises)
+      4. NEUROTICISMO: ${factors.neuroticism} (${getLevel(factors.neuroticism)})
+         (⚠️ ATENÇÃO: No relatório aparece 'Neuroticismo' = ${factors.neuroticism}. Use este número.
+          Explique que Neuroticismo Alto significa ALTA Sensibilidade/Intensidade Emocional, e não 'loucura'.
+          Neuroticismo Baixo significa Estabilidade.)
       5. ABERTURA: ${factors.openness} (${getLevel(factors.openness)})
-         (Criatividade e inovação)
 
-      🧠 REGRAS DE OURO PARA SUA RESPOSTA:
-      1. **LINGUAGEM POPULAR:** Não use termos como "Neuroticismo". Fale "Nível de Estresse".
-      2. **EXEMPLOS DO DIA A DIA:** É OBRIGATÓRIO dar ao menos um exemplo prático.
-         - Ruim: "Sua assertividade é alta."
-         - Bom: "Sabe aquela reunião em que todo mundo fica calado e você é o primeiro a falar? Isso é sua Extroversão alta agindo."
-      3. **SEJA DIRETA:** Responda a pergunta na primeira frase. Nada de "rodeios".
-      4. **TOM DE VOZ:** Empático, mas assertivo. Use emojis para quebrar o gelo. ✨
+      🧠 REGRAS DE OURO:
+      1. **USE OS NÚMEROS DA TELA**: Se o relatório diz 53, Diga "Seu Neuroticismo é 53". Não inverta o cálculo para não confundir.
+      2. **NORMALIZAÇÃO SEMÂNTICA**:
+         - Em vez de falar "Você é neurótico", diga "Você tem uma intensidade emocional maior".
+         - Diga: "Isso significa que você se importa muito e sente o ambiente com força."
+      3. **EXEMPLO PRÁTICO (OBRIGATÓRIO)**: Conecte o traço com uma cena de trabalho.
+      4. **SEM RODEIOS**: Vá direto ao ponto.
 
-      💡 CONTEXTO ATUAL:
-      O usuário perguntou: "${profile.lastMessage || 'Sobre meu perfil'}"
-      Os dados foram capturados diretamente do relatório oficial. Interprete-os com sabedoria prática.
+      💡 CONTEXTO:
+      O usuário perguntou: "${profile.lastMessage || 'Analise meu perfil'}"
     `;
     }
 }
