@@ -4,9 +4,10 @@ import { ConnectionsController } from './connections.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { TalkingToModule } from '../talking-to/talking-to.module';
 import { AiModule } from '../ai/ai.module';
+import { ReportsModule } from '../reports/reports.module';
 
 @Module({
-    imports: [TalkingToModule, AiModule],
+    imports: [TalkingToModule, AiModule, ReportsModule],
     controllers: [ConnectionsController],
     providers: [ConnectionsService, PrismaService],
     exports: [ConnectionsService],

@@ -252,15 +252,23 @@ export class InterpretationService {
 
         // --- INTEGRAÇÃO TALKING TO ---
         // Extrair scores calculados para alimentar o novo motor
+        const facetsMap: any = {};
+        report.traits.forEach(t => {
+            if (t.facets) {
+                facetsMap[t.key] = t.facets;
+            }
+        });
+
         const scores = {
             O: report.traits.find(t => t.key === 'OPENNESS' || t.key.includes('OPEN'))?.score || 50,
             C: report.traits.find(t => t.key === 'CONSCIENTIOUSNESS' || t.key.includes('CONSC'))?.score || 50,
             E: report.traits.find(t => t.key === 'EXTRAVERSION' || t.key.includes('EXTRA'))?.score || 50,
             A: report.traits.find(t => t.key === 'AGREEABLENESS' || t.key.includes('AGREE'))?.score || 50,
             N: report.traits.find(t => t.key === 'NEUROTICISM' || t.key.includes('NEURO'))?.score || 50,
+            facets: facetsMap
         };
 
-        const talkingToAnalysis = this.talkingToService.analyzeProfile(scores);
+        const talkingToAnalysis = await this.talkingToService.analyzeProfile(scores);
 
         return {
             ...report,

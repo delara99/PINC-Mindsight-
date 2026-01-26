@@ -1,42 +1,42 @@
+
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TalkingToService, TalkingToInput } from '../talking-to/talking-to.service';
 import { AiService } from '../ai/ai.service';
+import { InterpretationService } from '../reports/interpretation.service';
 
 @Injectable()
 export class ConnectionsService {
     constructor(
         private prisma: PrismaService,
         private talkingToService: TalkingToService,
-        private aiService: AiService
+        private aiService: AiService,
+        private interpretationService: InterpretationService
     ) { }
 
-    // Helper para determinar nível
     private getLevel(score: number): string {
-        if (score <= 25) return 'VERY_LOW';
-        if (score <= 45) return 'LOW';
-        if (score <= 55) return 'AVERAGE';
-        if (score <= 75) return 'HIGH';
-        return 'VERY_HIGH';
+        if (score >= 65) return 'HIGH';
+        if (score <= 35) return 'LOW';
+        return 'AVERAGE';
     }
 
-    // Busca textos ricos no banco
-    private async fetchRichTextsForScores(scores: any) {
-        const traits = [
-            { key: 'O', label: 'OPENNESS' },
-            { key: 'C', label: 'CONSCIENTIOUSNESS' },
-            { key: 'E', label: 'EXTRAVERSION' },
-            { key: 'A', label: 'AGREEABLENESS' },
-            { key: 'N', label: 'NEUROTICISM' }
+    // Buscador de Textos Ricos (Legacy/Optional helper)
+    private async fetchRichTextsForScores(scores: any): Promise<Record<string, string>> {
+        const richMap: Record<string, string> = {};
+        const getVal = (short: string, long: string) => scores[short] ?? scores[long];
+
+        const mapTraits = [
+            { label: 'EXTRAVERSION', val: getVal('E', 'EXTRAVERSION') },
+            { label: 'AGREEABLENESS', val: getVal('A', 'AGREEABLENESS') },
+            { label: 'CONSCIENTIOUSNESS', val: getVal('C', 'CONSCIENTIOUSNESS') },
+            { label: 'OPENNESS', val: getVal('O', 'OPENNESS') },
+            { label: 'NEUROTICISM', val: getVal('N', 'NEUROTICISM') }
         ];
 
-        const richMap: Record<string, string> = {};
+        await Promise.all(mapTraits.map(async (t) => {
+            const level = this.getLevel(Number(t.val) || 50);
 
-        await Promise.all(traits.map(async (t) => {
-            const score = scores[t.key] || 50;
-            const level = this.getLevel(score);
-
-            // Prioridade 1: Resumo (SUMMARY)
+            // Prioridade 1: Summary (Auto) ou Texto Rico
             const summary = await this.prisma.bigFiveInterpretativeText.findFirst({
                 where: { traitKey: t.label, scoreRange: level, category: 'SUMMARY' },
                 orderBy: { createdAt: 'desc' }
@@ -86,8 +86,6 @@ export class ConnectionsService {
         };
     }
 
-    // ... existing code ...
-
     async getComparisonData(connectionId: string, userId: string) {
         const connection = await this.prisma.connection.findFirst({
             where: {
@@ -124,97 +122,50 @@ export class ConnectionsService {
         ]);
 
         if (!myLastAssessment || !partnerLastAssessment) {
-            // ... (keep error handling)
             return { radarData: null, error: 'Dados insuficientes.', status: { me: !!myLastAssessment, partner: !!partnerLastAssessment, message: 'Falta assessment.' } };
         }
 
-        // Helper para normalizar chaves (OPENNESS -> O)
-        const normalizeScores = (rawScores: any): TalkingToInput => {
-            if (!rawScores) return { O: 50, C: 50, E: 50, A: 50, N: 50 };
-
-            // Tenta achar chaves longas ou curtas
-            const getVal = (short: string, long: string) => {
-                let val = rawScores[short] ?? rawScores[long];
-                // Se ainda for nulo, tenta lowercase
-                if (val === undefined) val = rawScores[long.toLowerCase()];
-
-                // Se for um objeto (formato novo do result builder), extrai o score numérico
-                if (typeof val === 'object' && val !== null && 'score' in val) {
-                    val = val.score;
-                }
-
-                // Se ainda for string numérico, converte
-                if (typeof val === 'string') val = Number(val);
-
-                return typeof val === 'number' && !isNaN(val) ? val : 50;
-            };
-
-            return {
-                O: getVal('O', 'OPENNESS'),
-                C: getVal('C', 'CONSCIENTIOUSNESS'),
-                E: getVal('E', 'EXTRAVERSION'),
-                A: getVal('A', 'AGREEABLENESS'),
-                N: getVal('N', 'NEUROTICISM'),
-                facets: rawScores.facets || {}
-            };
-        };
-
-        const myScores = normalizeScores((myLastAssessment.result as any)?.scores);
-        const partnerScores = normalizeScores((partnerLastAssessment.result as any)?.scores);
-
         console.log(`[COMPARISON AUDIT] Connection: ${connectionId}`);
-        console.log(`   - Me (${myLastAssessment.user.email}): O=${myScores.O}, C=${myScores.C}, E=${myScores.E}, A=${myScores.A}, N=${myScores.N} (ID: ${myLastAssessment.id})`);
-        console.log(`   - Partner (${partnerLastAssessment.user.email}): O=${partnerScores.O}, C=${partnerScores.C}, E=${partnerScores.E}, A=${partnerScores.A}, N=${partnerScores.N} (ID: ${partnerLastAssessment.id})`);
 
-        if (!myScores || !partnerScores) {
-            return { error: 'Scores inválidos ou corrompidos.' };
+        // ------------------------------------------------------------------
+        // NEW LOGIC: Use InterpretationService to Recalculate Facets & Scores
+        // ------------------------------------------------------------------
+
+        let myReport, partnerReport;
+
+        try {
+            // Using || '' for tenantId to handle potential nulls, although schema suggests optional link
+            myReport = await this.interpretationService.generateFullReport(myLastAssessment.id, myLastAssessment.user.tenantId || '');
+            partnerReport = await this.interpretationService.generateFullReport(partnerLastAssessment.id, partnerLastAssessment.user.tenantId || '');
+        } catch (error) {
+            console.error('[ConnectionsService] Failed to generate full report via InterpretationService:', error);
+            return { radarData: null, error: 'Erro ao processar relatório detalhado (Facetas ausentes/Erro de cálculo).', status: { me: true, partner: true, message: 'Calculation Error' } };
         }
 
-        const [myAnalysis, partnerAnalysis] = await Promise.all([
-            this.talkingToService.analyzeProfile(myScores),
-            this.talkingToService.analyzeProfile(partnerScores)
-        ]);
+        // 2. Extract TalkingTo Analysis (Rich with Facets)
+        const myAnalysis = myReport.talkingToAnalysis;
+        const partnerAnalysis = partnerReport.talkingToAnalysis;
 
-        // Prepare Radar Data (Normalized)
-        const dimensionsMap: Record<string, string> = {
-            'O': 'Abertura',
-            'C': 'Conscienciosidade',
-            'E': 'Extroversão',
-            'A': 'Agradabilidade',
-            'N': 'Estabilidade' // Note: N is usually Neuroticism, but TalkingTo treats inverse as Stability sometimes. Let's use raw or inverse? 
-            // In TalkingToService logic: analyzeStability takes neuroticismScore. 
-            // But for Radar Chart, usually we want "Positive" traits outwards. 
-            // Let's stick to the 5 keys.
-        };
-
-        // 2. Extrair Interpretações ORIGINAIS salvas (para consistência com Relatório Oficial)
-        const extractInterpretations = (raw: any, normalized: TalkingToInput) => {
-            const map: Record<string, string> = {};
-            const keys = ['O', 'C', 'E', 'A', 'N'];
-            const longKeys = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
-
-            keys.forEach((key, idx) => {
-                const long = longKeys[idx];
-                // Tenta achar o objeto original
-                const obj = raw[key] || raw[long] || raw[long.toLowerCase()];
-                if (obj && typeof obj === 'object') {
-                    // Tenta achar o texto rico salvo
-                    const text = obj.customTexts?.text_interpretation || obj.text_interpretation || obj.interpretation;
-                    if (text && typeof text === 'string' && text.length > 20) {
-                        map[long] = text;
-                    }
+        // 3. Helper to extract Scores+Facets for Relationship Analysis
+        const extractInput = (report: any): TalkingToInput => {
+            const scores: any = { facets: {} };
+            report.traits.forEach((t: any) => {
+                const shortKey = t.key[0]; // O, C, E, A, N
+                scores[shortKey] = t.score;
+                if (t.facets) {
+                    scores.facets[t.key] = t.facets;
                 }
             });
-            return map;
+            return scores as TalkingToInput;
         };
 
+        const myScores = extractInput(myReport);
+        const partnerScores = extractInput(partnerReport);
 
+        // 4. Analyze Relationship (Now using Rich Scores)
+        const relationshipAnalysis = this.talkingToService.analyzeRelationship(myScores, partnerScores);
 
-
-
-
-
-        // Prepare Radar Data (Normalized)
+        // 5. Prepare Radar Data
         const radarData = [
             { subject: 'Abertura', A: myScores.O, B: partnerScores.O, fullMark: 100 },
             { subject: 'Conscienciosidade', A: myScores.C, B: partnerScores.C, fullMark: 100 },
@@ -223,27 +174,25 @@ export class ConnectionsService {
             { subject: 'Estabilidade', A: 100 - myScores.N, B: 100 - partnerScores.N, fullMark: 100 },
         ];
 
-        const relationshipAnalysis = this.talkingToService.analyzeRelationship(myScores, partnerScores);
-
         return {
             me: {
                 name: myLastAssessment.user.name,
                 analysis: myAnalysis.profile_summary,
-                full_analysis: myAnalysis.talkingto_analysis, // Passed full details
+                full_analysis: myAnalysis.talkingto_analysis,
                 scores: myScores
             },
             partner: {
                 name: partnerLastAssessment.user.name,
                 analysis: partnerAnalysis.profile_summary,
-                full_analysis: partnerAnalysis.talkingto_analysis, // Passed full details
+                full_analysis: partnerAnalysis.talkingto_analysis,
                 scores: partnerScores
             },
             relationship_analysis: relationshipAnalysis,
             radarData,
-            shared: true
+            shared: true,
+            status: { me: true, partner: true, shared: true }
         };
     }
-
 
     // Enviar convite
     async sendInvite(senderId: string, email: string) {
@@ -257,15 +206,10 @@ export class ConnectionsService {
         }
 
         if (receiver.id === senderId) {
-            throw new BadRequestException('Você não pode convidar a si mesmo.');
+            throw new BadRequestException('Você não pode se conectar com você mesmo.');
         }
 
-        const sender = await this.prisma.user.findUnique({ where: { id: senderId } });
-        if (sender?.plan === 'START') {
-            throw new ForbiddenException('Seu plano atual não permite enviar convites. Faça o upgrade para o PRO.');
-        }
-
-        // Verificar se já existe conexão ou pedido
+        // Verificar se já existe conexão
         const existingConnection = await this.prisma.connection.findFirst({
             where: {
                 OR: [
@@ -765,15 +709,6 @@ export class ConnectionsService {
             }
         });
 
-        // TODO: Add audit log when AuditLog model is created
-        // await this.prisma.auditLog.create({
-        //     data: {
-        //         action: 'ADMIN_CANCEL_CONNECTION',
-        //         userId: adminId,
-        //         details: `Admin ${admin.name} cancelou conexão entre ${connection.userA.name} e ${connection.userB.name}. Motivo: ${reason || 'Não especificado'}`
-        //     }
-        // });
-
         return updated;
     }
 
@@ -802,15 +737,6 @@ export class ConnectionsService {
             include: { sender: { select: { id: true, name: true, email: true } } },
             orderBy: { createdAt: 'asc' }
         });
-
-        // TODO: Add audit log when AuditLog model is created
-        // await this.prisma.auditLog.create({
-        //     data: {
-        //         action: 'ADMIN_VIEW_MESSAGES',
-        //         userId: adminId,
-        //         details: `Admin ${admin.name} visualizou mensagens da conexão entre ${connection.userA.name} e ${connection.userB.name}`
-        //     }
-        // });
 
         return {
             connection: {
