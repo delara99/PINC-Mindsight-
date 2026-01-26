@@ -139,6 +139,47 @@ export class ConnectionsService {
             // Let's stick to the 5 keys.
         };
 
+        // 2. Extrair Interpretações ORIGINAIS salvas (para consistência com Relatório Oficial)
+        const extractInterpretations = (raw: any, normalized: TalkingToInput) => {
+            const map: Record<string, string> = {};
+            const keys = ['O', 'C', 'E', 'A', 'N'];
+            const longKeys = ['OPENNESS', 'CONSCIENTIOUSNESS', 'EXTRAVERSION', 'AGREEABLENESS', 'NEUROTICISM'];
+
+            keys.forEach((key, idx) => {
+                const long = longKeys[idx];
+                // Tenta achar o objeto original
+                const obj = raw[key] || raw[long] || raw[long.toLowerCase()];
+                if (obj && typeof obj === 'object') {
+                    // Tenta achar o texto rico salvo
+                    const text = obj.customTexts?.text_interpretation || obj.text_interpretation || obj.interpretation;
+                    if (text && typeof text === 'string' && text.length > 20) {
+                        map[long] = text;
+                    }
+                }
+            });
+            return map;
+        };
+
+        const myStoredTexts = extractInterpretations((myLastAssessment.result as any)?.scores, myScores);
+        const partnerStoredTexts = extractInterpretations((partnerLastAssessment.result as any)?.scores, partnerScores);
+
+
+
+        // 3. Hydrate Analysis with Stored Texts (Override generic generation)
+        const hydrate = (analysis: any, storedMap: Record<string, string>) => {
+            if (!analysis.talkingto_analysis) return;
+            analysis.talkingto_analysis.forEach((dim: any) => {
+                const key = dim.traitKey; // e.g. EXTRAVERSION
+                if (storedMap[key]) {
+                    dim.text_interpretation = storedMap[key];
+                }
+            });
+        };
+
+        hydrate(myAnalysis, myStoredTexts);
+        hydrate(partnerAnalysis, partnerStoredTexts);
+
+        // Prepare Radar Data (Normalized)
         const radarData = [
             { subject: 'Abertura', A: myScores.O, B: partnerScores.O, fullMark: 100 },
             { subject: 'Conscienciosidade', A: myScores.C, B: partnerScores.C, fullMark: 100 },
