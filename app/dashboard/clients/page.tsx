@@ -365,13 +365,15 @@ export default function ClientsPage() {
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Meus Clientes</h1>
                     <p className="text-gray-500 mt-1 text-sm">Gerencie usuários, créditos e acessos.</p>
                 </div>
-                <button
-                    onClick={() => setIsRegisterModalOpen(true)}
-                    className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
-                >
-                    <Plus size={18} />
-                    Novo Cliente
-                </button>
+                <div className={`transition-opacity duration-200 ${activeTab === 'COUPONS' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                    <button
+                        onClick={() => setIsRegisterModalOpen(true)}
+                        className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
+                    >
+                        <Plus size={18} />
+                        Novo Cliente
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -401,7 +403,7 @@ export default function ClientsPage() {
                     <Loader2 size={40} className="animate-spin text-primary" />
                 </div>
             ) : activeTab === 'COUPONS' ? (
-                // Tabela de Cupons (Simplificada)
+                // Tabela de Cupons
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
                         <h3 className="font-bold text-gray-700">Gerenciar Cupons</h3>
@@ -430,12 +432,17 @@ export default function ClientsPage() {
                                         </td>
                                     </tr>
                                 ))}
+                                {(!coupons || coupons.length === 0) && (
+                                    <tr>
+                                        <td colSpan={4} className="py-8 text-center text-gray-400 text-sm">Nenhum cupom ativo.</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
             ) : (
-                // Lista de Clientes Otimizada
+                // Lista de Clientes
                 <div className="grid gap-4 md:gap-0 bg-transparent md:bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-sm overflow-visible">
                     {/* Header da Tabela (Desktop) */}
                     <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50/80 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">
@@ -627,6 +634,40 @@ export default function ClientsPage() {
                                 ))}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Criação de Cupom */}
+            {isCouponModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
+                    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold">Criar Novo Cupom</h3>
+                            <button onClick={() => setIsCouponModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleCreateCoupon} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Código Promocional</label>
+                                <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono uppercase" placeholder="EX: NATAL20" required />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Desconto (%)</label>
+                                    <input type="number" min="1" max="100" value={newCoupon.discountPercent} onChange={e => setNewCoupon({ ...newCoupon, discountPercent: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Limite Usos (Opcional)</label>
+                                    <input type="number" min="1" value={newCoupon.usageLimit} onChange={e => setNewCoupon({ ...newCoupon, usageLimit: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" placeholder="∞" />
+                                </div>
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button type="button" onClick={() => setIsCouponModalOpen(false)} className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg">Cancelar</button>
+                                <button type="submit" disabled={createCouponMutation.isPending} className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary-hover flex items-center gap-2">
+                                    {createCouponMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Criar Cupom'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

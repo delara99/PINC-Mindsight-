@@ -89,25 +89,52 @@ export function PaymentModal({ isOpen, onClose, plan, token }: PaymentModalProps
         setTimeout(() => window.location.reload(), 3000);
     };
 
-    const handleValidateCoupon = () => {
+    const handleValidateCoupon = async () => {
         setValidatingCoupon(true);
         setCouponMessage(null);
 
-        // Simulação de delay de rede
-        setTimeout(() => {
-            setValidatingCoupon(false);
+        try {
+            // 1. Validar Cupom na API
+            const res = await fetch(`${API_URL}/api/v1/coupons/validate?code=${couponCode}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-            // Mock de lógica de validação
-            // No futuro, substituir por fetch(`${API_URL}/api/v1/coupons/validate`, ...)
-            if (['TESTE100', 'VIP2025', 'PINC2025', 'BETA'].includes(couponCode)) {
-                setCouponMessage({ type: 'success', text: 'Cupom aplicado com sucesso!' });
-                setValidatedCoupon({ code: couponCode, discount: 100 });
-                // Simular sucesso do checkout se for 100% de desconto
-                setTimeout(() => setActivated(true), 1000);
-            } else {
-                setCouponMessage({ type: 'error', text: 'Cupom inválido ou expirado.' });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Cupom inválido');
             }
-        }, 1500);
+
+            const couponData = await res.json();
+
+            // 2. Se for 100%, Aplicar Imediatamente
+            if (couponData.discountPercent === 100) {
+                const applyRes = await fetch(`${API_URL}/api/v1/coupons/apply`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        code: couponCode,
+                        planId: plan.id,
+                        planName: plan.name
+                    })
+                });
+
+                if (!applyRes.ok) throw new Error('Erro ao aplicar cupom');
+
+                setCouponMessage({ type: 'success', text: 'Cupom 100% aplicado! Acesso liberado.' });
+                setValidatedCoupon(couponData);
+                setTimeout(() => setActivated(true), 1500);
+            } else {
+                setCouponMessage({ type: 'error', text: `Este cupom dá ${couponData.discountPercent}% OFF. No momento aceitamos apenas Vouchers de 100%.` });
+            }
+
+        } catch (error: any) {
+            setCouponMessage({ type: 'error', text: error.message || 'Cupom inválido ou expirado.' });
+        } finally {
+            setValidatingCoupon(false);
+        }
     };
 
     return (
