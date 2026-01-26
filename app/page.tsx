@@ -49,10 +49,10 @@ export default function Home() {
         <main className="min-h-screen bg-white text-gray-800 font-sans">
 
             {/* HEADER */}
-            <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+                <div className="max-w-7xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <img src="/logo.png" alt="PINC Logo" className="h-12 w-auto object-contain" />
+                        <img src="/logo.png" alt="PINC Logo" className="h-10 md:h-12 w-auto object-contain" />
                     </div>
 
                     {/* Desktop Nav */}
@@ -79,34 +79,37 @@ export default function Home() {
 
                         {/* Mobile Menu Button */}
                         <button
-                            className="md:hidden text-gray-700 hover:text-primary focus:outline-none"
+                            className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                             onClick={toggleMenu}
+                            aria-label="Menu Principal"
                         >
-                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
                         </button>
                     </div>
                 </div>
 
                 {/* Mobile Menu Overlay */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl py-6 px-6 flex flex-col gap-6 animate-in slide-in-from-top-5">
-                        <nav className="flex flex-col gap-4 font-medium text-gray-700 text-lg">
-                            <Link href="#features" onClick={toggleMenu} className="hover:text-primary">Funcionalidades</Link>
-                            <Link href="/company" onClick={toggleMenu} className="hover:text-primary text-primary">Metodologia</Link>
-                            <Link href="/business" onClick={toggleMenu} className="hover:text-primary">Para Empresas</Link>
-                            <Link href="#plans" onClick={toggleMenu} className="hover:text-primary">Planos</Link>
-                            <Link href="/about" onClick={toggleMenu} className="hover:text-primary">Sobre Nós</Link>
-                        </nav>
-                        <div className="flex flex-col gap-3 border-t border-gray-100 pt-6">
-                            <Link href="/auth/login" onClick={toggleMenu} className="text-center font-semibold text-primary py-2">
-                                Área do Cliente
+                    <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-100 shadow-xl py-4 px-4 flex flex-col h-[calc(100vh-64px)] overflow-y-auto animate-in slide-in-from-top-2">
+                        <div className="space-y-1 mb-6">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-2 mb-2">Navegação</p>
+                            <Link href="#features" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-xl">Funcionalidades</Link>
+                            <Link href="/company" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-primary hover:bg-primary/5 rounded-xl">Metodologia</Link>
+                            <Link href="/business" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-xl">Para Empresas</Link>
+                            <Link href="#plans" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-xl">Planos</Link>
+                            <Link href="/about" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-xl">Sobre Nós</Link>
+                        </div>
+
+                        <div className="mt-auto border-t border-gray-100 pt-6 pb-8 space-y-3">
+                            <Link href="/auth/login" onClick={toggleMenu} className="flex justify-center items-center w-full px-4 py-3 border border-primary/20 text-primary font-bold rounded-xl hover:bg-primary/5 transition-colors">
+                                Já tenho conta
                             </Link>
                             <Link
                                 href="/auth/register"
                                 onClick={toggleMenu}
-                                className="text-center bg-secondary hover:bg-secondary-hover text-black font-bold py-3 rounded-full shadow-md"
+                                className="flex justify-center items-center w-full bg-secondary hover:bg-secondary-hover text-black font-bold py-4 px-6 rounded-xl shadow-lg shadow-secondary/20 active:scale-95 transition-transform"
                             >
-                                COMEÇAR AGORA
+                                COMEÇAR AGORA <ArrowRight size={18} className="ml-2" />
                             </Link>
                         </div>
                     </div>
