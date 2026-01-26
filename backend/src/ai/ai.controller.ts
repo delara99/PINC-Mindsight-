@@ -1,11 +1,10 @@
 
 import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common';
 import { AiService } from './ai.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('ai')
-@UseGuards(JwtAuthGuard) // Protegido: Só usuários logados
+@UseGuards(AuthGuard('jwt')) // Protegido: Só usuários logados
 export class AiController {
     constructor(private readonly aiService: AiService) { }
 

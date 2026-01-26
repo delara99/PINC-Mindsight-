@@ -22,8 +22,7 @@ import { InterpretationModule } from './interpretation/interpretation.module';
 import { TalkingToModule } from './talking-to/talking-to.module';
 import { BusinessModule } from './business/business.module';
 import { CalculationEngineModule } from './calculation-engine/calculation-engine.module';
-import { SeedModule,
-        AiModule } from './seed/seed.module';
+import { SeedModule } from './seed/seed.module';
 import { AiModule } from './ai/ai.module';
 
 @Module({
