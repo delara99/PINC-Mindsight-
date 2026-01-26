@@ -422,7 +422,7 @@ export default function ConnectionDetailPage() {
                                                                                 <div className="w-2 h-2 rounded-full bg-pink-500"></div> VOCÊ
                                                                             </span>
                                                                             <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-2.5 py-1 rounded-md border border-pink-100 shadow-sm">
-                                                                                {meTrait?.classification} ({comparisonData.me.scores[trait.trait] ?? '-'})
+                                                                                {meTrait?.classification} ({comparisonData.me.scores[trait.key] ?? '-'})
                                                                             </span>
                                                                         </div>
                                                                         <div className="text-sm text-gray-600 leading-relaxed text-justify bg-gray-50/50 p-4 rounded-xl border border-gray-100">
@@ -437,7 +437,7 @@ export default function ConnectionDetailPage() {
                                                                                 <div className="w-2 h-2 rounded-full bg-indigo-500"></div> {partner?.name.split(' ')[0].toUpperCase()}
                                                                             </span>
                                                                             <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100 shadow-sm">
-                                                                                {partnerTrait?.classification} ({comparisonData.partner.scores[trait.trait] ?? '-'})
+                                                                                {partnerTrait?.classification} ({comparisonData.partner.scores[trait.key] ?? '-'})
                                                                             </span>
                                                                         </div>
                                                                         <div className="text-sm text-gray-600 leading-relaxed text-justify bg-indigo-50/30 p-4 rounded-xl border border-indigo-50/50">
