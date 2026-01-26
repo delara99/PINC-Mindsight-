@@ -147,16 +147,17 @@ export class ConnectionsService {
         const partnerAnalysis = partnerReport.talkingToAnalysis;
 
         // 3. Helper to extract Scores+Facets for Relationship Analysis
-        const extractInput = (report: any): TalkingToInput => {
+        const extractInput = (report: any): TalkingToInput & Record<string, any> => {
             const scores: any = { facets: {} };
             report.traits.forEach((t: any) => {
                 const shortKey = t.key[0]; // O, C, E, A, N
                 scores[shortKey] = t.score;
+                scores[t.key] = t.score;
                 if (t.facets) {
                     scores.facets[t.key] = t.facets;
                 }
             });
-            return scores as TalkingToInput;
+            return scores;
         };
 
         const myScores = extractInput(myReport);
