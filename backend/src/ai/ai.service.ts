@@ -20,14 +20,20 @@ export class AiService {
 
     async generateChatResponse(userProfile: any, messages: any[], userPlan: string) {
         // 1. Validação de Plano (Business Rule)
-        // Se não for PRO ou BUSINESS, retornamos uma mensagem de teaser fixa ou erro,
-        // mas idealmente o frontend bloqueia. Aqui é a segurança final.
-        if (userPlan !== 'PRO' && userPlan !== 'BUSINESS' && userPlan !== 'SUPER_ADMIN') {
+        // Normalização para evitar erros de case (PRO, pro, Pro)
+        const normalizedPlan = (userPlan || '').toUpperCase().trim();
+
+        // Lista de planos permitidos
+        const allowedPlans = ['PRO', 'BUSINESS', 'SUPER_ADMIN', 'ENTERPRISE'];
+
+        if (!allowedPlans.includes(normalizedPlan)) {
+            this.logger.warn(`User blocked from AI. Plan: ${userPlan} (Normalized: ${normalizedPlan})`);
+
             return {
                 role: 'assistant',
                 content: '🔒 Recurso exclusivo para assinantes PRO. Faça o upgrade para continuar nossa conversa e desbloquear sua mentoria personalizada.'
             };
-        }
+        };
 
         try {
             // 2. Construção do System Prompt (A "Personalidade" da PINC)
