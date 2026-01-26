@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus, Get } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,6 +10,11 @@ export class AiController {
         private readonly aiService: AiService,
         private readonly prisma: PrismaService
     ) { }
+
+    @Get('history')
+    async getHistory(@Request() req) {
+        return this.aiService.getChatHistory(req.user.userId);
+    }
 
     @Post('chat')
     async chat(@Request() req, @Body() body: { message: string, history: any[], profileContext: any }) {
@@ -33,6 +38,7 @@ export class AiController {
 
         try {
             const response = await this.aiService.generateChatResponse(
+                tokenUser.userId, // Passando ID para persistência
                 body.profileContext || { name: tokenUser.name }, // Contexto do perfil (scores)
                 body.history || [], // Histórico da conversa
                 user.plan || 'START' // Plano RECENTE do banco

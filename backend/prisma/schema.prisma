@@ -101,6 +101,8 @@ model User {
   actionPlansAsManager  ActionPlan[] @relation("PlanManager")
   performanceSnapshots  PerformanceSnapshot[]
 
+  aiChats               AiChatHistory[]
+
   @@map("users")
 }
 
@@ -1227,4 +1229,21 @@ model PerformanceSnapshot {
   createdAt       DateTime @default(now())
   
   @@map("performance_snapshots")
+}
+
+// =======================
+// AI Chat Domain
+// =======================
+
+model AiChatHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  role      String   // 'user' | 'assistant'
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_chat_history")
 }

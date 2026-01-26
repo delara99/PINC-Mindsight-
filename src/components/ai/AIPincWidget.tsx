@@ -23,15 +23,34 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Initial Greeting Teaser
+    // Initial Greeting vs History
     useEffect(() => {
-        if (isOpen && messages.length === 0) {
-            // Personalização básica baseada no nome
-            const greeting = `Olá ${user?.name?.split(' ')[0] || ''}! Sou a PINC, sua coach de carreira baseada no seu perfil. Vi seus resultados e tenho alguns insights. O que você gostaria de explorar hoje?`;
-
-            setMessages([
-                { id: 'welcome', role: 'assistant', content: greeting }
-            ]);
+        if (isOpen) {
+            const fetchHistory = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/v1/ai/history`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const history = await res.json();
+                        if (history.length > 0) {
+                            setMessages(history.map((h: any) => ({
+                                id: h.id,
+                                role: h.role,
+                                content: h.content
+                            })));
+                        } else if (messages.length === 0) {
+                            // Se não tem histórico, mostra saudação
+                            const greeting = `Olá ${user?.name?.split(' ')[0] || ''}! Sou a PINC, sua coach de carreira prática. Vi seus resultados e tenho alguns insights 
+                            reais para você crescer. O que você gostaria de explorar hoje?`;
+                            setMessages([{ id: 'welcome', role: 'assistant', content: greeting }]);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro carregando histórico", e);
+                }
+            };
+            fetchHistory();
         }
     }, [isOpen, user]);
 
