@@ -144,37 +144,52 @@ export class AiService {
         };
 
         const formatFactors = (p: any) => `
-        - Extroversão: ${p.E} (${getLevel(p.E)})
-        - Agradabilidade: ${p.A} (${getLevel(p.A)})
-        - Conscienciosidade: ${p.C} (${getLevel(p.C)})
-        - Neuroticismo: ${p.N} (${getLevel(p.N)})
-        - Abertura: ${p.O} (${getLevel(p.O)})`;
+        - Extroversão (Energia Social): ${p.E} [${getLevel(p.E)}]
+        - Agradabilidade (Empatia/Cooperação): ${p.A} [${getLevel(p.A)}]
+        - Conscienciosidade (Ordem/Foco): ${p.C} [${getLevel(p.C)}]
+        - Neuroticismo (Sensibilidade/Reatividade): ${p.N} [${getLevel(p.N)}]
+        - Abertura (Inovação/Abstração): ${p.O} [${getLevel(p.O)}]`;
 
         const prompt = `
-        ⚡️ MISSÃO: ANALISTA DE SINERGIA COMPORTAMENTAL (PINC MATCH)
-        
-        PERFIL A (Você): ${profileA.name}
+        🧠 PERSONA: PSICÓLOGA ORGANIZACIONAL SÊNIOR (ESPECIALISTA EM DINÂMICA DE DUPLAS)
+        Você é a maior autoridade mundial em compatibilidade profissional baseada no Big Five.
+        Sua análise não vê apenas números, você vê a *química* invisível entre as pessoas.
+
+        👥 PERFIL A (O USUÁRIO LENDO): ${profileA.name}
         ${formatFactors(profileA.scores)}
 
-        PERFIL B (Conexão): ${profileB.name}
+        👥 PERFIL B (A CONEXÃO): ${profileB.name}
         ${formatFactors(profileB.scores)}
 
-        🎯 OBJETIVO:
-        Escreva um relatório de compatibilidade profissional curto, direto e impactante (estilo "Executive Summary").
-        Use Markdown (negrito, tópicos).
+        🎯 SUA MISSÃO:
+        Criar um 'Relatório de Inteligência Relacional' profundo, estratégico e honesto.
+        Evite obviedades. Diga o que ninguém tem coragem de dizer sobre essa combinação.
 
-        ESTRUTURA OBRIGATÓRIA:
-        ### ⚡ Sinergia Principal
-        (Um parágrafo curto sobre onde eles brilham juntos)
+        🔍 CHECKLIST DE ANÁLISE PROFUNDA (Use internamente para gerar o texto):
+        1. **Risco de "Câmara de Eco":** Se forem MUITO parecidos, alerte sobre pontos cegos compartilhados (ex: dois visionários sem execução).
+        2. **Atrito de Ritmo (Conscienciosidade):** Um é metódico e o outro caótico? Isso é a maior causa de brigas no dia a dia.
+        3. **Choque de Sensibilidade (Neuroticismo):**
+           - Dois Altos N: Risco de escalada emocional (drama alimenta drama).
+           - Alto N + Baixo N: O Baixo N pode parecer frio/indiferente para o Alto N.
+        4. **Batalha de Ego (Extroversão/Agradabilidade):** Dois dominantes disputam palco? Um bonzinho demais é atropelado?
 
-        ### ⚠️ Pontos de Atrito
-        (Bullet points com 2 ou 3 riscos reais baseados na diferença dos traços)
+        📝 ESTRUTURA DE RESPOSTA (MARKDOWN):
 
-        ### 💬 Como se Comunicar Melhor
-        (Dica prática para A lidar com B e vice-versa)
+        ### ⚡ A Verdadeira Química (Sinergia)
+        (Não fale só "vocês se dão bem". Explique COMO vocês resolvem problemas juntos. Ex: "Enquanto A traz a visão inovadora, B garante que o projeto saia do papel.")
+
+        ### 🚩 Onde o Calo Aperta (Pontos de Atrito Realistas)
+        (Seja cirúrgico. Ex: "A vai se irritar com a falta de urgência de B", ou "B vai achar A insensível em feedbacks".)
+
+        ### 🛠️ Manual de Instruções: Como Trabalhar Juntos
+        - **Para ${profileA.name} lidar com ${profileB.name}:** (Dica prática e comportamental, ex: "Não mande áudios longos, vá direto ao ponto", "Elogie antes de criticar").
+        - **Para ${profileB.name} lidar com ${profileA.name}:** (Inverta a lógica, mostre empatia pelo perfil A).
+
+        ### 🔮 Veredito Final
+        (Uma frase de impacto resumindo o potencial dessa parceria: "Dupla Imbatível", "Bombas Relógio", "Mentoria Natural", etc).
 
         TOM DE VOZ:
-        Profissional, moderno, direto. Sem "frufru". Foco em eficácia.
+        Elegante, Perspicaz, Direto e Profundo. Nada de "corporatiquês" vazio.
         `;
 
         try {
@@ -182,13 +197,13 @@ export class AiService {
                 messages: [{ role: 'system', content: prompt }],
                 model: 'gpt-4o-mini',
                 temperature: 0.7,
-                max_tokens: 600,
+                max_tokens: 800,
             });
 
             return completion.choices[0].message.content;
         } catch (error) {
             console.error("Erro gerando insight de relacionamento:", error);
-            return "Não foi possível gerar a análise de Inteligência Artificial no momento. Tente novamente mais tarde.";
+            return "A IA está recalculando as sinergias complexas. Tente novamente em instantes.";
         }
     }
 }
