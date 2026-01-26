@@ -65,10 +65,10 @@ export default function MyAssessmentsPage() {
 
     const handleStartAssessment = async (assessment: Assessment) => {
         if ((user?.credits || 0) < 1) {
-        if ((user?.credits || 0) < 1) {
-            router.push('/dashboard/plans');
-            return;
-        }
+            if ((user?.credits || 0) < 1) {
+                router.push('/dashboard/plans');
+                return;
+            }
             return;
         }
 
@@ -112,7 +112,7 @@ export default function MyAssessmentsPage() {
         // Capitalize first letter logic handled by CSS or standard formatted string
         const key = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         const keyCapitalized = key.charAt(0).toUpperCase() + key.slice(1);
-        
+
         if (!groups[keyCapitalized]) groups[keyCapitalized] = [];
         groups[keyCapitalized].push(assessment);
         return groups;
@@ -168,8 +168,8 @@ export default function MyAssessmentsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {pendingAssessments.map((assessment) => (
                                     <div key={assessment.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-                                         {/* Lógica de Bloqueio/Crédito (igual original) */}
-                                         {assessment.assignmentStatus !== 'COMPLETED' && (user?.credits || 0) < 1 && (
+                                        {/* Lógica de Bloqueio/Crédito (igual original) */}
+                                        {assessment.assignmentStatus !== 'COMPLETED' && (user?.credits || 0) < 1 && (
                                             <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center p-6 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                 <div className="bg-white p-4 rounded-xl shadow-xl border border-red-100 transform scale-100">
                                                     <Wallet className="mx-auto text-red-500 mb-2" size={24} />
@@ -229,7 +229,7 @@ export default function MyAssessmentsPage() {
                                         O mercado muda, você evolui. Refazer seu inventário periodicamente é a chave para acompanhar seu crescimento e calibrar sua bússola profissional.
                                     </p>
                                     <div className="flex flex-wrap gap-4">
-                                        <button 
+                                        <button
                                             onClick={() => router.push('/dashboard/plans')}
                                             className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
                                         >
@@ -257,7 +257,7 @@ export default function MyAssessmentsPage() {
                                     <div key={dateKey} className="relative animate-fadeIn" style={{ animationDelay: `${index * 100}ms` }}>
                                         {/* Bolinha da Timeline */}
                                         <div className="absolute -left-[41px] top-0 bg-white border-4 border-indigo-100 w-6 h-6 rounded-full flex items-center justify-center z-10" />
-                                        
+
                                         <div className="mb-6">
                                             <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-wider">
                                                 {dateKey}
@@ -266,28 +266,26 @@ export default function MyAssessmentsPage() {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                             {items.map((assessment) => (
-                                                <div key={assessment.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all group cursor-pointer"
-                                                     onClick={() => router.push(`/dashboard/assessments/results/${(assessment as any).assignmentId || assessment.id}`)}>
+                                                <div key={assessment.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm transition-all group cursor-default">
+                                                    {/* onClick removido para evitar abrir relatório antigo */}
                                                     <div className="flex justify-between items-start mb-3">
-                                                        <div className="p-2 bg-green-50 rounded-lg text-green-600 group-hover:bg-green-100 transition-colors">
+                                                        <div className="p-2 bg-green-50 rounded-lg text-green-600 transition-colors">
                                                             <Award size={20} />
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={(e) => handleDelete(e, (assessment as any).assignmentId)}
                                                                 className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors z-10"
                                                                 title="Excluir resultado"
                                                             >
                                                                 <Trash2 size={18} />
                                                             </button>
-                                                            <ArrowRight className="text-gray-300 group-hover:text-indigo-500 transition-colors" size={20} />
+                                                            {/* ArrowRight removido */}
                                                         </div>
                                                     </div>
                                                     <h3 className="font-bold text-gray-900 mb-1">{assessment.title}</h3>
-                                                    <p className="text-xs text-gray-500 mb-3 line-clamp-2">{assessment.description}</p>
-                                                    <div className="text-xs font-medium text-indigo-600 flex items-center gap-1">
-                                                        Ver Análise Completa
-                                                    </div>
+                                                    <p className="text-xs text-gray-500 mb-3 line-clamp-3 leading-relaxed">{assessment.description}</p>
+                                                    {/* Link "Ver Análise Completa" removido */}
                                                 </div>
                                             ))}
                                         </div>
@@ -311,7 +309,7 @@ export default function MyAssessmentsPage() {
                         >
                             <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-1 h-2" />
                             <div className="p-6 relative">
-                                <button 
+                                <button
                                     onClick={() => setIsNudgeOpen(false)}
                                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
                                 >
@@ -327,13 +325,13 @@ export default function MyAssessmentsPage() {
                                             Sua última análise foi incrível, mas você já mudou desde então. Que tal ver sua nova versão?
                                         </p>
                                         <div className="flex gap-3">
-                                            <button 
+                                            <button
                                                 onClick={() => { setIsNudgeOpen(false); router.push('/dashboard/plans'); }}
                                                 className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-pink-700 transition-colors shadow-lg shadow-pink-200"
                                             >
                                                 Ver Planos
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => setIsNudgeOpen(false)}
                                                 className="text-gray-500 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
                                             >
