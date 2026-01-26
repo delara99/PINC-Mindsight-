@@ -54,7 +54,7 @@ export default function Home() {
         <main className="min-h-screen bg-white text-gray-800 font-sans">
 
             {/* HEADER */}
-            <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+            <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <img src="/logo.png" alt="PINC Logo" className="h-10 md:h-12 w-auto object-contain" />
