@@ -134,9 +134,16 @@ export class ConnectionsService {
         let myReport, partnerReport;
 
         try {
-            // Using || '' for tenantId to handle potential nulls, although schema suggests optional link
-            myReport = await this.interpretationService.generateFullReport(myLastAssessment.id, myLastAssessment.user.tenantId || '');
-            partnerReport = await this.interpretationService.generateFullReport(partnerLastAssessment.id, partnerLastAssessment.user.tenantId || '');
+            // Use o tenantId do usuário da conexão (mais confiável que o assessment.user solto)
+            const myTenantId = (isUserA ? connection.userA.tenantId : connection.userB.tenantId) || myLastAssessment.user.tenantId || '';
+            const partnerTenantId = (isUserA ? connection.userB.tenantId : connection.userA.tenantId) || partnerLastAssessment.user.tenantId || '';
+
+            // Log para debug interno (vai para stdout do server)
+            console.log(`[COMPARISON] Generating report for MyID: ${myLastAssessment.id} (Tenant: ${myTenantId})`);
+            console.log(`[COMPARISON] Generating report for PartnerID: ${partnerLastAssessment.id} (Tenant: ${partnerTenantId})`);
+
+            myReport = await this.interpretationService.generateFullReport(myLastAssessment.id, myTenantId);
+            partnerReport = await this.interpretationService.generateFullReport(partnerLastAssessment.id, partnerTenantId);
         } catch (error) {
             console.error('[ConnectionsService] Failed to generate full report via InterpretationService:', error);
             return { radarData: null, error: 'Erro ao processar relatório detalhado (Facetas ausentes/Erro de cálculo).', status: { me: true, partner: true, message: 'Calculation Error' } };
