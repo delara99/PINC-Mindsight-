@@ -252,7 +252,13 @@ export default function MyReportPage() {
                     userProfile={{
                         name: user?.name,
                         role: user?.userType === 'COMPANY' ? user?.role : 'Membro',
-                        factors: report.factors || {}
+                        factors: report.unifiedScores ? {
+                            extroversion: report.unifiedScores['EXTRAVERSION']?.normalizedScore || 0,
+                            agreeableness: report.unifiedScores['AGREEABLENESS']?.normalizedScore || 0,
+                            conscientiousness: report.unifiedScores['CONSCIENTIOUSNESS']?.normalizedScore || 0,
+                            neuroticism: report.unifiedScores['NEUROTICISM']?.normalizedScore || 0,
+                            openness: report.unifiedScores['OPENNESS']?.normalizedScore || 0
+                        } : {}
                     }}
                 />
             )}
