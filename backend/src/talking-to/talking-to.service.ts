@@ -517,6 +517,8 @@ export class TalkingToService {
             }
 
             return {
+                key: dim.key,
+                traitKey: dim.trait,
                 dimension: dim.name,
                 similarity: absDiff < 15 ? 'HIGH' : absDiff < 30 ? 'MEDIUM' : 'LOW',
                 insight,

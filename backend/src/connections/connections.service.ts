@@ -167,12 +167,20 @@ export class ConnectionsService {
         const relationshipAnalysis = this.talkingToService.analyzeRelationship(myScores, partnerScores);
 
         // 5. Prepare Radar Data
+        // 5. Prepare Radar Data with Robust Access
+        const getScore = (s: any, k1: string, k2: string) => (s[k1] !== undefined ? s[k1] : s[k2] !== undefined ? s[k2] : 0);
+
         const radarData = [
-            { subject: 'Abertura', A: myScores.O, B: partnerScores.O, fullMark: 100 },
-            { subject: 'Conscienciosidade', A: myScores.C, B: partnerScores.C, fullMark: 100 },
-            { subject: 'Extroversão', A: myScores.E, B: partnerScores.E, fullMark: 100 },
-            { subject: 'Agradabilidade', A: myScores.A, B: partnerScores.A, fullMark: 100 },
-            { subject: 'Estabilidade', A: 100 - myScores.N, B: 100 - partnerScores.N, fullMark: 100 },
+            { subject: 'Abertura', A: getScore(myScores, 'O', 'OPENNESS'), B: getScore(partnerScores, 'O', 'OPENNESS'), fullMark: 100 },
+            { subject: 'Conscienciosidade', A: getScore(myScores, 'C', 'CONSCIENTIOUSNESS'), B: getScore(partnerScores, 'C', 'CONSCIENTIOUSNESS'), fullMark: 100 },
+            { subject: 'Extroversão', A: getScore(myScores, 'E', 'EXTRAVERSION'), B: getScore(partnerScores, 'E', 'EXTRAVERSION'), fullMark: 100 },
+            { subject: 'Agradabilidade', A: getScore(myScores, 'A', 'AGREEABLENESS'), B: getScore(partnerScores, 'A', 'AGREEABLENESS'), fullMark: 100 },
+            {
+                subject: 'Estabilidade',
+                A: 100 - getScore(myScores, 'N', 'NEUROTICISM'),
+                B: 100 - getScore(partnerScores, 'N', 'NEUROTICISM'),
+                fullMark: 100
+            },
         ];
 
         return {
