@@ -54,6 +54,14 @@ export class AiService {
 
         } catch (error) {
             this.logger.error('Error talking to OpenAI', error);
+
+            // Diagnóstico detalhado para Logs da Railway
+            if (error?.status === 429 || error?.code === 'insufficient_quota') {
+                const msg = '🚨 ERRO CRÍTICO OPENAI: COTA EXCEDIDA OU SALDO INSUFICIENTE. Adicione créditos em platform.openai.com';
+                this.logger.error(msg);
+                console.error(msg); // Forçar saída no stdout
+            }
+
             throw new Error('Falha ao processar resposta da IA.');
         }
     }
