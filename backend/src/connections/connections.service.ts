@@ -149,10 +149,40 @@ export class ConnectionsService {
         // 3. Helper to extract Scores+Facets for Relationship Analysis
         const extractInput = (report: any): TalkingToInput & Record<string, any> => {
             const scores: any = { facets: {} };
+
+            // MAPA DE NORMALIZAÇÃO ROBUSTO (PT + EN + Legacy)
+            const keyMap: Record<string, string> = {
+                'OPENNESS': 'O', 'ABERTURA': 'O', 'MENTALIDADE': 'O', 'OPEN': 'O',
+                'CONSCIENTIOUSNESS': 'C', 'ESTRUTURA': 'C', 'ORGANIZACAO': 'C', 'TRABALHO': 'C',
+                'EXTRAVERSION': 'E', 'EXTROVERSAO': 'E', 'ENERGIA': 'E', 'SOCIAL': 'E',
+                'AGREEABLENESS': 'A', 'AMABILIDADE': 'A', 'ESTILO RELACIONAL': 'A', 'RELACIONAL': 'A', 'AGRADABILIDADE': 'A',
+                'NEUROTICISM': 'N', 'NEUROTICISMO': 'N', 'ESTABILIDADE': 'N', 'RESILIENCIA': 'N', 'EMOCIONAL': 'N'
+            };
+
             report.traits.forEach((t: any) => {
-                const shortKey = t.key[0]; // O, C, E, A, N
-                scores[shortKey] = t.score;
+                const rawKey = (t.key || '').toUpperCase();
+                let shortKey = keyMap[rawKey];
+
+                // Heurísticas de Fallback se não estiver no mapa exato
+                if (!shortKey) {
+                    if (rawKey.includes('OPEN') || rawKey.includes('ABERTURA')) shortKey = 'O';
+                    else if (rawKey.includes('CONSC') || rawKey.includes('ESTRUTURA')) shortKey = 'C';
+                    else if (rawKey.includes('EXTRA') || rawKey.includes('ENERGIA') || rawKey.includes('EXTRO')) shortKey = 'E';
+                    else if (rawKey.includes('AGREE') || rawKey.includes('AMABILIDADE') || rawKey.includes('RELACIONAL')) shortKey = 'A';
+                    else if (rawKey.includes('NEURO') || rawKey.includes('ESTABILIDADE') || rawKey.includes('RESILIENCIA')) shortKey = 'N';
+                }
+
+                if (shortKey) {
+                    scores[shortKey] = t.score;
+                } else {
+                    // Fallback desesperado: Primeira letra (mas loga o perigo)
+                    const fallback = rawKey[0];
+                    scores[fallback] = t.score;
+                }
+
+                // Mantém a chave original também
                 scores[t.key] = t.score;
+
                 if (t.facets) {
                     scores.facets[t.key] = t.facets;
                 }
