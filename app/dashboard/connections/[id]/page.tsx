@@ -276,7 +276,7 @@ export default function ConnectionDetailPage() {
                     {activeTab === 'overview' && (
                         <div className="space-y-8 animate-in fade-in duration-300">
 
-                            {/* 🧠 PINC MATCH AI SECTION */}
+                            {/* 🧠 PINC COACH SECTION */}
                             <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-1 shadow-xl shadow-indigo-200/50">
                                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 sm:p-8 text-white relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -285,9 +285,9 @@ export default function ConnectionDetailPage() {
                                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
                                             <div>
                                                 <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-2 border border-white/20 shadow-sm">
-                                                    <Sparkles size={14} className="text-yellow-300" /> BETA
+                                                    <Sparkles size={14} className="text-yellow-300" /> NOVO
                                                 </div>
-                                                <h3 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">PINC Match AI</h3>
+                                                <h3 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">PINC Coach</h3>
                                                 <p className="text-indigo-100 max-w-xl text-sm md:text-base leading-relaxed">
                                                     Descubra a sinergia oculta entre vocês. Nossa IA analisa os traços de comportamento e gera um mapa de compatibilidade profissional exclusivo.
                                                 </p>
@@ -300,7 +300,7 @@ export default function ConnectionDetailPage() {
                                                     className="group bg-white text-indigo-700 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-3 whitespace-nowrap"
                                                 >
                                                     {generateAiMatchMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <BrainCircuit size={20} />}
-                                                    Analisar Compatibilidade
+                                                    Ativar PINC Coach
                                                 </button>
                                             )}
                                         </div>
@@ -321,7 +321,7 @@ export default function ConnectionDetailPage() {
 
                             {/* GRÁFICO E DADOS COMPARATIVOS */}
                             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                                <h3 className="font-bold text-xl text-gray-900 mb-6 flex items-center gap-2">
+                                <h3 className="font-bold text-xl text-gray-900 mb-8 flex items-center gap-2 border-b pb-4">
                                     <GitCompare className="text-primary" /> Comparativo Estrutural
                                 </h3>
 
@@ -330,109 +330,119 @@ export default function ConnectionDetailPage() {
                                         {loadingComparison ? (
                                             <div className="flex justify-center p-20"><Loader2 className="animate-spin text-primary" size={32} /></div>
                                         ) : comparisonData?.radarData && comparisonData?.me && comparisonData?.partner ? (
-                                            <div className="flex flex-col gap-12">
+                                            <div className="flex flex-col gap-16">
                                                 {/* Chart Section */}
-                                                <div className="grid lg:grid-cols-2 gap-10 items-center">
-                                                    <div className="bg-gray-50 rounded-2xl p-6 flex flex-col items-center justify-center relative min-h-[400px]">
-                                                        <ResponsiveContainer width="100%" height={350}>
-                                                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparisonData.radarData}>
-                                                                <PolarGrid gridType="polygon" stroke="#e5e7eb" />
-                                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 11, fontWeight: 600 }} />
+                                                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                                                    {/* Radar Chart com melhor visibilidade */}
+                                                    <div className="bg-gray-50/50 rounded-3xl p-4 flex flex-col items-center justify-center relative min-h-[420px] border border-gray-100">
+                                                        <ResponsiveContainer width="100%" height={400}>
+                                                            <RadarChart cx="50%" cy="50%" outerRadius="75%" data={comparisonData.radarData}>
+                                                                <PolarGrid gridType="polygon" stroke="#cbd5e1" strokeWidth={1} />
+                                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
                                                                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                                                                 <Radar
                                                                     name="Você"
                                                                     dataKey="A"
-                                                                    stroke="#E94C84"
+                                                                    stroke="#ec4899"
                                                                     strokeWidth={3}
-                                                                    fill="#E94C84"
-                                                                    fillOpacity={0.1}
+                                                                    fill="#ec4899"
+                                                                    fillOpacity={0.4}
                                                                 />
                                                                 <Radar
-                                                                    name={partner?.name}
+                                                                    name={partner?.name.split(' ')[0]}
                                                                     dataKey="B"
-                                                                    stroke="#6366F1"
+                                                                    stroke="#6366f1"
                                                                     strokeWidth={3}
-                                                                    fill="#6366F1"
-                                                                    fillOpacity={0.1}
+                                                                    fill="#6366f1"
+                                                                    fillOpacity={0.4}
                                                                 />
-                                                                <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold' }} />
+                                                                <Legend wrapperStyle={{ paddingTop: '24px', fontSize: '12px', fontWeight: 'bold' }} />
                                                             </RadarChart>
                                                         </ResponsiveContainer>
                                                     </div>
 
-                                                    <div className="space-y-6">
+                                                    <div className="space-y-8">
                                                         <div>
-                                                            <h4 className="font-black text-2xl text-gray-900 mb-3">Mapa de Sobreposição</h4>
-                                                            <p className="text-gray-500 leading-relaxed text-sm">
-                                                                Visualize onde seus estilos de trabalho convergem e onde divergem. Pontos distantes no gráfico representam oportunidades de complementariedade, mas também exigem atenção na comunicação.
+                                                            <h4 className="font-black text-2xl text-gray-900 mb-3 leading-tight">Mapa de Sobreposição</h4>
+                                                            <p className="text-gray-600 leading-relaxed text-base">
+                                                                O gráfico ao lado revela a dinâmica invisível da relação. Quanto mais sobreposta as áreas coloridas, maior a semelhança natural. Áreas distintas indicam onde um completa o outro.
                                                             </p>
                                                         </div>
 
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-pink-500 shadow-sm ring-1 ring-gray-100">
-                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Seu Perfil</p>
-                                                                <p className="font-bold text-gray-800 text-lg truncate" title={comparisonData.me.analysis.archetype_name}>{comparisonData.me.analysis.archetype_name}</p>
+                                                            <div className="p-5 bg-pink-50/50 rounded-2xl border-l-4 border-pink-500">
+                                                                <p className="text-xs font-bold text-pink-400 uppercase mb-1 tracking-wider">Seu Perfil</p>
+                                                                <p className="font-bold text-gray-900 text-lg">{comparisonData.me.analysis.archetype_name}</p>
                                                             </div>
-                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm ring-1 ring-gray-100">
-                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Perfil de {partner?.name.split(' ')[0]}</p>
-                                                                <p className="font-bold text-gray-800 text-lg truncate" title={comparisonData.partner.analysis.archetype_name}>{comparisonData.partner.analysis.archetype_name}</p>
+                                                            <div className="p-5 bg-indigo-50/50 rounded-2xl border-l-4 border-indigo-500">
+                                                                <p className="text-xs font-bold text-indigo-400 uppercase mb-1 tracking-wider">Perfil de {partner?.name.split(' ')[0]}</p>
+                                                                <p className="font-bold text-gray-900 text-lg">{comparisonData.partner.analysis.archetype_name}</p>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Detailed Breakdown */}
-                                                <div className="space-y-6">
-                                                    <h3 className="font-bold text-lg text-gray-900 border-b pb-4">Análise Fator a Fator</h3>
+                                                <div className="space-y-8">
+                                                    <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                                                        <h3 className="font-bold text-xl text-gray-900">Análise Fator a Fator</h3>
+                                                    </div>
 
                                                     {comparisonData.relationship_analysis?.map((trait: any, index: number) => {
                                                         const meTrait = comparisonData.me.full_analysis?.[index];
                                                         const partnerTrait = comparisonData.partner.full_analysis?.[index];
 
                                                         return (
-                                                            <div key={trait.dimension} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-                                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-lg text-xl shrink-0 ${index % 2 === 0 ? 'bg-gray-900' : 'bg-primary'}`}>
+                                                            <div key={trait.dimension} className="bg-white group rounded-2xl border border-gray-100 p-0 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+                                                                {/* Header do Card */}
+                                                                <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4">
+                                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-md text-xl shrink-0 ${index % 2 === 0 ? 'bg-gray-900' : 'bg-primary'}`}>
                                                                         {index + 1}
                                                                     </div>
-                                                                    <div>
-                                                                        <h4 className="font-black text-xl text-gray-900">{trait.dimension}</h4>
-                                                                        <span className={`inline-block mt-1 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${trait.similarity === 'HIGH' ? 'bg-green-100 text-green-700' : trait.similarity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                                            {trait.similarity === 'HIGH' ? 'Alta Sinergia' : trait.similarity === 'MEDIUM' ? 'Complementares' : 'Opostos'}
-                                                                        </span>
+                                                                    <div className="flex-1">
+                                                                        <div className="flex flex-wrap items-center gap-3 mb-1">
+                                                                            <h4 className="font-black text-lg text-gray-900">{trait.dimension}</h4>
+                                                                            <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${trait.similarity === 'HIGH' ? 'bg-green-100 text-green-700' : trait.similarity === 'MEDIUM' ? 'bg-amber-100 text-amber-800' : 'bg-orange-100 text-orange-800'}`}>
+                                                                                {trait.similarity === 'HIGH' ? 'Alta Sinergia' : trait.similarity === 'MEDIUM' ? 'Complementares' : 'Opostos'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-sm text-gray-600 font-medium">"{trait.implication}"</p>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Relationship Insight */}
-                                                                <div className="bg-gray-50 rounded-xl p-5 border-l-4 border-gray-900 mb-6">
-                                                                    <p className="font-bold text-gray-800 text-sm mb-2">{trait.insight}</p>
-                                                                    <p className="text-gray-600 text-sm italic leading-relaxed">"{trait.implication}"</p>
-                                                                </div>
+                                                                {/* Conteúdo Comparativo */}
+                                                                <div className="p-6 grid md:grid-cols-2 gap-8 relative">
+                                                                    {/* Linha divisória vertical (desktop) */}
+                                                                    <div className="hidden md:block absolute top-6 bottom-6 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
 
-                                                                {/* Side by Side Comparison */}
-                                                                <div className="grid md:grid-cols-2 gap-8 relative border-t pt-6 border-gray-100">
-                                                                    <div className="hidden md:block absolute top-6 bottom-0 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
-
-                                                                    {/* Me */}
+                                                                    {/* Lado Esquerdo (Você) */}
                                                                     <div className="space-y-3">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="text-xs font-extrabold text-pink-500 uppercase tracking-widest">VOCÊ</span>
-                                                                            <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-2.5 py-1 rounded-md border border-pink-100">{meTrait?.classification}</span>
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <span className="text-xs font-extrabold text-pink-500 uppercase tracking-widest flex items-center gap-2">
+                                                                                <div className="w-2 h-2 rounded-full bg-pink-500"></div> VOCÊ
+                                                                            </span>
+                                                                            <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-2.5 py-1 rounded-md border border-pink-100 shadow-sm">
+                                                                                {meTrait?.classification}
+                                                                            </span>
                                                                         </div>
-                                                                        <p className="text-sm text-gray-500 leading-relaxed text-justify">
-                                                                            {meTrait?.text_interpretation || 'Sem dados.'}
-                                                                        </p>
+                                                                        <div className="text-sm text-gray-600 leading-relaxed text-justify bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                                                                            {meTrait?.text_interpretation || 'Análise indisponível.'}
+                                                                        </div>
                                                                     </div>
 
-                                                                    {/* Partner */}
+                                                                    {/* Lado Direito (Parceiro) */}
                                                                     <div className="space-y-3">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest">{partner?.name.split(' ')[0].toUpperCase()}</span>
-                                                                            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100">{partnerTrait?.classification}</span>
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <span className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest flex items-center gap-2">
+                                                                                <div className="w-2 h-2 rounded-full bg-indigo-500"></div> {partner?.name.split(' ')[0].toUpperCase()}
+                                                                            </span>
+                                                                            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100 shadow-sm">
+                                                                                {partnerTrait?.classification}
+                                                                            </span>
                                                                         </div>
-                                                                        <p className="text-sm text-gray-500 leading-relaxed text-justify">
-                                                                            {partnerTrait?.text_interpretation || 'Sem dados.'}
-                                                                        </p>
+                                                                        <div className="text-sm text-gray-600 leading-relaxed text-justify bg-indigo-50/30 p-4 rounded-xl border border-indigo-50/50">
+                                                                            {partnerTrait?.text_interpretation || 'Análise indisponível.'}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
