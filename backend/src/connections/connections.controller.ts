@@ -95,6 +95,11 @@ export class ConnectionsController {
         return this.connectionsService.getComparisonData(connectionId, req.user.userId);
     }
 
+    @Get(':id/ai-match')
+    async getAiMatchSummary(@Param('id') connectionId: string, @Request() req) {
+        return this.connectionsService.getAiMatchSummary(connectionId, req.user.userId);
+    }
+
     @Put(':id/settings')
     async updateSettings(@Param('id') id: string, @Body() body: any, @Request() req) {
         return this.connectionsService.updateSharingSettings(id, req.user.userId, body);

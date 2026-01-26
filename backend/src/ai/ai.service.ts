@@ -134,4 +134,61 @@ export class AiService {
       O usuário perguntou: "${profile.lastMessage || 'Analise meu perfil'}"
     `;
     }
+
+    async generateRelationshipInsight(profileA: any, profileB: any) {
+        const getLevel = (score: number) => {
+            if (!score && score !== 0) return 'MÉDIO';
+            if (score <= 35) return 'BAIXO';
+            if (score <= 65) return 'MÉDIO';
+            return 'ALTO';
+        };
+
+        const formatFactors = (p: any) => `
+        - Extroversão: ${p.E} (${getLevel(p.E)})
+        - Agradabilidade: ${p.A} (${getLevel(p.A)})
+        - Conscienciosidade: ${p.C} (${getLevel(p.C)})
+        - Neuroticismo: ${p.N} (${getLevel(p.N)})
+        - Abertura: ${p.O} (${getLevel(p.O)})`;
+
+        const prompt = `
+        ⚡️ MISSÃO: ANALISTA DE SINERGIA COMPORTAMENTAL (PINC MATCH)
+        
+        PERFIL A (Você): ${profileA.name}
+        ${formatFactors(profileA.scores)}
+
+        PERFIL B (Conexão): ${profileB.name}
+        ${formatFactors(profileB.scores)}
+
+        🎯 OBJETIVO:
+        Escreva um relatório de compatibilidade profissional curto, direto e impactante (estilo "Executive Summary").
+        Use Markdown (negrito, tópicos).
+
+        ESTRUTURA OBRIGATÓRIA:
+        ### ⚡ Sinergia Principal
+        (Um parágrafo curto sobre onde eles brilham juntos)
+
+        ### ⚠️ Pontos de Atrito
+        (Bullet points com 2 ou 3 riscos reais baseados na diferença dos traços)
+
+        ### 💬 Como se Comunicar Melhor
+        (Dica prática para A lidar com B e vice-versa)
+
+        TOM DE VOZ:
+        Profissional, moderno, direto. Sem "frufru". Foco em eficácia.
+        `;
+
+        try {
+            const completion = await this.openai.chat.completions.create({
+                messages: [{ role: 'system', content: prompt }],
+                model: 'gpt-4o-mini',
+                temperature: 0.7,
+                max_tokens: 600,
+            });
+
+            return completion.choices[0].message.content;
+        } catch (error) {
+            console.error("Erro gerando insight de relacionamento:", error);
+            return "Não foi possível gerar a análise de Inteligência Artificial no momento. Tente novamente mais tarde.";
+        }
+    }
 }

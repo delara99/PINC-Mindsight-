@@ -1,15 +1,42 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TalkingToService, TalkingToInput } from '../talking-to/talking-to.service';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class ConnectionsService {
     constructor(
         private prisma: PrismaService,
-        private talkingToService: TalkingToService
+        private talkingToService: TalkingToService,
+        private aiService: AiService
     ) { }
 
-    // ... (keep all other methods until getComparisonData)
+    // Novo método para IA Match
+    async getAiMatchSummary(connectionId: string, userId: string) {
+        // Aproveita lógica de busca do comparison
+        const data = await this.getComparisonData(connectionId, userId);
+
+        if (data.error || !data.radarData) {
+            throw new BadRequestException(data.error || 'Dados insuficientes para análise de IA.');
+        }
+
+        const profileA = {
+            name: data.me.name,
+            scores: data.me.scores
+        };
+
+        const profileB = {
+            name: data.partner.name,
+            scores: data.partner.scores
+        };
+
+        // Chama IA
+        const insight = await this.aiService.generateRelationshipInsight(profileA, profileB);
+
+        return {
+            insight
+        };
+    }
 
     // ... existing code ...
 

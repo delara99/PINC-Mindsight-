@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar, Trash2 } from 'lucide-react';
+import { Loader2, Settings, MessageSquare, FileText, BarChart2, Send, Lock, GitCompare, Plus, Calendar, Trash2, Sparkles, BrainCircuit } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend } from 'recharts';
 
 export default function ConnectionDetailPage() {
@@ -15,6 +15,7 @@ export default function ConnectionDetailPage() {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'overview' | 'inventories' | 'chat' | 'crossProfile'>('overview');
     const [messageInput, setMessageInput] = useState('');
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     // Fetch Connection Details
@@ -119,6 +120,21 @@ export default function ConnectionDetailPage() {
             if (!res.ok) throw new Error('Erro ao carregar relatórios');
             return res.json();
         }
+    });
+
+    // PINC Match AI Mutation
+    const generateAiMatchMutation = useMutation({
+        mutationFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/connections/${id}/ai-match`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao gerar análise');
+            return res.json();
+        },
+        onSuccess: (data) => {
+            setAiSummary(data.insight);
+        },
+        onError: () => alert('Não foi possível gerar a análise agora. Tente mais tarde.')
     });
 
     const generateReportMutation = useMutation({
@@ -258,22 +274,70 @@ export default function ConnectionDetailPage() {
                 {/* Tab Content */}
                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
                     {activeTab === 'overview' && (
-                        <div className="space-y-6">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                                <h3 className="font-bold text-lg mb-4">Comparativo de Perfil</h3>
+                        <div className="space-y-8 animate-in fade-in duration-300">
+
+                            {/* 🧠 PINC MATCH AI SECTION */}
+                            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-1 shadow-xl shadow-indigo-200/50">
+                                <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 sm:p-8 text-white relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                                    <div className="relative z-10">
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
+                                            <div>
+                                                <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-2 border border-white/20 shadow-sm">
+                                                    <Sparkles size={14} className="text-yellow-300" /> BETA
+                                                </div>
+                                                <h3 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">PINC Match AI</h3>
+                                                <p className="text-indigo-100 max-w-xl text-sm md:text-base leading-relaxed">
+                                                    Descubra a sinergia oculta entre vocês. Nossa IA analisa os traços de comportamento e gera um mapa de compatibilidade profissional exclusivo.
+                                                </p>
+                                            </div>
+
+                                            {!aiSummary && (
+                                                <button
+                                                    onClick={() => generateAiMatchMutation.mutate()}
+                                                    disabled={generateAiMatchMutation.isPending || loadingComparison || !comparisonData?.radarData}
+                                                    className="group bg-white text-indigo-700 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-3 whitespace-nowrap"
+                                                >
+                                                    {generateAiMatchMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <BrainCircuit size={20} />}
+                                                    Analisar Compatibilidade
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {aiSummary && (
+                                            <div className="bg-white/95 backdrop-blur-sm text-gray-800 rounded-xl p-6 md:p-8 shadow-inner border border-white/40 animate-in zoom-in-95 duration-300">
+                                                <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-headings:text-indigo-900 prose-p:text-gray-600 prose-a:text-indigo-600">
+                                                    <div className="whitespace-pre-wrap">{aiSummary}</div>
+                                                </div>
+                                                <div className="mt-6 flex justify-end">
+                                                    <button onClick={() => setAiSummary(null)} className="text-xs text-indigo-400 hover:text-indigo-600 font-bold underline">Fechar Análise</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* GRÁFICO E DADOS COMPARATIVOS */}
+                            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                                <h3 className="font-bold text-xl text-gray-900 mb-6 flex items-center gap-2">
+                                    <GitCompare className="text-primary" /> Comparativo Estrutural
+                                </h3>
+
                                 {theirSettings.shareInventories ? (
                                     <>
                                         {loadingComparison ? (
-                                            <div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary" /></div>
-                                        ) : comparisonData?.radarData ? (
-                                            <div className="flex flex-col gap-10">
+                                            <div className="flex justify-center p-20"><Loader2 className="animate-spin text-primary" size={32} /></div>
+                                        ) : comparisonData?.radarData && comparisonData?.me && comparisonData?.partner ? (
+                                            <div className="flex flex-col gap-12">
                                                 {/* Chart Section */}
-                                                <div className="grid md:grid-cols-2 gap-8 items-center bg-gray-50 p-6 rounded-2xl">
-                                                    <div className="h-[400px] w-full relative">
-                                                        <ResponsiveContainer width="100%" height="100%">
+                                                <div className="grid lg:grid-cols-2 gap-10 items-center">
+                                                    <div className="bg-gray-50 rounded-2xl p-6 flex flex-col items-center justify-center relative min-h-[400px]">
+                                                        <ResponsiveContainer width="100%" height={350}>
                                                             <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparisonData.radarData}>
-                                                                <PolarGrid gridType="polygon" />
-                                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#6B7280', fontSize: 12 }} />
+                                                                <PolarGrid gridType="polygon" stroke="#e5e7eb" />
+                                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 11, fontWeight: 600 }} />
                                                                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                                                                 <Radar
                                                                     name="Você"
@@ -281,7 +345,7 @@ export default function ConnectionDetailPage() {
                                                                     stroke="#E94C84"
                                                                     strokeWidth={3}
                                                                     fill="#E94C84"
-                                                                    fillOpacity={0.2}
+                                                                    fillOpacity={0.1}
                                                                 />
                                                                 <Radar
                                                                     name={partner?.name}
@@ -289,30 +353,29 @@ export default function ConnectionDetailPage() {
                                                                     stroke="#6366F1"
                                                                     strokeWidth={3}
                                                                     fill="#6366F1"
-                                                                    fillOpacity={0.2}
+                                                                    fillOpacity={0.1}
                                                                 />
-                                                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                                                <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold' }} />
                                                             </RadarChart>
                                                         </ResponsiveContainer>
                                                     </div>
 
                                                     <div className="space-y-6">
                                                         <div>
-                                                            <h4 className="font-black text-2xl text-gray-800 mb-2">Visão Comparativa</h4>
-                                                            <p className="text-gray-500 leading-relaxed">
-                                                                Este gráfico sobrepõe os mapas comportamentais de você e seu parceiro(a).
-                                                                Áreas de sobreposição indicam semelhanças, enquanto pontos distantes sugerem complementaridade ou possíveis atritos.
+                                                            <h4 className="font-black text-2xl text-gray-900 mb-3">Mapa de Sobreposição</h4>
+                                                            <p className="text-gray-500 leading-relaxed text-sm">
+                                                                Visualize onde seus estilos de trabalho convergem e onde divergem. Pontos distantes no gráfico representam oportunidades de complementariedade, mas também exigem atenção na comunicação.
                                                             </p>
                                                         </div>
 
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-pink-500 shadow-sm">
-                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Seu Arquétipo</p>
-                                                                <p className="font-bold text-gray-800">{comparisonData.me.analysis.archetype_name}</p>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-pink-500 shadow-sm ring-1 ring-gray-100">
+                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Seu Perfil</p>
+                                                                <p className="font-bold text-gray-800 text-lg truncate" title={comparisonData.me.analysis.archetype_name}>{comparisonData.me.analysis.archetype_name}</p>
                                                             </div>
-                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm">
-                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Arquétipo de {partner?.name}</p>
-                                                                <p className="font-bold text-gray-800">{comparisonData.partner.analysis.archetype_name}</p>
+                                                            <div className="p-4 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm ring-1 ring-gray-100">
+                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">Perfil de {partner?.name.split(' ')[0]}</p>
+                                                                <p className="font-bold text-gray-800 text-lg truncate" title={comparisonData.partner.analysis.archetype_name}>{comparisonData.partner.analysis.archetype_name}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -320,55 +383,55 @@ export default function ConnectionDetailPage() {
 
                                                 {/* Detailed Breakdown */}
                                                 <div className="space-y-6">
-                                                    <h3 className="font-bold text-lg text-gray-800 border-b pb-2">Detalhamento dos 5 Fatores</h3>
+                                                    <h3 className="font-bold text-lg text-gray-900 border-b pb-4">Análise Fator a Fator</h3>
 
                                                     {comparisonData.relationship_analysis?.map((trait: any, index: number) => {
                                                         const meTrait = comparisonData.me.full_analysis?.[index];
                                                         const partnerTrait = comparisonData.partner.full_analysis?.[index];
 
                                                         return (
-                                                            <div key={trait.dimension} className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                                                <div className="flex items-center gap-3 mb-6">
-                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md ${index % 2 === 0 ? 'bg-gray-800' : 'bg-primary'}`}>
+                                                            <div key={trait.dimension} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+                                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-lg text-xl shrink-0 ${index % 2 === 0 ? 'bg-gray-900' : 'bg-primary'}`}>
                                                                         {index + 1}
                                                                     </div>
                                                                     <div>
-                                                                        <h4 className="font-black text-xl text-gray-800">{trait.dimension}</h4>
-                                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${trait.similarity === 'HIGH' ? 'bg-green-100 text-green-700' : trait.similarity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                                            {trait.similarity === 'HIGH' ? 'Alta Similaridade' : trait.similarity === 'MEDIUM' ? 'Complementares' : 'Opostos'}
+                                                                        <h4 className="font-black text-xl text-gray-900">{trait.dimension}</h4>
+                                                                        <span className={`inline-block mt-1 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${trait.similarity === 'HIGH' ? 'bg-green-100 text-green-700' : trait.similarity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                                            {trait.similarity === 'HIGH' ? 'Alta Sinergia' : trait.similarity === 'MEDIUM' ? 'Complementares' : 'Opostos'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Relationship Insight */}
-                                                                <div className="bg-gray-50 rounded-lg p-5 border-l-4 border-gray-800 mb-6">
+                                                                <div className="bg-gray-50 rounded-xl p-5 border-l-4 border-gray-900 mb-6">
                                                                     <p className="font-bold text-gray-800 text-sm mb-2">{trait.insight}</p>
-                                                                    <p className="text-gray-600 text-sm italic">"{trait.implication}"</p>
+                                                                    <p className="text-gray-600 text-sm italic leading-relaxed">"{trait.implication}"</p>
                                                                 </div>
 
                                                                 {/* Side by Side Comparison */}
-                                                                <div className="grid md:grid-cols-2 gap-8 relative border-t pt-4 border-gray-100">
-                                                                    <div className="md:absolute top-4 bottom-0 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
+                                                                <div className="grid md:grid-cols-2 gap-8 relative border-t pt-6 border-gray-100">
+                                                                    <div className="hidden md:block absolute top-6 bottom-0 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
 
                                                                     {/* Me */}
-                                                                    <div className="space-y-2">
+                                                                    <div className="space-y-3">
                                                                         <div className="flex items-center justify-between">
-                                                                            <span className="text-xs font-bold text-pink-500 uppercase tracking-wider">Você</span>
-                                                                            <span className="text-xs font-bold bg-pink-50 text-pink-700 px-2 py-1 rounded">{meTrait?.classification}</span>
+                                                                            <span className="text-xs font-extrabold text-pink-500 uppercase tracking-widest">VOCÊ</span>
+                                                                            <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-2.5 py-1 rounded-md border border-pink-100">{meTrait?.classification}</span>
                                                                         </div>
-                                                                        <p className="text-xs text-gray-500 leading-relaxed text-justify">
-                                                                            {meTrait?.text_interpretation}
+                                                                        <p className="text-sm text-gray-500 leading-relaxed text-justify">
+                                                                            {meTrait?.text_interpretation || 'Sem dados.'}
                                                                         </p>
                                                                     </div>
 
                                                                     {/* Partner */}
-                                                                    <div className="space-y-2">
+                                                                    <div className="space-y-3">
                                                                         <div className="flex items-center justify-between">
-                                                                            <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">{partner?.name}</span>
-                                                                            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded">{partnerTrait?.classification}</span>
+                                                                            <span className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest">{partner?.name.split(' ')[0].toUpperCase()}</span>
+                                                                            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100">{partnerTrait?.classification}</span>
                                                                         </div>
-                                                                        <p className="text-xs text-gray-500 leading-relaxed text-justify">
-                                                                            {partnerTrait?.text_interpretation}
+                                                                        <p className="text-sm text-gray-500 leading-relaxed text-justify">
+                                                                            {partnerTrait?.text_interpretation || 'Sem dados.'}
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -378,17 +441,26 @@ export default function ConnectionDetailPage() {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="text-center py-10 bg-gray-50 rounded-lg flex flex-col items-center justify-center p-6">
-                                                <BarChart2 className="text-gray-300 mb-3" size={48} />
-                                                <p className="text-gray-500 font-medium">{comparisonData?.error || 'Dados insuficientes para gerar o comparativo.'}</p>
-                                                <p className="text-gray-400 text-sm mt-1">Ambos precisam ter completado o inventário Big Five.</p>
+                                            <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center">
+                                                <div className="bg-white p-4 rounded-full shadow-sm mb-4">
+                                                    <BarChart2 className="text-gray-300" size={32} />
+                                                </div>
+                                                <h3 className="text-gray-800 font-bold text-lg mb-2">Dados insuficientes para comparação</h3>
+                                                <p className="text-gray-500 max-w-md mx-auto text-sm leading-relaxed mb-6">
+                                                    Para visualizar o mapa de compatibilidade e usar a IA, ambos os usuários precisam ter completado o inventário Big Five.
+                                                </p>
+                                                {!comparisonData && (
+                                                    <p className="text-xs text-red-400 font-medium bg-red-50 px-3 py-1 rounded-full">
+                                                        Erro: Não foi possível carregar os dados. Verifique a conexão.
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </>
                                 ) : (
-                                    <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg text-sm flex items-center gap-2">
-                                        <Lock size={16} />
-                                        <span>{partner?.name} não está compartilhando resultados com você.</span>
+                                    <div className="bg-yellow-50 text-yellow-800 p-6 rounded-xl text-sm flex items-center justify-center gap-3 border border-yellow-100 shadow-sm">
+                                        <Lock size={20} className="shrink-0" />
+                                        <span><strong>Acesso Restrito:</strong> {partner?.name} optou por não compartilhar os resultados dos inventários com você.</span>
                                     </div>
                                 )}
                             </div>
