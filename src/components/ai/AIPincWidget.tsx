@@ -80,6 +80,9 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
         setInputValue('');
         setIsLoading(true);
 
+        // Prepare history synchronously (state update is async)
+        const currentHistory = [...messages, newMessage];
+
         try {
             const res = await fetch(`${API_URL}/api/v1/ai/chat`, {
                 method: 'POST',
@@ -89,8 +92,8 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
                 },
                 body: JSON.stringify({
                     message: newMessage.content,
-                    history: messages.map(m => ({ role: m.role, content: m.content })),
-                    profileContext: userProfile // Pass the implementation context
+                    history: currentHistory.map(m => ({ role: m.role, content: m.content })),
+                    profileContext: userProfile
                 })
             });
 
@@ -180,12 +183,20 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
                                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div
-                                        className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
+                                        className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${msg.role === 'user'
                                             ? 'bg-slate-900 text-white rounded-br-none'
                                             : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'
                                             }`}
                                     >
-                                        {msg.content}
+                                        {msg.content.split(/(\*\*.*?\*\*)/).map((part, i) =>
+                                            part.startsWith('**') && part.endsWith('**') ? (
+                                                <strong key={i} className={msg.role === 'assistant' ? 'text-purple-700 font-bold' : 'font-bold'}>
+                                                    {part.slice(2, -2)}
+                                                </strong>
+                                            ) : (
+                                                part
+                                            )
+                                        )}
                                     </div>
                                 </div>
                             ))}
