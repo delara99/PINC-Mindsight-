@@ -166,21 +166,21 @@ function RegisterContent() {
                 <div className="relative z-20 max-w-lg space-y-8">
 
                     <h1 className="text-5xl font-extrabold leading-tight">
-                        Descubra o potencial <br />
+                        Descubra o poder <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                            oculto da sua equipe
+                            da sua personalidade
                         </span>
                     </h1>
 
                     <p className="text-lg text-gray-300 leading-relaxed">
-                        Junte-se a mais de 10.000 líderes que usam nossa inteligência comportamental para tomar decisões melhores.
+                        Junte-se a milhares de pessoas e líderes que usam o <strong>TalkingTo</strong> para acelerar carreiras e potencializar negócios.
                     </p>
 
                     <div className="space-y-4 pt-4">
                         {[
-                            "Mapeamento Big Five validado cientificamente",
-                            "Relatórios detalhados com insights de liderança",
-                            "Dashboard intuitivo para gestão de times"
+                            "Metodologia TalkingTo validada cientificamente",
+                            "Relatórios de perfil com profundidade clínica",
+                            "Plataforma completa para sua evolução"
                         ].map((item, idx) => (
                             <div key={idx} className="flex items-center gap-3">
                                 <div className="bg-white/20 p-1.5 rounded-full">
@@ -204,7 +204,7 @@ function RegisterContent() {
                                 <div className="flex text-yellow-500">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="currentColor" />)}
                                 </div>
-                                <span className="text-gray-400">Avaliado por 500+ empresas</span>
+                                <span className="text-gray-400">Usado por +10.000 pessoas</span>
                             </div>
                         </div>
                     </div>
