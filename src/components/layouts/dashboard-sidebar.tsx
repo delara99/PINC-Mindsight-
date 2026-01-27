@@ -70,8 +70,13 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications
     return (
         <div className="flex flex-col h-full bg-white text-slate-800">
             {/* Header / Logo */}
-            <div className="p-6 flex items-center justify-center border-b border-gray-50 bg-gray-50/50">
-                <img src="/logo.png" alt="PINC" className="h-12 w-auto object-contain" />
+            {/* Header / Logo */}
+            <div className="p-6 flex items-center gap-3 border-b border-gray-50 bg-gray-50/50">
+                <img src="/logo.png" alt="PINC" className="h-8 w-auto object-contain" />
+                <div className="h-8 w-px bg-gray-300" />
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-tight leading-tight w-24">
+                    Inventário de personalidade
+                </span>
             </div>
             {/* User Info */}
             <div className="px-6 pb-6 pt-2 border-b border-gray-50 bg-gray-50/50">
