@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 };
 
 import QueryProvider from '../src/providers/query-provider';
+import GlobalHelpButton from '../src/components/GlobalHelpButton';
 
 export default function RootLayout({
     children,
@@ -18,6 +19,7 @@ export default function RootLayout({
             <body>
                 <QueryProvider>
                     {children}
+                    <GlobalHelpButton />
                 </QueryProvider>
             </body>
         </html>
