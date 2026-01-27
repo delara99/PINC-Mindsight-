@@ -2,6 +2,41 @@ import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useState } from 'react';
 import { Loader2, Lock } from 'lucide-react';
 
+
+// Helper para traduzir erros técnicos do Stripe para mensagens amigáveis
+function getFriendlyErrorMessage(rawMessage: string): string {
+    const msg = rawMessage.toLowerCase();
+
+    // Erros de Teste em Produção
+    if (msg.includes('test mode') || msg.includes('test card') || msg.includes('modo de produção')) {
+        return 'Cartão inválido. Por favor, utilize um cartão de crédito válido para processar sua compra.';
+    }
+
+    // Erros Comuns de Cartão
+    if (msg.includes('insufficient funds') || msg.includes('saldo insuficiente')) {
+        return 'Saldo insuficiente. Por favor, utilize outro cartão ou verifique com seu banco.';
+    }
+
+    if (msg.includes('declined') || msg.includes('recusado') || msg.includes('generic_decline')) {
+        return 'Transação não autorizada. Verifique os dados ou tente outro cartão.';
+    }
+
+    if (msg.includes('expiration') || msg.includes('expired') || msg.includes('data de validade')) {
+        return 'A data de validade do cartão está incorreta ou vencida. Verifique os dados.';
+    }
+
+    if (msg.includes('cvc') || msg.includes('security code') || msg.includes('código de segurança')) {
+        return 'O código de segurança (CVC) está incorreto.';
+    }
+
+    if (msg.includes('incorrect_number') || msg.includes('número do cartão')) {
+        return 'O número do cartão parece inválido. Verifique os dígitos.';
+    }
+
+    // Fallback
+    return rawMessage || 'Não foi possível processar o pagamento. Verifique seus dados e tente novamente.';
+}
+
 export function StripePaymentForm({ onSuccess, onError, amount }: { onSuccess: () => void, onError: (msg: string) => void, amount: number }) {
     const stripe = useStripe();
     const elements = useElements();
@@ -27,8 +62,10 @@ export function StripePaymentForm({ onSuccess, onError, amount }: { onSuccess: (
         });
 
         if (error) {
-            setErrorMessage(error.message || 'Erro desconhecido no pagamento.');
-            onError(error.message || 'Erro desconhecido');
+
+            const friendlyError = getFriendlyErrorMessage(error.message || '');
+            setErrorMessage(friendlyError);
+            onError(friendlyError);
             setLoading(false);
         } else if (paymentIntent && paymentIntent.status === 'succeeded') {
             onSuccess();
