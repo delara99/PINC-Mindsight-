@@ -267,6 +267,14 @@ export default function HelpPage() {
 
             {/* --- HERO SECTION --- */}
             <header className="relative pt-32 pb-20 px-6 md:px-12 lg:px-24 overflow-hidden border-b border-slate-100">
+
+                {/* Logo Navigation */}
+                <div className="absolute top-8 left-6 md:left-12 z-50">
+                    <Link href="/" className="group flex items-center gap-2 transition-opacity hover:opacity-80">
+                        <img src="/logo-pinc.png" alt="PINC Logo" className="h-8 w-auto" />
+                    </Link>
+                </div>
+
                 <div className="max-w-7xl mx-auto">
                     <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
                         <span className="inline-block py-1 px-3 rounded-full bg-slate-100 text-slate-600 text-xs font-bold tracking-widest uppercase mb-6">
