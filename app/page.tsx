@@ -138,23 +138,25 @@ export default function Home() {
                                 {settings.heroBadge}
                             </div>
                         )}
-                        <h1 className="text-5xl md:text-6xl font-extrabold leading-tight" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
-                            {settings?.heroTitle || 'Descubra os Talentos'} <br />
-                            <span style={{ color: settings?.accentColor || '#FFC107' }}>{settings?.heroSubtitle || 'Ocultos na Sua Equipe'}</span>
+                        <h1 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                            {settings?.heroTitle || 'Revele quem você'} <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500" style={{ color: settings?.accentColor ? 'inherit' : undefined }}>
+                                {settings?.heroSubtitle || 'realmente é.'}
+                            </span>
                         </h1>
-                        <p className="text-lg opacity-90 leading-relaxed max-w-lg" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
-                            {settings?.heroDescription || 'A ferramenta definitiva baseada no Big Five para mapeamento de perfil comportamental e inteligência organizacional.'}
+                        <p className="text-xl opacity-90 leading-relaxed max-w-lg font-light" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                            {settings?.heroDescription || 'Não é horóscopo. É ciência. Use o método Big Five para entender sua personalidade, alavancar sua carreira e melhorar seus relacionamentos.'}
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
                             <Link
-                                href="/trial"
-                                className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full shadow-xl transition-all hover:translate-y-[-2px]"
+                                href="/auth/register"
+                                className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full shadow-2xl transition-all hover:scale-105 hover:shadow-amber-400/20"
                                 style={{
                                     backgroundColor: settings?.accentColor || '#FFC107',
                                     color: '#000'
                                 }}
                             >
-                                {settings?.primaryButtonText || 'Ver Degustação'} <ArrowRight size={20} />
+                                {settings?.primaryButtonText || 'Fazer Mapeamento Grátis'} <ArrowRight size={20} />
                             </Link>
                         </div>
                     </div>
