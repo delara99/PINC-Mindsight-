@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, ChevronDown, ChevronRight, MessageSquare, Zap, Target, Users, BookOpen, CreditCard, Shield, ArrowRight, Sparkles, LayoutGrid } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, ChevronDown, ChevronRight, Target, Users, CreditCard, ArrowRight, Sparkles, X, MessageCircle, Send, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { API_URL } from '../../src/config/api';
 
 // --- DATA: FAQ & Categories ---
 const categories = [
     {
         id: 'plans',
-        title: 'Planos & Assinaturas',
-        description: 'Tudo sobre preços, B2B, B2C e upgrades.',
+        title: 'Planos & Créditos',
+        description: 'Tudo sobre preços, pacotes de créditos e upgrades.',
         icon: <CreditCard className="w-8 h-8" />,
         colSpan: 'md:col-span-2',
         bg: 'bg-slate-50'
@@ -49,7 +50,7 @@ const faqs = [
     {
         category: 'plans',
         question: 'Posso cancelar minha assinatura a qualquer momento?',
-        answer: 'Sim! Nossos planos mensais não possuem fidelidade. Você pode cancelar direto pelo painel financeiro sem multas ou taxas ocultas.'
+        answer: 'Nós não trabalhamos com modelo de assinatura recorrente, mas sim com CRÉDITOS pré-pagos. Você compra pacotes de créditos para realizar análises e eles não expiram. É como um celular pré-pago: você usa quando precisa, sem mensalidade fixa ou multas de cancelamento.'
     },
     {
         category: 'method',
@@ -64,7 +65,7 @@ const faqs = [
     {
         category: 'team',
         question: 'Como convido meu time para fazer o teste?',
-        answer: 'No Dashboard de Gestor, basta acessar a aba "Convidar", inserir os e-mails e pronto. Eles receberão um link único e os resultados aparecerão automaticamente no seu painel assim que concluírem.'
+        answer: 'A dinâmica é simples: Sua empresa adquire pacotes de créditos. O Gestor acessa o Painel Administrativo, cadastra os colaboradores e atribui créditos a eles. O colaborador NÃO precisa de e-mail e senha para acessar; ele recebe um Código de Acesso único (ex: PINC-AB12) para responder o inventário de forma rápida e segura.'
     },
     {
         category: 'coach',
@@ -102,17 +103,167 @@ function Accordion({ item, isOpen, onClick }: { item: any, isOpen: boolean, onCl
     );
 }
 
+// --- COACH MODAL COMPONENT ---
+function CoachModal({ isOpen, onClose, initialQuery }: { isOpen: boolean, onClose: () => void, initialQuery: string }) {
+    const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
+    const [input, setInput] = useState(initialQuery);
+    const [loading, setLoading] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Initial Greeting if empty
+    useEffect(() => {
+        if (isOpen && messages.length === 0) {
+            if (initialQuery) {
+                handleSend(initialQuery);
+            } else {
+                setMessages([{ role: 'assistant', content: 'Olá! Sou a PINC Coach. Como posso ajudar você hoje sobre a plataforma, metodologia ou planos?' }]);
+            }
+        }
+    }, [isOpen]);
+
+    // Update input if initialQuery changes while open
+    useEffect(() => {
+        if (isOpen && initialQuery && messages.length === 0) {
+            handleSend(initialQuery);
+        }
+    }, [initialQuery]);
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    const handleSend = async (text: string) => {
+        if (!text.trim()) return;
+
+        const userMsg = { role: 'user' as const, content: text };
+        setMessages(prev => [...prev, userMsg]);
+        setInput('');
+        setLoading(true);
+
+        try {
+            const res = await fetch(`${API_URL}/api/v1/ai/support`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+
+            if (!res.ok) throw new Error('Falha na comunicação');
+
+            const data = await res.json();
+            const aiResponse = data.message?.content || 'Não consegui processar a resposta.';
+
+            setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+        } catch (error) {
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Desculpe, tive um erro técnico momentâneo. Tente novamente.' }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg h-[600px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="bg-slate-900 p-4 flex justify-between items-center text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center">
+                            <Sparkles size={20} className="text-white" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold">PINC Coach</h3>
+                            <p className="text-xs text-slate-300 flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Online
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" ref={scrollRef}>
+                    {messages.map((m, i) => (
+                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
+                                ? 'bg-primary text-white rounded-tr-none'
+                                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'
+                                }`}>
+                                {m.content}
+                            </div>
+                        </div>
+                    ))}
+                    {loading && (
+                        <div className="flex justify-start">
+                            <div className="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
+                                <Loader2 size={16} className="animate-spin text-primary" />
+                                <span className="text-xs text-slate-400">Digitando...</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Input */}
+                <div className="p-4 bg-white border-t border-slate-100">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSend(input);
+                        }}
+                        className="flex gap-2"
+                    >
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Digite sua dúvida..."
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                            autoFocus
+                        />
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || loading}
+                            className="bg-primary hover:bg-primary-hover text-white p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <Send size={20} />
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function HelpPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [isCoachOpen, setIsCoachOpen] = useState(false);
+    const [coachQuery, setCoachQuery] = useState('');
 
     const filteredFaqs = faqs.filter(f =>
         f.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
         f.answer.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchTerm.trim()) {
+            setCoachQuery(searchTerm);
+            setIsCoachOpen(true);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-primary selection:text-white">
+
+            <CoachModal
+                isOpen={isCoachOpen}
+                onClose={() => setIsCoachOpen(false)}
+                initialQuery={coachQuery}
+            />
 
             {/* --- HERO SECTION --- */}
             <header className="relative pt-32 pb-20 px-6 md:px-12 lg:px-24 overflow-hidden border-b border-slate-100">
@@ -130,18 +281,24 @@ export default function HelpPage() {
                         </p>
 
                         {/* Search Bar Big */}
-                        <div className="relative max-w-3xl group">
+                        <form onSubmit={handleSearchSubmit} className="relative max-w-3xl group">
                             <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                                 <Search size={28} />
                             </div>
                             <input
                                 type="text"
-                                placeholder="Busque por 'planos', 'metodologia', 'cancelamento'..."
+                                placeholder="Busque por 'planos', 'metodologia' ou faça uma pergunta para a IA..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-slate-50 hover:bg-white focus:bg-white border-2 border-transparent focus:border-primary/20 hover:shadow-xl focus:shadow-2xl rounded-2xl py-6 pl-20 pr-6 text-xl outline-none transition-all duration-300 placeholder:text-slate-300"
                             />
-                        </div>
+                            {/* Visual Hint for Enter */}
+                            {searchTerm && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded border border-slate-200 font-mono">
+                                    Pressione Enter ↵
+                                </div>
+                            )}
+                        </form>
                     </div>
                 </div>
 
@@ -150,7 +307,7 @@ export default function HelpPage() {
                 <div className="absolute top-20 right-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse" />
             </header>
 
-            {/* --- CATEGORIES GRID (Broken Grid) --- */}
+            {/* --- CATEGORIES GRID (Fixed: No Click) --- */}
             <section className="py-24 px-6 md:px-12 lg:px-24 bg-white">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-end justify-between mb-16">
@@ -162,10 +319,10 @@ export default function HelpPage() {
                         {categories.map((cat, idx) => (
                             <div
                                 key={cat.id}
-                                className={`group relative p-8 rounded-3xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl border border-slate-100 overflow-hidden flex flex-col justify-between ${cat.colSpan} ${cat.bg}`}
+                                className={`group relative p-8 rounded-3xl border border-slate-100 overflow-hidden flex flex-col justify-between ${cat.colSpan} ${cat.bg} cursor-default`}
                             >
                                 <div className="relative z-10">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 ${cat.bg.includes('slate-900') ? 'bg-white/10 text-white' : 'bg-white shadow-lg text-primary'}`}>
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${cat.bg.includes('slate-900') ? 'bg-white/10 text-white' : 'bg-white shadow-lg text-primary'}`}>
                                         {cat.icon}
                                     </div>
                                     <h3 className={`text-3xl font-bold mb-3 ${cat.bg.includes('slate-900') ? 'text-white' : 'text-slate-900'}`}>
@@ -175,8 +332,9 @@ export default function HelpPage() {
                                         {cat.description}
                                     </p>
                                 </div>
-                                <div className="relative z-10 flex justify-end">
-                                    <span className={`p-3 rounded-full transition-all duration-300 ${cat.bg.includes('slate-900') ? 'bg-white text-slate-900 hover:bg-primary hover:text-white' : 'bg-slate-900 text-white group-hover:bg-primary'}`}>
+                                {/* Arrow Visual Only (No Link) */}
+                                <div className="relative z-10 flex justify-end opacity-50 group-hover:opacity-100 transition-opacity">
+                                    <span className={`p-3 rounded-full ${cat.bg.includes('slate-900') ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}`}>
                                         <ArrowRight size={20} />
                                     </span>
                                 </div>
@@ -211,6 +369,15 @@ export default function HelpPage() {
                         ) : (
                             <div className="text-center py-12 text-slate-400">
                                 <p>Nenhuma pergunta encontrada para "{searchTerm}".</p>
+                                <button
+                                    onClick={() => {
+                                        setCoachQuery(searchTerm);
+                                        setIsCoachOpen(true);
+                                    }}
+                                    className="mt-4 text-primary font-bold hover:underline flex items-center justify-center gap-2 mx-auto"
+                                >
+                                    Perguntar para a IA <ArrowRight size={16} />
+                                </button>
                             </div>
                         )}
                     </div>
@@ -239,13 +406,17 @@ export default function HelpPage() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                            <Link href="/dashboard/coach" className="px-8 py-5 bg-white text-slate-900 rounded-xl font-bold text-lg hover:bg-slate-100 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-white/10 flex items-center justify-center gap-2">
+                            <button
+                                onClick={() => {
+                                    setCoachQuery('');
+                                    setIsCoachOpen(true);
+                                }}
+                                className="px-8 py-5 bg-white text-slate-900 rounded-xl font-bold text-lg hover:bg-slate-100 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-white/10 flex items-center justify-center gap-2"
+                            >
                                 <Sparkles size={20} className="text-primary" />
                                 Perguntar para IA
-                            </Link>
-                            <Link href="mailto:ajuda@pinc.app.br" className="px-8 py-5 bg-transparent border border-white/20 text-white rounded-xl font-bold text-lg hover:bg-white/5 transition-all flex items-center justify-center gap-2">
-                                Falar com Humano
-                            </Link>
+                            </button>
+                            {/* Human button removed as requested */}
                         </div>
                     </div>
 
@@ -258,13 +429,13 @@ export default function HelpPage() {
                                 <div className="flex gap-3">
                                     <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0" />
                                     <div className="bg-slate-800 rounded-r-xl rounded-bl-xl p-3 text-xs text-slate-300">
-                                        Como funciona o plano corporativo para 50 pessoas?
+                                        Qual a diferença do plano B2B?
                                     </div>
                                 </div>
                                 <div className="flex gap-3 flex-row-reverse">
                                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">IA</div>
                                     <div className="bg-primary/20 text-white rounded-l-xl rounded-br-xl p-3 text-xs border border-primary/30">
-                                        O plano Business oferece painel gestor completo. Para 50 vidas, temos condições especiais...
+                                        Para empresas, oferecemos gestão de times e códigos de acesso...
                                     </div>
                                 </div>
                                 <div className="flex gap-2 items-center text-slate-500 text-[10px] justify-center pt-2">
@@ -281,9 +452,8 @@ export default function HelpPage() {
 
             {/* Footer Simple */}
             <footer className="py-12 text-center text-slate-400 text-sm bg-white border-t border-slate-100">
-                <p>&copy; {new Date().getFullYear()} PINC Mindsight. Todos os direitos reservados.</p>
+                <p>&copy; {new Date().getFullYear()} PINC Mindsight. Suporte 100% via IA.</p>
             </footer>
         </div>
     );
 }
-

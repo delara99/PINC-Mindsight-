@@ -4,7 +4,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('ai')
-@UseGuards(AuthGuard('jwt')) // Protegido: Só usuários logados
 export class AiController {
     constructor(
         private readonly aiService: AiService,
@@ -12,11 +11,13 @@ export class AiController {
     ) { }
 
     @Get('history')
+    @UseGuards(AuthGuard('jwt'))
     async getHistory(@Request() req) {
         return this.aiService.getChatHistory(req.user.userId);
     }
 
     @Post('chat')
+    @UseGuards(AuthGuard('jwt'))
     async chat(@Request() req, @Body() body: { message: string, history: any[], profileContext: any }) {
         // Pegar o usuario do token (req.user)
         const tokenUser = req.user;
@@ -49,6 +50,22 @@ export class AiController {
         } catch (error) {
             console.error('AI Error:', error);
             throw new HttpException('Erro no processamento da IA', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Post('support')
+    // Endpoint Público (Sem AuthGuard) para a página /help
+    async supportChat(@Body() body: { message: string }) {
+        if (!body.message) {
+            throw new HttpException('Mensagem vazia', HttpStatus.BAD_REQUEST);
+        }
+
+        // Simples Rate Limit / Proteção básica poderia ser adicionada aqui
+        try {
+            const response = await this.aiService.generateSupportResponse(body.message);
+            return { message: response };
+        } catch (error) {
+            throw new HttpException('Erro no suporte IA', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
