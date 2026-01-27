@@ -147,23 +147,13 @@ export default function Home() {
                         <p className="text-xl opacity-90 leading-relaxed max-w-lg font-light" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
                             {settings?.heroDescription || 'Não é horóscopo. É ciência. Use o método Big Five para entender sua personalidade, alavancar sua carreira e melhorar seus relacionamentos.'}
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                            <Link
-                                href="/auth/register"
-                                className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full shadow-2xl transition-all hover:scale-105 hover:shadow-amber-400/20"
-                                style={{
-                                    backgroundColor: settings?.accentColor || '#FFC107',
-                                    color: '#000'
-                                }}
-                            >
-                                {settings?.primaryButtonText || 'Fazer Mapeamento Grátis'} <ArrowRight size={20} />
-                            </Link>
-
+                        <div className="flex flex-col sm:flex-row gap-4 pt-8">
                             <Link
                                 href="/trial"
-                                className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full border-2 border-white/30 hover:bg-white/10 text-white transition-all hover:scale-105"
+                                className="group flex items-center justify-center gap-3 text-lg font-bold py-4 px-10 rounded-full bg-white text-slate-900 shadow-2xl transition-all hover:scale-105 hover:bg-slate-50 hover:shadow-white/20"
                             >
                                 Ver Degustação
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>
@@ -269,13 +259,22 @@ export default function Home() {
             )}
 
             {/* FOOTER */}
+            {/* FOOTER */}
             <footer className="bg-white border-t border-gray-200 py-12">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                        <img src="/logo.png" alt="PINC Logo" className="h-12 w-auto" />
-                        <p className="text-gray-900 font-medium">
-                            PINC By Sued.Inc - 2025 - CNPJ: 57.810.083/0001-00
-                        </p>
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
+                        <div className="flex flex-col items-center md:items-start gap-4">
+                            <img src="/logo.png" alt="PINC Logo" className="h-10 w-auto" />
+                            <p className="text-gray-500 text-sm">
+                                © 2025 Sued Inc. Todos os direitos reservados.
+                            </p>
+                        </div>
+
+                        <div className="max-w-lg text-center md:text-right">
+                            <p className="text-gray-400 text-xs leading-relaxed">
+                                O PINC é uma ferramenta de autoconhecimento e desenvolvimento. Os relatórios gerados não substituem avaliações psicológicas clínicas ou acompanhamento profissional especializado quando necessário.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </footer>
