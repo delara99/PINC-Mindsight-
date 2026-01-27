@@ -158,6 +158,13 @@ export default function Home() {
                             >
                                 {settings?.primaryButtonText || 'Fazer Mapeamento Grátis'} <ArrowRight size={20} />
                             </Link>
+
+                            <Link
+                                href="/trial"
+                                className="flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-full border-2 border-white/30 hover:bg-white/10 text-white transition-all hover:scale-105"
+                            >
+                                Ver Degustação
+                            </Link>
                         </div>
                     </div>
 
