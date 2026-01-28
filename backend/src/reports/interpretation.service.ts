@@ -101,7 +101,60 @@ export class InterpretationService {
 
         // Gerar análise para cada trait
         for (const trait of config.traits) {
-            const traitResponses = responsesByTrait[trait.traitKey] || [];
+            let traitResponses = responsesByTrait[trait.traitKey];
+
+            // FALLBACK ROBUSTO DE MATCHING DE RESPOSTAS (PT <-> EN)
+            if (!traitResponses || traitResponses.length === 0) {
+                const key = trait.traitKey.toUpperCase();
+
+                // Mapa de equivalências bidirecional
+                const equivalents: Record<string, string[]> = {
+                    'OPENNESS': ['ABERTURA', 'MENTALIDADE', 'OPEN', 'FATOR_O'],
+                    'ABERTURA': ['OPENNESS', 'MENTALIDADE', 'OPEN'],
+                    'MENTALIDADE': ['OPENNESS', 'ABERTURA', 'OPEN'],
+
+                    'CONSCIENTIOUSNESS': ['CONSCIENCIOSIDADE', 'ESTRUTURA', 'ORGANIZACAO', 'TRABALHO', 'CONSC', 'FATOR_C'],
+                    'CONSCIENCIOSIDADE': ['CONSCIENTIOUSNESS', 'ESTRUTURA', 'ORGANIZACAO', 'TRABALHO'],
+                    'ESTRUTURA': ['CONSCIENTIOUSNESS', 'CONSCIENCIOSIDADE', 'ORGANIZACAO', 'TRABALHO'],
+
+                    'EXTRAVERSION': ['EXTROVERSAO', 'ENERGIA', 'SOCIAL', 'EXTRA', 'FATOR_E'],
+                    'EXTROVERSAO': ['EXTRAVERSION', 'ENERGIA', 'SOCIAL'],
+                    'ENERGIA': ['EXTRAVERSION', 'EXTROVERSAO', 'SOCIAL'],
+
+                    'AGREEABLENESS': ['AMABILIDADE', 'AGRADABILIDADE', 'RELACIONAL', 'AGREE', 'FATOR_A'],
+                    'AMABILIDADE': ['AGREEABLENESS', 'AGRADABILIDADE', 'RELACIONAL'],
+                    'RELACIONAL': ['AGREEABLENESS', 'AMABILIDADE', 'AGRADABILIDADE'],
+
+                    'NEUROTICISM': ['NEUROTICISMO', 'ESTABILIDADE', 'RESILIENCIA', 'EMOCIONAL', 'NEURO', 'FATOR_N'],
+                    'NEUROTICISMO': ['NEUROTICISM', 'ESTABILIDADE', 'RESILIENCIA', 'EMOCIONAL'],
+                    'ESTABILIDADE': ['NEUROTICISM', 'NEUROTICISMO', 'RESILIENCIA', 'EMOCIONAL']
+                };
+
+                // Tenta encontrar em qualquer chave equivalente que tenha respostas
+                const aliasList = equivalents[key] || [];
+                // Adiciona heurística genérica (includes)
+                const allKeys = Object.keys(responsesByTrait);
+
+                // 1. Busca direta nos equivalentes
+                for (const alias of aliasList) {
+                    if (responsesByTrait[alias]?.length > 0) {
+                        traitResponses = responsesByTrait[alias];
+                        console.log(`[InterpretationService] Match por alias: ${trait.traitKey} -> ${alias}`);
+                        break;
+                    }
+                }
+
+                // 2. Busca por includes (fallback final)
+                if (!traitResponses) {
+                    const match = allKeys.find(k => k.toUpperCase().includes(key.substring(0, 4)) || key.substring(0, 4).includes(k.toUpperCase()));
+                    if (match) {
+                        traitResponses = responsesByTrait[match];
+                        console.log(`[InterpretationService] Match por includes: ${trait.traitKey} -> ${match}`);
+                    }
+                }
+            }
+
+            traitResponses = traitResponses || [];
 
             // Calcular score
             const rawScore = this.calculateScore(traitResponses, trait.weight);
