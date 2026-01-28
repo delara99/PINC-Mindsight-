@@ -245,6 +245,8 @@ export default function ConnectionDetailPage() {
     const theirSettings = detail?.theirSettings || {};
 
     // DEBUG QUERY (Emergency Diagnostic) - FAIL SAFE
+    // TEMPORARILY DISABLED TO FIX BLACK SCREEN
+    /*
     useQuery({
         queryKey: ['debug-connection-failsafe', id],
         enabled: true,
@@ -269,6 +271,7 @@ export default function ConnectionDetailPage() {
         },
         retry: false
     });
+    */
 
     return (
         <div className="h-[calc(100vh-100px)] flex flex-col md:flex-row gap-6">
