@@ -351,11 +351,12 @@ export class InterpretationService {
             let traitKey = response.question.traitKey;
 
             // 2. Metadata (Schema Antigo/Legado)
-            if (!traitKey && response.question.metadata) {
+            const meta = (response.question as any).metadata;
+            if (!traitKey && meta) {
                 try {
-                    let parsed = typeof response.question.metadata === 'string'
-                        ? JSON.parse(response.question.metadata)
-                        : response.question.metadata;
+                    let parsed = typeof meta === 'string'
+                        ? JSON.parse(meta)
+                        : meta;
 
                     const metadata = Array.isArray(parsed) ? parsed[0] : parsed;
                     if (metadata) {
