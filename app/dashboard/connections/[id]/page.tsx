@@ -462,13 +462,42 @@ export default function ConnectionDetailPage() {
                                                         </div>
 
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                            <div className="p-5 bg-pink-50/50 rounded-2xl border-l-4 border-pink-500">
-                                                                <p className="text-xs font-bold text-pink-400 uppercase mb-1 tracking-wider">Seu Perfil</p>
-                                                                <p className="font-bold text-gray-900 text-lg">{comparisonData.me.analysis.archetype_name}</p>
+                                                            <div className="p-5 bg-pink-50/50 rounded-2xl border-l-4 border-pink-500 hover:shadow-md transition-shadow">
+                                                                <p className="text-xs font-bold text-pink-400 uppercase mb-2 tracking-wider flex items-center gap-1">
+                                                                    <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div> Seu Perfil
+                                                                </p>
+                                                                <p className="font-bold text-gray-900 text-lg mb-2 leading-tight">{comparisonData.me.analysis.archetype_name}</p>
+
+                                                                {comparisonData.me.analysis.keywords && Array.isArray(comparisonData.me.analysis.keywords) && (
+                                                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                                                        {comparisonData.me.analysis.keywords.slice(0, 3).map((k: string, i: number) => (
+                                                                            <span key={i} className="text-[10px] uppercase font-bold bg-white text-pink-600 px-2 py-1 rounded-md border border-pink-100 shadow-sm">{k}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+
+                                                                <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
+                                                                    {comparisonData.me.analysis.overview || comparisonData.me.analysis.archetype_description || comparisonData.me.analysis.summary || "Perfil processado com sucesso."}
+                                                                </p>
                                                             </div>
-                                                            <div className="p-5 bg-indigo-50/50 rounded-2xl border-l-4 border-indigo-500">
-                                                                <p className="text-xs font-bold text-indigo-400 uppercase mb-1 tracking-wider">Perfil de {partner?.name.split(' ')[0]}</p>
-                                                                <p className="font-bold text-gray-900 text-lg">{comparisonData.partner.analysis.archetype_name}</p>
+
+                                                            <div className="p-5 bg-indigo-50/50 rounded-2xl border-l-4 border-indigo-500 hover:shadow-md transition-shadow">
+                                                                <p className="text-xs font-bold text-indigo-400 uppercase mb-2 tracking-wider flex items-center gap-1">
+                                                                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div> Perfil de {partner?.name.split(' ')[0]}
+                                                                </p>
+                                                                <p className="font-bold text-gray-900 text-lg mb-2 leading-tight">{comparisonData.partner.analysis.archetype_name}</p>
+
+                                                                {comparisonData.partner.analysis.keywords && Array.isArray(comparisonData.partner.analysis.keywords) && (
+                                                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                                                        {comparisonData.partner.analysis.keywords.slice(0, 3).map((k: string, i: number) => (
+                                                                            <span key={i} className="text-[10px] uppercase font-bold bg-white text-indigo-600 px-2 py-1 rounded-md border border-indigo-100 shadow-sm">{k}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+
+                                                                <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
+                                                                    {comparisonData.partner.analysis.overview || comparisonData.partner.analysis.archetype_description || comparisonData.partner.analysis.summary || "Perfil processado com sucesso."}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     </div>

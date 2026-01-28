@@ -259,12 +259,21 @@ export class InterpretationService {
             }
         });
 
+        // Helper para normalizar busca de key com suporte a PT/EN
+        const findTraitScore = (keys: string[]) => {
+            const trait = report.traits.find(t => {
+                const k = (t.key || '').toUpperCase();
+                return keys.some(search => k === search || k.includes(search));
+            });
+            return trait ? trait.score : 50;
+        };
+
         const scores = {
-            O: report.traits.find(t => t.key === 'OPENNESS' || t.key.includes('OPEN'))?.score || 50,
-            C: report.traits.find(t => t.key === 'CONSCIENTIOUSNESS' || t.key.includes('CONSC'))?.score || 50,
-            E: report.traits.find(t => t.key === 'EXTRAVERSION' || t.key.includes('EXTRA'))?.score || 50,
-            A: report.traits.find(t => t.key === 'AGREEABLENESS' || t.key.includes('AGREE'))?.score || 50,
-            N: report.traits.find(t => t.key === 'NEUROTICISM' || t.key.includes('NEURO'))?.score || 50,
+            O: findTraitScore(['OPEN', 'ABERTURA', 'MENTALIDADE']),
+            C: findTraitScore(['CONSC', 'ESTRUTURA', 'ORGANIZACAO', 'TRABALHO']),
+            E: findTraitScore(['EXTRA', 'ENERGIA', 'SOCIAL', 'EXTRO']),
+            A: findTraitScore(['AGREE', 'AMABILIDADE', 'RELACIONAL', 'AGRAD']),
+            N: findTraitScore(['NEURO', 'ESTABILIDADE', 'RESILIENCIA', 'EMOCIONAL']),
             facets: facetsMap
         };
 
