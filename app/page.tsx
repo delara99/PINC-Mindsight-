@@ -138,7 +138,7 @@ export default function Home() {
                                 {settings.heroBadge}
                             </div>
                         )}
-                        <h1 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                        <h1 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
                             {settings?.heroTitle || 'Revele quem você'} <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500" style={{ color: settings?.accentColor ? 'inherit' : undefined }}>
                                 {settings?.heroSubtitle || 'realmente é.'}
