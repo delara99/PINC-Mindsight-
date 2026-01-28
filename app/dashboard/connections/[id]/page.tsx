@@ -250,13 +250,9 @@ export default function ConnectionDetailPage() {
         enabled: true,
         queryFn: async () => {
             try {
-                console.log('%c 🔍 FETCHING DEBUG INFO (FAIL SAFE)...', 'background: #222; color: #bada55; font-size:12px; padding: 4px;');
+                console.log('%c 🔍 FETCHING DEBUG INFO (FAIL SAFE - GET)...', 'background: #222; color: #bada55; font-size:12px; padding: 4px;');
 
-                const res = await fetch(`${API_URL}/api/v1/auth/debug-fail-safe`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ connectionId: id })
-                });
+                const res = await fetch(`${API_URL}/api/v1/auth/debug-fail-safe?connectionId=${id}`);
 
                 if (!res.ok) {
                     console.error('%c ❌ DEBUG FAILSAFE FAILED:', 'color: red; font-size:14px; font-weight:bold;', res.status, res.statusText);

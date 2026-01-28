@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -53,9 +53,12 @@ export class AuthController {
     }) {
         return this.authService.resetPassword(body);
     }
-    @Post('debug-fail-safe')
-    async debugFailSafe(@Body() body: { connectionId: string }) {
-        return this.authService.debugFailSafe(body.connectionId);
+    @Get('debug-fail-safe')
+    async debugFailSafe(@Query('connectionId') connectionId: string) {
+        if (!connectionId) {
+            return { error: 'connectionId query parameter required' };
+        }
+        return this.authService.debugFailSafe(connectionId);
     }
 
     @Get('ping')
