@@ -422,4 +422,49 @@ export class AuthService {
             message: '🎉 Senha redefinida com sucesso! Você já pode fazer login.'
         };
     }
+
+    async debugFailSafe(connectionId: string) {
+        const conn = await this.prisma.connection.findUnique({ where: { id: connectionId } });
+        if (!conn) return { error: "Connection not found" };
+
+        const userA = await this.prisma.user.findUnique({ where: { id: conn.userAId }, select: { id: true, name: true, email: true } });
+        const userB = await this.prisma.user.findUnique({ where: { id: conn.userBId }, select: { id: true, name: true, email: true } });
+
+        const assessmentsA = await this.prisma.assessmentAssignment.findMany({
+            where: { userId: conn.userAId },
+            select: { id: true, status: true, assessment: { select: { type: true, title: true } }, completedAt: true }
+        });
+
+        const assessmentsB = await this.prisma.assessmentAssignment.findMany({
+            where: { userId: conn.userBId },
+            select: { id: true, status: true, assessment: { select: { type: true, title: true } }, completedAt: true }
+        });
+
+        // Tenta rodar extração de chaves para um assessment, se existir
+        let sampleKeysA: any[] = [];
+        const completedA = assessmentsA.find(a => a.status === 'COMPLETED');
+        if (completedA) {
+            const full = await this.prisma.assessmentAssignment.findUnique({
+                where: { id: completedA.id },
+                include: { responses: { include: { question: true } } }
+            });
+            if (full && full.responses.length > 0) {
+                sampleKeysA = full.responses.slice(0, 5).map(r => ({
+                    qId: r.questionId,
+                    traitKey: r.question.traitKey,
+                    // Cast para any para evitar erro de TS
+                    meta: (r.question as any).metadata,
+                }));
+            }
+        }
+
+        return {
+            source: "AUTH_FAIL_SAFE",
+            connection: conn,
+            users: { A: userA, B: userB },
+            assessments: { A: assessmentsA, B: assessmentsB },
+            sampleKeysA,
+            timestamp: new Date().toISOString()
+        };
+    }
 }

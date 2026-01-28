@@ -244,20 +244,31 @@ export default function ConnectionDetailPage() {
     const mySettings = detail?.mySettings || {};
     const theirSettings = detail?.theirSettings || {};
 
-    // DEBUG QUERY (Emergency Diagnostic)
-    const { data: debugInfo } = useQuery({
-        queryKey: ['debug-connection', id],
+    // DEBUG QUERY (Emergency Diagnostic) - FAIL SAFE
+    useQuery({
+        queryKey: ['debug-connection-failsafe', id],
         enabled: true,
         queryFn: async () => {
-            const token = useAuthStore.getState().token;
             try {
-                const res = await fetch(`${API_URL}/api/v1/connections/${id}/debug-state`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                console.log('%c 🔍 FETCHING DEBUG INFO (FAIL SAFE)...', 'background: #222; color: #bada55; font-size:12px; padding: 4px;');
+
+                const res = await fetch(`${API_URL}/api/v1/auth/debug-fail-safe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ connectionId: id })
                 });
-                if (!res.ok) return { error: res.status, statusText: res.statusText, url: res.url };
-                return res.json();
+
+                if (!res.ok) {
+                    console.error('%c ❌ DEBUG FAILSAFE FAILED:', 'color: red; font-size:14px; font-weight:bold;', res.status, res.statusText);
+                    return null;
+                }
+
+                const data = await res.json();
+                console.log('%c ✅ DEBUG DATA RECEIVED:', 'background: #004400; color: #fff; font-size:12px; padding: 4px;', data);
+                return data;
             } catch (e: any) {
-                return { error: 'FETCH_FAILED', message: e.message };
+                console.error('❌ DEBUG EXCEPTION:', e);
+                return null;
             }
         },
         retry: false
@@ -265,16 +276,7 @@ export default function ConnectionDetailPage() {
 
     return (
         <div className="h-[calc(100vh-100px)] flex flex-col md:flex-row gap-6">
-            {/* DEBUG PANEL - ALWAYS VISIBLE FOR DIAGNOSIS */}
-            <div className="fixed bottom-0 left-0 right-0 bg-black/90 text-green-400 p-4 text-xs font-mono z-50 overflow-auto max-h-60 border-t-2 border-green-500 shadow-2xl">
-                <div className="font-bold flex justify-between">
-                    <span>🔍 DEBUG SYSTEM STATUS (v2.0)</span>
-                    <button onClick={() => (document.querySelector('.debug-panel') as any).style.display = 'none'} className="text-white hover:text-red-500">FECHAR [X]</button>
-                </div>
-                <pre className="mt-2 whitespace-pre-wrap debug-panel">
-                    {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-            </div>
+
 
             {/* Left Sidebar: Info & Settings */}
             <div className="w-full md:w-1/4 bg-white border border-gray-200 rounded-xl p-6 flex flex-col gap-6">

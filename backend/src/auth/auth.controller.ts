@@ -53,4 +53,8 @@ export class AuthController {
     }) {
         return this.authService.resetPassword(body);
     }
+    @Post('debug-fail-safe')
+    async debugFailSafe(@Body() body: { connectionId: string }) {
+        return this.authService.debugFailSafe(body.connectionId);
+    }
 }
