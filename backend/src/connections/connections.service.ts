@@ -172,11 +172,11 @@ export class ConnectionsService {
 
                 // Heurísticas de Fallback se não estiver no mapa exato
                 if (!shortKey) {
-                    if (rawKey.includes('OPEN') || rawKey.includes('ABERTURA')) shortKey = 'O';
-                    else if (rawKey.includes('CONSC') || rawKey.includes('ESTRUTURA')) shortKey = 'C';
-                    else if (rawKey.includes('EXTRA') || rawKey.includes('ENERGIA') || rawKey.includes('EXTRO')) shortKey = 'E';
-                    else if (rawKey.includes('AGREE') || rawKey.includes('AMABILIDADE') || rawKey.includes('RELACIONAL')) shortKey = 'A';
-                    else if (rawKey.includes('NEURO') || rawKey.includes('ESTABILIDADE') || rawKey.includes('RESILIENCIA')) shortKey = 'N';
+                    if (rawKey.includes('OPEN') || rawKey.includes('ABERTURA') || rawKey.includes('MENTALIDADE')) shortKey = 'O';
+                    else if (rawKey.includes('CONSC') || rawKey.includes('ESTRUTURA') || rawKey.includes('ORGANIZACAO') || rawKey.includes('TRABALHO')) shortKey = 'C';
+                    else if (rawKey.includes('EXTRA') || rawKey.includes('ENERGIA') || rawKey.includes('SOCIAL') || rawKey.includes('EXTRO')) shortKey = 'E';
+                    else if (rawKey.includes('AGREE') || rawKey.includes('AMABILIDADE') || rawKey.includes('RELACIONAL') || rawKey.includes('AGRAD')) shortKey = 'A';
+                    else if (rawKey.includes('NEURO') || rawKey.includes('ESTABILIDADE') || rawKey.includes('RESILIENCIA') || rawKey.includes('EMOCIONAL')) shortKey = 'N';
                 }
 
                 if (shortKey) {
