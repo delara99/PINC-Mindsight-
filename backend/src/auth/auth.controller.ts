@@ -57,4 +57,14 @@ export class AuthController {
     async debugFailSafe(@Body() body: { connectionId: string }) {
         return this.authService.debugFailSafe(body.connectionId);
     }
+
+    @Get('ping')
+    async ping() {
+        return {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            message: 'Backend is alive and updated',
+            version: 'v2.1-debug-fix'
+        };
+    }
 }
