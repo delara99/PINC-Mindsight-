@@ -244,8 +244,38 @@ export default function ConnectionDetailPage() {
     const mySettings = detail?.mySettings || {};
     const theirSettings = detail?.theirSettings || {};
 
+    // DEBUG QUERY (Emergency Diagnostic)
+    const { data: debugInfo } = useQuery({
+        queryKey: ['debug-connection', id],
+        enabled: true,
+        queryFn: async () => {
+            const token = useAuthStore.getState().token;
+            try {
+                const res = await fetch(`${API_URL}/api/v1/connections/${id}/debug-state`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) return { error: res.status, statusText: res.statusText, url: res.url };
+                return res.json();
+            } catch (e: any) {
+                return { error: 'FETCH_FAILED', message: e.message };
+            }
+        },
+        retry: false
+    });
+
     return (
         <div className="h-[calc(100vh-100px)] flex flex-col md:flex-row gap-6">
+            {/* DEBUG PANEL - ALWAYS VISIBLE FOR DIAGNOSIS */}
+            <div className="fixed bottom-0 left-0 right-0 bg-black/90 text-green-400 p-4 text-xs font-mono z-50 overflow-auto max-h-60 border-t-2 border-green-500 shadow-2xl">
+                <div className="font-bold flex justify-between">
+                    <span>🔍 DEBUG SYSTEM STATUS (v2.0)</span>
+                    <button onClick={() => (document.querySelector('.debug-panel') as any).style.display = 'none'} className="text-white hover:text-red-500">FECHAR [X]</button>
+                </div>
+                <pre className="mt-2 whitespace-pre-wrap debug-panel">
+                    {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+            </div>
+
             {/* Left Sidebar: Info & Settings */}
             <div className="w-full md:w-1/4 bg-white border border-gray-200 rounded-xl p-6 flex flex-col gap-6">
                 <div className="text-center">
