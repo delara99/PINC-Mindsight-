@@ -62,18 +62,18 @@ function PlansContent() {
             <div className="flex flex-wrap justify-center gap-8">
                 {plans.map((plan: any) => {
                     const quantity = quantities[plan.id] || 0;
-                    const isUnlimited = plan.name.toLowerCase().includes('business'); 
-                    
+                    const isUnlimited = plan.name.toLowerCase().includes('business');
+
                     // Logic: Base price is for 1 credit (Starter/Pro) usually.
                     // If plan has 0 credits in DB, assume 1 based on user requirement.
                     const dbCredits = plan.credits || 0;
                     const baseCredits = (dbCredits === 0 && !isUnlimited) ? 1 : dbCredits;
-                    
+
                     const totalCredits = isUnlimited ? 0 : (baseCredits + quantity);
                     const finalPrice = Number(plan.price) + (quantity * CREDIT_PRICE);
 
                     return (
-                        <div 
+                        <div
                             key={plan.id}
                             className={`relative bg-white rounded-2xl shadow-xl border-2 flex flex-col p-8 transition-transform hover:scale-[1.02] w-full max-w-sm ${plan.highlighted ? 'border-primary ring-4 ring-primary/10' : 'border-gray-100'}`}
                         >
@@ -82,7 +82,7 @@ function PlansContent() {
                                     MAIS POPULAR
                                 </div>
                             )}
-                            
+
                             <div className="text-center mb-6">
                                 <h3 className="text-lg font-medium text-gray-500 mb-2">{plan.name}</h3>
                                 <div className="flex justify-center items-baseline gap-1">
@@ -106,7 +106,7 @@ function PlansContent() {
                                     <div className="mt-6 bg-gray-50 rounded-xl p-4 border border-gray-100">
                                         <p className="text-xs font-bold text-gray-500 uppercase mb-3">Adicionar Créditos Extras</p>
                                         <div className="flex items-center justify-center gap-4">
-                                            <button 
+                                            <button
                                                 onClick={() => handleQuantityChange(plan.id, -1)}
                                                 className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors shadow-sm disabled:opacity-50"
                                                 disabled={quantity <= 0}
@@ -117,7 +117,7 @@ function PlansContent() {
                                                 <span className="text-2xl font-bold text-primary">{quantity}</span>
                                                 <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">adicionais</span>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => handleQuantityChange(plan.id, 1)}
                                                 className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20"
                                             >
@@ -143,20 +143,20 @@ function PlansContent() {
                                         <span className="text-sm">{feature}</span>
                                     </li>
                                 )) || (
-                                    <li className="text-gray-400 italic">Recursos não listados</li>
-                                )}
+                                        <li className="text-gray-400 italic">Recursos não listados</li>
+                                    )}
                             </ul>
 
-                            <button 
-                                onClick={() => setSelectedPlan({ 
-                                    ...plan, 
-                                    price: finalPrice, 
+                            <button
+                                onClick={() => setSelectedPlan({
+                                    ...plan,
+                                    price: finalPrice,
                                     credits: totalCredits,
                                     originalPrice: plan.price
                                 })}
                                 className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${plan.highlighted ? 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/30' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                             >
-                               <CreditCard size={20} /> {plan.buttonText || 'Comprar Agora'}
+                                <CreditCard size={20} /> {plan.buttonText || 'Comprar Agora'}
                             </button>
                         </div>
                     );
@@ -165,12 +165,12 @@ function PlansContent() {
 
             <div className="mt-12 text-center bg-blue-50 p-6 rounded-xl border border-blue-100 max-w-2xl mx-auto">
                 <p className="text-blue-800 font-medium">
-                    Precisa de um plano Corporativo customizado? 
-                    <Link href="/dashboard/Help" className="underline ml-2 hover:text-blue-900">Fale com vendas</Link>
+                    Tem dúvidas sobre qual plano escolher?
+                    <a href="https://www.pinc.app.br/help" target="_blank" rel="noopener noreferrer" className="underline ml-2 hover:text-blue-900">Visite nossa Central de Ajuda</a>
                 </p>
             </div>
 
-            <PaymentModal 
+            <PaymentModal
                 isOpen={!!selectedPlan}
                 onClose={() => setSelectedPlan(null)}
                 plan={selectedPlan}

@@ -94,8 +94,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
                             </button>
 
-                            <p className="mt-4 text-center text-xs text-gray-400">
-                                Sem compromisso. Você pode cancelar a qualquer momento.
+                            <p className="mt-4 text-center text-xs text-blue-600 font-bold">
+                                Clique no botão acima para se tornar PRO
                             </p>
                         </div>
                     </motion.div>
