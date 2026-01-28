@@ -345,38 +345,41 @@ export class InterpretationService {
         const grouped: Record<string, any[]> = {};
 
         for (const response of responses) {
-            if (!response.question.metadata) continue;
+            // ESTRATÉGIA DE EXTRAÇÃO DE TRAIT (Prioridade: Coluna Direta -> Metadata -> Campos TalkingTo)
 
-            try {
-                let parsed = typeof response.question.metadata === 'string'
-                    ? JSON.parse(response.question.metadata)
-                    : response.question.metadata;
+            // 1. Coluna Direta (Schema Novo)
+            let traitKey = response.question.traitKey;
 
-                // Suporte a Array (pega o primeiro elemento)
-                const metadata = Array.isArray(parsed) ? parsed[0] : parsed;
+            // 2. Metadata (Schema Antigo/Legado)
+            if (!traitKey && response.question.metadata) {
+                try {
+                    let parsed = typeof response.question.metadata === 'string'
+                        ? JSON.parse(response.question.metadata)
+                        : response.question.metadata;
 
-                if (!metadata) continue;
-
-                // Tenta varias chaves possíveis
-                const traitKey = metadata.trait ||
-                    metadata.dimension ||
-                    metadata.factor ||
-                    metadata.category ||
-                    metadata.domain ||
-                    metadata.traitKey;
-
-                if (!traitKey) continue;
-
-                // Normaliza chave para facilitar matching
-                // Mantemos case original na chave do objeto, mas o FuzzyMatch vai lidar com isso depois
-                if (!grouped[traitKey]) {
-                    grouped[traitKey] = [];
-                }
-
-                grouped[traitKey].push(response);
-            } catch (e) {
-                console.error('Erro ao parsear metadata:', e);
+                    const metadata = Array.isArray(parsed) ? parsed[0] : parsed;
+                    if (metadata) {
+                        traitKey = metadata.trait ||
+                            metadata.dimension ||
+                            metadata.factor ||
+                            metadata.category ||
+                            metadata.domain ||
+                            metadata.traitKey;
+                    }
+                } catch (e) { /* ignore */ }
             }
+
+            // 3. Campos TalkingTo (Schema Híbrido)
+            if (!traitKey) {
+                traitKey = response.question.questionTrait;
+            }
+
+            if (!traitKey) continue;
+
+            if (!grouped[traitKey]) {
+                grouped[traitKey] = [];
+            }
+            grouped[traitKey].push(response);
         }
 
         return grouped;
