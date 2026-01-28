@@ -471,4 +471,37 @@ export class BusinessService {
             }
         };
     }
+    // --- LEADS ---
+    async createLead(data: {
+        name: string,
+        email: string,
+        phone: string,
+        company: string,
+        companySize: string,
+        role: string,
+        interests: any,
+        consent: boolean
+    }) {
+        // @ts-ignore - Prisma might not have regenerated types yet locally
+        return this.prisma.businessLead.create({
+            data: {
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                company: data.company,
+                companySize: data.companySize,
+                role: data.role,
+                interests: data.interests,
+                consent: data.consent,
+                status: 'PENDING'
+            }
+        });
+    }
+
+    async getLeads() {
+        // @ts-ignore
+        return this.prisma.businessLead.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+    }
 }

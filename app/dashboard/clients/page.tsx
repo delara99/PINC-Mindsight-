@@ -32,7 +32,7 @@ export default function ClientsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
     const [selectedClient, setSelectedClient] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'INDIVIDUAL' | 'COMPANY' | 'COUPONS'>('INDIVIDUAL');
+    const [activeTab, setActiveTab] = useState<'INDIVIDUAL' | 'COMPANY' | 'COUPONS' | 'LEADS'>('INDIVIDUAL');
     const [openMenuId, setOpenMenuId] = useState<string | null>(null); // State para menu dropdown
 
     const [tempPassword, setTempPassword] = useState<{ pass: string; name: string } | null>(null);
@@ -91,6 +91,18 @@ export default function ClientsPage() {
             return res.json();
         },
         enabled: !!token && activeTab === 'COUPONS'
+    });
+
+    const { data: leads, isLoading: leadsLoading } = useQuery({
+        queryKey: ['business-leads'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/v1/business/leads`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return [];
+            return res.json();
+        },
+        enabled: !!token && activeTab === 'LEADS'
     });
 
     // Mutations
@@ -396,6 +408,12 @@ export default function ClientsPage() {
                 >
                     Cupons
                 </button>
+                <button
+                    onClick={() => setActiveTab('LEADS')}
+                    className={`flex-1 md:flex-none px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'LEADS' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Interessados
+                </button>
             </div>
 
             {isLoading ? (
@@ -435,6 +453,55 @@ export default function ClientsPage() {
                                 {(!coupons || coupons.length === 0) && (
                                     <tr>
                                         <td colSpan={4} className="py-8 text-center text-gray-400 text-sm">Nenhum cupom ativo.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : activeTab === 'LEADS' ? (
+                // Tabela de Leads
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+                        <h3 className="font-bold text-gray-700">Leads Business (Interessados)</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <tr>
+                                    <th className="text-left py-3 px-6">Nome / Cargo</th>
+                                    <th className="text-left py-3 px-6">Empresa</th>
+                                    <th className="text-left py-3 px-6">Contato</th>
+                                    <th className="text-left py-3 px-6">Interesses</th>
+                                    <th className="text-right py-3 px-6">Data</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {Array.isArray(leads) && leads.map((lead: any) => (
+                                    <tr key={lead.id} className="hover:bg-gray-50/50">
+                                        <td className="py-3 px-6">
+                                            <div className="font-bold text-gray-900">{lead.name}</div>
+                                            <div className="text-xs text-gray-500">{lead.role}</div>
+                                        </td>
+                                        <td className="py-3 px-6">
+                                            <div className="font-medium text-gray-800">{lead.company}</div>
+                                            <div className="text-xs text-gray-400">{lead.companySize}</div>
+                                        </td>
+                                        <td className="py-3 px-6">
+                                            <div className="text-sm text-gray-600 flex items-center gap-1"><Mail size={12} /> {lead.email}</div>
+                                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Phone size={12} /> {lead.phone}</div>
+                                        </td>
+                                        <td className="py-3 px-6 text-xs text-gray-500 max-w-xs truncate" title={JSON.stringify(lead.interests)}>
+                                            {lead.interests?.business?.length || 0} Business, {lead.interests?.user?.length || 0} Pessoais
+                                        </td>
+                                        <td className="py-3 px-6 text-right text-xs text-gray-400">
+                                            {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(!leads || leads.length === 0) && (
+                                    <tr>
+                                        <td colSpan={5} className="py-8 text-center text-gray-400 text-sm">Nenhum lead encontrado.</td>
                                     </tr>
                                 )}
                             </tbody>

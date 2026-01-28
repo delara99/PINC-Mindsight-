@@ -8,9 +8,11 @@ import { ReportsModule } from '../reports/reports.module';
 
 import { TalentIntelligenceModule } from './talent-intelligence/talent-intelligence.module';
 
+import { PublicBusinessController } from './public-business.controller';
+
 @Module({
     imports: [PrismaModule, TalkingToModule, ReportsModule, TalentIntelligenceModule],
-    controllers: [BusinessController],
+    controllers: [BusinessController, PublicBusinessController],
     providers: [BusinessService],
     exports: [BusinessService, TalentIntelligenceModule]
 })

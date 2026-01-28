@@ -117,4 +117,11 @@ export class BusinessController {
         // O Service valida permissões internamente (Gestor ou Próprio Colaborador)
         return this.service.getUnifiedReport(assignmentId, req.user);
     }
+    @Get('leads')
+    async getLeads(@Request() req) {
+        if (req.user.role !== Role.SUPER_ADMIN) {
+            throw new ForbiddenException('Acesso restrito a administradores.');
+        }
+        return this.service.getLeads();
+    }
 }

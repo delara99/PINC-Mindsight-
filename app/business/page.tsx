@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, CheckCircle2, BarChart3, Users, ShieldCheck, Home, Menu, X, LogIn } from 'lucide-react';
+import LeadFormModal from '../../src/components/business/LeadFormModal';
 
 export default function BusinessLandingPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
 
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -23,8 +25,12 @@ export default function BusinessLandingPage() {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
                         <a href="#solucoes" className="hover:text-purple-700 transition-colors">Soluções</a>
-                        <a href="#metodologia" className="hover:text-purple-700 transition-colors">Metodologia</a>
-                        <a href="#planos" className="hover:text-purple-700 transition-colors">Planos Enterprise</a>
+                        <button
+                            onClick={() => setIsFormOpen(true)}
+                            className="bg-slate-100 text-slate-900 border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                        >
+                            Fale com um especialista
+                        </button>
                     </nav>
 
                     {/* Desktop Actions */}
@@ -60,8 +66,12 @@ export default function BusinessLandingPage() {
                             <div className="space-y-1">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 mb-2">Navegação</p>
                                 <a href="#solucoes" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-slate-700 hover:bg-slate-50 rounded-xl">Soluções</a>
-                                <a href="#metodologia" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-slate-700 hover:bg-slate-50 rounded-xl">Metodologia</a>
-                                <a href="#planos" onClick={toggleMenu} className="block px-4 py-3 text-lg font-medium text-slate-700 hover:bg-slate-50 rounded-xl">Enterprise</a>
+                                <button
+                                    onClick={() => { toggleMenu(); setIsFormOpen(true); }}
+                                    className="block w-full text-left px-4 py-3 text-lg font-bold text-purple-700 hover:bg-purple-50 rounded-xl"
+                                >
+                                    Fale com um especialista
+                                </button>
                             </div>
 
                             <hr className="border-slate-100" />
@@ -196,6 +206,8 @@ export default function BusinessLandingPage() {
                     <p className="text-slate-500 text-sm">© {new Date().getFullYear()} PINC Business. Todos os direitos reservados.</p>
                 </div>
             </footer>
+
+            <LeadFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
         </div>
     );
 }
