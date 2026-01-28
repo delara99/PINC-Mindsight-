@@ -504,4 +504,17 @@ export class BusinessService {
             orderBy: { createdAt: 'desc' }
         });
     }
+
+    async deleteLead(id: string) {
+        // @ts-ignore
+        return this.prisma.businessLead.delete({ where: { id } });
+    }
+
+    async updateLead(id: string, data: any) {
+        // @ts-ignore
+        return this.prisma.businessLead.update({
+            where: { id },
+            data
+        });
+    }
 }

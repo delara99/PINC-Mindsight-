@@ -67,6 +67,10 @@ export default function ClientsPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
 
+    // State Leads (B2B)
+    const [isEditLeadModalOpen, setIsEditLeadModalOpen] = useState(false);
+    const [editingLead, setEditingLead] = useState<any>(null);
+
     // Queries
     const { data: clients, isLoading } = useQuery<Client[]>({
         queryKey: ['clients'],
@@ -281,6 +285,35 @@ export default function ClientsPage() {
         onError: (error: any) => alert(error.message || 'Erro ao excluir cliente.')
     });
 
+    // Mutations Leads
+    const deleteLeadMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await fetch(`${API_URL}/api/v1/business/leads/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['business-leads'] });
+            alert('Lead excluído!');
+        }
+    });
+
+    const updateLeadMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: string, data: any }) => {
+            await fetch(`${API_URL}/api/v1/business/leads/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['business-leads'] });
+            setIsEditLeadModalOpen(false);
+            alert('Lead atualizado!');
+        }
+    });
+
     const openAddCredits = (clientId: string) => {
         setSelectedClient(clientId);
         setIsModalOpen(true);
@@ -412,7 +445,7 @@ export default function ClientsPage() {
                     onClick={() => setActiveTab('LEADS')}
                     className={`flex-1 md:flex-none px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'LEADS' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                    Interessados
+                    Interessados (B2B)
                 </button>
             </div>
 
@@ -473,7 +506,8 @@ export default function ClientsPage() {
                                     <th className="text-left py-3 px-6">Empresa</th>
                                     <th className="text-left py-3 px-6">Contato</th>
                                     <th className="text-left py-3 px-6">Interesses</th>
-                                    <th className="text-right py-3 px-6">Data</th>
+                                    <th className="text-center py-3 px-6">Status</th>
+                                    <th className="text-right py-3 px-6">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -494,8 +528,20 @@ export default function ClientsPage() {
                                         <td className="py-3 px-6 text-xs text-gray-500 max-w-xs truncate" title={JSON.stringify(lead.interests)}>
                                             {lead.interests?.business?.length || 0} Business, {lead.interests?.user?.length || 0} Pessoais
                                         </td>
-                                        <td className="py-3 px-6 text-right text-xs text-gray-400">
-                                            {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                                        <td className="py-3 px-6 text-center">
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${lead.status === 'CONVERTED' ? 'bg-green-100 text-green-700' :
+                                                lead.status === 'CONTACTED' ? 'bg-blue-100 text-blue-700' :
+                                                    lead.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-500' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                {lead.status === 'PENDING' ? 'PENDENTE' : lead.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-6 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => { setEditingLead(lead); setIsEditLeadModalOpen(true); }} className="p-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Editar"><Edit size={16} /></button>
+                                                <button onClick={() => { if (confirm('Excluir lead permanentemente?')) deleteLeadMutation.mutate(lead.id) }} className="p-2 bg-red-50 hover:bg-red-100 rounded text-red-500 transition-colors" title="Excluir"><Trash2 size={16} /></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -705,254 +751,315 @@ export default function ClientsPage() {
                 </div>
             )}
 
-            {/* Modal de Criação de Cupom */}
-            {isCouponModalOpen && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
-                    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">Criar Novo Cupom</h3>
-                            <button onClick={() => setIsCouponModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+
+
+            {/* Modal Edit Lead */}
+            {
+                isEditLeadModalOpen && editingLead && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] backdrop-blur-sm p-4">
+                        <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold">Editar Lead</h3>
+                                <button onClick={() => setIsEditLeadModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nome</label>
+                                    <input className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:border-primary" value={editingLead.name} onChange={e => setEditingLead({ ...editingLead, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Empresa</label>
+                                    <input className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:border-primary" value={editingLead.company} onChange={e => setEditingLead({ ...editingLead, company: e.target.value })} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Email</label>
+                                        <input className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:border-primary" value={editingLead.email} onChange={e => setEditingLead({ ...editingLead, email: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Telefone</label>
+                                        <input className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:border-primary" value={editingLead.phone} onChange={e => setEditingLead({ ...editingLead, phone: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Status</label>
+                                    <select className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:border-primary bg-white" value={editingLead.status || 'PENDING'} onChange={e => setEditingLead({ ...editingLead, status: e.target.value })}>
+                                        <option value="PENDING">Pendente</option>
+                                        <option value="CONTACTED">Contactado</option>
+                                        <option value="CONVERTED">Convertido</option>
+                                        <option value="ARCHIVED">Arquivado</option>
+                                    </select>
+                                </div>
+                                <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 mt-2">
+                                    <button onClick={() => setIsEditLeadModalOpen(false)} className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-50 rounded-lg">Cancelar</button>
+                                    <button onClick={() => updateLeadMutation.mutate({ id: editingLead.id, data: editingLead })} disabled={updateLeadMutation.isPending} className="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:opacity-90 flex items-center gap-2">
+                                        {updateLeadMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Salvar Alterações'}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <form onSubmit={handleCreateCoupon} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Código Promocional</label>
-                                <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono uppercase" placeholder="EX: NATAL20" required />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Desconto (%)</label>
-                                    <input type="number" min="1" max="100" value={newCoupon.discountPercent} onChange={e => setNewCoupon({ ...newCoupon, discountPercent: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Limite Usos (Opcional)</label>
-                                    <input type="number" min="1" value={newCoupon.usageLimit} onChange={e => setNewCoupon({ ...newCoupon, usageLimit: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" placeholder="∞" />
-                                </div>
-                            </div>
-                            <div className="pt-4 flex justify-end gap-3">
-                                <button type="button" onClick={() => setIsCouponModalOpen(false)} className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg">Cancelar</button>
-                                <button type="submit" disabled={createCouponMutation.isPending} className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary-hover flex items-center gap-2">
-                                    {createCouponMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Criar Cupom'}
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Modal de Criação de Cupom */}
+            {
+                isCouponModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
+                        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold">Criar Novo Cupom</h3>
+                                <button onClick={() => setIsCouponModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                            </div>
+                            <form onSubmit={handleCreateCoupon} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Código Promocional</label>
+                                    <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono uppercase" placeholder="EX: NATAL20" required />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Desconto (%)</label>
+                                        <input type="number" min="1" max="100" value={newCoupon.discountPercent} onChange={e => setNewCoupon({ ...newCoupon, discountPercent: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Limite Usos (Opcional)</label>
+                                        <input type="number" min="1" value={newCoupon.usageLimit} onChange={e => setNewCoupon({ ...newCoupon, usageLimit: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" placeholder="∞" />
+                                    </div>
+                                </div>
+                                <div className="pt-4 flex justify-end gap-3">
+                                    <button type="button" onClick={() => setIsCouponModalOpen(false)} className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg">Cancelar</button>
+                                    <button type="submit" disabled={createCouponMutation.isPending} className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary-hover flex items-center gap-2">
+                                        {createCouponMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Criar Cupom'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Modal Cadastro, Edição, Créditos, Senha (Mantendo implementação anterior mas com z-index alto) */}
             {/* Modal Cadastro */}
-            {isRegisterModalOpen && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
-                    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-2xl font-bold">Novo Cliente</h3>
-                                <p className="text-gray-500 text-sm">Preencha os dados abaixo.</p>
+            {
+                isRegisterModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
+                        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 className="text-2xl font-bold">Novo Cliente</h3>
+                                    <p className="text-gray-500 text-sm">Preencha os dados abaixo.</p>
+                                </div>
+                                <button onClick={() => setIsRegisterModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
                             </div>
-                            <button onClick={() => setIsRegisterModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
-                        </div>
-                        <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-xl">
-                            <button onClick={() => setClientType('INDIVIDUAL')} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${clientType === 'INDIVIDUAL' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Pessoa Física</button>
-                            <button onClick={() => setClientType('COMPANY')} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${clientType === 'COMPANY' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Pessoa Jurídica</button>
-                        </div>
-                        {/* Form Fields (Simplificado para brevidade, mas mantendo funcionalidade) */}
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email *</label>
-                                <input type="email" value={registerData.email} onChange={e => setRegisterData({ ...registerData, email: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
+                            <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-xl">
+                                <button onClick={() => setClientType('INDIVIDUAL')} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${clientType === 'INDIVIDUAL' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Pessoa Física</button>
+                                <button onClick={() => setClientType('COMPANY')} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all ${clientType === 'COMPANY' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Pessoa Jurídica</button>
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome / Razão Social *</label>
-                                <input type="text" value={clientType === 'INDIVIDUAL' ? registerData.name : registerData.companyName} onChange={e => clientType === 'INDIVIDUAL' ? setRegisterData({ ...registerData, name: e.target.value }) : setRegisterData({ ...registerData, companyName: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
-                            </div>
-                            {clientType === 'COMPANY' && (
+                            {/* Form Fields (Simplificado para brevidade, mas mantendo funcionalidade) */}
+                            <div className="grid md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Fantasia</label>
-                                    <input type="text" value={registerData.name} onChange={e => setRegisterData({ ...registerData, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" />
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email *</label>
+                                    <input type="email" value={registerData.email} onChange={e => setRegisterData({ ...registerData, email: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
                                 </div>
-                            )}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{clientType === 'INDIVIDUAL' ? 'CPF' : 'CNPJ'} *</label>
-                                <input type="text" value={clientType === 'INDIVIDUAL' ? registerData.cpf : registerData.cnpj} onChange={e => clientType === 'INDIVIDUAL' ? setRegisterData({ ...registerData, cpf: e.target.value }) : setRegisterData({ ...registerData, cnpj: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefone</label>
-                                <input type="tel" value={registerData.phone} onChange={e => setRegisterData({ ...registerData, phone: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Senha Inicial *</label>
-                                <input type="password" value={registerData.password} onChange={e => setRegisterData({ ...registerData, password: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required minLength={6} placeholder="Mínimo 6 caracteres" />
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
-                            <button onClick={() => setIsRegisterModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancelar</button>
-                            <button onClick={() => registerClient.mutate(registerData)} disabled={registerClient.isPending} className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover flex items-center gap-2">
-                                {registerClient.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Cadastrar'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal Edição */}
-            {isEditModalOpen && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
-                    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h3 className="text-xl font-bold">Editar Cliente</h3>
-                                <p className="text-sm text-gray-500">
-                                    {editingClient?.userType === 'COMPANY' ? 'Pessoa Jurídica (B2B)' : 'Pessoa Física (B2C)'}
-                                </p>
-                            </div>
-                            <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
-                        </div>
-
-                        <div className="space-y-4">
-                            {/* Email (Readonly) */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email de Acesso (Não editável)</label>
-                                <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed">
-                                    <Mail size={16} />
-                                    {editingClient?.email}
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome / Razão Social *</label>
+                                    <input type="text" value={clientType === 'INDIVIDUAL' ? registerData.name : registerData.companyName} onChange={e => clientType === 'INDIVIDUAL' ? setRegisterData({ ...registerData, name: e.target.value }) : setRegisterData({ ...registerData, companyName: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required />
                                 </div>
-                            </div>
-
-                            {/* Nome / Razão Social */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                                    {editingClient?.userType === 'COMPANY' ? 'Razão Social' : 'Nome Completo'}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editingClient?.userType === 'COMPANY' ? editData.companyName : editData.name}
-                                    onChange={e => editingClient?.userType === 'COMPANY' ? setEditData({ ...editData, companyName: e.target.value }) : setEditData({ ...editData, name: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
-                                />
-                            </div>
-
-                            {/* Nome Fantasia (Apenas B2B) */}
-                            {editingClient?.userType === 'COMPANY' && (
+                                {clientType === 'COMPANY' && (
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Fantasia</label>
+                                        <input type="text" value={registerData.name} onChange={e => setRegisterData({ ...registerData, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" />
+                                    </div>
+                                )}
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Fantasia</label>
-                                    <input
-                                        type="text"
-                                        value={editData.name} // No modelo atual, 'name' é usado como fantasia para PJ visualmente em alguns lugares, ou vice-versa. Ajuste conforme seu backend.
-                                        onChange={e => setEditData({ ...editData, name: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
-                                        placeholder="Nome comercial da empresa"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Documento e Telefone */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                                        {editingClient?.userType === 'COMPANY' ? 'CNPJ' : 'CPF'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editingClient?.userType === 'COMPANY' ? editData.cnpj : editData.cpf}
-                                        onChange={e => editingClient?.userType === 'COMPANY' ? setEditData({ ...editData, cnpj: e.target.value }) : setEditData({ ...editData, cpf: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary font-mono"
-                                    />
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{clientType === 'INDIVIDUAL' ? 'CPF' : 'CNPJ'} *</label>
+                                    <input type="text" value={clientType === 'INDIVIDUAL' ? registerData.cpf : registerData.cnpj} onChange={e => clientType === 'INDIVIDUAL' ? setRegisterData({ ...registerData, cpf: e.target.value }) : setRegisterData({ ...registerData, cnpj: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefone</label>
-                                    <input
-                                        type="text"
-                                        value={editData.phone}
-                                        onChange={e => setEditData({ ...editData, phone: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
-                                    />
+                                    <input type="tel" value={registerData.phone} onChange={e => setRegisterData({ ...registerData, phone: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Senha Inicial *</label>
+                                    <input type="password" value={registerData.password} onChange={e => setRegisterData({ ...registerData, password: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" required minLength={6} placeholder="Mínimo 6 caracteres" />
                                 </div>
                             </div>
+                            <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
+                                <button onClick={() => setIsRegisterModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancelar</button>
+                                <button onClick={() => registerClient.mutate(registerData)} disabled={registerClient.isPending} className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover flex items-center gap-2">
+                                    {registerClient.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Cadastrar'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
 
-                            {/* Plano e Status (Opcional) */}
-                            <div className="grid grid-cols-2 gap-4">
+            {/* Modal Edição */}
+            {
+                isEditModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
+                        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Plano de Acesso</label>
-                                    <select value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value as any })} className="w-full px-4 py-2 border rounded-lg bg-white outline-none focus:border-primary cursor-pointer hover:border-gray-400 transition-colors">
-                                        <option value="START">Start</option>
-                                        <option value="PRO">Pro</option>
-                                        <option value="BUSINESS">Business</option>
-                                    </select>
+                                    <h3 className="text-xl font-bold">Editar Cliente</h3>
+                                    <p className="text-sm text-gray-500">
+                                        {editingClient?.userType === 'COMPANY' ? 'Pessoa Jurídica (B2B)' : 'Pessoa Física (B2C)'}
+                                    </p>
                                 </div>
+                                <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Email (Readonly) */}
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status da Conta</label>
-                                    <div className="px-4 py-2 bg-gray-50 border rounded-lg text-gray-500 text-sm flex items-center justify-between">
-                                        <span>{editingClient?.status === 'active' ? 'Ativo' : 'Inativo'}</span>
-                                        {/* Status geralmente requer endpoint específico para ativar/desativar, mantido como display por enquanto ou adicione select se o update suportar */}
-                                        <div className={`w-2 h-2 rounded-full ${editingClient?.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email de Acesso (Não editável)</label>
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed">
+                                        <Mail size={16} />
+                                        {editingClient?.email}
+                                    </div>
+                                </div>
+
+                                {/* Nome / Razão Social */}
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                        {editingClient?.userType === 'COMPANY' ? 'Razão Social' : 'Nome Completo'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editingClient?.userType === 'COMPANY' ? editData.companyName : editData.name}
+                                        onChange={e => editingClient?.userType === 'COMPANY' ? setEditData({ ...editData, companyName: e.target.value }) : setEditData({ ...editData, name: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                                    />
+                                </div>
+
+                                {/* Nome Fantasia (Apenas B2B) */}
+                                {editingClient?.userType === 'COMPANY' && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Fantasia</label>
+                                        <input
+                                            type="text"
+                                            value={editData.name} // No modelo atual, 'name' é usado como fantasia para PJ visualmente em alguns lugares, ou vice-versa. Ajuste conforme seu backend.
+                                            onChange={e => setEditData({ ...editData, name: e.target.value })}
+                                            className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                            placeholder="Nome comercial da empresa"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Documento e Telefone */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                            {editingClient?.userType === 'COMPANY' ? 'CNPJ' : 'CPF'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editingClient?.userType === 'COMPANY' ? editData.cnpj : editData.cpf}
+                                            onChange={e => editingClient?.userType === 'COMPANY' ? setEditData({ ...editData, cnpj: e.target.value }) : setEditData({ ...editData, cpf: e.target.value })}
+                                            className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefone</label>
+                                        <input
+                                            type="text"
+                                            value={editData.phone}
+                                            onChange={e => setEditData({ ...editData, phone: e.target.value })}
+                                            className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Plano e Status (Opcional) */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Plano de Acesso</label>
+                                        <select value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value as any })} className="w-full px-4 py-2 border rounded-lg bg-white outline-none focus:border-primary cursor-pointer hover:border-gray-400 transition-colors">
+                                            <option value="START">Start</option>
+                                            <option value="PRO">Pro</option>
+                                            <option value="BUSINESS">Business</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status da Conta</label>
+                                        <div className="px-4 py-2 bg-gray-50 border rounded-lg text-gray-500 text-sm flex items-center justify-between">
+                                            <span>{editingClient?.status === 'active' ? 'Ativo' : 'Inativo'}</span>
+                                            {/* Status geralmente requer endpoint específico para ativar/desativar, mantido como display por enquanto ou adicione select se o update suportar */}
+                                            <div className={`w-2 h-2 rounded-full ${editingClient?.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+                                <button onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
+                                <button onClick={handleUpdateClient} disabled={updateClientMutation.isPending} className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+                                    {updateClientMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <><Check size={18} /> Salvar Alterações</>}
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-                            <button onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
-                            <button onClick={handleUpdateClient} disabled={updateClientMutation.isPending} className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
-                                {updateClientMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <><Check size={18} /> Salvar Alterações</>}
+                    </div>
+                )
+            }
+
+            {/* Modal Créditos */}
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
+                        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm animate-in fade-in zoom-in duration-200 text-center">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                                <CreditCard size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-1">Gerenciar Créditos</h3>
+                            <p className="text-gray-500 text-sm mb-6">Adicione ou remova créditos.</p>
+
+                            <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
+                                <button onClick={() => setCreditOperation('add')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${creditOperation === 'add' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}>Adicionar</button>
+                                <button onClick={() => setCreditOperation('remove')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${creditOperation === 'remove' ? 'bg-white shadow text-red-500' : 'text-gray-500'}`}>Remover</button>
+                            </div>
+
+                            <input type="number" min="1" autoFocus placeholder="Quantidade" value={creditAmount} onChange={e => setCreditAmount(e.target.value)} className="w-full text-center text-3xl font-bold border-b-2 border-gray-200 focus:border-primary outline-none py-2 mb-8 bg-transparent" />
+
+                            <div className="flex gap-3">
+                                <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl">Cancelar</button>
+                                <button onClick={handleAddCredits} disabled={!creditAmount || addCreditsMutation.isPending} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20">Confirmar</button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Modal Senha Temp */}
+            {
+                tempPassword && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] backdrop-blur-sm p-4">
+                        <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200 border-2 border-primary/20 text-center">
+                            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                <Key className="text-green-600" size={32} />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900">Senha Resetada!</h3>
+                            <p className="text-gray-500 mt-2 text-sm">A senha de <strong>{tempPassword.name}</strong> foi redefinida.</p>
+
+                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 my-6 relative group cursor-pointer hover:border-primary/50 transition-colors" onClick={() => { navigator.clipboard.writeText(tempPassword.pass); alert('Copiado!'); }}>
+                                <p className="text-xs text-gray-400 uppercase font-bold tracking-widest mb-1">Senha Temporária</p>
+                                <p className="text-2xl font-mono font-bold text-primary">{tempPassword.pass}</p>
+                                <p className="text-[10px] text-gray-400 mt-2">Toque para copiar</p>
+                            </div>
+
+                            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-6 flex gap-3 text-left">
+                                <AlertTriangle className="text-yellow-600 shrink-0 mt-0.5" size={16} />
+                                <p className="text-xs text-yellow-800 leading-relaxed">
+                                    O usuário será <strong>obrigado</strong> a criar uma nova senha no próximo login.
+                                </p>
+                            </div>
+
+                            <button onClick={() => setTempPassword(null)} className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20">
+                                Entendi, fechar
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Modal Créditos */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
-                    <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm animate-in fade-in zoom-in duration-200 text-center">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
-                            <CreditCard size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold mb-1">Gerenciar Créditos</h3>
-                        <p className="text-gray-500 text-sm mb-6">Adicione ou remova créditos.</p>
-
-                        <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
-                            <button onClick={() => setCreditOperation('add')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${creditOperation === 'add' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}>Adicionar</button>
-                            <button onClick={() => setCreditOperation('remove')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${creditOperation === 'remove' ? 'bg-white shadow text-red-500' : 'text-gray-500'}`}>Remover</button>
-                        </div>
-
-                        <input type="number" min="1" autoFocus placeholder="Quantidade" value={creditAmount} onChange={e => setCreditAmount(e.target.value)} className="w-full text-center text-3xl font-bold border-b-2 border-gray-200 focus:border-primary outline-none py-2 mb-8 bg-transparent" />
-
-                        <div className="flex gap-3">
-                            <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl">Cancelar</button>
-                            <button onClick={handleAddCredits} disabled={!creditAmount || addCreditsMutation.isPending} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20">Confirmar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal Senha Temp */}
-            {tempPassword && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] backdrop-blur-sm p-4">
-                    <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200 border-2 border-primary/20 text-center">
-                        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                            <Key className="text-green-600" size={32} />
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900">Senha Resetada!</h3>
-                        <p className="text-gray-500 mt-2 text-sm">A senha de <strong>{tempPassword.name}</strong> foi redefinida.</p>
-
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 my-6 relative group cursor-pointer hover:border-primary/50 transition-colors" onClick={() => { navigator.clipboard.writeText(tempPassword.pass); alert('Copiado!'); }}>
-                            <p className="text-xs text-gray-400 uppercase font-bold tracking-widest mb-1">Senha Temporária</p>
-                            <p className="text-2xl font-mono font-bold text-primary">{tempPassword.pass}</p>
-                            <p className="text-[10px] text-gray-400 mt-2">Toque para copiar</p>
-                        </div>
-
-                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-6 flex gap-3 text-left">
-                            <AlertTriangle className="text-yellow-600 shrink-0 mt-0.5" size={16} />
-                            <p className="text-xs text-yellow-800 leading-relaxed">
-                                O usuário será <strong>obrigado</strong> a criar uma nova senha no próximo login.
-                            </p>
-                        </div>
-
-                        <button onClick={() => setTempPassword(null)} className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20">
-                            Entendi, fechar
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

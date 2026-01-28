@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Param, Res, UseGuards, Request, ForbiddenException, NotFoundException, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Res, UseGuards, Request, ForbiddenException, NotFoundException, Delete, Put } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { BusinessService } from './business.service';
@@ -123,5 +123,21 @@ export class BusinessController {
             throw new ForbiddenException('Acesso restrito a administradores.');
         }
         return this.service.getLeads();
+    }
+
+    @Delete('leads/:id')
+    async deleteLead(@Param('id') id: string, @Request() req) {
+        if (req.user.role !== Role.SUPER_ADMIN) {
+            throw new ForbiddenException('Acesso restrito a administradores.');
+        }
+        return this.service.deleteLead(id);
+    }
+
+    @Put('leads/:id')
+    async updateLead(@Param('id') id: string, @Body() body: any, @Request() req) {
+        if (req.user.role !== Role.SUPER_ADMIN) {
+            throw new ForbiddenException('Acesso restrito a administradores.');
+        }
+        return this.service.updateLead(id, body);
     }
 }
