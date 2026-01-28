@@ -109,23 +109,23 @@ export class InterpretationService {
 
                 // Mapa de equivalências bidirecional
                 const equivalents: Record<string, string[]> = {
-                    'OPENNESS': ['ABERTURA', 'MENTALIDADE', 'OPEN', 'FATOR_O'],
+                    'OPENNESS': ['ABERTURA', 'MENTALIDADE', 'OPEN', 'FATOR_O', 'FACTOR_O', 'FATOR_V', 'FACTOR_V', 'INTELLECT', 'IMAGINATION'],
                     'ABERTURA': ['OPENNESS', 'MENTALIDADE', 'OPEN'],
                     'MENTALIDADE': ['OPENNESS', 'ABERTURA', 'OPEN'],
 
-                    'CONSCIENTIOUSNESS': ['CONSCIENCIOSIDADE', 'ESTRUTURA', 'ORGANIZACAO', 'TRABALHO', 'CONSC', 'FATOR_C'],
+                    'CONSCIENTIOUSNESS': ['CONSCIENCIOSIDADE', 'ESTRUTURA', 'ORGANIZACAO', 'TRABALHO', 'CONSC', 'FATOR_C', 'FACTOR_C', 'FATOR_III', 'FACTOR_III'],
                     'CONSCIENCIOSIDADE': ['CONSCIENTIOUSNESS', 'ESTRUTURA', 'ORGANIZACAO', 'TRABALHO'],
                     'ESTRUTURA': ['CONSCIENTIOUSNESS', 'CONSCIENCIOSIDADE', 'ORGANIZACAO', 'TRABALHO'],
 
-                    'EXTRAVERSION': ['EXTROVERSAO', 'ENERGIA', 'SOCIAL', 'EXTRA', 'FATOR_E'],
+                    'EXTRAVERSION': ['EXTROVERSAO', 'ENERGIA', 'SOCIAL', 'EXTRA', 'FATOR_E', 'FACTOR_E', 'FATOR_I', 'FACTOR_I'],
                     'EXTROVERSAO': ['EXTRAVERSION', 'ENERGIA', 'SOCIAL'],
                     'ENERGIA': ['EXTRAVERSION', 'EXTROVERSAO', 'SOCIAL'],
 
-                    'AGREEABLENESS': ['AMABILIDADE', 'AGRADABILIDADE', 'RELACIONAL', 'AGREE', 'FATOR_A'],
+                    'AGREEABLENESS': ['AMABILIDADE', 'AGRADABILIDADE', 'RELACIONAL', 'AGREE', 'FATOR_A', 'FACTOR_A', 'FATOR_II', 'FACTOR_II'],
                     'AMABILIDADE': ['AGREEABLENESS', 'AGRADABILIDADE', 'RELACIONAL'],
                     'RELACIONAL': ['AGREEABLENESS', 'AMABILIDADE', 'AGRADABILIDADE'],
 
-                    'NEUROTICISM': ['NEUROTICISMO', 'ESTABILIDADE', 'RESILIENCIA', 'EMOCIONAL', 'NEURO', 'FATOR_N'],
+                    'NEUROTICISM': ['NEUROTICISMO', 'ESTABILIDADE', 'RESILIENCIA', 'EMOCIONAL', 'NEURO', 'FATOR_N', 'FACTOR_N', 'FATOR_IV', 'FACTOR_IV'],
                     'NEUROTICISMO': ['NEUROTICISM', 'ESTABILIDADE', 'RESILIENCIA', 'EMOCIONAL'],
                     'ESTABILIDADE': ['NEUROTICISM', 'NEUROTICISMO', 'RESILIENCIA', 'EMOCIONAL']
                 };
@@ -348,11 +348,22 @@ export class InterpretationService {
             if (!response.question.metadata) continue;
 
             try {
-                const metadata = JSON.parse(response.question.metadata as string);
-                const traitKey = metadata.trait || metadata.dimension;
+                const metadata = typeof response.question.metadata === 'string'
+                    ? JSON.parse(response.question.metadata)
+                    : response.question.metadata;
+
+                // Tenta varias chaves possíveis
+                const traitKey = metadata.trait ||
+                    metadata.dimension ||
+                    metadata.factor ||
+                    metadata.category ||
+                    metadata.domain ||
+                    metadata.traitKey;
 
                 if (!traitKey) continue;
 
+                // Normaliza chave para facilitar matching
+                // Mantemos case original na chave do objeto, mas o FuzzyMatch vai lidar com isso depois
                 if (!grouped[traitKey]) {
                     grouped[traitKey] = [];
                 }
