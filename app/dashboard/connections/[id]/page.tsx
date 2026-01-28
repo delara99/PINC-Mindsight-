@@ -16,7 +16,15 @@ export default function ConnectionDetailPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'inventories' | 'chat' | 'crossProfile'>('overview');
     const [messageInput, setMessageInput] = useState('');
     const [aiSummary, setAiSummary] = useState<string | null>(null);
+    const [coachHistory, setCoachHistory] = useState<any[]>([]); // Histórico do chat com Coach
+    const [coachInput, setCoachInput] = useState('');
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const coachChatEndRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to bottom of coach chat
+    useEffect(() => {
+        coachChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [coachHistory, aiSummary]);
 
     // Fetch Connection Details
     const { data: detail, isLoading: loadingDetail } = useQuery({
@@ -43,6 +51,7 @@ export default function ConnectionDetailPage() {
         }
     });
 
+    // ... (Shared Content e Messages queries mantidas iguais) ...
     // Fetch Shared Content (Inventories etc) - Only when tab is relevant
     const { data: sharedContent, isLoading: loadingShared } = useQuery({
         queryKey: ['shared-content', id],
@@ -69,14 +78,7 @@ export default function ConnectionDetailPage() {
     });
 
     // Handle both admin and regular user responses
-    // Admin returns: { connection, messages, messageCount }
-    // Regular returns: [...messages]
     const messages = Array.isArray(messagesResponse) ? messagesResponse : (messagesResponse?.messages || []);
-
-    // Scroll to bottom of chat
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
 
     // Update Settings
     const updateSettingsMutation = useMutation({
@@ -94,7 +96,7 @@ export default function ConnectionDetailPage() {
         }
     });
 
-    // Send Message
+    // Send Message (Normal Chat)
     const sendMessageMutation = useMutation({
         mutationFn: async (text: string) => {
             await fetch(`${API_URL}/api/v1/connections/${id}/messages`, {
@@ -133,9 +135,70 @@ export default function ConnectionDetailPage() {
         },
         onSuccess: (data) => {
             setAiSummary(data.insight);
+            // Seta o histórico inicial com a resposta da IA para garantir consistência
+            // Mas não adicionamos aqui para não duplicar visualmente já que aiSummary é renderizado separadamente
+            setCoachHistory([]);
         },
         onError: () => alert('Não foi possível gerar a análise agora. Tente mais tarde.')
     });
+
+    // Send Message to PINC Coach
+    const sendCoachMessageMutation = useMutation({
+        mutationFn: async (message: string) => {
+            // Montar contexto combinando dados do usuário e do parceiro
+            const context = {
+                type: 'CONNECTION_COACH',
+                me: comparisonData?.me,
+                partner: comparisonData?.partner,
+                relationship_analysis: comparisonData?.relationship_analysis,
+                userName: user?.name,
+                partnerName: detail?.partner?.name
+            };
+
+            // Preparar histórico para enviar (incluindo o summary inicial como contexto se necessário)
+            const historyToSend = [
+                { role: 'assistant', content: aiSummary }, // Contexto inicial
+                ...coachHistory
+            ];
+
+            const res = await fetch(`${API_URL}/api/v1/ai/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    message,
+                    history: historyToSend,
+                    profileContext: context
+                })
+            });
+
+            if (!res.ok) throw new Error('Erro ao enviar mensagem');
+            return res.json();
+        },
+        onSuccess: (data) => {
+            // Adiciona a resposta da IA ao histórico local
+            setCoachHistory(prev => [...prev, { role: 'assistant', content: data.message }]);
+        },
+        onError: () => {
+            alert('Erro ao processar resposta do Coach.');
+            // Remove a mensagem do usuário se falhou (opcional, mas boa UX)
+            setCoachHistory(prev => prev.slice(0, -1));
+        }
+    });
+
+    const handleSendCoachMessage = () => {
+        if (!coachInput.trim()) return;
+        const msg = coachInput;
+        setCoachInput('');
+
+        // Adiciona mensagem do usuário ao histórico IMEDIATAMENTE (UI Optimista)
+        setCoachHistory(prev => [...prev, { role: 'user', content: msg }]);
+
+        // Envia para a API
+        sendCoachMessageMutation.mutate(msg);
+    };
 
     const generateReportMutation = useMutation({
         mutationFn: async () => {
@@ -263,12 +326,6 @@ export default function ConnectionDetailPage() {
                     >
                         <MessageSquare size={16} /> Chat
                     </button>
-                    <button
-                        onClick={() => setActiveTab('crossProfile')}
-                        className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'crossProfile' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                    >
-                        <GitCompare size={16} /> Relatórios Relacionais
-                    </button>
                 </div>
 
                 {/* Tab Content */}
@@ -305,13 +362,48 @@ export default function ConnectionDetailPage() {
                                             )}
                                         </div>
 
+                                        {/* AI Chat Interface */}
                                         {aiSummary && (
-                                            <div className="bg-white/95 backdrop-blur-sm text-gray-800 rounded-xl p-6 md:p-8 shadow-inner border border-white/40 animate-in zoom-in-95 duration-300">
-                                                <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-headings:text-indigo-900 prose-p:text-gray-600 prose-a:text-indigo-600">
-                                                    <div className="whitespace-pre-wrap">{aiSummary}</div>
+                                            <div className="bg-white/95 backdrop-blur-sm text-gray-800 rounded-xl shadow-inner border border-white/40 animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[600px]">
+                                                {/* Chat History */}
+                                                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+                                                    {/* Initial Insight */}
+                                                    <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-headings:text-indigo-900 prose-p:text-gray-600 prose-a:text-indigo-600">
+                                                        <div className="whitespace-pre-wrap">{aiSummary}</div>
+                                                    </div>
+
+                                                    {/* Session History */}
+                                                    {coachHistory.map((msg: any, idx: number) => (
+                                                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                            <div className={`max-w-[85%] rounded-2xl p-4 text-sm shadow-sm ${msg.role === 'user'
+                                                                ? 'bg-indigo-600 text-white rounded-br-none'
+                                                                : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'
+                                                                }`}>
+                                                                {msg.content}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    <div ref={coachChatEndRef} />
                                                 </div>
-                                                <div className="mt-6 flex justify-end">
-                                                    <button onClick={() => setAiSummary(null)} className="text-xs text-indigo-400 hover:text-indigo-600 font-bold underline">Fechar Análise</button>
+
+                                                {/* Input Area */}
+                                                <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={coachInput}
+                                                        onChange={(e) => setCoachInput(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && !sendCoachMessageMutation.isPending && handleSendCoachMessage()}
+                                                        placeholder="Faça uma pergunta sobre essa análise..."
+                                                        className="flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                                        disabled={sendCoachMessageMutation.isPending}
+                                                    />
+                                                    <button
+                                                        onClick={handleSendCoachMessage}
+                                                        disabled={sendCoachMessageMutation.isPending || !coachInput.trim()}
+                                                        className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-indigo-200"
+                                                    >
+                                                        {sendCoachMessageMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                                                    </button>
                                                 </div>
                                             </div>
                                         )}
@@ -382,83 +474,7 @@ export default function ConnectionDetailPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Detailed Breakdown */}
-                                                <div className="space-y-8">
-                                                    <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                                                        <h3 className="font-bold text-xl text-gray-900">Análise Fator a Fator</h3>
-                                                    </div>
 
-                                                    {comparisonData.relationship_analysis?.map((trait: any, index: number) => {
-                                                        const meTrait = comparisonData.me.full_analysis?.[index];
-                                                        const partnerTrait = comparisonData.partner.full_analysis?.[index];
-
-                                                        return (
-                                                            <div key={trait.dimension} className="bg-white group rounded-2xl border border-gray-100 p-0 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
-                                                                {/* Header do Card */}
-                                                                <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4">
-                                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-md text-xl shrink-0 ${index % 2 === 0 ? 'bg-gray-900' : 'bg-primary'}`}>
-                                                                        {index + 1}
-                                                                    </div>
-                                                                    <div className="flex-1">
-                                                                        <div className="flex flex-wrap items-center gap-3 mb-1">
-                                                                            <h4 className="font-black text-lg text-gray-900">{trait.dimension}</h4>
-                                                                            <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${trait.similarity === 'HIGH' ? 'bg-green-100 text-green-700' : trait.similarity === 'MEDIUM' ? 'bg-amber-100 text-amber-800' : 'bg-orange-100 text-orange-800'}`}>
-                                                                                {trait.similarity === 'HIGH' ? 'Alta Sinergia' : trait.similarity === 'MEDIUM' ? 'Complementares' : 'Opostos'}
-                                                                            </span>
-                                                                        </div>
-                                                                        <p className="text-sm text-gray-600 font-medium">"{trait.implication}"</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Conteúdo Comparativo */}
-                                                                <div className="p-6 grid md:grid-cols-2 gap-8 relative">
-                                                                    {/* Linha divisória vertical (desktop) */}
-                                                                    <div className="hidden md:block absolute top-6 bottom-6 left-1/2 w-px bg-gray-100 -ml-[0.5px]"></div>
-
-                                                                    {/* Lado Esquerdo (Você) */}
-                                                                    <div className="space-y-3">
-                                                                        <div className="flex items-center justify-between mb-2">
-                                                                            <span className="text-xs font-extrabold text-pink-500 uppercase tracking-widest flex items-center gap-2">
-                                                                                <div className="w-2 h-2 rounded-full bg-pink-500"></div> VOCÊ
-                                                                            </span>
-                                                                            <span className="text-[10px] font-bold bg-pink-50 text-pink-700 px-2.5 py-1 rounded-md border border-pink-100 shadow-sm">
-                                                                                {meTrait?.classification} ({
-                                                                                    comparisonData.me.scores[trait.key] ??
-                                                                                    comparisonData.me.scores[trait.traitKey] ??
-                                                                                    comparisonData.me.scores[trait.dimension.includes('Extroversão') ? 'E' : trait.dimension.includes('Agradabilidade') ? 'A' : trait.dimension.includes('Estrutura') ? 'C' : trait.dimension.includes('Abertura') ? 'O' : 'N'] ??
-                                                                                    '-'
-                                                                                })
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="text-sm text-gray-600 leading-relaxed text-justify bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                                                                            {meTrait?.text_interpretation || 'Análise indisponível.'}
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Lado Direito (Parceiro) */}
-                                                                    <div className="space-y-3">
-                                                                        <div className="flex items-center justify-between mb-2">
-                                                                            <span className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest flex items-center gap-2">
-                                                                                <div className="w-2 h-2 rounded-full bg-indigo-500"></div> {partner?.name.split(' ')[0].toUpperCase()}
-                                                                            </span>
-                                                                            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100 shadow-sm">
-                                                                                {partnerTrait?.classification} ({
-                                                                                    comparisonData.partner.scores[trait.key] ??
-                                                                                    comparisonData.partner.scores[trait.traitKey] ??
-                                                                                    comparisonData.partner.scores[trait.dimension.includes('Extroversão') ? 'E' : trait.dimension.includes('Agradabilidade') ? 'A' : trait.dimension.includes('Estrutura') ? 'C' : trait.dimension.includes('Abertura') ? 'O' : 'N'] ??
-                                                                                    '-'
-                                                                                })
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="text-sm text-gray-600 leading-relaxed text-justify bg-indigo-50/30 p-4 rounded-xl border border-indigo-50/50">
-                                                                            {partnerTrait?.text_interpretation || 'Análise indisponível.'}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
                                             </div>
                                         ) : (
                                             <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center">
