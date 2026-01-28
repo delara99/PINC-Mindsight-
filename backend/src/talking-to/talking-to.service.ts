@@ -529,6 +529,25 @@ export class TalkingToService {
     }
 
     private generateArchetypeName(traits: string[]): string {
-        return "Arquétipo TalkingTo (Beta)";
+        const map: Record<string, string> = {
+            'Energia Social (Extroversão)': 'Comunicador',
+            'Estilo Relacional (Agradabilidade)': 'Mediador',
+            'Estilo de Trabalho (Estrutura)': 'Executor',
+            'Mentalidade (Abertura)': 'Visionário',
+            'Resiliência (Estabilidade)': 'Porto Seguro'
+        };
+
+        if (!traits || traits.length === 0) return "Perfil Equilibrado";
+
+        // Pega o primeiro trait dominante como principal
+        const primary = map[traits[0]] || traits[0];
+
+        if (traits.length === 1) return `O ${primary}`;
+
+        // Se tiver mais de um, combina os dois primeiros
+        const secondary = map[traits[1]] || traits[1];
+
+        // Exemplo: "Comunicador Visionário"
+        return `${primary} ${secondary}`;
     }
 }

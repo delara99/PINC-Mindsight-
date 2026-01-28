@@ -348,9 +348,14 @@ export class InterpretationService {
             if (!response.question.metadata) continue;
 
             try {
-                const metadata = typeof response.question.metadata === 'string'
+                let parsed = typeof response.question.metadata === 'string'
                     ? JSON.parse(response.question.metadata)
                     : response.question.metadata;
+
+                // Suporte a Array (pega o primeiro elemento)
+                const metadata = Array.isArray(parsed) ? parsed[0] : parsed;
+
+                if (!metadata) continue;
 
                 // Tenta varias chaves possíveis
                 const traitKey = metadata.trait ||
