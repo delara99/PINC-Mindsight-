@@ -50,7 +50,8 @@ export default function LeadFormModal({ isOpen, onClose }: LeadFormModalProps) {
 
         setIsLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/public/business/leads`, {
+            // Using correct API version prefix (/api/v1) configured in backend main.ts
+            const res = await fetch(`${API_URL}/api/v1/public/business/leads`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -66,22 +67,8 @@ export default function LeadFormModal({ isOpen, onClose }: LeadFormModalProps) {
             });
 
             if (!res.ok) {
-                // Fallback para tentar URL sem prefixo /api se falhar (caso rota seja direta)
-                const res2 = await fetch(`${API_URL}/public/business/leads`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: formData.name,
-                        email: formData.email,
-                        phone: formData.phone,
-                        company: formData.company,
-                        companySize: formData.companySize,
-                        role: formData.role,
-                        interests: { user: formData.interestsUser, business: formData.interestsBusiness },
-                        consent: formData.consent
-                    })
-                });
-                if (!res2.ok) throw new Error('Falha no envio');
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Falha no envio');
             }
 
             setIsSuccess(true);
