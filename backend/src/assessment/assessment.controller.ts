@@ -165,28 +165,6 @@ export class AssessmentController {
             console.error('[AssignmentFilter] Error filtering assignments:', e);
         }
 
-        // NOVO: Filtrar para mostrar apenas o mais recente de cada tipo
-        const latestByType = new Map<string, any>();
-        assignments.forEach(a => {
-            const key = a.assessment.type;
-            const existing = latestByType.get(key);
-
-            if (!existing) {
-                latestByType.set(key, a);
-            } else {
-                // Comparar datas (mais recente vence)
-                const currentDate = new Date(a.completedAt || a.assignedAt).getTime();
-                const existingDate = new Date(existing.completedAt || existing.assignedAt).getTime();
-
-                if (currentDate > existingDate) {
-                    latestByType.set(key, a);
-                }
-            }
-        });
-
-        assignments = Array.from(latestByType.values());
-        console.log(`[DEBUG] After latest-only filter: ${assignments.length} assignments`);
-
 
         return assignments.map(assignment => ({
             ...assignment.assessment,
