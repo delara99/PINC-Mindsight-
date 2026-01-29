@@ -231,7 +231,7 @@ export default function AssessmentDetailsPage() {
                                             <TraitCard
                                                 key={index}
                                                 traitName={displayName}
-                                                overallScore={trait.score}
+                                                overallScore={Math.min(100, trait.score)}
                                                 interpretation={((({
                                                     'HIGH': 'ALTO',
                                                     'AVERAGE': 'MÉDIO',
@@ -239,13 +239,17 @@ export default function AssessmentDetailsPage() {
                                                     'VERY_HIGH': 'MUITO ALTO',
                                                     'VERY_LOW': 'MUITO BAIXO'
                                                 })[trait.level as string] || (trait.level ? String(trait.level).toUpperCase() : '')))}
-                                                facets={trait.facets?.map((f: any) => ({
-                                                    facet: translateAndFormat(f.name || f.facetName || f.facet),
-                                                    normalizedScore: Math.max(0, typeof f.score === 'number' ? f.score : 0),
-                                                    rawScore: f.rawScore !== undefined ? Math.max(0, f.rawScore) : Math.max(0, ((typeof f.score === 'number' ? f.score : 0) / 20))
-                                                })) || []}
+                                                facets={trait.facets?.map((f: any) => {
+                                                    const s = typeof f.score === 'number' ? f.score : 0;
+                                                    const safeS = Math.min(100, Math.max(0, s));
+                                                    return {
+                                                        facet: translateAndFormat(f.name || f.facetName || f.facet),
+                                                        normalizedScore: safeS,
+                                                        rawScore: safeS // Força exibição 0-100
+                                                    };
+                                                }) || []}
                                                 customTexts={{
-                                                    summary: trait.customTexts?.summary || trait.interpretation, // Use Backend Description (Config Ativa) as fallback
+                                                    summary: trait.customTexts?.text_interpretation || trait.customTexts?.summary || trait.interpretation, // Use Backend Description (Config Ativa) as fallback
                                                     practicalImpact: trait.customTexts?.practicalImpact,
                                                     expertSynthesis: trait.customTexts?.expertSynthesis,
                                                     expertHypothesis: trait.customTexts?.expertHypothesis
@@ -295,15 +299,16 @@ export default function AssessmentDetailsPage() {
                                                 <TraitCard
                                                     key={traitName}
                                                     traitName={displayName}
-                                                    overallScore={normalizedAvg}
+                                                    overallScore={Math.min(100, normalizedAvg)}
                                                     interpretation={interpretation}
                                                     facets={data.facets.map(f => {
-                                                        // Backend retorna 0-100, não precisa multiplicar
-                                                        const scoreValue = typeof f.score === 'number' ? f.score : 0;
+                                                        const s = typeof f.score === 'number' ? f.score : 0;
+                                                        // Fallback data generally comes as 0-100, but ensuring clamp
+                                                        const safeS = Math.min(100, Math.max(0, s));
                                                         return {
                                                             facet: translateAndFormat(f.name),
-                                                            normalizedScore: Math.round(Math.max(0, Math.min(100, scoreValue))),
-                                                            rawScore: scoreValue / 20 // Converter 0-100 para 0-5
+                                                            normalizedScore: safeS,
+                                                            rawScore: safeS
                                                         };
                                                     })}
                                                     defaultExpanded={true}
@@ -319,28 +324,7 @@ export default function AssessmentDetailsPage() {
                     })()}
                 </div>
 
-                {/* --- SEÇÕES INTERPRETATIVAS AVANÇADAS (ADMIN VIEW) --- */}
-                {assignment.calculatedScores?.interpretationSections && assignment.calculatedScores.interpretationSections.length > 0 && (
-                    <div className="space-y-6 mt-8 mb-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-gradient-to-br from-violet-600 to-indigo-600 p-2 rounded-lg shadow-sm">
-                                <Sparkles className="w-5 h-5 text-white" />
-                            </div>
-                            <h2 className="text-xl font-bold text-gray-900">Análise Avançada de Padrões</h2>
-                        </div>
 
-                        {assignment.calculatedScores.interpretationSections.map((section: any) => (
-                            <div key={section.code} className="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
-                                <div className="flex items-center gap-3 mb-6 border-l-4 border-violet-500 pl-4">
-                                    <h3 className="text-lg font-bold text-gray-900">{section.title}</h3>
-                                </div>
-                                <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
-                                    {section.content}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
 
                 {/* Gráfico Radar - Priorizar Calculated Scores (Tempo Real) */}
                 {assignment.calculatedScores?.scores ? (
