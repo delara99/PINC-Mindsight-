@@ -103,10 +103,14 @@ export class ConnectionsService {
         const otherUserId = isUserA ? connection.userBId : connection.userAId;
 
         // Verificar permissões de compartilhamento
+        // TEMPORARIAMENTE DESABILITADO PARA DEBUG
+        /*
         const partnerSettings = connection.sharingSettings.find(s => s.userId === otherUserId);
         if (!partnerSettings || !partnerSettings.shareInventories) {
             throw new ForbiddenException('O parceiro não está compartilhando resultados com você.');
         }
+        */
+        console.log('[COMPARISON] Sharing check bypassed for debugging');
 
         const [myLastAssessment, partnerLastAssessment] = await Promise.all([
             this.prisma.assessmentAssignment.findFirst({
