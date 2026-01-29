@@ -170,9 +170,11 @@ export default function AssessmentDetailsPage() {
                                             'CONSCIENTIOUSNESS': 'Conscienciosidade',
                                             'EXTRAVERSION': 'Extroversão',
                                             'AGREEABLENESS': 'Amabilidade',
-                                            'NEUROTICISM': 'Estabilidade Emocional'
+                                            'NEUROTICISM': 'Estabilidade Emocional',
+                                            'Neuroticismo': 'Estabilidade Emocional'
                                         };
-                                        const displayName = traitTranslation[trait.traitKey] || trait.traitName || trait.name;
+                                        const keyToUse = trait.traitKey || trait.traitName || trait.name;
+                                        const displayName = traitTranslation[keyToUse] || keyToUse;
 
                                         return (
                                             <TraitCard
@@ -233,9 +235,11 @@ export default function AssessmentDetailsPage() {
                                                 'CONSCIENTIOUSNESS': 'Conscienciosidade',
                                                 'EXTRAVERSION': 'Extroversão',
                                                 'AGREEABLENESS': 'Amabilidade',
-                                                'NEUROTICISM': 'Estabilidade Emocional'
+                                                'NEUROTICISM': 'Estabilidade Emocional',
+                                                'Neuroticismo': 'Estabilidade Emocional'
                                             };
-                                            const displayName = traitTranslation[traitName] || traitName;
+                                            const keyToUse = traitName;
+                                            const displayName = traitTranslation[keyToUse] || keyToUse;
                                             const avgScore = data.facets.reduce((sum, f) => sum + f.score, 0) / data.facets.length;
                                             const normalizedAvg = avgScore * 20; // Converter 0-5 para 0-100
 
@@ -310,6 +314,7 @@ export default function AssessmentDetailsPage() {
                             'EXTRAVERSION': 'Extroversão',
                             'AGREEABLENESS': 'Amabilidade',
                             'NEUROTICISM': 'Estabilidade Emocional',
+                            'Neuroticismo': 'Estabilidade Emocional',
                             // Variações e Fallbacks
                             'Openness': 'Abertura à Experiência',
                             'Conscientiousness': 'Conscienciosidade',
