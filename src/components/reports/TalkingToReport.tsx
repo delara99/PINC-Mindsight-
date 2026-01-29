@@ -365,48 +365,15 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                     {trait.facets && trait.facets.length > 0 ? (
                                         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
                                             {(() => {
-                                                const translateFacet = (name: string) => {
-                                                    const map: Record<string, string> = {
-                                                        'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
-                                                        'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
-                                                        'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
-                                                        'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
-                                                        'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
-                                                        'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
-                                                        'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
-                                                        'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
-                                                        'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
-                                                        'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
-                                                        'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
-                                                        'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
-                                                        'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
-                                                        'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
-                                                        'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
-                                                        'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
-                                                        'ideas': 'Ideias', 'factors_ideas': 'Ideias',
-                                                        'values': 'Valores', 'factors_values': 'Valores',
-                                                        'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
-                                                        'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
-                                                        'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
-                                                        'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
-                                                        'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
-                                                        'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
-                                                        'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
-                                                        'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
-                                                        'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
-                                                        'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
-                                                        'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
-                                                        'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
-                                                    };
-                                                    const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
-                                                    return map[normalized] || name;
-                                                };
-
                                                 const seen = new Set();
                                                 const uniqueFacets = trait.facets.filter((f: any) => {
                                                     const fName = f.name || f.facetName;
-                                                    const translated = translateFacet(fName);
-                                                    if (seen.has(translated)) return false;
+                                                    // Usa Helper Global
+                                                    const translated = translateFacetGlobal(fName);
+
+                                                    // Se retornou null (bloqueado/repetido) ou já existe -> Pular
+                                                    if (!translated || seen.has(translated)) return false;
+
                                                     seen.add(translated);
                                                     return true;
                                                 });
@@ -419,7 +386,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                     return (
                                                         <div key={idx} className="space-y-1.5">
                                                             <div className="flex justify-between items-center text-xs font-bold text-slate-600">
-                                                                <span>{translateFacet(fName)}</span>
+                                                                <span>{translateFacetGlobal(fName)}</span> {/* Chamada Segura */}
                                                                 <span className="text-slate-400 font-mono">{fScore}</span>
                                                             </div>
                                                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -432,6 +399,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                                     );
                                                 });
                                             })()}
+
                                         </div>
                                     ) : (
                                         <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400 text-xs italic font-medium">
@@ -543,24 +511,26 @@ function safeRender(content: any) {
 
 function mapTraitToLabel(key: string) {
     const map: Record<string, string> = {
-        'OPENNESS': 'Abertura',
-        'CONSCIENTIOUSNESS': 'Conscienciosidade',
-        'EXTRAVERSION': 'Extroversão',
-        'AGREEABLENESS': 'Amabilidade',
-        'NEUROTICISM': 'Estabilidade'
+        'OPENNESS': 'ABERTURA À EXPERIÊNCIA',
+        'CONSCIENTIOUSNESS': 'CONSCIENCIOSIDADE',
+        'EXTRAVERSION': 'EXTROVERSÃO',
+        'AGREEABLENESS': 'AMABILIDADE',
+        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL'
     };
-    return map[key] || key;
+    return map[key] || key.toUpperCase();
 }
 
 function getLevelLabel(level: string) {
     const map: Record<string, string> = {
-        'VERY_HIGH': 'Muito Alto',
-        'HIGH': 'Alto',
-        'AVERAGE': 'Médio',
-        'LOW': 'Baixo',
-        'VERY_LOW': 'Muito Baixo'
+        'VERY_HIGH': 'MUITO ALTO',
+        'HIGH': 'ALTO',
+        'AVERAGE': 'MÉDIO',
+        'LOW': 'BAIXO',
+        'VERY_LOW': 'MUITO BAIXO'
     };
-    return map[level] || level;
+    // Tenta uppercase por segurança
+    const upper = String(level).toUpperCase();
+    return map[upper] || upper;
 }
 
 function getLevelColor(level: string) {
@@ -595,4 +565,70 @@ function getTraitIcon(key: string) {
         'NEUROTICISM': <BrainCircuit />
     };
     return icons[key] || <Target />;
+}
+
+// Helper Global de Tradução de Facetas
+function translateFacetGlobal(name: string): string | null {
+    if (!name) return null;
+    const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
+
+    // 1. Filtro de Bloqueio (Remove Traços Principais se aparecerem como facetas)
+    const blocked = [
+        'extraversion', 'extroversao', 'neuroticism', 'neuroticismo', 'estabilidade', 'estabilidadeemocional',
+        'openness', 'abertura', 'agreeableness', 'amabilidade', 'conscientiousness', 'conscienciosidade'
+    ];
+    // Verifica se a string normalizada contém o nome do traço (ex: "extraversion_score" -> bloqueia)
+    if (blocked.some(b => normalized.includes(b)) && !normalized.includes('factors')) {
+        // Exceção: se tiver "factors", as vezes é prefixo válido? 
+        // No print do user apareceu "EXTRAVERSION" puro. Então contains é perigoso se for "extraversion_gregariousness".
+        // Vamos bloquear apenas match exato ou muito próximo.
+        if (blocked.includes(normalized)) return null;
+    }
+    // Simplificação: Bloqueia match exato com lista de bloqueio
+    if (blocked.includes(normalized)) return null;
+
+    // 2. Dicionário de Tradução (UPPERCASE)
+    const map: Record<string, string> = {
+        // Neuroticism / Estabilidade
+        'anxiety': 'ANSIEDADE', 'ansiedade': 'ANSIEDADE', 'factors_anxiety': 'ANSIEDADE',
+        'angryhostility': 'HOSTILIDADE', 'hostilidade': 'HOSTILIDADE', 'factors_angryhostility': 'HOSTILIDADE',
+        'depression': 'DEPRESSÃO', 'depressao': 'DEPRESSÃO', 'factors_depression': 'DEPRESSÃO',
+        'selfconsciousness': 'AUTOCONSCIÊNCIA', 'autoconsciencia': 'AUTOCONSCIÊNCIA', 'factors_selfconsciousness': 'AUTOCONSCIÊNCIA',
+        'impulsiveness': 'IMPULSIVIDADE', 'impulsividade': 'IMPULSIVIDADE', 'factors_impulsiveness': 'IMPULSIVIDADE',
+        'vulnerability': 'VULNERABILIDADE', 'factors_vulnerability': 'VULNERABILIDADE',
+
+        // Extroversão
+        'warmth': 'ACOLHIMENTO', 'acolhimento': 'ACOLHIMENTO', 'factors_warmth': 'ACOLHIMENTO',
+        'gregariousness': 'GREGARISMO', 'gregarismo': 'GREGARISMO', 'factors_gregariousness': 'GREGARISMO',
+        'assertiveness': 'ASSERTIVIDADE', 'factors_assertiveness': 'ASSERTIVIDADE',
+        'activity': 'NÍVEL DE ATIVIDADE', 'atividade': 'NÍVEL DE ATIVIDADE', 'factors_activity': 'NÍVEL DE ATIVIDADE',
+        'excitementseeking': 'BUSCA POR EMOÇÃO', 'busca de excitacao': 'BUSCA POR EMOÇÃO', 'factors_excitementseeking': 'BUSCA POR EMOÇÃO',
+        'positiveemotions': 'EMOÇÕES POSITIVAS', 'emocoes positivas': 'EMOÇÕES POSITIVAS', 'factors_positiveemotions': 'EMOÇÕES POSITIVAS',
+
+        // Abertura
+        'fantasy': 'FANTASIA', 'fantasia': 'FANTASIA', 'factors_fantasy': 'FANTASIA',
+        'aesthetics': 'ESTÉTICA', 'estetica': 'ESTÉTICA', 'factors_aesthetics': 'ESTÉTICA',
+        'feelings': 'SENTIMENTOS', 'sentimentos': 'SENTIMENTOS', 'factors_feelings': 'SENTIMENTOS',
+        'actions': 'AÇÕES', 'acoes': 'AÇÕES', 'factors_actions': 'AÇÕES',
+        'ideas': 'IDEIAS', 'factors_ideas': 'IDEIAS',
+        'values': 'VALORES', 'factors_values': 'VALORES',
+
+        // Amabilidade
+        'trust': 'CONFIANÇA', 'confianca': 'CONFIANÇA', 'factors_trust': 'CONFIANÇA',
+        'straightforwardness': 'FRANQUEZA', 'franqueza': 'FRANQUEZA', 'factors_straightforwardness': 'FRANQUEZA',
+        'altruism': 'ALTRUÍSMO', 'altruismo': 'ALTRUÍSMO', 'factors_altruism': 'ALTRUÍSMO',
+        'compliance': 'COMPLACÊNCIA', 'complacencia': 'COMPLACÊNCIA', 'factors_compliance': 'COMPLACÊNCIA',
+        'modesty': 'MODÉSTIA', 'modestia': 'MODÉSTIA', 'factors_modesty': 'MODÉSTIA',
+        'tendermindedness': 'SENSIBILIDADE', 'sensibilidade': 'SENSIBILIDADE', 'factors_tendermindedness': 'SENSIBILIDADE',
+
+        // Conscienciosidade
+        'competence': 'COMPETÊNCIA', 'competencia': 'COMPETÊNCIA', 'factors_competence': 'COMPETÊNCIA',
+        'order': 'ORDEM / ORGANIZAÇÃO', 'ordem': 'ORDEM / ORGANIZAÇÃO', 'factors_order': 'ORDEM / ORGANIZAÇÃO',
+        'dutifulness': 'SENSO DE DEVER', 'dever': 'SENSO DE DEVER', 'factors_dutifulness': 'SENSO DE DEVER',
+        'achievementstriving': 'ESFORÇO POR REALIZAÇÃO', 'realizacao': 'ESFORÇO POR REALIZAÇÃO', 'factors_achievementstriving': 'ESFORÇO POR REALIZAÇÃO',
+        'selfdiscipline': 'AUTODISCIPLINA', 'factors_selfdiscipline': 'AUTODISCIPLINA',
+        'deliberation': 'DELIBERAÇÃO', 'factors_deliberation': 'DELIBERAÇÃO'
+    };
+
+    return map[normalized] || name.toUpperCase();
 }
