@@ -22,7 +22,7 @@ const TRAIT_TRANSLATIONS: Record<string, string> = {
     'CONSCIENTIOUSNESS': 'Conscienciosidade',
     'EXTRAVERSION': 'Extroversão',
     'AGREEABLENESS': 'Amabilidade',
-    'NEUROTICISM': 'Neuroticismo'
+    'NEUROTICISM': 'Estabilidade Emocional'
 };
 
 export default function ReportsPage() {

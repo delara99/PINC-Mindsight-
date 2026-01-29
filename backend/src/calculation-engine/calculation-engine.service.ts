@@ -522,7 +522,7 @@ export class CalculationEngineService {
                 { key: 'C', name: 'Conscienciosidade', description: 'Organização, disciplina, responsabilidade' },
                 { key: 'E', name: 'Extroversão', description: 'Sociabilidade, energia, assertividade' },
                 { key: 'A', name: 'Amabilidade', description: 'Empatia, cooperação, confiança' },
-                { key: 'N', name: 'Neuroticismo', description: 'Estabilidade emocional, resiliência' }
+                { key: 'N', name: 'Estabilidade Emocional', description: 'Estabilidade emocional, resiliência' }
             ],
             formulas,
             classifications: classifications.reduce((acc, c) => {

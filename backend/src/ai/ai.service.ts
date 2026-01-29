@@ -116,17 +116,18 @@ export class AiService {
       1. EXTROVERSÃO: ${factors.extroversion} (${getLevel(factors.extroversion)})
       2. AMABILIDADE: ${factors.agreeableness} (${getLevel(factors.agreeableness)})
       3. CONSCIENCIOSIDADE: ${factors.conscientiousness} (${getLevel(factors.conscientiousness)})
-      4. NEUROTICISMO: ${factors.neuroticism} (${getLevel(factors.neuroticism)})
-         (⚠️ ATENÇÃO: No relatório aparece 'Neuroticismo' = ${factors.neuroticism}. Use este número.
-          Explique que Neuroticismo Alto significa ALTA Sensibilidade/Intensidade Emocional, e não 'loucura'.
-          Neuroticismo Baixo significa Estabilidade.)
+      4. ESTABILIDADE EMOCIONAL: ${factors.neuroticism} (${getLevel(factors.neuroticism)})
+         (⚠️ TÉCNICA: O score segue a escala de NEUROTICISMO.
+          - Score ALTO (>65) = Muita Intensidade/Sensibilidade (Baixa Estabilidade).
+          - Score BAIXO (<35) = Muita Calma/Resiliência (Alta Estabilidade).
+          Na tela do usuário aparece "Estabilidade Emocional", mas explique o significado real do número.)
       5. ABERTURA: ${factors.openness} (${getLevel(factors.openness)})
 
       🧠 REGRAS DE OURO:
-      1. **USE OS NÚMEROS DA TELA**: Se o relatório diz 53, Diga "Seu Neuroticismo é 53". Não inverta o cálculo para não confundir.
+      1. **USE OS NÚMEROS DA TELA**: Se o relatório diz 53, Diga "Sua Estabilidade Emocional é 53".
       2. **NORMALIZAÇÃO SEMÂNTICA**:
-         - Em vez de falar "Você é neurótico", diga "Você tem uma intensidade emocional maior".
-         - Diga: "Isso significa que você se importa muito e sente o ambiente com força."
+         - Se o score for ALTO, diga "Você tem uma intensidade emocional maior" ou "Você sente as coisas com mais força".
+         - Se o score for BAIXO, diga "Você tem uma base emocional muito estável e resiliente".
       3. **EXEMPLO PRÁTICO (OBRIGATÓRIO)**: Conecte o traço com uma cena de trabalho.
       4. **SEM RODEIOS**: Vá direto ao ponto.
 
@@ -147,7 +148,7 @@ export class AiService {
         - Extroversão (Energia Social): ${p.E} [${getLevel(p.E)}]
         - Agradabilidade (Empatia/Cooperação): ${p.A} [${getLevel(p.A)}]
         - Conscienciosidade (Ordem/Foco): ${p.C} [${getLevel(p.C)}]
-        - Neuroticismo (Sensibilidade/Reatividade): ${p.N} [${getLevel(p.N)}]
+        - Estabilidade Emocional (Sensibilidade/Reatividade): ${p.N} [${getLevel(p.N)}]
         - Abertura (Inovação/Abstração): ${p.O} [${getLevel(p.O)}]`;
 
         const prompt = `
@@ -233,7 +234,7 @@ export class AiService {
         4. 🧠 METODOLOGIA:
            - Baseada no Big Five (Cinco Grandes Fatores).
            - Ciência, não horóscopo.
-           - Traços: Extroversão, Amabilidade, Conscienciosidade, Neuroticismo, Abertura.
+           - Traços: Extroversão, Amabilidade, Conscienciosidade, Estabilidade Emocional, Abertura.
            
         5. 🤖 PINC COACH:
            - "Sou eu! Uma IA de carreira baseada em psicologia."

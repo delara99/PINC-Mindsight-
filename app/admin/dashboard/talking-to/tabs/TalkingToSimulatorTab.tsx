@@ -51,7 +51,7 @@ export default function TalkingToSimulatorTab({ isActive }: { isActive: boolean 
                                 <span>{key === 'O' ? 'Abertura (O)' :
                                     key === 'C' ? 'Conscienciosidade (C)' :
                                         key === 'E' ? 'Extroversão (E)' :
-                                            key === 'A' ? 'Amabilidade (A)' : 'Neuroticismo (N)'}</span>
+                                            key === 'A' ? 'Amabilidade (A)' : 'Estabilidade Emocional (N)'}</span>
                                 <span className="bg-slate-100 px-2 rounded text-slate-600">{(inputs as any)[key]}%</span>
                             </div>
                             <input

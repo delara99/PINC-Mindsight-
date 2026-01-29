@@ -232,7 +232,7 @@ function QuestionMappingsTab() {
         'A': 'Amabilidade',
         'C': 'Conscienciosidade',
         'O': 'Abertura',
-        'N': 'Neuroticismo'
+        'N': 'Estabilidade Emocional'
     };
 
     const fetchMappings = async () => {
@@ -753,7 +753,7 @@ function ClassificationsTab() {
         'AGREEABLENESS': 'Amabilidade',
         'CONSCIENTIOUSNESS': 'Conscienciosidade',
         'OPENNESS': 'Abertura',
-        'NEUROTICISM': 'Neuroticismo'
+        'NEUROTICISM': 'Estabilidade Emocional'
     };
 
     const fetchClassifications = async () => {
@@ -1035,7 +1035,7 @@ function SimulatorTab() {
             'C': 'Conscienciosidade',
             'E': 'Extroversão',
             'A': 'Amabilidade',
-            'N': 'Neuroticismo'
+            'N': 'Estabilidade Emocional'
         };
         return names[key] || key;
     };

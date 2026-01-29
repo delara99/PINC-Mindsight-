@@ -180,7 +180,7 @@ export class ScoreCalculationService {
             'C': 'Conscienciosidade',
             'E': 'Extroversão',
             'A': 'Amabilidade',
-            'N': 'Neuroticismo'
+            'N': 'Estabilidade Emocional'
         };
 
         const dimensionKeysMap: Record<string, string> = {

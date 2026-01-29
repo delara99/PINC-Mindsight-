@@ -527,7 +527,7 @@ export class BigFiveConfigService {
             },
             {
                 key: 'NEUROTICISM',
-                name: 'Neuroticismo',
+                name: 'Estabilidade Emocional',
                 facets: ['Ansiedade', 'Hostilidade', 'Depressão', 'Embaraço', 'Impulsividade', 'Vulnerabilidade']
             }
         ];

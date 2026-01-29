@@ -11,8 +11,8 @@ const QUESTIONS = [
     { id: 4, text: "Tenho interesse pelas pessoas.", trait: "Amabilidade" },
     { id: 5, text: "Estou sempre preparado.", trait: "Conscienciosidade" },
     { id: 6, text: "Presto atenção aos detalhes.", trait: "Conscienciosidade" },
-    { id: 7, text: "Fico estressado facilmente.", trait: "Neuroticismo" },
-    { id: 8, text: "Mudo de humor com frequência.", trait: "Neuroticismo" },
+    { id: 7, text: "Fico estressado facilmente.", trait: "Estabilidade Emocional" },
+    { id: 8, text: "Mudo de humor com frequência.", trait: "Estabilidade Emocional" },
     { id: 9, text: "Tenho uma imaginação fértil.", trait: "Abertura" },
     { id: 10, text: "Gosto de ideias complexas.", trait: "Abertura" }
 ];
@@ -26,13 +26,13 @@ export function TrialQuiz() {
     // Guard clause para evitar crash se índice inválido (persistência antiga)
     if (!question) {
         if (currentQuestionIndex >= QUESTIONS.length) {
-             // Se já passou do fim, vai para calculando
-             setStep('calculating');
+            // Se já passou do fim, vai para calculando
+            setStep('calculating');
         } else {
-             // Se índice negativo ou louco, reseta
-             setStep('intro');
+            // Se índice negativo ou louco, reseta
+            setStep('intro');
         }
-        return null; 
+        return null;
     }
 
     const progress = ((currentQuestionIndex) / QUESTIONS.length) * 100;
@@ -43,7 +43,7 @@ export function TrialQuiz() {
         setTimeout(() => {
             setAnswer(question.id, score);
             setSelectedOption(null);
-            
+
             if (currentQuestionIndex < QUESTIONS.length - 1) {
                 nextQuestion();
             } else {
@@ -69,7 +69,7 @@ export function TrialQuiz() {
                     <span>{Math.round(progress)}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className="h-full bg-primary transition-all duration-500 ease-out"
                         style={{ width: `${progress}%` }}
                     />
@@ -88,8 +88,8 @@ export function TrialQuiz() {
                             key={option.score}
                             onClick={() => handleSelect(option.score)}
                             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group
-                                ${selectedOption === option.score 
-                                    ? 'border-primary bg-primary/5 text-primary font-bold' 
+                                ${selectedOption === option.score
+                                    ? 'border-primary bg-primary/5 text-primary font-bold'
                                     : 'border-gray-100 hover:border-primary/50 hover:bg-gray-50 text-gray-600'
                                 }`}
                         >

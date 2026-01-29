@@ -13,7 +13,7 @@ const MOCK_PROFILES = {
     },
     'lider': {
         label: 'Líder Executor',
-        description: 'Alta Extroversão e Baixo Neuroticismo.',
+        description: 'Alta Extroversão e Alta Estabilidade Emocional.',
         activeTraits: ['E1+', 'E2+', 'N1-', 'A1+', 'S1+'], // Gregário, Ativo, Autoconfiante...
         scores: { EXTRAVERSION: 85, AGREEABLENESS: 40, CONSCIENTIOUSNESS: 70, OPENNESS: 60, NEUROTICISM: 20 }
     },
@@ -54,8 +54,8 @@ export default function CubeDemoPage() {
                                 key={key}
                                 onClick={() => setCurrentProfile(key as any)}
                                 className={`w-full text-left p-4 rounded-xl transition-all border-2 relative overflow-hidden ${currentProfile === key
-                                        ? 'border-indigo-500 bg-indigo-50 shadow-md'
-                                        : 'border-slate-100 bg-white hover:border-slate-300'
+                                    ? 'border-indigo-500 bg-indigo-50 shadow-md'
+                                    : 'border-slate-100 bg-white hover:border-slate-300'
                                     }`}
                             >
                                 <div className="font-bold text-slate-900">{profile.label}</div>

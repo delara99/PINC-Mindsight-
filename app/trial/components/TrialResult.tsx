@@ -12,7 +12,7 @@ export function TrialResult() {
         'Extroversão': [1, 2],
         'Amabilidade': [3, 4],
         'Conscienciosidade': [5, 6],
-        'Neuroticismo': [7, 8],
+        'Estabilidade Emocional': [7, 8],
         'Abertura': [9, 10]
     };
 
@@ -20,7 +20,7 @@ export function TrialResult() {
     const calculateScore = (questionIds: number[]) => {
         let total = 0;
         let max = questionIds.length * 5; // 5 é o score máximo por questão
-        
+
         questionIds.forEach(id => {
             total += answers[id] || 3; // Fallback para neutro se não respondido
         });
@@ -33,7 +33,7 @@ export function TrialResult() {
         extroversion: calculateScore(TRAITS_MAP['Extroversão']),
         agreeableness: calculateScore(TRAITS_MAP['Amabilidade']),
         conscientiousness: calculateScore(TRAITS_MAP['Conscienciosidade']),
-        neuroticism: calculateScore(TRAITS_MAP['Neuroticismo']),
+        neuroticism: calculateScore(TRAITS_MAP['Estabilidade Emocional']),
         openness: calculateScore(TRAITS_MAP['Abertura'])
     };
 
@@ -66,16 +66,16 @@ export function TrialResult() {
                             <span className="text-5xl font-extrabold text-gray-900">{Math.round(percentage)}%</span>
                             <p className="text-sm text-gray-500 mt-1">Nível de Energia Social</p>
                         </div>
-                        
+
                         <div className="h-4 bg-gray-100 rounded-full overflow-hidden mb-6">
-                            <div 
-                                className="h-full bg-gradient-to-r from-primary to-purple-600" 
+                            <div
+                                className="h-full bg-gradient-to-r from-primary to-purple-600"
                                 style={{ width: `${percentage}%` }}
                             />
                         </div>
 
                         <p className="text-gray-600 text-sm leading-relaxed">
-                            {percentage > 60 
+                            {percentage > 60
                                 ? "Você tende a ser comunicativo e energizado por interações sociais. Líderes com este perfil costumam ser excelentes em motivar equipes e criar redes de contato."
                                 : percentage > 40
                                     ? "Você possui um equilíbrio saudável entre interação social e tempo reservado. Adapta-se bem a diferentes ambientes, ouvindo e falando na medida certa."
@@ -95,24 +95,24 @@ export function TrialResult() {
                         <p className="text-gray-600 mb-6 max-w-xs">
                             Tenha acesso detalhado aos outros 4 traços de personalidade e descubra seus talentos ocultos.
                         </p>
-                        <Link 
+                        <Link
                             href={`/auth/register?name=${encodeURIComponent(userInfo.name)}&email=${encodeURIComponent(userInfo.email || '')}`}
                             className="bg-secondary hover:bg-secondary-hover text-black font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all flex items-center gap-2"
                         >
                             Ver Relatório Completo <ArrowRight className="w-5 h-5" />
                         </Link>
-                        
+
                         <div className="flex flex-col items-center mt-6 gap-2">
-                             <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <p className="text-xs text-gray-500 flex items-center gap-1">
                                 <CheckCircle className="w-3 h-3" /> Sem cartão de crédito necessário
                             </p>
-                            <button 
+                            <button
                                 onClick={() => {
                                     if (confirm('Tem certeza? Seus dados serão perdidos.')) {
                                         const { resetTrial } = useTrialStore.getState();
                                         resetTrial();
                                         sessionStorage.removeItem('trial-storage'); // Force clear
-                                        window.location.href = '/'; 
+                                        window.location.href = '/';
                                     }
                                 }}
                                 className="px-6 py-2 mt-2 text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-full text-sm font-bold transition-all flex items-center gap-2"
@@ -127,7 +127,7 @@ export function TrialResult() {
                         {[
                             { name: 'Amabilidade', score: scores.agreeableness, color: 'bg-green-500' },
                             { name: 'Conscienciosidade', score: scores.conscientiousness, color: 'bg-blue-500' },
-                            { name: 'Neuroticismo', score: scores.neuroticism, color: 'bg-red-500' },
+                            { name: 'Estabilidade Emocional', score: scores.neuroticism, color: 'bg-red-500' },
                             { name: 'Abertura', score: scores.openness, color: 'bg-yellow-500' }
                         ].map((trait, i) => (
                             <div key={i}>
@@ -147,7 +147,7 @@ export function TrialResult() {
             {/* Social Proof / Comparação */}
             <div className="bg-gray-900 text-white rounded-2xl p-8 mb-12 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div>
                         <div className="flex items-center gap-2 text-primary mb-2 font-bold">
@@ -158,14 +158,14 @@ export function TrialResult() {
                             {percentage > 50 ? "Perfil de Liderança Dinâmica" : "Perfil de Especialista Estratégico"}
                         </h3>
                         <p className="text-gray-300 max-w-lg">
-                            Cruzando seus dados preliminares com nossa base de profissionais, identificamos alta aderência a 
+                            Cruzando seus dados preliminares com nossa base de profissionais, identificamos alta aderência a
                             {percentage > 50 ? " funções que exigem influência e comunicação." : " funções que exigem análise profunda e foco."}
                         </p>
                     </div>
                     <div className="flex -space-x-4">
                         {[1, 2, 3, 4].map((i) => (
                             <div key={i} className="w-12 h-12 rounded-full border-2 border-gray-900 bg-gray-800 flex items-center justify-center text-xs font-bold">
-                                {['JD', 'AM', 'RK', 'LZ'][i-1]}
+                                {['JD', 'AM', 'RK', 'LZ'][i - 1]}
                             </div>
                         ))}
                         <div className="w-12 h-12 rounded-full border-2 border-gray-900 bg-primary flex items-center justify-center text-xs font-bold">
