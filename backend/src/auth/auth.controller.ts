@@ -70,4 +70,51 @@ export class AuthController {
             version: 'v2.1-debug-fix'
         };
     }
+
+    @Get('test-comparison')
+    async testComparison(@Query('connectionId') connectionId: string) {
+        if (!connectionId) {
+            return { error: 'connectionId query parameter required' };
+        }
+        // BYPASS AUTH - APENAS PARA TESTE
+        const prisma = this.authService['prisma'];
+        const conn = await prisma.connection.findUnique({
+            where: { id: connectionId }
+        });
+
+        if (!conn) return { error: 'Connection not found' };
+
+        const assessmentsA = await prisma.assessmentAssignment.findMany({
+            where: {
+                userId: conn.userAId,
+                status: { in: ['COMPLETED', 'DELETED'] },
+                assessment: { type: 'BIG_FIVE' }
+            },
+            orderBy: { completedAt: 'desc' },
+            take: 1,
+            select: { id: true, status: true }
+        });
+
+        const assessmentsB = await prisma.assessmentAssignment.findMany({
+            where: {
+                userId: conn.userBId,
+                status: { in: ['COMPLETED', 'DELETED'] },
+                assessment: { type: 'BIG_FIVE' }
+            },
+            orderBy: { completedAt: 'desc' },
+            take: 1,
+            select: { id: true, status: true }
+        });
+
+        return {
+            connection: { id: conn.id, userAId: conn.userAId, userBId: conn.userBId },
+            foundAssessments: {
+                userA: assessmentsA[0] || null,
+                userB: assessmentsB[0] || null
+            },
+            message: assessmentsA.length > 0 && assessmentsB.length > 0
+                ? '✅ Both users have assessments - comparison should work!'
+                : '❌ Missing assessments - comparison will fail'
+        };
+    }
 }
