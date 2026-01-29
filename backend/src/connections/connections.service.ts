@@ -145,8 +145,53 @@ export class ConnectionsService {
             myReport = await this.interpretationService.generateFullReport(myLastAssessment.id, myTenantId);
             partnerReport = await this.interpretationService.generateFullReport(partnerLastAssessment.id, partnerTenantId);
         } catch (error) {
-            console.error('[ConnectionsService] Failed to generate full report via InterpretationService:', error);
-            return { radarData: null, error: 'Erro ao processar relatório detalhado (Facetas ausentes/Erro de cálculo).', status: { me: true, partner: true, message: 'Calculation Error' } };
+            console.error('[ConnectionsService] Failed to generate full report, attempting basic score extraction:', error);
+
+            // FALLBACK: Tentar extrair scores básicos diretamente das respostas
+            try {
+                const myResponses = await this.prisma.assessmentResponse.findMany({
+                    where: { assignmentId: myLastAssessment.id },
+                    include: { question: true }
+                });
+
+                const partnerResponses = await this.prisma.assessmentResponse.findMany({
+                    where: { assignmentId: partnerLastAssessment.id },
+                    include: { question: true }
+                });
+
+                // Calcular scores básicos (média simples por trait)
+                const calculateBasicScores = (responses: any[]) => {
+                    const traitScores: Record<string, number[]> = { O: [], C: [], E: [], A: [], N: [] };
+
+                    responses.forEach(r => {
+                        const metadata = (r.question as any).metadata;
+                        if (metadata && metadata.trait) {
+                            const trait = metadata.trait.toUpperCase()[0]; // Primeira letra
+                            if (traitScores[trait]) {
+                                traitScores[trait].push(r.score || 0);
+                            }
+                        }
+                    });
+
+                    const traits = [];
+                    for (const [key, scores] of Object.entries(traitScores)) {
+                        if (scores.length > 0) {
+                            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+                            traits.push({ key, score: Math.round(avg * 10) / 10, facets: [] });
+                        }
+                    }
+
+                    return { traits, talkingToAnalysis: null };
+                };
+
+                myReport = calculateBasicScores(myResponses);
+                partnerReport = calculateBasicScores(partnerResponses);
+
+                console.log('[COMPARISON] Using basic scores fallback');
+            } catch (fallbackError) {
+                console.error('[ConnectionsService] Fallback also failed:', fallbackError);
+                return { radarData: null, error: 'Erro ao processar relatório detalhado (Facetas ausentes/Erro de cálculo).', status: { me: true, partner: true, message: 'Calculation Error' } };
+            }
         }
 
         // 2. Extract TalkingTo Analysis (Rich with Facets)
