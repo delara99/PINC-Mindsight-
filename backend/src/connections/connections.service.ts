@@ -114,12 +114,12 @@ export class ConnectionsService {
 
         const [myLastAssessment, partnerLastAssessment] = await Promise.all([
             this.prisma.assessmentAssignment.findFirst({
-                where: { userId, status: { in: ['COMPLETED', 'DELETED'] }, assessment: { type: 'BIG_FIVE' } },
+                where: { userId, status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
                 orderBy: { completedAt: 'desc' },
                 include: { user: true, result: true }
             }),
             this.prisma.assessmentAssignment.findFirst({
-                where: { userId: otherUserId, status: { in: ['COMPLETED', 'DELETED'] }, assessment: { type: 'BIG_FIVE' } },
+                where: { userId: otherUserId, status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
                 orderBy: { completedAt: 'desc' },
                 include: { user: true, result: true }
             })
