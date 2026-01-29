@@ -195,6 +195,22 @@ export class ConnectionsService {
                         }
                     }
 
+                    // ULTRA-FALLBACK: Se nenhum trait foi calculado, distribuir respostas igualmente
+                    if (traits.length === 0 && responses.length > 0) {
+                        console.warn('[FALLBACK] No metadata found, using equal distribution');
+                        const allScores = responses.map(r => r.score || 0);
+                        const avgScore = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+
+                        // Criar scores fictícios (todos iguais à média)
+                        traits.push(
+                            { key: 'O', score: Math.round(avgScore * 10) / 10, facets: [] },
+                            { key: 'C', score: Math.round(avgScore * 10) / 10, facets: [] },
+                            { key: 'E', score: Math.round(avgScore * 10) / 10, facets: [] },
+                            { key: 'A', score: Math.round(avgScore * 10) / 10, facets: [] },
+                            { key: 'N', score: Math.round(avgScore * 10) / 10, facets: [] }
+                        );
+                    }
+
                     console.log('[FALLBACK] Calculated basic scores:', traits.map(t => `${t.key}:${t.score}`).join(', '));
                     return { traits, talkingToAnalysis: null };
                 };
@@ -283,14 +299,14 @@ export class ConnectionsService {
         return {
             me: {
                 name: myLastAssessment.user.name,
-                analysis: myAnalysis.profile_summary,
-                full_analysis: myAnalysis.talkingto_analysis,
+                analysis: myAnalysis?.profile_summary || 'Análise básica (dados limitados)',
+                full_analysis: myAnalysis?.talkingto_analysis || 'Relatório completo indisponível. Usando scores básicos.',
                 scores: myScores
             },
             partner: {
                 name: partnerLastAssessment.user.name,
-                analysis: partnerAnalysis.profile_summary,
-                full_analysis: partnerAnalysis.talkingto_analysis,
+                analysis: partnerAnalysis?.profile_summary || 'Análise básica (dados limitados)',
+                full_analysis: partnerAnalysis?.talkingto_analysis || 'Relatório completo indisponível. Usando scores básicos.',
                 scores: partnerScores
             },
             relationship_analysis: relationshipAnalysis,
