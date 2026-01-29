@@ -164,12 +164,26 @@ export class ConnectionsService {
                     const traitScores: Record<string, number[]> = { O: [], C: [], E: [], A: [], N: [] };
 
                     responses.forEach(r => {
-                        const metadata = (r.question as any).metadata;
-                        if (metadata && metadata.trait) {
-                            const trait = metadata.trait.toUpperCase()[0]; // Primeira letra
-                            if (traitScores[trait]) {
-                                traitScores[trait].push(r.score || 0);
+                        try {
+                            const metadata = (r.question as any)?.metadata;
+                            if (!metadata) return;
+
+                            let traitKey = null;
+
+                            // Tentar extrair trait de várias formas
+                            if (typeof metadata.trait === 'string') {
+                                traitKey = metadata.trait.toUpperCase()[0];
+                            } else if (metadata.dimension) {
+                                traitKey = metadata.dimension.toUpperCase()[0];
+                            } else if (metadata.category) {
+                                traitKey = metadata.category.toUpperCase()[0];
                             }
+
+                            if (traitKey && traitScores[traitKey]) {
+                                traitScores[traitKey].push(r.score || 0);
+                            }
+                        } catch (err) {
+                            // Silenciar erros individuais de parsing
                         }
                     });
 
@@ -181,6 +195,7 @@ export class ConnectionsService {
                         }
                     }
 
+                    console.log('[FALLBACK] Calculated basic scores:', traits.map(t => `${t.key}:${t.score}`).join(', '));
                     return { traits, talkingToAnalysis: null };
                 };
 
