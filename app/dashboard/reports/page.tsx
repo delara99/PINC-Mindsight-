@@ -18,12 +18,26 @@ interface Report {
 }
 
 const TRAIT_TRANSLATIONS: Record<string, string> = {
-    'OPENNESS': 'Abertura',
-    'CONSCIENTIOUSNESS': 'Conscienciosidade',
-    'EXTRAVERSION': 'Extroversão',
-    'AGREEABLENESS': 'Amabilidade',
-    'NEUROTICISM': 'Estabilidade Emocional'
+    'OPENNESS': 'ABERTURA À EXPERIÊNCIA',
+    'CONSCIENTIOUSNESS': 'CONSCIENCIOSIDADE',
+    'EXTRAVERSION': 'EXTROVERSÃO',
+    'AGREEABLENESS': 'AMABILIDADE',
+    'NEUROTICISM': 'ESTABILIDADE EMOCIONAL',
+    'NEUROTICISMO': 'ESTABILIDADE EMOCIONAL', // Legacy
+    'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL'
 };
+
+const safeRenderScore = (score: any) => {
+    if (typeof score === 'number') return score.toFixed(1);
+    if (typeof score === 'string') return score;
+    // Se for objeto (novo formato calculation engine?), extrair valor
+    if (score && typeof score === 'object') {
+        const val = score.score ?? score.normalizedScore ?? score.value ?? 0;
+        return typeof val === 'number' ? val.toFixed(1) : String(val);
+    }
+    return '-';
+};
+
 
 export default function ReportsPage() {
     const router = useRouter();
@@ -207,7 +221,7 @@ export default function ReportsPage() {
                                                 >
                                                     <Award size={14} className="text-blue-600" />
                                                     <span className="text-xs font-medium text-blue-900">
-                                                        {TRAIT_TRANSLATIONS[trait] || trait}: {typeof score === 'number' ? score.toFixed(1) : score}
+                                                        {TRAIT_TRANSLATIONS[String(trait).toUpperCase()] || String(trait).toUpperCase()}: {safeRenderScore(score)}
                                                     </span>
                                                 </div>
                                             ))}
