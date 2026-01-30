@@ -43,12 +43,9 @@ const getStatusParams = (score: number) => {
 
 const parseChatHistory = (fullText: string) => {
     if (!fullText) return [];
-
-    // Regex para encontrar headers como [Nome - Data]:
     const regex = /\[(.*?)\s-\s(.*?)\]:\n([\s\S]*?)(?=(\[.*?\s-\s.*?\]:|$))/g;
     const history = [];
     let match;
-
     while ((match = regex.exec(fullText)) !== null) {
         history.push({
             author: match[1],
@@ -56,11 +53,9 @@ const parseChatHistory = (fullText: string) => {
             message: match[3].trim()
         });
     }
-
     if (history.length === 0 && fullText.trim()) {
         return [{ author: 'Anotações Anteriores', timestamp: '-', message: fullText }];
     }
-
     return history;
 };
 
@@ -211,7 +206,6 @@ export default function AssessmentDetailsPageV2() {
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
         'NEUROTICISM': 'ESTABILIDADE EMOCIONAL', 'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL',
-        // Facetas... (Shortened for brevity, same as before)
         'ANXIETY': 'ANSIEDADE', 'ANGER': 'HOSTILIDADE', 'HOSTILITY': 'HOSTILIDADE', 'DEPRESSION': 'DEPRESSÃO',
         'SELF-CONSCIOUSNESS': 'EMBARAÇO', 'IMPULSIVENESS': 'IMPULSIVIDADE', 'VULNERABILITY': 'VULNERABILIDADE',
         'FRIENDLINESS': 'CORDIALIDADE', 'GREGARIOUSNESS': 'GREGARIEDADE', 'ASSERTIVENESS': 'ASSERTIVIDADE',
@@ -321,7 +315,41 @@ export default function AssessmentDetailsPageV2() {
 
                 <div ref={reportRef} className="space-y-12">
 
-                    {/* Hero Grid ... */}
+                    {/* SECTION 1: TRAITS (Reordered) */}
+                    <section>
+                        <h2 className="text-2xl font-bold flex items-center gap-3 mb-8">
+                            <Layers className="text-indigo-500" /> Detalhamento dos Traços
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {(() => {
+                                const calcScores = assignment.calculatedScores?.scores;
+                                if (calcScores) {
+                                    const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
+                                    return scoresList.map((trait: any, idx: number) => (
+                                        <ModernTraitCard
+                                            key={idx}
+                                            traitName={translateAndFormat(trait.traitKey || trait.name)}
+                                            overallScore={Math.min(100, trait.score)}
+                                            interpretation={((({
+                                                'HIGH': 'ALTO', 'AVERAGE': 'MÉDIO', 'LOW': 'BAIXO',
+                                                'VERY_HIGH': 'MUITO ALTO', 'VERY_LOW': 'MUITO BAIXO'
+                                            })[trait.level as string] || trait.level || ''))}
+                                            facets={trait.facets?.map((f: any) => ({
+                                                facet: translateAndFormat(f.name || f.facetName),
+                                                normalizedScore: Math.min(100, Math.max(0, typeof f.score === 'number' ? f.score : 0))
+                                            })) || []}
+                                            customTexts={{
+                                                summary: trait.customTexts?.text_interpretation || trait.customTexts?.summary || trait.interpretation
+                                            }}
+                                        />
+                                    ));
+                                }
+                                return null;
+                            })()}
+                        </div>
+                    </section>
+
+                    {/* SECTION 2: MAPA (Radar) (Reordered) */}
                     <section className="grid md:grid-cols-12 gap-8">
                         <div className="md:col-span-12 xl:col-span-12 bg-white rounded-3xl p-8 shadow-sm border border-slate-100 ring-1 ring-slate-400/5 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500" />
@@ -359,81 +387,13 @@ export default function AssessmentDetailsPageV2() {
                         </div>
                     </section>
 
-                    {/* Traits ... */}
-                    <section>
-                        <h2 className="text-2xl font-bold flex items-center gap-3 mb-8">
-                            <Layers className="text-indigo-500" /> Detalhamento dos Traços
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {(() => {
-                                const calcScores = assignment.calculatedScores?.scores;
-                                if (calcScores) {
-                                    const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
-                                    return scoresList.map((trait: any, idx: number) => (
-                                        <ModernTraitCard
-                                            key={idx}
-                                            traitName={translateAndFormat(trait.traitKey || trait.name)}
-                                            overallScore={Math.min(100, trait.score)}
-                                            interpretation={((({
-                                                'HIGH': 'ALTO', 'AVERAGE': 'MÉDIO', 'LOW': 'BAIXO',
-                                                'VERY_HIGH': 'MUITO ALTO', 'VERY_LOW': 'MUITO BAIXO'
-                                            })[trait.level as string] || trait.level || ''))}
-                                            facets={trait.facets?.map((f: any) => ({
-                                                facet: translateAndFormat(f.name || f.facetName),
-                                                normalizedScore: Math.min(100, Math.max(0, typeof f.score === 'number' ? f.score : 0))
-                                            })) || []}
-                                            customTexts={{
-                                                summary: trait.customTexts?.text_interpretation || trait.customTexts?.summary || trait.interpretation
-                                            }}
-                                        />
-                                    ));
-                                }
-                                return null;
-                            })()}
-                        </div>
-                    </section>
-
-                    {/* Responses with Edit - UPDATED */}
-                    <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                            <Brain className="text-pink-500" /> Respostas do Questionário (ADMIN)
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {assessment.questions.map((question: any, index: number) => {
-                                const response = responses.find((r: any) => r.questionId === question.id);
-                                return (
-                                    <div key={question.id} className="group p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-300 hover:bg-white transition-all duration-300">
-                                        <div className="flex flex-col h-full justify-between gap-3">
-                                            <div>
-                                                <span className="text-xs font-bold text-slate-400 uppercase mb-1 block">Questão {index + 1}</span>
-                                                <p className="text-sm font-medium text-slate-700 leading-relaxed group-hover:text-slate-900 transition-colors">{question.text}</p>
-                                            </div>
-                                            <div className="flex items-center justify-between border-t border-slate-200/50 pt-3 mt-1">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Sua Escolha</span>
-                                                {/* EDITABLE COMPONENT */}
-                                                <EditableAnswer
-                                                    assignmentId={params.id}
-                                                    questionId={question.id}
-                                                    initialValue={response?.answer}
-                                                    token={token}
-                                                    refetch={refetch}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </section>
-
-                    {/* Chat ... */}
+                    {/* SECTION 3: CHAT (Reordered) */}
                     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                         <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
                             <MessageSquare className="text-indigo-500" /> Interação & Anotações
                         </h2>
 
-                        {/* Chat Implementation Same as before... */}
                         <div className="bg-slate-50 rounded-2xl p-6 min-h-[300px] max-h-[500px] overflow-y-auto mb-6 flex flex-col gap-4 border border-slate-200">
                             {chatHistory.length === 0 ? (
                                 <div className="text-center text-slate-400 py-12 flex flex-col items-center gap-2">
@@ -485,6 +445,39 @@ export default function AssessmentDetailsPageV2() {
                             </button>
                         </div>
                     </section>
+
+                    {/* SECTION 4: RESPONSES (Reordered) */}
+                    <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                            <Brain className="text-pink-500" /> Respostas do Questionário (ADMIN)
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {assessment.questions.map((question: any, index: number) => {
+                                const response = responses.find((r: any) => r.questionId === question.id);
+                                return (
+                                    <div key={question.id} className="group p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-300 hover:bg-white transition-all duration-300">
+                                        <div className="flex flex-col h-full justify-between gap-3">
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-400 uppercase mb-1 block">Questão {index + 1}</span>
+                                                <p className="text-sm font-medium text-slate-700 leading-relaxed group-hover:text-slate-900 transition-colors">{question.text}</p>
+                                            </div>
+                                            <div className="flex items-center justify-between border-t border-slate-200/50 pt-3 mt-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Sua Escolha</span>
+                                                <EditableAnswer
+                                                    assignmentId={params.id}
+                                                    questionId={question.id}
+                                                    initialValue={response?.answer}
+                                                    token={token}
+                                                    refetch={refetch}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
                 </div>
             </div>
         </div>
