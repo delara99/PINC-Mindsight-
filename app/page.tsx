@@ -138,13 +138,13 @@ export default function Home() {
                                 {settings.heroBadge}
                             </div>
                         )}
-                        <h1 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-[1.1] tracking-tighter" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
                             {settings?.heroTitle || 'Revele quem você'} <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500" style={{ color: settings?.accentColor ? 'inherit' : undefined }}>
                                 {settings?.heroSubtitle || 'realmente é.'}
                             </span>
                         </h1>
-                        <p className="text-xl opacity-90 leading-relaxed max-w-lg font-light" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
+                        <p className="text-lg opacity-90 leading-relaxed max-w-lg font-medium mt-4" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
                             {settings?.heroDescription || 'Não é horóscopo. É ciência. Use o método Big Five para entender sua personalidade, alavancar sua carreira e melhorar seus relacionamentos.'}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 pt-8">
