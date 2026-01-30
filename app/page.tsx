@@ -132,12 +132,7 @@ export default function Home() {
 
                 <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
                     <div className="space-y-6">
-                        {settings?.heroBadge && (
-                            <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
-                                <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
-                                {settings.heroBadge}
-                            </div>
-                        )}
+
                         <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-[1.1] tracking-tighter" style={{ color: settings?.heroTextColor || '#FFFFFF' }}>
                             {settings?.heroTitle || 'Revele quem você'} <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500" style={{ color: settings?.accentColor ? 'inherit' : undefined }}>

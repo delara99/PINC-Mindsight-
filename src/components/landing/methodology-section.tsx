@@ -14,10 +14,7 @@ export function MethodologySection() {
 
                 {/* LEFT: MARKETING COPY */}
                 <div className="space-y-8">
-                    <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-                        <Sparkles size={14} className="text-purple-400" />
-                        Metodologia TalkingTo
-                    </div>
+
 
                     <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
                         Muito além de um teste. <br />

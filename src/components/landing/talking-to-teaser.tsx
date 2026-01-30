@@ -12,10 +12,7 @@ export const TalkingToTeaser = () => {
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-200/20 rounded-full blur-[100px] -ml-40 pointer-events-none"></div>
 
                 <div className="text-center mb-16 relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm text-sm font-bold text-purple-600 mb-6 uppercase tracking-wider">
-                        <Sparkles size={14} className="fill-purple-600" />
-                        Exclusividade PINC
-                    </div>
+
                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 tracking-tight">
                         Muito além de um teste de personalidade
                     </h2>
