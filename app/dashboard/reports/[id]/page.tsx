@@ -1,431 +1,486 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download, Sparkles, Activity, Brain, Heart, Zap, Globe, Share2, Layers, MessageSquare, Send, Clock, Edit2 } from 'lucide-react';
 import { useAuthStore } from '../../../../src/store/auth-store';
 import { BigFiveChart } from '../../../../src/components/dashboard/big-five-chart';
-import { TraitCard } from '../../../../src/components/dashboard/TraitCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { API_URL } from '../../../../src/config/api';
+import { motion } from 'framer-motion';
+
+// --- HELPERS ---
+
+const getStatusParams = (score: number) => {
+    // Pedido V2: Baixo (<36) Vermelho, Médio (36-65) Laranja, Alto (>65) Verde.
+    if (score <= 35) return {
+        base: 'red',
+        gradient: 'bg-gradient-to-r from-red-400 to-red-600',
+        text: 'text-red-700',
+        bg: 'bg-red-50',
+        border: 'border-red-200',
+        marker: 'bg-red-500'
+    };
+    if (score <= 65) return {
+        base: 'orange',
+        gradient: 'bg-gradient-to-r from-orange-400 to-orange-600',
+        text: 'text-orange-700',
+        bg: 'bg-orange-50',
+        border: 'border-orange-200',
+        marker: 'bg-orange-500'
+    };
+    return {
+        base: 'emerald',
+        gradient: 'bg-gradient-to-r from-emerald-400 to-emerald-600',
+        text: 'text-emerald-700',
+        bg: 'bg-emerald-50',
+        border: 'border-emerald-200',
+        marker: 'bg-emerald-500'
+    };
+};
+
+const parseChatHistory = (fullText: string) => {
+    if (!fullText) return [];
+    // Regex para encontrar headers como [Nome - Data]:
+    const regex = /\[(.*?)\s-\s(.*?)\]:\n([\s\S]*?)(?=(\[.*?\s-\s.*?\]:|$))/g;
+    const history = [];
+    let match;
+
+    while ((match = regex.exec(fullText)) !== null) {
+        history.push({
+            author: match[1],
+            timestamp: match[2],
+            message: match[3].trim()
+        });
+    }
+
+    if (history.length === 0 && fullText.trim()) {
+        return [{ author: 'Anotações Anteriores', timestamp: '-', message: fullText }];
+    }
+
+    return history;
+};
+
+// --- MODERN UI COMPONENTS ---
+
+const ModernTraitCard = ({ traitName, overallScore, interpretation, facets, customTexts }: any) => {
+    const status = getStatusParams(overallScore);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col h-full"
+        >
+            <div className={`p-6 border-b border-slate-50 ${status.bg} bg-opacity-30`}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">{traitName}</h3>
+                        <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${status.bg} ${status.text} ${status.border} bg-opacity-100`}>
+                            {interpretation}
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className={`text-3xl font-black tracking-tighter ${status.text}`}>{overallScore.toFixed(0)}</span>
+                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Score</span>
+                    </div>
+                </div>
+
+                {/* Main Progress Bar */}
+                <div className="h-2.5 w-full bg-white rounded-full overflow-hidden mb-6 shadow-sm ring-1 ring-slate-100">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${overallScore}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className={`h-full rounded-full ${status.gradient}`}
+                    />
+                </div>
+
+                {/* Summary Text (Rich) */}
+                {customTexts?.summary && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 mb-2 border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2 text-indigo-500">
+                            <Sparkles size={14} fill="currentColor" className="opacity-20" />
+                            <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">Insight</span>
+                        </div>
+                        <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                            {customTexts.summary.replace(/<[^>]*>/g, '').slice(0, 180)}...
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Facets Grid */}
+            <div className="px-6 py-4 bg-white flex-1">
+                <div className="grid grid-cols-1 gap-4">
+                    {facets.map((facet: any, idx: number) => {
+                        const fStatus = getStatusParams(facet.normalizedScore);
+                        return (
+                            <div key={idx} className="flex items-center justify-between group">
+                                <span className="text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors w-1/3 truncate" title={facet.facet}>
+                                    {facet.facet}
+                                </span>
+                                <div className="flex-1 mx-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${facet.normalizedScore}%` }}
+                                        transition={{ duration: 0.8, delay: 0.1 * idx }}
+                                        className={`h-full rounded-full opacity-80 group-hover:opacity-100 transition-opacity ${fStatus.marker}`}
+                                    />
+                                </div>
+                                <span className={`text-xs font-mono font-bold w-8 text-right ${fStatus.text}`}>
+                                    {facet.normalizedScore.toFixed(0)}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+const EditableAnswer = ({ assignmentId, questionId, initialValue, token, refetch }: any) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [val, setVal] = useState(initialValue);
+
+    const updateMutation = useMutation({
+        mutationFn: async (newValue: number) => {
+            const res = await fetch(`${API_URL}/api/v1/assessments/assignments/${assignmentId}/responses/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ value: newValue })
+            });
+            if (!res.ok) throw new Error('Falha ao atualizar');
+            return res.json();
+        },
+        onSuccess: () => {
+            setIsEditing(false);
+            refetch(); // Reload assignment to update scores!
+        }
+    });
+
+    if (isEditing) {
+        return (
+            <div className="flex gap-1" onMouseLeave={() => setIsEditing(false)}>
+                {[1, 2, 3, 4, 5].map(v => (
+                    <button
+                        key={v}
+                        onClick={() => { setVal(v); updateMutation.mutate(v); }}
+                        disabled={updateMutation.isPending}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold text-xs transition-all shadow-sm ${val === v ? 'bg-indigo-600 text-white ring-2 ring-indigo-200' : 'bg-white text-slate-500 hover:bg-indigo-50 border border-slate-200'
+                            }`}
+                    >
+                        {v}
+                    </button>
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <button
+            onClick={() => setIsEditing(true)}
+            className="px-3 py-1 rounded-lg text-sm font-bold bg-white border border-slate-200 text-indigo-600 shadow-sm hover:shadow-md transition-all flex items-center gap-2 hover:ring-2 ring-indigo-50 min-w-[50px] justify-between group"
+            title="Clique para editar resposta"
+        >
+            <span>{val || '-'}</span>
+            <Edit2 size={10} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+        </button>
+    );
+}
+
+// --- PAGE COMPONENT ---
 
 export default function AssessmentDetailsPage() {
     const params = useParams();
-    const { token } = useAuthStore();
-    // ...
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    const { token, user: currentUser } = useAuthStore();
 
-    // --- TRANSLATION HELPER ---
+    const [newMessage, setNewMessage] = useState('');
+    const reportRef = useRef<HTMLDivElement>(null);
+
+    // --- TRANSLATION HELPER (Shared) ---
     const TERMS_MAP: Record<string, string> = {
-        // Traços
         'OPENNESS': 'ABERTURA À EXPERIÊNCIA',
         'CONSCIENTIOUSNESS': 'CONSCIENCIOSIDADE',
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
-        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL',
-        'NEUROTICISMO': 'ESTABILIDADE EMOCIONAL',
-        'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL',
-
-        // Facetas (Common IPIP/Neo mappings if legacy data is in English)
-        'ANXIETY': 'ANSIEDADE',
-        'ANGER': 'HOSTILIDADE', 'HOSTILITY': 'HOSTILIDADE',
-        'DEPRESSION': 'DEPRESSÃO',
-        'SELF-CONSCIOUSNESS': 'EMBARAÇO',
-        'IMPULSIVENESS': 'IMPULSIVIDADE',
-        'VULNERABILITY': 'VULNERABILIDADE',
-
-        'FRIENDLINESS': 'CORDIALIDADE',
-        'GREGARIOUSNESS': 'GREGARIEDADE',
-        'ASSERTIVENESS': 'ASSERTIVIDADE',
-        'ACTIVITY LEVEL': 'ATIVIDADE',
-        'EXCITEMENT-SEEKING': 'BUSCA DE SENSAÇÕES',
-        'CHEERFULNESS': 'EMOÇÕES POSITIVAS',
-
-        'TRUST': 'CONFIANÇA',
-        'MORALITY': 'FRANQUEZA',
-        'ALTRUISM': 'ALTRUÍSMO',
-        'COOPERATION': 'COMPLACÊNCIA',
-        'MODESTY': 'MODÉSTIA',
-        'SYMPATHY': 'SENSIBILIDADE',
-
-        'SELF-EFFICACY': 'COMPETÊNCIA',
-        'ORDERLINESS': 'ORDEM',
-        'DUTIFULNESS': 'SENSO DE DEVER',
-        'ACHIEVEMENT-STRIVING': 'ESFORÇO POR REALIZAÇÕES',
-        'SELF-DISCIPLINE': 'AUTODISCIPLINA',
-        'CAUTIOUSNESS': 'PONDERAÇÃO',
-
-        'IMAGINATION': 'FANTASIA',
-        'ARTISTIC INTERESTS': 'ESTÉTICA',
-        'EMOTIONALITY': 'SENTIMENTOS',
-        'ADVENTUROUSNESS': 'AÇÕES',
-        'INTELLECT': 'IDEIAS',
-        'LIBERALISM': 'VALORES'
+        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL', 'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL',
+        // Facetas
+        'ANXIETY': 'ANSIEDADE', 'ANGER': 'HOSTILIDADE', 'HOSTILITY': 'HOSTILIDADE', 'DEPRESSION': 'DEPRESSÃO',
+        'SELF-CONSCIOUSNESS': 'EMBARAÇO', 'IMPULSIVENESS': 'IMPULSIVIDADE', 'VULNERABILITY': 'VULNERABILIDADE',
+        'FRIENDLINESS': 'CORDIALIDADE', 'GREGARIOUSNESS': 'GREGARIEDADE', 'ASSERTIVENESS': 'ASSERTIVIDADE',
+        'ACTIVITY LEVEL': 'ATIVIDADE', 'EXCITEMENT-SEEKING': 'BUSCA DE SENSAÇÕES', 'CHEERFULNESS': 'EMOÇÕES POSITIVAS',
+        'TRUST': 'CONFIANÇA', 'MORALITY': 'FRANQUEZA', 'ALTRUISM': 'ALTRUÍSMO', 'COOPERATION': 'COMPLACÊNCIA',
+        'MODESTY': 'MODÉSTIA', 'SYMPATHY': 'SENSIBILIDADE', 'SELF-EFFICACY': 'COMPETÊNCIA', 'ORDERLINESS': 'ORDEM',
+        'DUTIFULNESS': 'SENSO DE DEVER', 'ACHIEVEMENT-STRIVING': 'ESFORÇO POR REALIZAÇÕES', 'SELF-DISCIPLINE': 'AUTODISCIPLINA',
+        'CAUTIOUSNESS': 'PONDERAÇÃO', 'IMAGINATION': 'FANTASIA', 'ARTISTIC INTERESTS': 'ESTÉTICA', 'EMOTIONALITY': 'SENTIMENTOS',
+        'ADVENTUROUSNESS': 'AÇÕES', 'INTELLECT': 'IDEIAS', 'LIBERALISM': 'VALORES'
     };
 
     const translateAndFormat = (text: string) => {
         if (!text) return '';
         const upper = text.toUpperCase();
-        // Tenta tradução direta
         if (TERMS_MAP[upper]) return TERMS_MAP[upper];
-
-        // Se já estiver em português (ex: "Abertura"), só garante Upper
         return upper;
     };
 
-    const router = useRouter();
-    const queryClient = useQueryClient();
-    const [feedback, setFeedback] = useState('');
-    const reportRef = useRef<HTMLDivElement>(null);
-    const [isExporting, setIsExporting] = useState(false);
-
-    const { data: assignment, isLoading, error } = useQuery({
+    // --- QUERY ---
+    const { data: assignment, isLoading, error, refetch } = useQuery({
         queryKey: ['assignment-details', params.id],
         queryFn: async () => {
             const res = await fetch(`${API_URL}/api/v1/assessments/assignments/${params.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Erro ${res.status}: ${errorText || res.statusText}`);
-            }
+            if (!res.ok) throw new Error('Erro ao carregar');
             return res.json();
         },
-        enabled: !!token // Só executa se tiver token
+        enabled: !!token
     });
 
     const submitFeedbackMutation = useMutation({
-        mutationFn: async (feedbackData: { feedback: string }) => {
+        mutationFn: async (fullText: string) => {
             const res = await fetch(`${API_URL}/api/v1/assessments/assignments/${params.id}/feedback`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(feedbackData)
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ feedback: fullText })
             });
-            if (!res.ok) throw new Error('Erro ao salvar feedback');
+            if (!res.ok) throw new Error('Erro ao salvar');
             return res.json();
         },
         onSuccess: () => {
-            alert('Feedback salvo com sucesso!');
+            setNewMessage('');
             queryClient.invalidateQueries({ queryKey: ['assignment-details', params.id] });
-        },
-        onError: (err) => {
-            alert('Erro ao salvar feedback: ' + err.message);
         }
     });
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500">Carregando detalhes...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Erro ao carregar detalhes: {error.message}</div>;
+    const handleSendMessage = () => {
+        if (!newMessage.trim()) return;
+        const now = new Date();
+        const timestamp = now.toLocaleString('pt-BR');
+        const authorName = currentUser?.name || 'Usuário';
+        const newEntry = `[${authorName} - ${timestamp}]:\n${newMessage.trim()}\n\n`;
+        const currentFeedback = assignment.feedback || '';
+        const updatedFeedback = currentFeedback + (currentFeedback ? (currentFeedback.endsWith('\n\n') ? '' : '\n\n') : '') + newEntry;
+        submitFeedbackMutation.mutate(updatedFeedback);
+    };
 
-    const { user, assessment, responses, result } = assignment;
+    if (isLoading) return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" /></div>;
+    if (error) return <div className="p-8 text-center text-red-500">Erro: {error.message}</div>;
+
+    const { user, assessment, responses } = assignment;
+    const chatHistory = parseChatHistory(assignment.feedback || '');
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                    <ArrowLeft className="w-5 h-5 text-gray-500" />
-                </button>
-                <h1 className="text-2xl font-display font-bold text-gray-900">Detalhes da Avaliação</h1>
-                {/* Botão Exportar PDF - Captura da Tela */}
-                <button
-                    onClick={async () => {
-                        if (!reportRef.current) return;
+        <div className="min-h-screen bg-slate-50/50 p-6 md:p-12 font-sans text-slate-900">
 
-                        setIsExporting(true);
-                        try {
-                            // Capturar o conteúdo da tela
-                            const canvas = await html2canvas(reportRef.current, {
-                                scale: 2, // Qualidade alta
-                                useCORS: true,
-                                logging: false,
-                                backgroundColor: '#ffffff',
-                                windowHeight: reportRef.current.scrollHeight,
-                                windowWidth: reportRef.current.scrollWidth
-                            });
+            <div className="max-w-7xl mx-auto space-y-12">
 
-                            // Criar PDF com múltiplas páginas se necessário
-                            const imgData = canvas.toDataURL('image/png');
-                            const pdf = new jsPDF({
-                                orientation: 'portrait',
-                                unit: 'mm',
-                                format: 'a4'
-                            });
-
-                            const imgWidth = 210; // A4 width in mm
-                            const pageHeight = 297; // A4 height in mm
-                            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                            let heightLeft = imgHeight;
-                            let position = 0;
-
-                            // Primeira página
-                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                            heightLeft -= pageHeight;
-
-                            // Adicionar páginas extras se necessário
-                            while (heightLeft > 0) {
-                                position = heightLeft - imgHeight;
-                                pdf.addPage();
-                                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                                heightLeft -= pageHeight;
-                            }
-
-                            pdf.save(`relatorio-${user.name || 'candidato'}.pdf`);
-                        } catch (error) {
-                            console.error('Erro ao gerar PDF:', error);
-                            alert('Erro ao exportar PDF');
-                        } finally {
-                            setIsExporting(false);
-                        }
-                    }}
-                    disabled={isExporting}
-                    className="ml-auto bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-                >
-                    <Download className="w-4 h-4" />
-                    {isExporting ? 'Gerando PDF...' : 'Exportar PDF'}
-                </button>
-            </div>
-
-            {/* Conteúdo capturável para PDF */}
-            <div ref={reportRef}>
-
-                {/* Informações do Candidato e Avaliação */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-800">{assessment.title}</h2>
-                            <div className="flex items-center text-sm text-gray-500 mt-1">
-                                <UserIcon className="w-4 h-4 mr-1" />
-                                {user.name || user.email}
-                                <Calendar className="w-4 h-4 ml-4 mr-1" />
-                                {new Date(assignment.completedAt).toLocaleDateString()}
+                {/* Header Section */}
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative">
+                    <div>
+                        <button onClick={() => router.back()} className="mb-6 flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
+                            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                            <span className="font-semibold text-sm">Voltar</span>
+                        </button>
+                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                                Relatório de <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
+                                    {user.name || 'Candidato'}
+                                </span>
+                            </h1>
+                            <div className="flex items-center gap-4 mt-4 text-slate-500 font-medium">
+                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+                                    <UserIcon size={16} />
+                                    <span>{user.email}</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+                                    <Calendar size={16} />
+                                    <span>{new Date(assignment.completedAt).toLocaleDateString()}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Concluído
-                        </div>
+                        </motion.div>
                     </div>
 
-                    {/* Detalhes por Traço - Processar dados salvos */}
-                    {(() => {
-                        // Tentar usar calculatedScores primeiro, senão processar result.scores
-                        const calcScores = assignment.calculatedScores?.scores;
-                        const hasCalcScores = calcScores && (Array.isArray(calcScores) ? calcScores.length > 0 : Object.keys(calcScores).length > 0);
-
-                        if (hasCalcScores) {
-                            const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
-                            return (
-                                <div className="mt-6 space-y-4">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">ANÁLISE POR TRAÇO DE PERSONALIDADE</h3>
-                                    {scoresList.map((trait: any, index: number) => {
-                                        const keyToUse = trait.traitKey || trait.traitName || trait.name;
-                                        const displayName = translateAndFormat(keyToUse);
-
-                                        return (
-                                            <TraitCard
-                                                key={index}
-                                                traitName={displayName}
-                                                overallScore={Math.min(100, trait.score)}
-                                                interpretation={((({
-                                                    'HIGH': 'ALTO',
-                                                    'AVERAGE': 'MÉDIO',
-                                                    'LOW': 'BAIXO',
-                                                    'VERY_HIGH': 'MUITO ALTO',
-                                                    'VERY_LOW': 'MUITO BAIXO'
-                                                })[trait.level as string] || (trait.level ? String(trait.level).toUpperCase() : '')))}
-                                                facets={trait.facets?.map((f: any) => {
-                                                    const s = typeof f.score === 'number' ? f.score : 0;
-                                                    const safeS = Math.min(100, Math.max(0, s));
-                                                    return {
-                                                        facet: translateAndFormat(f.name || f.facetName || f.facet),
-                                                        normalizedScore: safeS,
-                                                        rawScore: safeS // Força exibição 0-100
-                                                    };
-                                                }) || []}
-                                                customTexts={{
-                                                    summary: trait.customTexts?.text_interpretation || trait.customTexts?.summary || trait.interpretation, // Use Backend Description (Config Ativa) as fallback
-                                                    practicalImpact: trait.customTexts?.practicalImpact,
-                                                    expertSynthesis: trait.customTexts?.expertSynthesis,
-                                                    expertHypothesis: trait.customTexts?.expertHypothesis
-                                                }}
-                                                defaultExpanded={true}
-                                            />
-                                        )
-                                    })}
-                                </div>
-                            );
-                        }
-
-                        // Processar result.scores (formato: "Traço::Faceta": score)
-                        if (result?.scores && typeof result.scores === 'object') {
-                            const scoresByTrait: Record<string, { facets: Array<{ name: string; score: number }> }> = {};
-
-                            Object.entries(result.scores).forEach(([key, score]) => {
-                                if (typeof key === 'string' && key.includes('::')) {
-                                    const [traitName, facetName] = key.split('::');
-                                    if (!scoresByTrait[traitName]) {
-                                        scoresByTrait[traitName] = { facets: [] };
-                                    }
-                                    scoresByTrait[traitName].facets.push({
-                                        name: facetName,
-                                        score: typeof score === 'number' ? score : 0
-                                    });
-                                }
-                            });
-
-                            if (Object.keys(scoresByTrait).length > 0) {
-                                return (
-                                    <div className="mt-6 space-y-4">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">ANÁLISE POR TRAÇO DE PERSONALIDADE</h3>
-                                        {Object.entries(scoresByTrait).map(([traitName, data]) => {
-                                            const displayName = translateAndFormat(traitName);
-                                            const avgScore = data.facets.reduce((sum, f) => sum + f.score, 0) / data.facets.length;
-                                            const normalizedAvg = avgScore * 20; // Converter 0-5 para 0-100
-
-                                            let interpretation = 'MÉDIO';
-                                            if (normalizedAvg >= 80) interpretation = 'MUITO ALTO';
-                                            else if (normalizedAvg >= 60) interpretation = 'ALTO';
-                                            else if (normalizedAvg >= 40) interpretation = 'MÉDIO';
-                                            else if (normalizedAvg >= 20) interpretation = 'BAIXO';
-                                            else interpretation = 'MUITO BAIXO';
-
-                                            return (
-                                                <TraitCard
-                                                    key={traitName}
-                                                    traitName={displayName}
-                                                    overallScore={Math.min(100, normalizedAvg)}
-                                                    interpretation={interpretation}
-                                                    facets={data.facets.map(f => {
-                                                        const s = typeof f.score === 'number' ? f.score : 0;
-                                                        // Fallback data generally comes as 0-100, but ensuring clamp
-                                                        const safeS = Math.min(100, Math.max(0, s));
-                                                        return {
-                                                            facet: translateAndFormat(f.name),
-                                                            normalizedScore: safeS,
-                                                            rawScore: safeS
-                                                        };
-                                                    })}
-                                                    defaultExpanded={true}
-                                                />
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            }
-                        }
-
-                        return null;
-                    })()}
-                </div>
-
-
-
-                {/* Gráfico Radar - Priorizar Calculated Scores (Tempo Real) */}
-                {assignment.calculatedScores?.scores ? (
-                    (() => {
-                        // Preparar dados achatados para o gráfico (Formato "Trait::Facet": score 0-5)
-                        const chartData: Record<string, number> = {};
-
-                        // Mapeamento completo usando translator centralizado
-                        const scoresList = Array.isArray(assignment.calculatedScores.scores)
-                            ? assignment.calculatedScores.scores
-                            : Object.values(assignment.calculatedScores.scores);
-
-                        scoresList.forEach((trait: any) => {
-                            // Tenta obter a chave ou nome original
-                            const keyOrName = trait.traitKey || trait.traitName || trait.name || trait.traitKey || 'Traço Desconhecido';
-
-                            // Traduz e formata (UPPERCASE PT-BR)
-                            const traitNamePT = translateAndFormat(keyOrName);
-
-                            // VALIDAÇÃO FINAL
-                            if (!traitNamePT || traitNamePT === 'UNDEFINED' || traitNamePT === 'NULL') {
-                                return;
-                            }
-
-                            if (trait.facets && trait.facets.length > 0) {
-                                trait.facets.forEach((facet: any) => {
-                                    // Normalização do score (0-5)
-                                    let val = typeof facet.score === 'number' ? facet.score : 0;
-                                    if (val > 5) val = val / 20;
-
-                                    const facetNameOriginal = facet.name || facet.facetName || 'Faceta Desconhecida';
-                                    const facetNameFinal = translateAndFormat(facetNameOriginal);
-
-                                    chartData[`${traitNamePT}::${facetNameFinal}`] = val;
-                                });
-                            }
-                        });
-
-                        return Object.keys(chartData).length > 0 ? (
-                            <BigFiveChart scores={chartData} />
-                        ) : (
-                            // Fallback para tentar result.scores se o calculated score falhou nas facetas (ex: config antiga)
-                            result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
-                                <BigFiveChart scores={result.scores} />
-                            ) : (
-                                <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
-                                    <p className="text-yellow-800 font-medium">⚠️ Nenhuma faceta encontrada nos dados calculados.</p>
-                                </div>
-                            )
-                        );
-                    })()
-                ) : result?.scores && typeof result.scores === 'object' && Object.keys(result.scores).length > 0 ? (
-                    <BigFiveChart scores={result.scores} />
-                ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
-                        <p className="text-yellow-800 font-medium">⚠️ Aguardando cálculo de scores...</p>
-                    </div>
-                )}
-
-                {/* Respostas Detalhadas - Melhorado */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Respostas do Candidato</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {assessment.questions.map((question: any, index: number) => {
-                            const response = responses.find((r: any) => r.questionId === question.id);
-                            return (
-                                <div key={question.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-600 font-medium mb-1.5 line-clamp-2">
-                                        {index + 1}. {question.text}
-                                    </p>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] text-gray-500 uppercase tracking-wide">Resposta:</span>
-                                        <span className="text-sm font-bold text-primary">{response ? response.answer : '-'}</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Área de Feedback */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Dúvidas sobre seu resultado</h3>
-                    <textarea
-                        className="w-full min-h-[150px] p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none resize-y text-sm"
-                        placeholder="Utilize este espaço para descrever suas dúvidas ou pontos que gostaria de aprofundar sobre o seu resultado. O especialista terá acesso ao seu inventário completo e utilizará essa informação para orientar o atendimento."
-                        defaultValue={assignment.feedback || ''}
-                        onChange={(e) => setFeedback(e.target.value)}
-                    ></textarea>
-                    <div className="mt-4 flex justify-end">
-                        <button
-                            onClick={() => submitFeedbackMutation.mutate({ feedback: feedback || assignment.feedback })}
-                            disabled={submitFeedbackMutation.isPending}
-                            className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-70"
-                        >
-                            <Save className="w-4 h-4" />
-                            {submitFeedbackMutation.isPending ? 'Enviando...' : 'Enviar para o especialista'}
+                    <div className="flex gap-3">
+                        <button onClick={() => window.print()} className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-all flex items-center gap-2 hover:translate-y-[-2px]">
+                            <Download size={18} /> Baixar PDF
                         </button>
                     </div>
+                </header>
+
+                <div ref={reportRef} className="space-y-12">
+
+                    {/* SECTION 1: TRAITS */}
+                    <section>
+                        <h2 className="text-2xl font-bold flex items-center gap-3 mb-8">
+                            <Layers className="text-indigo-500" /> Detalhamento dos Traços
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {(() => {
+                                const calcScores = assignment.calculatedScores?.scores;
+                                if (calcScores) {
+                                    const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
+                                    return scoresList.map((trait: any, idx: number) => (
+                                        <ModernTraitCard
+                                            key={idx}
+                                            traitName={translateAndFormat(trait.traitKey || trait.name)}
+                                            overallScore={Math.min(100, trait.score)}
+                                            interpretation={((({
+                                                'HIGH': 'ALTO', 'AVERAGE': 'MÉDIO', 'LOW': 'BAIXO',
+                                                'VERY_HIGH': 'MUITO ALTO', 'VERY_LOW': 'MUITO BAIXO'
+                                            })[trait.level as string] || trait.level || ''))}
+                                            facets={trait.facets?.map((f: any) => ({
+                                                facet: translateAndFormat(f.name || f.facetName),
+                                                normalizedScore: Math.min(100, Math.max(0, typeof f.score === 'number' ? f.score : 0))
+                                            })) || []}
+                                            customTexts={{
+                                                summary: trait.customTexts?.text_interpretation || trait.customTexts?.summary || trait.interpretation
+                                            }}
+                                        />
+                                    ));
+                                }
+                                return null;
+                            })()}
+                        </div>
+                    </section>
+
+                    {/* SECTION 2: MAPA */}
+                    <section className="grid md:grid-cols-12 gap-8">
+                        <div className="md:col-span-12 xl:col-span-12 bg-white rounded-3xl p-8 shadow-sm border border-slate-100 ring-1 ring-slate-400/5 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500" />
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-2xl font-bold flex items-center gap-3">
+                                    <Activity className="text-violet-500" />
+                                    Mapa de Personalidade
+                                </h2>
+                                <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase">Big Five Pro</span>
+                            </div>
+                            <div className="flex items-center justify-center p-4">
+                                {(() => {
+                                    const calcScores = assignment.calculatedScores?.scores;
+                                    if (calcScores) {
+                                        const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
+                                        const chartData: any = {};
+                                        scoresList.forEach((t: any) => {
+                                            const kn = t.traitKey || t.traitName || t.name;
+                                            const tn = translateAndFormat(kn);
+                                            if (!tn) return;
+                                            if (t.facets) {
+                                                t.facets.forEach((f: any) => {
+                                                    let v = typeof f.score === 'number' ? f.score : 0;
+                                                    if (v > 5) v = v / 20;
+                                                    const fn = translateAndFormat(f.name || f.facetName);
+                                                    chartData[`${tn}::${fn}`] = v;
+                                                });
+                                            }
+                                        });
+                                        return Object.keys(chartData).length > 0 ? <BigFiveChart scores={chartData} /> : null;
+                                    }
+                                    return <div className="text-slate-400">Dados indisponíveis</div>;
+                                })()}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SECTION 3: CHAT */}
+                    <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                            <MessageSquare className="text-indigo-500" /> Interação & Anotações
+                        </h2>
+
+                        <div className="bg-slate-50 rounded-2xl p-6 min-h-[300px] max-h-[500px] overflow-y-auto mb-6 flex flex-col gap-4 border border-slate-200">
+                            {chatHistory.length === 0 ? (
+                                <div className="text-center text-slate-400 py-12 flex flex-col items-center gap-2">
+                                    <MessageSquare size={32} className="opacity-20" />
+                                    <p className="text-sm">Nenhuma anotação ou mensagem ainda.</p>
+                                </div>
+                            ) : (
+                                chatHistory.map((msg: any, idx: number) => {
+                                    const isSpecialist = msg.author.toLowerCase().includes('especialista') || msg.author.toLowerCase().includes('admin');
+                                    let bubbleStyle = "bg-white border-slate-200 text-slate-700";
+                                    let align = "items-start";
+                                    if (isSpecialist) {
+                                        bubbleStyle = "bg-indigo-50 border-indigo-100 text-indigo-900 font-medium";
+                                        align = "items-end";
+                                    }
+                                    return (
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={idx} className={`flex flex-col ${align} w-full`}>
+                                            <div className={`max-w-[80%] rounded-2xl p-4 border shadow-sm ${bubbleStyle}`}>
+                                                <div className="flex justify-between items-center gap-4 mb-2 opacity-60 text-xs font-bold uppercase tracking-wider">
+                                                    <span>{msg.author}</span>
+                                                    <span className="flex items-center gap-1"><Clock size={10} /> {msg.timestamp}</span>
+                                                </div>
+                                                <p className="text-sm border-t border-black/5 pt-2 whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })
+                            )}
+                        </div>
+                        <div className="flex gap-4 items-start bg-white p-2 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+                            <textarea
+                                className="flex-1 min-h-[60px] max-h-[150px] p-2 bg-transparent outline-none text-slate-700 resize-none font-medium text-sm placeholder:text-slate-400"
+                                placeholder="Escreva uma mensagem ou anotação..."
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={handleSendMessage}
+                                disabled={submitFeedbackMutation.isPending || !newMessage.trim()}
+                                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white p-3 rounded-lg transition-colors shadow-md hover:shadow-lg self-end"
+                            >
+                                {submitFeedbackMutation.isPending ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={20} />}
+                            </button>
+                        </div>
+                    </section>
+
+                    {/* SECTION 4: RESPONSES */}
+                    <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                            <Brain className="text-pink-500" /> Respostas do Questionário (ADMIN)
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {assessment.questions.map((question: any, index: number) => {
+                                const response = responses.find((r: any) => r.questionId === question.id);
+                                return (
+                                    <div key={question.id} className="group p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-300 hover:bg-white transition-all duration-300">
+                                        <div className="flex flex-col h-full justify-between gap-3">
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-400 uppercase mb-1 block">Questão {index + 1}</span>
+                                                <p className="text-sm font-medium text-slate-700 leading-relaxed group-hover:text-slate-900 transition-colors">{question.text}</p>
+                                            </div>
+                                            <div className="flex items-center justify-between border-t border-slate-200/50 pt-3 mt-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Sua Escolha</span>
+                                                <EditableAnswer
+                                                    assignmentId={params.id}
+                                                    questionId={question.id}
+                                                    initialValue={response?.answer}
+                                                    token={token}
+                                                    refetch={refetch}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
                 </div>
-            </div>{/* Fim do conteúdo capturável */}
+            </div>
         </div>
     );
 }
