@@ -324,6 +324,10 @@ export default function AboutPage() {
                         <p className="text-xl text-gray-600 italic">
                             "Ciência aplicada à vida real. Sem julgamento, sem promessas milagrosas, apenas a verdade sobre o seu potencial."
                         </p>
+                        <div className="mt-8 flex flex-col items-center space-y-1 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <p className="text-gray-900 font-bold text-lg">Henrique De Lara e Cristiano Amorim</p>
+                            <p className="text-xs text-pink-600 font-bold uppercase tracking-widest">Fundadores e Idealizadores da PINC</p>
+                        </div>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 pt-8 border-t border-gray-100">
