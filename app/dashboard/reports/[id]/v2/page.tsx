@@ -307,6 +307,39 @@ export default function AssessmentDetailsPageV2() {
                         </div>
                     </section>
 
+
+                    {/* Detailed Responses Section */}
+                    <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                            <Brain className="text-pink-500" />
+                            Respostas do Questionário
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {assessment.questions.map((question: any, index: number) => {
+                                const response = responses.find((r: any) => r.questionId === question.id);
+                                return (
+                                    <div key={question.id} className="group p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-300 hover:bg-white transition-all duration-300">
+                                        <div className="flex flex-col h-full justify-between gap-3">
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-400 uppercase mb-1 block">Questão {index + 1}</span>
+                                                <p className="text-sm font-medium text-slate-700 leading-relaxed group-hover:text-slate-900 transition-colors">
+                                                    {question.text}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center justify-between border-t border-slate-200/50 pt-3 mt-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Sua Escolha</span>
+                                                <span className="px-3 py-1 rounded-lg text-sm font-bold bg-white border border-slate-200 text-indigo-600 shadow-sm group-hover:shadow-md transition-shadow">
+                                                    {response ? response.answer : '-'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
                     {/* Feedback Section */}
                     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                         <h3 className="text-lg font-bold mb-4">Anotações do Candidato</h3>
