@@ -1731,4 +1731,37 @@ export class AssessmentController {
             deletedAt: a.assignedAt // TODO: Ideal seria ter deletedAt coluna
         }));
     }
+
+    // PATCH Response Endpoint - Allows Admin to edit answers and recalculate
+    @Put('assignments/:id/responses/:questionId')
+    // @UseGuards(AuthGuard('jwt')) 
+    async updateResponse(
+        @Param('id') assignmentId: string,
+        @Param('questionId') questionId: string,
+        @Body() body: { value: number },
+        @Request() req
+    ) {
+        // Encontrar resposta existente (logica composta)
+        const response = await this.prisma.assessmentResponse.findFirst({
+            where: { assignmentId, questionId }
+        });
+
+        if (!response) {
+            // Se nao existir, cria
+            await this.prisma.assessmentResponse.create({
+                data: { assignmentId, questionId, answer: Number(body.value) }
+            });
+        } else {
+            // Atualiza
+            await this.prisma.assessmentResponse.update({
+                where: { id: response.id },
+                data: { answer: Number(body.value) }
+            });
+        }
+
+        // DISPARAR RECÁLCULO (TalkingTo Engine)
+        await this.calculateRealScores(assignmentId);
+
+        return { success: true };
+    }
 }

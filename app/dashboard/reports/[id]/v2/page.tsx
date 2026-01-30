@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download, Sparkles, Activity, Brain, Heart, Zap, Globe, Share2, Layers, MessageSquare, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Save, User as UserIcon, Calendar, CheckCircle, Download, Sparkles, Activity, Brain, Heart, Zap, Globe, Share2, Layers, MessageSquare, Send, Clock, Edit2 } from 'lucide-react';
 import { useAuthStore } from '../../../../../src/store/auth-store';
 import { BigFiveChart } from '../../../../../src/components/dashboard/big-five-chart';
 import html2canvas from 'html2canvas';
@@ -39,6 +39,29 @@ const getStatusParams = (score: number) => {
         border: 'border-emerald-200',
         marker: 'bg-emerald-500'
     };
+};
+
+const parseChatHistory = (fullText: string) => {
+    if (!fullText) return [];
+
+    // Regex para encontrar headers como [Nome - Data]:
+    const regex = /\[(.*?)\s-\s(.*?)\]:\n([\s\S]*?)(?=(\[.*?\s-\s.*?\]:|$))/g;
+    const history = [];
+    let match;
+
+    while ((match = regex.exec(fullText)) !== null) {
+        history.push({
+            author: match[1],
+            timestamp: match[2],
+            message: match[3].trim()
+        });
+    }
+
+    if (history.length === 0 && fullText.trim()) {
+        return [{ author: 'Anotações Anteriores', timestamp: '-', message: fullText }];
+    }
+
+    return history;
 };
 
 // --- MODERN UI COMPONENTS ---
@@ -120,31 +143,55 @@ const ModernTraitCard = ({ traitName, overallScore, interpretation, facets, cust
     );
 };
 
-// --- CHAT SYSTEM (SIMULATED) ---
+const EditableAnswer = ({ assignmentId, questionId, initialValue, token, refetch }: any) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [val, setVal] = useState(initialValue);
 
-const parseChatHistory = (fullText: string) => {
-    if (!fullText) return [];
+    const updateMutation = useMutation({
+        mutationFn: async (newValue: number) => {
+            const res = await fetch(`${API_URL}/api/v1/assessments/assignments/${assignmentId}/responses/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ value: newValue })
+            });
+            if (!res.ok) throw new Error('Falha ao atualizar');
+            return res.json();
+        },
+        onSuccess: () => {
+            setIsEditing(false);
+            refetch(); // Reload assignment to update scores!
+        }
+    });
 
-    // Regex para encontrar headers como [Nome - Data Hora]:
-    const regex = /\[(.*?)\s-\s(.*?)\]:\n([\s\S]*?)(?=(\[.*?\s-\s.*?\]:|$))/g;
-    const history = [];
-    let match;
-
-    while ((match = regex.exec(fullText)) !== null) {
-        history.push({
-            author: match[1],
-            timestamp: match[2],
-            message: match[3].trim()
-        });
+    if (isEditing) {
+        return (
+            <div className="flex gap-1" onMouseLeave={() => setIsEditing(false)}>
+                {[1, 2, 3, 4, 5].map(v => (
+                    <button
+                        key={v}
+                        onClick={() => { setVal(v); updateMutation.mutate(v); }}
+                        disabled={updateMutation.isPending}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold text-xs transition-all shadow-sm ${val === v ? 'bg-indigo-600 text-white ring-2 ring-indigo-200' : 'bg-white text-slate-500 hover:bg-indigo-50 border border-slate-200'
+                            }`}
+                    >
+                        {v}
+                    </button>
+                ))}
+            </div>
+        );
     }
 
-    // Se não achou formato chat, retorna como legado
-    if (history.length === 0 && fullText.trim()) {
-        return [{ author: 'Anotações Anteriores', timestamp: '-', message: fullText }];
-    }
-
-    return history;
-};
+    return (
+        <button
+            onClick={() => setIsEditing(true)}
+            className="px-3 py-1 rounded-lg text-sm font-bold bg-white border border-slate-200 text-indigo-600 shadow-sm hover:shadow-md transition-all flex items-center gap-2 hover:ring-2 ring-indigo-50 min-w-[50px] justify-between group"
+            title="Clique para editar resposta"
+        >
+            <span>{val || '-'}</span>
+            <Edit2 size={10} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+        </button>
+    );
+}
 
 // --- PAGE COMPONENT ---
 
@@ -163,8 +210,8 @@ export default function AssessmentDetailsPageV2() {
         'CONSCIENTIOUSNESS': 'CONSCIENCIOSIDADE',
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
-        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL',
-        'NEUROTICISMO': 'ESTABILIDADE EMOCIONAL', 'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL',
+        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL', 'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL',
+        // Facetas... (Shortened for brevity, same as before)
         'ANXIETY': 'ANSIEDADE', 'ANGER': 'HOSTILIDADE', 'HOSTILITY': 'HOSTILIDADE', 'DEPRESSION': 'DEPRESSÃO',
         'SELF-CONSCIOUSNESS': 'EMBARAÇO', 'IMPULSIVENESS': 'IMPULSIVIDADE', 'VULNERABILITY': 'VULNERABILIDADE',
         'FRIENDLINESS': 'CORDIALIDADE', 'GREGARIOUSNESS': 'GREGARIEDADE', 'ASSERTIVENESS': 'ASSERTIVIDADE',
@@ -184,7 +231,7 @@ export default function AssessmentDetailsPageV2() {
     };
 
     // --- QUERY ---
-    const { data: assignment, isLoading, error } = useQuery({
+    const { data: assignment, isLoading, error, refetch } = useQuery({
         queryKey: ['assignment-details', params.id],
         queryFn: async () => {
             const res = await fetch(`${API_URL}/api/v1/assessments/assignments/${params.id}`, {
@@ -214,19 +261,12 @@ export default function AssessmentDetailsPageV2() {
 
     const handleSendMessage = () => {
         if (!newMessage.trim()) return;
-
         const now = new Date();
         const timestamp = now.toLocaleString('pt-BR');
         const authorName = currentUser?.name || 'Usuário';
-
-        // Format: [Nome - Data]:\nMensagem
         const newEntry = `[${authorName} - ${timestamp}]:\n${newMessage.trim()}\n\n`;
-
-        // Append to existing
         const currentFeedback = assignment.feedback || '';
-        // Se currentFeedback já termina com \n, ok.
         const updatedFeedback = currentFeedback + (currentFeedback ? (currentFeedback.endsWith('\n\n') ? '' : '\n\n') : '') + newEntry;
-
         submitFeedbackMutation.mutate(updatedFeedback);
     };
 
@@ -353,10 +393,10 @@ export default function AssessmentDetailsPageV2() {
                         </div>
                     </section>
 
-                    {/* Responses ... */}
+                    {/* Responses with Edit - UPDATED */}
                     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                         <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                            <Brain className="text-pink-500" /> Respostas do Questionário
+                            <Brain className="text-pink-500" /> Respostas do Questionário (ADMIN)
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {assessment.questions.map((question: any, index: number) => {
@@ -370,9 +410,14 @@ export default function AssessmentDetailsPageV2() {
                                             </div>
                                             <div className="flex items-center justify-between border-t border-slate-200/50 pt-3 mt-1">
                                                 <span className="text-[10px] font-bold text-slate-400 uppercase">Sua Escolha</span>
-                                                <span className="px-3 py-1 rounded-lg text-sm font-bold bg-white border border-slate-200 text-indigo-600 shadow-sm group-hover:shadow-md transition-shadow">
-                                                    {response ? response.answer : '-'}
-                                                </span>
+                                                {/* EDITABLE COMPONENT */}
+                                                <EditableAnswer
+                                                    assignmentId={params.id}
+                                                    questionId={question.id}
+                                                    initialValue={response?.answer}
+                                                    token={token}
+                                                    refetch={refetch}
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -381,14 +426,14 @@ export default function AssessmentDetailsPageV2() {
                         </div>
                     </section>
 
-                    {/* Chat / Interaction Section (NEW) */}
+                    {/* Chat ... */}
                     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                         <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                            <MessageSquare className="text-indigo-500" />
-                            Interação & Anotações
+                            <MessageSquare className="text-indigo-500" /> Interação & Anotações
                         </h2>
 
+                        {/* Chat Implementation Same as before... */}
                         <div className="bg-slate-50 rounded-2xl p-6 min-h-[300px] max-h-[500px] overflow-y-auto mb-6 flex flex-col gap-4 border border-slate-200">
                             {chatHistory.length === 0 ? (
                                 <div className="text-center text-slate-400 py-12 flex flex-col items-center gap-2">
@@ -397,25 +442,15 @@ export default function AssessmentDetailsPageV2() {
                                 </div>
                             ) : (
                                 chatHistory.map((msg: any, idx: number) => {
-                                    const isMe = msg.author.includes(currentUser?.name || 'Eu') || msg.author === 'Eu';
                                     const isSpecialist = msg.author.toLowerCase().includes('especialista') || msg.author.toLowerCase().includes('admin');
-
-                                    // Visual Style based on author
                                     let bubbleStyle = "bg-white border-slate-200 text-slate-700";
                                     let align = "items-start";
-
                                     if (isSpecialist) {
                                         bubbleStyle = "bg-indigo-50 border-indigo-100 text-indigo-900 font-medium";
                                         align = "items-end";
                                     }
-
                                     return (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            key={idx}
-                                            className={`flex flex-col ${align} w-full`}
-                                        >
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={idx} className={`flex flex-col ${align} w-full`}>
                                             <div className={`max-w-[80%] rounded-2xl p-4 border shadow-sm ${bubbleStyle}`}>
                                                 <div className="flex justify-between items-center gap-4 mb-2 opacity-60 text-xs font-bold uppercase tracking-wider">
                                                     <span>{msg.author}</span>
@@ -428,7 +463,6 @@ export default function AssessmentDetailsPageV2() {
                                 })
                             )}
                         </div>
-
                         <div className="flex gap-4 items-start bg-white p-2 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
                             <textarea
                                 className="flex-1 min-h-[60px] max-h-[150px] p-2 bg-transparent outline-none text-slate-700 resize-none font-medium text-sm placeholder:text-slate-400"
@@ -450,11 +484,7 @@ export default function AssessmentDetailsPageV2() {
                                 {submitFeedbackMutation.isPending ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={20} />}
                             </button>
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-2 text-center">
-                            As mensagens ficam salvas no histórico do relatório.
-                        </p>
                     </section>
-
                 </div>
             </div>
         </div>
