@@ -16,48 +16,57 @@ import {
     Target,
     Users,
     Activity,
-    Lock
+    BarChart2
 } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 // --- COMPONENTS ---
 
-// 1. NAVBAR
+// 1. NAVBAR (White Style - Adjusted Links)
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <nav className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#8B1D98]/90 backdrop-blur-md border-b border-white/10">
+        <nav className="fixed top-0 w-full z-50 bg-white shadow-sm transition-all duration-300">
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/v2" className="flex items-center gap-2 group">
-                    <img src="/logo.png" alt="PINC" className="h-10 w-auto brightness-0 invert" />
-                    {/* Nota: Assumindo que o logo.png original precisa ser invertido para branco no fundo roxo, ou usamos CSS filter */}
+                    <div className="relative w-8 h-8 md:w-10 md:h-10">
+                        <img
+                            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/buss-t3M8k5g9k0k5g9k0k5g9k0k5g9k0.png"
+                            alt="PINC Logo"
+                            className="object-contain w-full h-full"
+                        />
+                    </div>
+                    <span className="font-black text-xl md:text-2xl tracking-tight text-slate-900 group-hover:text-purple-900 transition-colors">
+                        PINC
+                    </span>
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/90">
-                    <Link href="#methodology" className="hover:text-white transition-colors">Metodologia</Link>
-                    <Link href="#coach" className="hover:text-white transition-colors">PINC Coach</Link>
-                    <Link href="#features" className="hover:text-white transition-colors">Recursos</Link>
-                    <Link href="#pricing" className="hover:text-white transition-colors">Planos</Link>
+                <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
+                    <Link href="#features" className="hover:text-purple-600 transition-colors">Funcionalidades</Link>
+                    <Link href="#methodology" className="hover:text-purple-600 transition-colors">Metodologia</Link>
+                    <Link href="/business" className="hover:text-purple-600 transition-colors">Para Empresas</Link>
+                    <Link href="#pricing" className="hover:text-purple-600 transition-colors">Planos</Link>
+                    <Link href="/about" className="hover:text-purple-600 transition-colors">Sobre Nós</Link>
                 </div>
 
                 {/* Desktop CTA */}
-                <div className="hidden md:flex items-center gap-4">
-                    <Link href="/auth/login" className="text-white hover:text-white/80 text-sm font-bold">
-                        Login
+                <div className="hidden lg:flex items-center gap-6">
+                    <Link href="/auth/login" className="text-slate-700 hover:text-purple-600 text-sm font-bold">
+                        Área do Cliente
                     </Link>
                     <Link
                         href="/auth/register"
-                        className="bg-white text-[#8B1D98] px-6 py-2.5 rounded-full text-sm font-bold hover:bg-pink-50 transition-all hover:scale-105 shadow-lg"
+                        className="bg-[#FFCC00] hover:bg-[#F0B900] text-slate-900 px-6 py-2.5 rounded-full text-sm font-black uppercase tracking-wide hover:scale-105 shadow-[0_4px_14px_rgba(255,204,0,0.3)] hover:shadow-[0_6px_20px_rgba(255,204,0,0.4)] transition-all"
                     >
-                        Criar Conta
+                        Começar Agora
                     </Link>
                 </div>
 
                 {/* Mobile Toggle */}
-                <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>
+                <button className="lg:hidden text-slate-900" onClick={() => setIsOpen(!isOpen)}>
                     {isOpen ? <X /> : <Menu />}
                 </button>
             </div>
@@ -69,15 +78,17 @@ const Navbar = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-[#6a1575] border-b border-white/10 overflow-hidden"
+                        className="lg:hidden bg-white border-b border-slate-100 overflow-hidden"
                     >
-                        <div className="px-6 py-8 flex flex-col gap-6 text-white text-lg font-medium">
+                        <div className="px-6 py-8 flex flex-col gap-6 text-slate-900 text-lg font-medium">
+                            <Link href="#features" onClick={() => setIsOpen(false)}>Funcionalidades</Link>
                             <Link href="#methodology" onClick={() => setIsOpen(false)}>Metodologia</Link>
-                            <Link href="#coach" onClick={() => setIsOpen(false)}>PINC Coach</Link>
+                            <Link href="/business" onClick={() => setIsOpen(false)}>Para Empresas</Link>
                             <Link href="#pricing" onClick={() => setIsOpen(false)}>Planos</Link>
-                            <hr className="border-white/10" />
-                            <Link href="/auth/login" className="opacity-80">Login</Link>
-                            <Link href="/auth/register" className="bg-white text-[#8B1D98] text-center py-3 rounded-full font-bold">Começar Agora</Link>
+                            <Link href="/about" onClick={() => setIsOpen(false)}>Sobre Nós</Link>
+                            <hr className="border-slate-100" />
+                            <Link href="/auth/login" className="opacity-80">Área do Cliente</Link>
+                            <Link href="/auth/register" className="bg-[#FFCC00] text-slate-900 text-center py-3 rounded-full font-black uppercase">Começar Agora</Link>
                         </div>
                     </motion.div>
                 )}
@@ -369,55 +380,86 @@ const PincCoach = () => {
     )
 }
 
-// 5. PRICING
+// 5. PRICING (Original Copied from Production)
 const Pricing = () => {
     return (
-        <section id="pricing" className="py-24 bg-slate-50">
-            <div className="max-w-7xl mx-auto px-6">
+        <section id="pricing" className="py-24 bg-slate-50 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+            <div className="max-w-7xl mx-auto px-6 relative z-10">
                 <div className="text-center mb-16 max-w-2xl mx-auto">
-                    <h2 className="text-4xl font-extrabold text-[#8B1D98] mb-4">Invista em você</h2>
-                    <p className="text-slate-500 text-lg">
-                        Custo menor que uma pizza. Retorno para a vida toda.
+                    <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
+                        Invista no seu maior ativo: <br /> <span className="text-purple-600">Você mesmo.</span>
+                    </h2>
+                    <p className="text-lg text-slate-600">
+                        Escolha o plano ideal para sua jornada de autoconhecimento.
                     </p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                    {/* Basic Plan */}
-                    <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-lg hover:shadow-xl transition-all">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Relatório Essencial</h3>
-                        <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-sm font-bold text-slate-400">R$</span>
-                            <span className="text-4xl font-black text-slate-900">29,90</span>
-                            <span className="text-sm text-slate-400">/único</span>
+                    {/* ESSENTIAL PLAN */}
+                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                        <h3 className="text-2xl font-bold text-slate-900 mb-2">Essential</h3>
+                        <div className="flex items-baseline gap-1 mb-2">
+                            <span className="text-sm font-bold text-slate-500">R$</span>
+                            <span className="text-5xl font-black text-slate-900">29,90</span>
+                            <span className="text-sm text-slate-500 font-medium">/Por Inventário</span>
                         </div>
-                        <ul className="space-y-4 mb-8 text-sm text-slate-600">
-                            <li className="flex gap-3"><CheckCircle2 className="text-green-500 shrink-0" size={18} /> Gráfico Big Five Completo</li>
-                            <li className="flex gap-3"><CheckCircle2 className="text-green-500 shrink-0" size={18} /> Resumo dos 5 Traços</li>
-                            <li className="flex gap-3"><CheckCircle2 className="text-green-500 shrink-0" size={18} /> Acesso Vitalício</li>
+                        <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                            Para quem quer começar a se entender melhor.
+                        </p>
+
+                        <ul className="space-y-4 mb-8">
+                            {[
+                                "1 Avaliação completa de perfil",
+                                "Relatório PINC Method",
+                                "Acesso ao relatório interativo"
+                            ].map((item, i) => (
+                                <li key={i} className="flex gap-3 text-slate-600 text-sm">
+                                    <CheckCircle2 className="text-purple-600 shrink-0 w-5 h-5" />
+                                    {item}
+                                </li>
+                            ))}
                         </ul>
-                        <Link href="/auth/register" className="block w-full py-4 rounded-xl border-2 border-slate-100 text-slate-900 font-bold text-center hover:bg-slate-50 transition-colors">
-                            Começar Básico
+
+                        <Link href="/auth/register" className="block w-full py-4 rounded-xl bg-slate-100 text-slate-900 font-bold text-center hover:bg-slate-200 transition-colors">
+                            Começar Agora
                         </Link>
                     </div>
 
-                    {/* Pro Plan */}
-                    <div className="bg-[#1f1f2e] text-white rounded-[2rem] p-8 border border-purple-500/30 shadow-2xl relative overflow-hidden transform md:-translate-y-4 hover:scale-[1.02] transition-transform">
-                        <div className="absolute top-0 right-0 bg-purple-500 text-xs font-bold px-3 py-1 rounded-bl-xl text-white">RECOMENDADO</div>
-                        <h3 className="text-xl font-bold text-white mb-2">PINC Professional</h3>
-                        <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-sm font-bold text-purple-300">R$</span>
-                            <span className="text-4xl font-black text-white">97,00</span>
-                            <span className="text-sm text-purple-300">/único</span>
+                    {/* PROFESSIONAL PLAN */}
+                    <div className="bg-white rounded-3xl p-8 border-2 border-purple-600 shadow-xl relative overflow-hidden transform md:-translate-y-4">
+                        <div className="absolute top-0 right-0 left-0 bg-purple-700 text-white text-xs font-bold py-1.5 text-center uppercase tracking-widest">
+                            MAIS POPULAR
                         </div>
-                        <ul className="space-y-4 mb-8 text-sm text-gray-300">
-                            <li className="flex gap-3"><CheckCircle2 className="text-purple-400 shrink-0" size={18} /> <strong>Relatório Completo (50+ págs)</strong></li>
-                            <li className="flex gap-3"><CheckCircle2 className="text-purple-400 shrink-0" size={18} /> Análise de Competências</li>
-                            <li className="flex gap-3"><CheckCircle2 className="text-purple-400 shrink-0" size={18} /> Dicas de Carreira & Liderança</li>
-                            <li className="flex gap-3"><CheckCircle2 className="text-purple-400 shrink-0" size={18} /> <span className="text-white font-bold">Acesso ao PINC Coach IA</span></li>
-                        </ul>
-                        <Link href="/auth/register?plan=pro" className="block w-full py-4 rounded-xl bg-purple-600 text-white font-bold text-center hover:bg-purple-500 transition-colors shadow-lg shadow-purple-900/50">
-                            Liberar Acesso Completo
-                        </Link>
+                        <div className="mt-4">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Professional</h3>
+                            <div className="flex items-baseline gap-1 mb-2">
+                                <span className="text-sm font-bold text-slate-500">R$</span>
+                                <span className="text-5xl font-black text-slate-900">59,90</span>
+                                <span className="text-sm text-slate-500 font-medium">/Por Inventário</span>
+                            </div>
+                            <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                                Para quem busca transformação profunda e ferramentas práticas.
+                            </p>
+
+                            <ul className="space-y-4 mb-8">
+                                {[
+                                    "Tudo do plano Essential",
+                                    "Comparação de perfil (Casal/Time)",
+                                    "Acesso à PINC Coach IA 24h",
+                                    "Dicas de carreira e liderança"
+                                ].map((item, i) => (
+                                    <li key={i} className="flex gap-3 text-slate-600 text-sm">
+                                        <CheckCircle2 className="text-purple-600 shrink-0 w-5 h-5" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <Link href="/auth/register?plan=pro" className="block w-full py-4 rounded-xl bg-purple-700 text-white font-bold text-center hover:bg-purple-800 transition-colors shadow-lg shadow-purple-900/20">
+                                Mais Popular
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -433,7 +475,11 @@ const Footer = () => {
 
                 {/* Logo & Copyright */}
                 <div className="flex flex-col items-center md:items-start gap-2">
-                    <img src="/logo.png" alt="PINC" className="h-8 w-auto mix-blend-multiply opacity-80" />
+                    <img
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/buss-t3M8k5g9k0k5g9k0k5g9k0k5g9k0.png"
+                        alt="PINC Logo"
+                        className="h-8 w-auto mix-blend-multiply opacity-80"
+                    />
                     <p className="text-[10px] text-slate-400 font-medium tracking-wide">
                         © 2025 Sued Inc. Todos os direitos reservados.
                     </p>
