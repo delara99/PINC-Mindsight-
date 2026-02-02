@@ -22,11 +22,14 @@ export class AiService {
         });
     }
 
-    async getChatHistory(userId: string) {
+    async getChatHistory(userId: string, context: string = 'GENERAL') {
         try {
             // @ts-ignore
             return await this.prisma.aiChatHistory.findMany({
-                where: { userId },
+                where: {
+                    userId,
+                    context: context
+                },
                 orderBy: { createdAt: 'asc' },
                 take: 50
             });
@@ -35,7 +38,7 @@ export class AiService {
         }
     }
 
-    async generateChatResponse(userId: string, userProfile: any, messages: any[], userPlan: string) {
+    async generateChatResponse(userId: string, userProfile: any, messages: any[], userPlan: string, context: string = 'GENERAL') {
         // Validation
         const normalizedPlan = (userPlan || '').toUpperCase().trim();
         const allowedPlans = ['PRO', 'BUSINESS', 'SUPER_ADMIN', 'ENTERPRISE'];
@@ -48,16 +51,22 @@ export class AiService {
         };
 
         try {
-            // Save User Update
+            // Save User Update with Context
             const lastUserMsg = messages[messages.length - 1];
             if (lastUserMsg && lastUserMsg.role === 'user') {
                 // @ts-ignore
                 await this.prisma.aiChatHistory.create({
-                    data: { userId, role: 'user', content: lastUserMsg.content }
+                    data: { userId, role: 'user', content: lastUserMsg.content, context }
                 }).catch(e => console.error("Erro salvando msg user", e));
             }
 
-            const systemPrompt = this.buildSystemPrompt(userProfile);
+            // Seleção de Persona baseada no Contexto
+            let systemPrompt = '';
+            if (context.startsWith('CONNECTION:')) {
+                systemPrompt = this.buildConnectionChatPrompt(userProfile);
+            } else {
+                systemPrompt = this.buildSystemPrompt(userProfile);
+            }
 
             const completion = await this.openai.chat.completions.create({
                 messages: [
@@ -74,7 +83,7 @@ export class AiService {
             if (aiMsg && aiMsg.content) {
                 // @ts-ignore
                 await this.prisma.aiChatHistory.create({
-                    data: { userId, role: 'assistant', content: aiMsg.content }
+                    data: { userId, role: 'assistant', content: aiMsg.content, context }
                 }).catch(e => console.error("Erro salvando msg AI", e));
             }
 
@@ -91,6 +100,45 @@ export class AiService {
 
             throw new Error('Falha ao processar resposta da IA.');
         }
+    }
+
+    private buildConnectionChatPrompt(profile: any): string {
+        // PERFIL A (USUARIO) + PERFIL B (PARCEIRO)
+        const me = profile.me || {};
+        const partner = profile.partner || {};
+        const insight = profile.relationship_analysis || "N/A";
+
+        return `
+        🧠 PERSONA: PINC COACH DE RELACIONAMENTOS (MEDIADORA DE CONFLITOS)
+        Você está em um chat privado com ${profile.userName || 'o usuário'} sobre a conexão dele(a) com ${profile.partnerName || 'o parceiro'}.
+        
+        Sua missão é ajudar ${profile.userName} a lidar melhor com ${profile.partnerName}.
+
+        📊 DADOS DA RELAÇÃO:
+        
+        USUÁRIO (QUEM PERGUNTA): ${me.name}
+        - Extroversão: ${me.scores?.E}
+        - Amabilidade: ${me.scores?.A}
+        - Conscienciosidade: ${me.scores?.C}
+        - Estabilidade: ${me.scores?.N}
+        - Abertura: ${me.scores?.O}
+
+        CONEXÃO (SOBRE QUEM FALAMOS): ${partner.name}
+        - Extroversão: ${partner.scores?.E}
+        - Amabilidade: ${partner.scores?.A}
+        - Conscienciosidade: ${partner.scores?.C}
+        - Estabilidade: ${partner.scores?.N}
+        - Abertura: ${partner.scores?.O}
+
+        🔍 INSIGHT JÁ GERADO PELA IA (Contexto):
+        "${insight}"
+
+        💡 COMO RESPONDER:
+        1. Responda DÚVIDAS ESPECÍFICAS sobre como eles interagem.
+        2. Se o usuário reclamar ("ele é muito chato"), explique a causa raiz no perfil ("Na verdade, ele tem alta Conscienciosidade, o que o torna exigente...").
+        3. Dê conselhos práticos e "Manuais de Instrução" curtos.
+        4. Seja neutra, não tome partido, mas foque em ajudar o USUÁRIO a navegar a relação.
+        `;
     }
 
     private buildSystemPrompt(profile: any): string {
@@ -244,9 +292,9 @@ export class AiService {
            - Se não souber responder, peça para enviar e-mail para: ajuda@pinc.app.br
            
         TOM DE VOZ:
-        - Profissional, acolhedor, direto e prestativo.
-        - Use emojis moderadamente.
-        - Respostas curtas e objetivas (máx 3 parágrafos).
+           - Profissional, acolhedor, direto e prestativo.
+           - Use emojis moderadamente.
+           - Respostas curtas e objetivas (máx 3 parágrafos).
         `;
 
         try {

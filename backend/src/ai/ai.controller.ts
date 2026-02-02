@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus, Get, Query } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,13 +12,13 @@ export class AiController {
 
     @Get('history')
     @UseGuards(AuthGuard('jwt'))
-    async getHistory(@Request() req) {
-        return this.aiService.getChatHistory(req.user.userId);
+    async getHistory(@Request() req, @Query('context') context: string) {
+        return this.aiService.getChatHistory(req.user.userId, context || 'GENERAL');
     }
 
     @Post('chat')
     @UseGuards(AuthGuard('jwt'))
-    async chat(@Request() req, @Body() body: { message: string, history: any[], profileContext: any }) {
+    async chat(@Request() req, @Body() body: { message: string, history: any[], profileContext: any, context?: string }) {
         // Pegar o usuario do token (req.user)
         const tokenUser = req.user;
 
@@ -42,7 +42,8 @@ export class AiController {
                 tokenUser.userId, // Passando ID para persistência
                 body.profileContext || { name: tokenUser.name }, // Contexto do perfil (scores)
                 body.history || [], // Histórico da conversa
-                user.plan || 'START' // Plano RECENTE do banco
+                user.plan || 'START', // Plano RECENTE do banco
+                body.context || 'GENERAL' // Contexto da conversa (ex: MY_REPORT ou CONNECTION:xyz)
             );
 
             return { message: response };

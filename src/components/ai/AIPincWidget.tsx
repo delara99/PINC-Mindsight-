@@ -14,7 +14,7 @@ interface Message {
     content: string;
 }
 
-export function AIPincWidget({ userProfile }: { userProfile: any }) {
+export function AIPincWidget({ userProfile, context = 'MY_REPORT' }: { userProfile: any, context?: string }) {
     const { user, token } = useAuthStore();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -28,7 +28,7 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
         if (isOpen) {
             const fetchHistory = async () => {
                 try {
-                    const res = await fetch(`${API_URL}/api/v1/ai/history`, {
+                    const res = await fetch(`${API_URL}/api/v1/ai/history?context=${context}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (res.ok) {
@@ -52,7 +52,7 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
             };
             fetchHistory();
         }
-    }, [isOpen, user]);
+    }, [isOpen, user, context]); // Dependência de context adicionada
 
     // Scroll to bottom
     useEffect(() => {
@@ -93,7 +93,8 @@ export function AIPincWidget({ userProfile }: { userProfile: any }) {
                 body: JSON.stringify({
                     message: newMessage.content,
                     history: currentHistory.map(m => ({ role: m.role, content: m.content })),
-                    profileContext: userProfile
+                    profileContext: userProfile,
+                    context: context // Envia o contexto para o backend
                 })
             });
 

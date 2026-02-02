@@ -1240,11 +1240,12 @@ model AiChatHistory {
   userId    String   @map("user_id")
   role      String   // 'user' | 'assistant'
   content   String   @db.Text
+  context   String?  @default("GENERAL") // 'GENERAL', 'CONNECTION:uuid', 'MY_REPORT'
   createdAt DateTime @default(now()) @map("created_at")
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, context])
   @@map("ai_chat_history")
 }
 
