@@ -676,7 +676,7 @@ export class ConnectionsService {
 
         return {
             token: link.token,
-            link: `${process.env.FRONTEND_URL || 'https://ping.app.br'}/dashboard/connections/join/${link.token}`,
+            link: `${process.env.FRONTEND_URL || 'https://pinc.app.br'}/dashboard/connections/join/${link.token}`,
             expiresAt: link.expiresAt
         };
     }

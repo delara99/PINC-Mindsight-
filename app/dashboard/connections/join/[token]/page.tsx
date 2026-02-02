@@ -86,19 +86,10 @@ export default function AcceptInvitePage() {
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-6">
                 <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
                     <CheckCircle2 className="text-green-500 mx-auto mb-4" size={64} />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Solicitação Enviada!</h2>
-                    <p className="text-gray-600 mb-2">
-                        Sua solicitação de conexão com <strong>{invite?.creator?.name}</strong> foi enviada.
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Conexão Estabelecida!</h2>
+                    <p className="text-gray-600 mb-6">
+                        Você agora está conectado com <strong>{invite?.creator?.name}</strong>.
                     </p>
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 mt-4">
-                        <AlertCircle className="text-orange-600 mx-auto mb-2" size={32} />
-                        <p className="text-sm text-orange-800 font-medium">
-                            A conexão está pendente de aprovação do administrador.
-                        </p>
-                        <p className="text-xs text-orange-600 mt-1">
-                            Você será notificado assim que for aprovada.
-                        </p>
-                    </div>
                     <button
                         onClick={() => router.push('/dashboard/connections')}
                         className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-primary-hover"
@@ -132,7 +123,6 @@ export default function AcceptInvitePage() {
                     <ul className="text-xs text-gray-600 space-y-1">
                         <li>✅ Poderá compartilhar inventários e resultados (se autorizado)</li>
                         <li>✅ Terá acesso ao chat privado</li>
-                        <li>⚠️ A conexão estará pendente de aprovação do administrador</li>
                     </ul>
                 </div>
 

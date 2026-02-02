@@ -577,56 +577,56 @@ export default function ConnectionsPage() {
                             <LinkIcon size={24} className="text-primary" />
                             Link de Convite Compartilhável
                         </h3>
-                        <p className="text-gray-500 mb-6 text-sm">
-                            Gere um link único e compartilhe com quem você deseja conectar. Após a pessoa aceitar, a conexão ficará pendente de aprovação do administrador.
-                        </p>
+                        Gere um link único e compartilhe com quem você deseja conectar. A conexão será estabelecida assim que o convite for aceito.
+                    </p>
 
-                        {!generatedLink ? (
-                            <button
-                                onClick={() => generateLinkMutation.mutate()}
-                                disabled={generateLinkMutation.isPending}
-                                className="w-full bg-primary text-white py-4 rounded-lg font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {generateLinkMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <LinkIcon size={18} />}
-                                Gerar Link Agora
-                            </button>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                                    <p className="text-sm font-bold text-green-800 mb-2">✅ Link gerado com sucesso!</p>
-                                    <div className="flex items-center gap-2 bg-white p-3 rounded border border-green-300">
-                                        <input
-                                            type="text"
-                                            value={generatedLink || ''}
-                                            readOnly
-                                            className="flex-1 text-sm text-gray-700 outline-none bg-transparent"
-                                        />
-                                        <button
-                                            onClick={copyToClipboard}
-                                            className="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-primary-hover flex items-center gap-2"
-                                        >
-                                            {linkCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-                                            {linkCopied ? 'Copiado!' : 'Copiar'}
-                                        </button>
-                                    </div>
+                    {!generatedLink ? (
+                        <button
+                            onClick={() => generateLinkMutation.mutate()}
+                            disabled={generateLinkMutation.isPending}
+                            className="w-full bg-primary text-white py-4 rounded-lg font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {generateLinkMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <LinkIcon size={18} />}
+                            Gerar Link Agora
+                        </button>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-sm font-bold text-green-800 mb-2">✅ Link gerado com sucesso!</p>
+                                <div className="flex items-center gap-2 bg-white p-3 rounded border border-green-300">
+                                    <input
+                                        type="text"
+                                        value={generatedLink || ''}
+                                        readOnly
+                                        className="flex-1 text-sm text-gray-700 outline-none bg-transparent"
+                                    />
+                                    <button
+                                        onClick={copyToClipboard}
+                                        className="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-primary-hover flex items-center gap-2"
+                                    >
+                                        {linkCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                                        {linkCopied ? 'Copiado!' : 'Copiar'}
+                                    </button>
                                 </div>
-                                <p className="text-xs text-gray-500 text-center">
-                                    Compartilhe este link por WhatsApp, e-mail ou qualquer outro meio. Ele expira em 7 dias.
-                                </p>
                             </div>
-                        )}
-
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button
-                                onClick={() => setIsInviteModalOpen(false)}
-                                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg"
-                            >
-                                Fechar
-                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                                Compartilhe este link por WhatsApp, e-mail ou qualquer outro meio. Ele expira em 7 dias.
+                            </p>
                         </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 mt-6">
+                        <button
+                            onClick={() => setIsInviteModalOpen(false)}
+                            className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg"
+                        >
+                            Fechar
+                        </button>
                     </div>
                 </div>
-            )}
-        </div>
+                </div>
+    )
+}
+        </div >
     );
 }
