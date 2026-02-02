@@ -729,6 +729,15 @@ export class ConnectionsService {
 
         // Criar ConnectionRequest com flag de aprovação admin
         return this.prisma.$transaction(async (tx) => {
+            // Criar conexão DIRETAMENTE (Sem aprovação de admin)
+            const connection = await tx.connection.create({
+                data: {
+                    userAId: invite.creatorId,
+                    userBId: userId,
+                    status: 'ACTIVE'
+                }
+            });
+
             // Marcar link como usado
             await tx.connectionInviteLink.update({
                 where: { id: invite.id },
@@ -738,18 +747,26 @@ export class ConnectionsService {
                 }
             });
 
-            // Criar request pendente de aprovação do admin
-            const request = await tx.connectionRequest.create({
+            // Inicializa configurações de compartilhamento padrão (tudo false)
+            await tx.connectionSharingSetting.createMany({
+                data: [
+                    { connectionId: connection.id, userId: invite.creatorId },
+                    { connectionId: connection.id, userId: userId }
+                ]
+            });
+
+            // Cria um registro de request "auto-aceito" apenas para histórico
+            await tx.connectionRequest.create({
                 data: {
                     senderId: invite.creatorId,
                     receiverId: userId,
-                    status: 'PENDING_ADMIN_APPROVAL',
-                    requiresAdminApproval: true,
-                    message: `Conexão via link compartilhável`
+                    status: 'ACCEPTED',
+                    requiresAdminApproval: false,
+                    message: `Conexão direta via link`
                 }
             });
 
-            return request;
+            return connection;
         });
     }
 
