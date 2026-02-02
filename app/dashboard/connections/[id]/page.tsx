@@ -179,7 +179,8 @@ export default function ConnectionDetailPage() {
         },
         onSuccess: (data) => {
             // Adiciona a resposta da IA ao histórico local
-            setCoachHistory(prev => [...prev, { role: 'assistant', content: data.message }]);
+            // FIX: data.message é um objeto OpenAI Message ({ role, content }), precisamos extrair o content
+            setCoachHistory(prev => [...prev, { role: 'assistant', content: data.message?.content || data.message }]);
         },
         onError: () => {
             alert('Erro ao processar resposta do Coach.');
@@ -410,7 +411,7 @@ export default function ConnectionDetailPage() {
                                                                 ? 'bg-indigo-600 text-white rounded-br-none'
                                                                 : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'
                                                                 }`}>
-                                                                {msg.content}
+                                                                {typeof msg.content === 'string' ? msg.content : (msg.content?.content || JSON.stringify(msg.content))}
                                                             </div>
                                                         </div>
                                                     ))}
