@@ -357,6 +357,49 @@ function QuestionMappingsTab() {
                                                 onChange={(e) => setEditForm({ ...editForm, facet: e.target.value })}
                                                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                             />
+
+                                            {/* TalkingTo Fields (Novos) */}
+                                            <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 bg-slate-50 p-2 rounded">
+                                                <div className="col-span-2 text-[10px] font-bold text-purple-600 border-b border-purple-100 mb-1">PARÂMETROS TALKING-TO</div>
+
+                                                <div>
+                                                    <label className="text-[9px] text-gray-500 block">Dicotomia</label>
+                                                    <input
+                                                        value={editForm.dichotomy || ''}
+                                                        onChange={(e) => setEditForm({ ...editForm, dichotomy: e.target.value })}
+                                                        placeholder="Ex: Introversão-Extroversão"
+                                                        className="w-full text-xs border border-purple-200 rounded px-1 py-0.5"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] text-gray-500 block">Traço Questão</label>
+                                                    <input
+                                                        value={editForm.questionTrait || ''}
+                                                        onChange={(e) => setEditForm({ ...editForm, questionTrait: e.target.value })}
+                                                        placeholder="Ex: EXTROVERTIDO"
+                                                        className="w-full text-xs border border-purple-200 rounded px-1 py-0.5"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] text-gray-500 block">Subtraço</label>
+                                                    <input
+                                                        value={editForm.subtrait || ''}
+                                                        onChange={(e) => setEditForm({ ...editForm, subtrait: e.target.value })}
+                                                        placeholder="Ex: falante"
+                                                        className="w-full text-xs border border-purple-200 rounded px-1 py-0.5"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] text-gray-500 block">Conceito</label>
+                                                    <input
+                                                        value={editForm.concept || ''}
+                                                        onChange={(e) => setEditForm({ ...editForm, concept: e.target.value })}
+                                                        placeholder="Ex: comunicação"
+                                                        className="w-full text-xs border border-purple-200 rounded px-1 py-0.5"
+                                                    />
+                                                </div>
+                                            </div>
+
                                             <div className="text-xs text-gray-500 mt-2 mb-1">Motivo da Alteração:</div>
                                             <input
                                                 type="text"

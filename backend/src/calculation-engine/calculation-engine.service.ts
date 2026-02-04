@@ -108,7 +108,13 @@ export class CalculationEngineService {
                 facet: data.facet,
                 weight: data.weight || 1.0,
                 isReversed: data.isReversed || false,
-                description: data.description
+                description: data.description,
+                // TalkingTo Fields
+                dichotomy: data.dichotomy,
+                questionTrait: data.questionTrait,
+                subtraitDichotomy: data.subtraitDichotomy,
+                subtrait: data.subtrait,
+                concept: data.concept
             }
         });
 
@@ -127,7 +133,13 @@ export class CalculationEngineService {
                 facet: data.facet,
                 weight: data.weight,
                 isReversed: data.isReversed,
-                description: data.description
+                description: data.description,
+                // TalkingTo Fields
+                dichotomy: data.dichotomy,
+                questionTrait: data.questionTrait,
+                subtraitDichotomy: data.subtraitDichotomy,
+                subtrait: data.subtrait,
+                concept: data.concept
             }
         });
 

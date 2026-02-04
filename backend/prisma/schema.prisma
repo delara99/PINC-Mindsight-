@@ -1013,6 +1013,13 @@ model CalculationQuestionMapping {
   // Metadados
   description String?  // Explicação do porquê desse mapeamento
   isActive    Boolean  @default(true)
+
+  // TalkingTo Fields (Adicionado para suportar metodologia nova)
+  dichotomy         String?  // e.g., 'Introversão-Extroversão'
+  questionTrait     String?  // e.g., 'EXTROVERTIDO'
+  subtraitDichotomy String?  // e.g., 'ouvinte-falante'
+  subtrait          String?  // e.g., 'falante'
+  concept           String?  // e.g., 'comunicação'
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
