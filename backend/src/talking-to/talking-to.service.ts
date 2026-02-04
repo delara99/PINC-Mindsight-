@@ -482,6 +482,44 @@ export class TalkingToService {
         return 0;
     }
 
+    // --- CROSSINGS RETRIEVAL ---
+    async getCrossingsForAnalysis(dimensions: TalkingToDimensionResult[]) {
+        const crossings = [];
+
+        for (const dim of dimensions) {
+            // Pega o primeiro label como subtraço dominante (ex: "Ouvinte")
+            let dominantSubtrait = dim.labels[0];
+            if (!dominantSubtrait) continue;
+
+            // Normalização: O front/service usa Title Case ("Ouvinte"), banco usa lowercase ("ouvinte")
+            dominantSubtrait = dominantSubtrait.toLowerCase();
+
+            // Busca cruzamentos onde este subtraço é o "A" (Origem)
+            // ex: Eu sou Ouvinte (A), como falo com Falante (B)?
+            const matches = await this.prisma.talkingToCrossing.findMany({
+                where: {
+                    subtraitA: dominantSubtrait,
+                    isActive: true
+                }
+            });
+
+            if (matches.length > 0) {
+                crossings.push({
+                    dimension: dim.dimension,
+                    traitKey: dim.traitKey,
+                    userSubtrait: dim.labels[0], // Display name
+                    interactions: matches.map(m => ({
+                        targetSubtrait: m.subtraitB, // ex: Falante
+                        text: m.text,
+                        id: m.id
+                    }))
+                });
+            }
+        }
+
+        return crossings;
+    }
+
     // --- COMPARISON LOGIC ---
     analyzeRelationship(myScores: TalkingToInput, partnerScores: TalkingToInput): any[] {
         const dimensions = [

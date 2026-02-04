@@ -232,6 +232,9 @@ export class TalkingToController {
         // 3. Gerar Análise Narrativa
         const analysis = await this.service.analyzeProfile(talkingToInput);
 
+        // 3.1 Busca Crossings (Como falar com...)
+        const crossings = await this.service.getCrossingsForAnalysis(analysis.talkingto_analysis);
+
         // --- MERGE CRUCIAL: Injetar textos do TalkingTo dentro dos Scores (Flattened para evitar erro React #31) ---
         if (analysis && analysis.talkingto_analysis) {
             analysis.talkingto_analysis.forEach((dimResult: any) => {
@@ -257,6 +260,7 @@ export class TalkingToController {
 
             // Dados Narrativos
             talkingToAnalysis: analysis,
+            crossings: crossings, // NOVO CAMPO
 
             // Dados Quantitativos (Para o Radar e Detalhes)
             unifiedScores: scores,

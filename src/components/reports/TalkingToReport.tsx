@@ -5,6 +5,7 @@ import { Target, BrainCircuit, Zap, Users, ShieldCheck, Download, Sparkles, Refr
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import TalkingToInteractions from './TalkingToInteractions';
 
 interface TalkingToReportProps {
     reportData: any;
@@ -22,6 +23,9 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         setMounted(true);
         return () => setMounted(false);
     }, []);
+
+    // Extrair Crossings se existirem (para o Guia de Interação)
+    const crossings = reportData.crossings || [];
 
     // --- DATA NORMALIZATION ADAPTER (B2B vs B2C Support) ---
     let scores: any[] = [];
@@ -274,6 +278,11 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                     ))}
                 </div>
             </div>
+
+            {/* --- GUIA DE INTERAÇÃO (CROSSINGS - NOVO) --- */}
+            {crossings.length > 0 && (
+                <TalkingToInteractions crossings={crossings} />
+            )}
 
             {/* --- DETALHAMENTO EXPANDIDO (FULL WIDTH CARDS) --- */}
             <div className="space-y-12 py-8">
