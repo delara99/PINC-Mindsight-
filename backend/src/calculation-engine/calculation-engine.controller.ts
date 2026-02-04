@@ -95,6 +95,34 @@ export class CalculationEngineController {
     }
 
     // ============================================
+    // CRUZAMENTOS TALKING-TO
+    // ============================================
+
+    @Get('crossings')
+    async getAllCrossings(@Request() req) {
+        this.checkAdmin(req);
+        return this.service.getAllCrossings();
+    }
+
+    @Post('crossings')
+    async createCrossing(@Request() req, @Body() data: any) {
+        this.checkAdmin(req);
+        return this.service.createCrossing(data, req.user.userId);
+    }
+
+    @Put('crossings/:id')
+    async updateCrossing(@Request() req, @Param('id') id: string, @Body() data: any) {
+        this.checkAdmin(req);
+        return this.service.updateCrossing(id, data, req.user.userId);
+    }
+
+    @Delete('crossings/:id')
+    async deleteCrossing(@Request() req, @Param('id') id: string) {
+        this.checkAdmin(req);
+        return this.service.deleteCrossing(id, req.user.userId);
+    }
+
+    // ============================================
     // SIMULADOR
     // ============================================
 

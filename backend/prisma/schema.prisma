@@ -1028,6 +1028,30 @@ model CalculationQuestionMapping {
   @@map("calculation_question_mappings")
 }
 
+// Cruzamento de Subtraços (TalkingTo)
+model TalkingToCrossing {
+  id String @id @default(uuid())
+  
+  dimension    String // Ex: "E"
+  dichotomy    String // Ex: "Introversão-Extroversão"
+  
+  subtraitA    String // Ex: "ouvinte"
+  subtraitB    String // Ex: "falante"
+  
+  // Texto que explica a interação/conflito/solução
+  text         String @db.Text 
+  
+  // Opcional: Texto inverso (se a perspectiva de B para A for diferente)
+  textInverse  String? @db.Text
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([subtraitA, subtraitB])
+  @@map("talking_to_crossings")
+}
+
 // Configuração de Fórmulas de Cálculo
 model CalculationFormula {
   id          String   @id @default(uuid())

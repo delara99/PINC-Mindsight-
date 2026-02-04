@@ -162,6 +162,63 @@ export class CalculationEngineService {
     }
 
     // ============================================
+    // CRUZAMENTOS TALKING-TO
+    // ============================================
+
+    async getAllCrossings() {
+        return this.prisma.talkingToCrossing.findMany({
+            where: { isActive: true },
+            orderBy: [{ dimension: 'asc' }, { subtraitA: 'asc' }]
+        });
+    }
+
+    async createCrossing(data: any, userId: string) {
+        const created = await this.prisma.talkingToCrossing.create({
+            data: {
+                dimension: data.dimension,
+                dichotomy: data.dichotomy,
+                subtraitA: data.subtraitA,
+                subtraitB: data.subtraitB,
+                text: data.text,
+                textInverse: data.textInverse
+            }
+        });
+
+        await this.createAuditLog('CROSSING', created.id, 'CREATE', null, created, userId);
+        return created;
+    }
+
+    async updateCrossing(id: string, data: any, userId: string) {
+        const old = await this.prisma.talkingToCrossing.findUnique({ where: { id } });
+
+        const updated = await this.prisma.talkingToCrossing.update({
+            where: { id },
+            data: {
+                text: data.text,
+                textInverse: data.textInverse,
+                subtraitA: data.subtraitA, // Permitir correção
+                subtraitB: data.subtraitB
+            }
+        });
+
+        await this.createAuditLog('CROSSING', id, 'UPDATE', old, updated, userId);
+        return updated;
+    }
+
+    async deleteCrossing(id: string, userId: string) {
+        const old = await this.prisma.talkingToCrossing.findUnique({ where: { id } });
+
+        await this.prisma.talkingToCrossing.update({
+            where: { id },
+            data: { isActive: false }
+        });
+
+        await this.createAuditLog('CROSSING', id, 'DELETE', old, null, userId);
+
+        return { success: true };
+    }
+
+    // ============================================
     // SIMULADOR
     // ============================================
 
