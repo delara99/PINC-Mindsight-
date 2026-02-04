@@ -28,8 +28,14 @@ export class QuestionController {
                 traitKey: data.traitKey,
                 facetKey: data.facetKey,
                 weight: data.weight,
-                isReverse: data.isReverse, // Novo campo
-                isActive: data.isActive
+                isReverse: data.isReverse,
+                isActive: data.isActive,
+                // TalkingTo Fields
+                dichotomy: data.dichotomy,
+                questionTrait: data.questionTrait,
+                subtraitDichotomy: data.subtraitDichotomy,
+                subtrait: data.subtrait,
+                concept: data.concept
             }
         });
     }
@@ -51,7 +57,13 @@ export class QuestionController {
                 facetKey: data.facetKey,
                 weight: data.weight || 1.0,
                 isReverse: data.isReverse || false,
-                isActive: true
+                isActive: true,
+                // TalkingTo Fields
+                dichotomy: data.dichotomy,
+                questionTrait: data.questionTrait,
+                subtraitDichotomy: data.subtraitDichotomy,
+                subtrait: data.subtrait,
+                concept: data.concept
             }
         });
     }

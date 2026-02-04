@@ -7,23 +7,43 @@ import { Edit2, Save, X, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react
 export default function QuestionsEditor() {
     const { token } = useAuthStore();
     const queryClient = useQueryClient();
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editForm, setEditForm] = useState<any>({});
+    const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+    const [formData, setFormData] = useState({
+        id: '',
+        text: '',
+        traitKey: '',
+        facetKey: '',
+        weight: 1.0,
+        isReverse: false,
+        isActive: true,
+        // TalkingTo Fields
+        dichotomy: '',         // Ex: Introversão-Extroversão
+        questionTrait: '',     // Ex: EXTROVERTIDO
+        subtraitDichotomy: '', // Ex: ouvinte-falante
+        subtrait: '',          // Ex: falante
+        concept: ''            // Ex: comunicação
+    });
+
     const [isCreating, setIsCreating] = useState(false);
-    const [createForm, setCreateForm] = useState({ text: '', traitKey: '', facetKey: '', weight: 1.0, isReverse: false });
+
+    const resetForm = () => {
+        setFormData({
+            id: '', text: '', traitKey: '', facetKey: '', weight: 1.0, isReverse: false, isActive: true,
+            dichotomy: '', questionTrait: '', subtraitDichotomy: '', subtrait: '', concept: ''
+        });
+        setFormMode('create');
+        setIsCreating(false);
+    }
 
     // 1. Buscar o ID do Modelo Big Five
     const { data: assessment } = useQuery({
         queryKey: ['big-five-model'],
         queryFn: async () => {
-            // Buscar assessments e filtrar (hack rápido pois não temos endpoint direto 'get-big-five-id' público sem auth complexa,
-            // mas assumimos que o admin vê todos)
             const res = await fetch(`${API_URL}/api/v1/assessments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erro ao buscar modelo');
             const data = await res.json();
-            // Encontrar o primeiro do tipo BIG_FIVE
             const model = data.find((a: any) => a.type === 'BIG_FIVE');
             if (!model) throw new Error('Modelo Big Five não encontrado');
             return model;
@@ -46,44 +66,46 @@ export default function QuestionsEditor() {
         enabled: !!assessmentId
     });
 
-    // Mutations
+    // Mutations (Updated to use formData)
     const updateMutation = useMutation({
-        mutationFn: async ({ id, data }: any) => {
+        mutationFn: async (data: any) => {
+            const { id, ...updateData } = data;
             const res = await fetch(`${API_URL}/api/v1/questions/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(updateData)
             });
             if (!res.ok) throw new Error('Erro ao atualizar');
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['questions', assessmentId] });
-            setEditingId(null);
+            resetForm();
             alert('Pergunta atualizada!');
         }
     });
 
     const createMutation = useMutation({
         mutationFn: async (data: any) => {
+            // Remove id if present
+            const { id, ...createPayload } = data;
             const res = await fetch(`${API_URL}/api/v1/questions/assessment/${assessmentId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(createPayload)
             });
             if (!res.ok) throw new Error('Erro ao criar');
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['questions', assessmentId] });
-            setIsCreating(false);
-            setCreateForm({ text: '', traitKey: '', facetKey: '', weight: 1.0, isReverse: false });
+            resetForm();
             alert('Pergunta criada!');
         }
     });
@@ -94,8 +116,8 @@ export default function QuestionsEditor() {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!res.ok) throw new Error('Erro ao remover'); // Pode ser soft delete no backend
-            return res.status === 204 ? {} : res.json(); // Handle 204 No Content
+            if (!res.ok) throw new Error('Erro ao remover');
+            return res.status === 204 ? {} : res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['questions', assessmentId] });
@@ -104,16 +126,34 @@ export default function QuestionsEditor() {
     });
 
     const handleEditClick = (q: any) => {
-        setEditingId(q.id);
-        setEditForm({ ...q });
+        setFormData({
+            id: q.id,
+            text: q.text,
+            traitKey: q.traitKey || '',
+            facetKey: q.facetKey || '',
+            weight: q.weight || 1.0,
+            isReverse: q.isReverse || false,
+            isActive: q.isActive !== false,
+            dichotomy: q.dichotomy || '',
+            questionTrait: q.questionTrait || '',
+            subtraitDichotomy: q.subtraitDichotomy || '',
+            subtrait: q.subtrait || '',
+            concept: q.concept || ''
+        });
+        setFormMode('edit');
+        setIsCreating(true); // Reusa o booleano para mostrar o form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleSave = () => {
-        updateMutation.mutate({ id: editingId, data: editForm });
+    const handleSubmit = () => {
+        if (formMode === 'create') {
+            createMutation.mutate(formData);
+        } else {
+            updateMutation.mutate(formData);
+        }
     };
 
     if (isLoading) return <div className="p-8 text-center">Carregando perguntas...</div>;
-
     if (!assessment) return <div className="p-8 text-center text-red-500">Modelo Big Five não encontrado. Crie um modelo primeiro.</div>;
 
     return (
@@ -122,13 +162,12 @@ export default function QuestionsEditor() {
                 <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Parametrização das Perguntas</h3>
                     <p className="text-gray-600">
-                        Edite o texto, associe Traços/Facetas e configure Inversão.
-                        <br /><span className="text-xs text-yellow-600 font-bold">⚠️ Alterações aqui afetam o cálculo de todos os novos inventários.</span>
+                        Edite o texto e configure os parâmetros do algoritmo TalkingTo.
                     </p>
                 </div>
                 {!isCreating && (
                     <button
-                        onClick={() => setIsCreating(true)}
+                        onClick={() => { resetForm(); setIsCreating(true); }}
                         className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                     >
                         <Plus size={18} />
@@ -137,103 +176,143 @@ export default function QuestionsEditor() {
                 )}
             </div>
 
-            {/* Create Form */}
+            {/* Form de Edição/Criação */}
             {isCreating && (
-                <div className="bg-gray-50 border border-primary/20 rounded-lg p-6 mb-6">
-                    <h4 className="font-bold mb-4">Adicionar Pergunta</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="col-span-2">
-                            <label className="block text-xs font-bold text-gray-700 uppercase">Texto da Pergunta</label>
-                            <input className="w-full border p-2 rounded" value={createForm.text} onChange={e => setCreateForm({ ...createForm, text: e.target.value })} placeholder="Ex: Sinto-me confortável perto de pessoas" />
+                <div className="bg-gray-50 border border-primary/20 rounded-lg p-6 mb-8 shadow-lg">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-lg text-primary flex items-center gap-2">
+                            {formMode === 'create' ? <Plus size={20} /> : <Edit2 size={20} />}
+                            {formMode === 'create' ? 'Adicionar Pergunta' : 'Editar Pergunta'}
+                        </h4>
+                        <button onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+                        {/* Texto (Full Width) */}
+                        <div className="md:col-span-12">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Texto da Pergunta</label>
+                            <input
+                                className="w-full border p-2 rounded focus:ring-2 ring-primary/20 outline-none"
+                                value={formData.text}
+                                onChange={e => setFormData({ ...formData, text: e.target.value })}
+                                placeholder="Ex: Sinto-me confortável..."
+                            />
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase">Chave do Traço (TraitKey)</label>
-                            <input className="w-full border p-2 rounded" value={createForm.traitKey} onChange={e => setCreateForm({ ...createForm, traitKey: e.target.value })} placeholder="Ex: EXTRAVERSION" />
+
+                        {/* Bloco 1: Big Five Clássico */}
+                        <div className="md:col-span-12 mt-2 mb-1">
+                            <span className="text-xs font-bold text-gray-400 border-b block pb-1">PARÂMETROS BÁSICOS</span>
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase">Chave da Faceta (FacetKey)</label>
-                            <input className="w-full border p-2 rounded" value={createForm.facetKey} onChange={e => setCreateForm({ ...createForm, facetKey: e.target.value })} placeholder="Ex: FRIENDLINESS" />
+                        <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Traço (Openness...)</label>
+                            <input className="w-full border p-2 rounded uppercase" value={formData.traitKey} onChange={e => setFormData({ ...formData, traitKey: e.target.value })} />
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase">Peso</label>
-                            <input type="number" step="0.1" className="w-full border p-2 rounded" value={createForm.weight} onChange={e => setCreateForm({ ...createForm, weight: parseFloat(e.target.value) })} />
+                        <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Faceta (Fantasy...)</label>
+                            <input className="w-full border p-2 rounded uppercase" value={formData.facetKey} onChange={e => setFormData({ ...formData, facetKey: e.target.value })} />
                         </div>
-                        <div className="flex items-center gap-2 mt-6">
-                            <input type="checkbox" id="create-reverse" checked={createForm.isReverse} onChange={e => setCreateForm({ ...createForm, isReverse: e.target.checked })} className="w-5 h-5 text-primary" />
-                            <label htmlFor="create-reverse" className="text-sm font-bold text-gray-700">Pergunta Invertida?</label>
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Peso</label>
+                            <input type="number" step="0.1" className="w-full border p-2 rounded" value={formData.weight} onChange={e => setFormData({ ...formData, weight: parseFloat(e.target.value) })} />
+                        </div>
+                        <div className="md:col-span-4 flex items-end gap-6 pb-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={formData.isReverse} onChange={e => setFormData({ ...formData, isReverse: e.target.checked })} className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-bold text-gray-700">Invertida?</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 text-green-600" />
+                                <span className="text-sm font-bold text-gray-700">Ativa?</span>
+                            </label>
+                        </div>
+
+                        {/* Bloco 2: TalkingTo (Novos Campos) */}
+                        <div className="md:col-span-12 mt-4 mb-1">
+                            <span className="text-xs font-bold text-purple-500 border-b border-purple-100 block pb-1">PARÂMETROS TALKING-TO (AVANÇADO)</span>
+                        </div>
+                        <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Dicotomia</label>
+                            <input className="w-full border p-2 rounded border-purple-100 bg-purple-50/30" value={formData.dichotomy} onChange={e => setFormData({ ...formData, dichotomy: e.target.value })} placeholder="Introv-Extrov" />
+                        </div>
+                        <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Traço Questão</label>
+                            <input className="w-full border p-2 rounded border-purple-100 bg-purple-50/30" value={formData.questionTrait} onChange={e => setFormData({ ...formData, questionTrait: e.target.value })} placeholder="EXTROVERTIDO" />
+                        </div>
+                        <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Subtraço Dicot.</label>
+                            <input className="w-full border p-2 rounded border-purple-100 bg-purple-50/30" value={formData.subtraitDichotomy} onChange={e => setFormData({ ...formData, subtraitDichotomy: e.target.value })} placeholder="ouvinte-falante" />
+                        </div>
+                        <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Subtraço Alvo</label>
+                            <input className="w-full border p-2 rounded border-purple-100 bg-purple-50/30" value={formData.subtrait} onChange={e => setFormData({ ...formData, subtrait: e.target.value })} placeholder="falante" />
+                        </div>
+                        <div className="md:col-span-12">
+                            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Conceito</label>
+                            <input className="w-full border p-2 rounded border-purple-100 bg-purple-50/30" value={formData.concept} onChange={e => setFormData({ ...formData, concept: e.target.value })} placeholder="Ex: Comunicação, Tomada de Decisão..." />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2">
-                        <button onClick={() => setIsCreating(false)} className="text-gray-500 px-4 py-2">Cancelar</button>
-                        <button onClick={() => createMutation.mutate(createForm)} className="bg-primary text-white px-4 py-2 rounded">Salvar</button>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button onClick={resetForm} className="text-gray-500 px-6 py-2 hover:bg-gray-100 rounded-lg font-medium">Cancelar</button>
+                        <button onClick={handleSubmit} className="bg-primary hover:bg-primary-hover text-white px-8 py-2 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all">
+                            {formMode === 'create' ? 'Salvar Nova' : 'Atualizar Pergunta'}
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* Lista */}
+            {/* Listagem Simplificada */}
             <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left">
                     <thead className="bg-gray-50 text-gray-700 font-bold uppercase text-xs">
                         <tr>
-                            <th className="px-4 py-3">Texto</th>
-                            <th className="px-4 py-3 w-32">Traço</th>
-                            <th className="px-4 py-3 w-32">Faceta</th>
-                            <th className="px-4 py-3 w-16 text-center">Peso</th>
-                            <th className="px-4 py-3 w-16 text-center">Inv?</th>
-                            <th className="px-4 py-3 w-16 text-center">Ativa</th>
+                            <th className="px-4 py-3">Pergunta</th>
+                            <th className="px-4 py-3 w-40">TalkingTo (Subtraço)</th>
+                            <th className="px-4 py-3 w-28 text-center">Status</th>
                             <th className="px-4 py-3 w-24 text-right">Ações</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {questions?.map((q: any) => (
                             <tr key={q.id} className={!q.isActive ? 'opacity-50 bg-gray-50' : 'hover:bg-gray-50'}>
-                                {editingId === q.id ? (
-                                    <>
-                                        <td className="px-4 py-2">
-                                            <input className="w-full border p-1 rounded" value={editForm.text} onChange={e => setEditForm({ ...editForm, text: e.target.value })} />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <input className="w-full border p-1 rounded text-xs" value={editForm.traitKey || ''} onChange={e => setEditForm({ ...editForm, traitKey: e.target.value })} />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <input className="w-full border p-1 rounded text-xs" value={editForm.facetKey || ''} onChange={e => setEditForm({ ...editForm, facetKey: e.target.value })} />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <input type="number" step="0.1" className="w-16 border p-1 rounded text-center" value={editForm.weight} onChange={e => setEditForm({ ...editForm, weight: parseFloat(e.target.value) })} />
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                            <input type="checkbox" checked={editForm.isReverse} onChange={e => setEditForm({ ...editForm, isReverse: e.target.checked })} />
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                            <input type="checkbox" checked={editForm.isActive} onChange={e => setEditForm({ ...editForm, isActive: e.target.checked })} />
-                                        </td>
-                                        <td className="px-4 py-2 text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <button onClick={handleSave} className="text-green-600 hover:bg-green-50 p-1 rounded"><Save size={16} /></button>
-                                                <button onClick={() => setEditingId(null)} className="text-gray-500 hover:bg-gray-100 p-1 rounded"><X size={16} /></button>
-                                            </div>
-                                        </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td className="px-4 py-3 font-medium text-gray-900">{q.text}</td>
-                                        <td className="px-4 py-3 text-gray-500 font-mono text-xs">{q.traitKey}</td>
-                                        <td className="px-4 py-3 text-gray-500 font-mono text-xs">{q.facetKey || '-'}</td>
-                                        <td className="px-4 py-3 text-center">{q.weight}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            {q.isReverse ? <CheckCircle size={16} className="mx-auto text-orange-500" /> : <span className="text-gray-300">-</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {q.isActive ? <CheckCircle size={16} className="mx-auto text-green-500" /> : <XCircle size={16} className="mx-auto text-red-500" />}
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button onClick={() => handleEditClick(q)} className="text-blue-600 hover:text-blue-800"><Edit2 size={16} /></button>
-                                                <button onClick={() => { if (confirm('Remover pergunta?')) deleteMutation.mutate(q.id) }} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
-                                            </div>
-                                        </td>
-                                    </>
-                                )}
+                                <td className="px-4 py-3">
+                                    <p className="font-medium text-gray-900">{q.text}</p>
+                                    <div className="flex gap-2 mt-1 text-xs text-gray-400 font-mono">
+                                        <span className="bg-gray-100 px-1 rounded">{q.traitKey}</span>
+                                        {q.facetKey && <span className="bg-gray-100 px-1 rounded">{q.facetKey}</span>}
+                                        {q.isReverse && <span className="text-orange-500 font-bold ml-1">(R)</span>}
+                                    </div>
+                                </td>
+                                <td className="px-4 py-3 text-xs">
+                                    {q.subtrait ? (
+                                        <div>
+                                            <span className="font-bold text-purple-700 block">{q.subtrait}</span>
+                                            <span className="text-gray-400 text-[10px]">{q.subtraitDichotomy}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-300">-</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                    {q.isActive ?
+                                        <span className="text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">Ativa</span> :
+                                        <span className="text-gray-400 text-xs bg-gray-100 px-2 py-1 rounded-full">Inativa</span>
+                                    }
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <button onClick={() => handleEditClick(q)} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors" title="Editar">
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => { if (confirm('Remover pergunta?')) deleteMutation.mutate(q.id) }}
+                                            className="text-red-400 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                            title="Remover"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
