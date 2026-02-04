@@ -362,24 +362,29 @@ function QuestionMappingsTab() {
                                             <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 bg-slate-50 p-2 rounded">
                                                 <div className="col-span-2 text-[10px] font-bold text-purple-600 border-b border-purple-100 mb-1">PARÂMETROS TALKING-TO</div>
 
-                                                <div>
-                                                    <label className="text-[9px] text-gray-500 block">Dicotomia</label>
-                                                    <input
-                                                        value={editForm.dichotomy || ''}
-                                                        onChange={(e) => setEditForm({ ...editForm, dichotomy: e.target.value })}
-                                                        placeholder="Ex: Introversão-Extroversão"
-                                                        className="w-full text-xs border border-purple-200 rounded px-1 py-0.5"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[9px] text-gray-500 block">Traço Questão</label>
-                                                    <input
-                                                        value={editForm.questionTrait || ''}
-                                                        onChange={(e) => setEditForm({ ...editForm, questionTrait: e.target.value })}
-                                                        placeholder="Ex: EXTROVERTIDO"
-                                                        className="w-full text-xs border border-purple-200 rounded px-1 py-0.5"
-                                                    />
-                                                </div>
+                                                {(() => {
+                                                    const dim = selectedDimension;
+                                                    const dichotomyMap: any = { 'E': ['Introversão-Extroversão'], 'A': ['Competitividade-Cooperatividade'], 'C': ['Flexibilidade-Estrutura'], 'N': ['Estabilidade-Reatividade'], 'O': ['Conservadorismo-Inovação'] };
+                                                    const traitsMap: any = { 'E': ['INTROVERTIDO', 'EXTROVERTIDO'], 'A': ['COMPETITIVO', 'COOPERATIVO'], 'C': ['FLEXÍVEL', 'ESTRUTURADO'], 'N': ['ESTÁVEL', 'REATIVO'], 'O': ['CONSERVADOR', 'INOVADOR'] };
+                                                    const dichotomies = dichotomyMap[dim] || [];
+                                                    const traits = traitsMap[dim] || [];
+
+                                                    return (
+                                                        <>
+                                                            <div>
+                                                                <label className="text-[9px] text-gray-500 block">Dicotomia</label>
+                                                                <input list="dichotomies-list" value={editForm.dichotomy || ''} onChange={(e) => setEditForm({ ...editForm, dichotomy: e.target.value })} placeholder="Selecione..." className="w-full text-xs border border-purple-200 rounded px-1 py-0.5" />
+                                                                <datalist id="dichotomies-list">{dichotomies.map((d: string) => <option key={d} value={d} />)}</datalist>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] text-gray-500 block">Traço Questão</label>
+                                                                <input list="traits-list" value={editForm.questionTrait || ''} onChange={(e) => setEditForm({ ...editForm, questionTrait: e.target.value })} placeholder="Selecione..." className="w-full text-xs border border-purple-200 rounded px-1 py-0.5" />
+                                                                <datalist id="traits-list">{traits.map((t: string) => <option key={t} value={t} />)}</datalist>
+                                                            </div>
+                                                        </>
+                                                    );
+                                                })()}
+
                                                 <div>
                                                     <label className="text-[9px] text-gray-500 block">Subtraço</label>
                                                     <input
