@@ -495,7 +495,6 @@ export class TalkingToService {
             dominantSubtrait = dominantSubtrait.toLowerCase();
 
             // Busca cruzamentos onde este subtraço é o "A" (Origem)
-            // ex: Eu sou Ouvinte (A), como falo com Falante (B)?
             const matches = await this.prisma.talkingToCrossing.findMany({
                 where: {
                     subtraitA: dominantSubtrait,
@@ -509,10 +508,23 @@ export class TalkingToService {
                     traitKey: dim.traitKey,
                     userSubtrait: dim.labels[0], // Display name
                     interactions: matches.map(m => ({
-                        targetSubtrait: m.subtraitB, // ex: Falante
+                        targetSubtrait: m.subtraitB,
                         text: m.text,
                         id: m.id
                     }))
+                });
+            } else if (dim.classification === 'FLEX') {
+                // FALLBACK PARA PERFIS MEDIANOS (FLEX)
+                // Se não tem conflito específico mapeado, assume-se que é adaptável.
+                crossings.push({
+                    dimension: dim.dimension,
+                    traitKey: dim.traitKey,
+                    userSubtrait: dim.labels[0],
+                    interactions: [{
+                        targetSubtrait: 'Interação Geral',
+                        text: 'É pouco provável que esse subtraço crie desafios relacionais, dada sua flexibilidade em transitar entre os extremos.',
+                        id: `flex_${dim.traitKey}`
+                    }]
                 });
             }
         }
