@@ -444,7 +444,7 @@ export class TalkingToService {
             };
             text = await this.getText('NEUROTICISM_HIGH', 'DIMENSION', 'Você tende a ser Inquieto e Reativo. Sente as emoções com intensidade e pode se preocupar excessivamente com problemas futuros. É muito vigilante a riscos, mas precisa de segurança para performar bem.', 'Estabilidade Baixa (Alto Neuroticismo)');
         } else if (classification === 'ALTO') { // Baixo Neuroticismo
-            labels = ['Resiliente', 'Autoconfiante', 'Controlado'];
+            labels = ['Autoconfiante', 'Resiliente', 'Controlado'];
             needs = {
                 primary: await this.getText('NEUROTICISM_LOW_NEEDS_PRIMARY', 'NEEDS', 'Desafios de alta pressão e autonomia para gerenciar crises.'),
                 environment: await this.getText('NEUROTICISM_LOW_NEEDS_ENVIRONMENT', 'NEEDS', 'Podem ser caóticos ou de alta pressão; você aguenta bem.'),
@@ -487,26 +487,32 @@ export class TalkingToService {
         const crossings = [];
 
         for (const dim of dimensions) {
-            // Pega o primeiro label como subtraço dominante (ex: "Ouvinte")
-            let dominantSubtrait = dim.labels[0];
-            if (!dominantSubtrait) continue;
+            // Tenta encontrar match para QUALQUER um dos labels do usuário
+            // Isso previne que labels customizados (Fine Tuning) ou secundários quebrem a feature
+            let matches: any[] = [];
+            let matchedLabel = '';
 
-            // Normalização: O front/service usa Title Case ("Ouvinte"), banco usa lowercase ("ouvinte")
-            dominantSubtrait = dominantSubtrait.toLowerCase();
+            for (const label of dim.labels) {
+                const normalizedLabel = label.toLowerCase();
+                const found = await this.prisma.talkingToCrossing.findMany({
+                    where: {
+                        subtraitA: normalizedLabel,
+                        isActive: true
+                    }
+                });
 
-            // Busca cruzamentos onde este subtraço é o "A" (Origem)
-            const matches = await this.prisma.talkingToCrossing.findMany({
-                where: {
-                    subtraitA: dominantSubtrait,
-                    isActive: true
+                if (found.length > 0) {
+                    matches = found;
+                    matchedLabel = label; // Usa o Display Name original (Title Case)
+                    break; // Achou match, para de procurar. Prioridade é a ordem do array labels.
                 }
-            });
+            }
 
             if (matches.length > 0) {
                 crossings.push({
                     dimension: dim.dimension,
                     traitKey: dim.traitKey,
-                    userSubtrait: dim.labels[0], // Display name
+                    userSubtrait: matchedLabel,
                     interactions: matches.map(m => ({
                         targetSubtrait: m.subtraitB,
                         text: m.text,
