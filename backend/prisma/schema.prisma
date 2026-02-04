@@ -1033,7 +1033,7 @@ model TalkingToCrossing {
   id String @id @default(uuid())
   
   dimension    String // Ex: "E"
-  dichotomy    String // Ex: "Introversão-Extroversão"
+  dichotomy    String? // Ex: "Introversão-Extroversão"
   
   subtraitA    String // Ex: "ouvinte"
   subtraitB    String // Ex: "falante"

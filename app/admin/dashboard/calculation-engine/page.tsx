@@ -1648,6 +1648,14 @@ function CrossingsTab() {
         'O': ['realista', 'imaginativo', 'prático', 'conceitual', 'conservador', 'aberto']
     };
 
+    const dichotomyByDimension: any = {
+        'E': 'Introversão-Extroversão',
+        'A': 'Competitividade-Cooperatividade',
+        'C': 'Flexibilidade-Estrutura',
+        'N': 'Estabilidade-Reatividade',
+        'O': 'Conservadorismo-Inovação'
+    };
+
     useEffect(() => {
         fetchCrossings();
     }, [token]);
@@ -1672,16 +1680,21 @@ function CrossingsTab() {
         setIsSaving(true);
         try {
             if (editingId === 'new') {
-                await axios.post(`${API_URL}/calculation-engine/crossings`, { ...editForm, dimension: selectedDimension }, getAxiosConfig(token));
+                const dichotomy = dichotomyByDimension[selectedDimension] || 'Default';
+                await axios.post(`${API_URL}/calculation-engine/crossings`, {
+                    ...editForm,
+                    dimension: selectedDimension,
+                    dichotomy
+                }, getAxiosConfig(token));
             } else {
                 await axios.put(`${API_URL}/calculation-engine/crossings/${editingId}`, editForm, getAxiosConfig(token));
             }
             await fetchCrossings();
             setEditingId(null);
             setEditForm({});
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar cruzamento');
+            alert('Erro ao salvar cruzamento: ' + (error.response?.data?.message || 'Erro desconhecido'));
         } finally {
             setIsSaving(false);
         }
@@ -1730,8 +1743,8 @@ function CrossingsTab() {
                         key={dim}
                         onClick={() => { setSelectedDimension(dim); setEditingId(null); }}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${selectedDimension === dim
-                                ? 'border-purple-600 text-purple-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-purple-600 text-purple-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Dimensão {dim}
