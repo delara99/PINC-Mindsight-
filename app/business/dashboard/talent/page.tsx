@@ -131,13 +131,13 @@ export default function TalentIntelligenceDashboard() {
             {/* Quick Actions Grid (Secundário) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 hover:opacity-100 transition-opacity">
                 {/* Cards antigos mantidos, mas com menos destaque pois agora o foco é a lista acima */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200">
+                <Link href="/business/dashboard/talent/teams" className="bg-white p-6 rounded-xl border border-slate-200 hover:border-green-300 hover:shadow-lg transition-all cursor-pointer">
                     <div className="flex items-center gap-3 mb-2 text-green-600">
                         <Users size={20} />
                         <h3 className="font-bold">Análise de Equipe</h3>
                     </div>
-                    <p className="text-sm text-slate-500 mb-4">Em breve: simule novos membros.</p>
-                </div>
+                    <p className="text-sm text-slate-500 mb-4">Gerencie times e simule novos membros.</p>
+                </Link>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2 text-orange-600">
