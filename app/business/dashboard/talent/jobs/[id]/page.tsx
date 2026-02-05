@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
-import { ArrowLeft, Target, TrendingUp, AlertCircle, CheckCircle, User } from 'lucide-react';
+import { ArrowLeft, Target, TrendingUp, AlertCircle, CheckCircle, User, Search } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip } from 'recharts';
 
 export default function JobProfileAnalysisPage({ params }: { params: { id: string } }) {
@@ -33,40 +33,130 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
     if (loading) return <div className="p-12 text-center text-slate-500">Calculando compatibilidades...</div>;
     if (!data) return <div className="p-12 text-center text-red-500">Erro ao carregar dados.</div>;
 
-    const { profile, candidates } = data;
-    const idealScores = profile.idealScores;
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+    const [sortBy, setSortBy] = useState<'fit' | 'date' | 'name'>('fit');
+
+    // Lógica de Filtragem e Ordenação
+    const filteredCandidates = candidates?.filter((c: any) => {
+        const matchesSearch = c.user.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus =
+            filterStatus === 'all' ? true :
+                filterStatus === 'high' ? c.fit >= 75 :
+                    filterStatus === 'medium' ? c.fit >= 50 && c.fit < 75 :
+                        c.fit < 50; // low
+        return matchesSearch && matchesStatus;
+    }).sort((a: any, b: any) => {
+        if (sortBy === 'fit') return b.fit - a.fit;
+        if (sortBy === 'date') return new Date(b.source?.completedAt).getTime() - new Date(a.source?.completedAt).getTime();
+        return a.user.name.localeCompare(b.user.name);
+    }) || [];
+
+    // Contadores para as Pílulas
+    const counts = {
+        all: candidates?.length || 0,
+        high: candidates?.filter((c: any) => c.fit >= 75).length || 0,
+        medium: candidates?.filter((c: any) => c.fit >= 50 && c.fit < 75).length || 0,
+        low: candidates?.filter((c: any) => c.fit < 50).length || 0
+    };
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
             {/* Header */}
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
-                >
-                    <ArrowLeft />
-                </button>
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">{profile.name}</h1>
-                    <p className="text-slate-500 flex items-center gap-2">
-                        <Target size={16} /> Análise de Compatibilidade (Fit)
-                    </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
+                    >
+                        <ArrowLeft />
+                    </button>
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">{profile.name}</h1>
+                        <p className="text-slate-500 flex items-center gap-2">
+                            <Target size={16} /> Análise de Compatibilidade (Fit)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* BARRA DE CONTROLE INTELIGENTE */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between sticky top-4 z-10 backdrop-blur-md bg-opacity-95">
+
+                {/* 1. Busca */}
+                <div className="relative w-full md:w-96 group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Buscar colaborador..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                    />
+                </div>
+
+                {/* 2. Filtros Rápidos (Pills) */}
+                <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                    <FilterPill
+                        label="Todos"
+                        count={counts.all}
+                        active={filterStatus === 'all'}
+                        onClick={() => setFilterStatus('all')}
+                    />
+                    <FilterPill
+                        label="Alta"
+                        color="green"
+                        count={counts.high}
+                        active={filterStatus === 'high'}
+                        onClick={() => setFilterStatus('high')}
+                    />
+                    <FilterPill
+                        label="Média"
+                        color="yellow"
+                        count={counts.medium}
+                        active={filterStatus === 'medium'}
+                        onClick={() => setFilterStatus('medium')}
+                    />
+                    <FilterPill
+                        label="Baixa"
+                        color="red"
+                        count={counts.low}
+                        active={filterStatus === 'low'}
+                        onClick={() => setFilterStatus('low')}
+                    />
+                </div>
+
+                {/* 3. Ordenação */}
+                <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                    <span className="text-xs font-bold text-slate-400 uppercase hidden md:inline">Ordenar:</span>
+                    <select
+                        value={sortBy}
+                        onChange={(e: any) => setSortBy(e.target.value)}
+                        className="bg-transparent text-sm font-semibold text-slate-700 cursor-pointer outline-none focus:text-purple-600 hover:bg-slate-50 p-2 rounded-lg"
+                    >
+                        <option value="fit">Melhor Fit</option>
+                        <option value="date">Mais Recentes</option>
+                        <option value="name">Nome (A-Z)</option>
+                    </select>
                 </div>
             </div>
 
             {/* Ranking Grid */}
             <div className="grid grid-cols-1 gap-6">
-                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <TrendingUp className="text-purple-600" />
-                    Ranking de Candidatos ({candidates.length})
-                </h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <TrendingUp className="text-purple-600" />
+                        Ranking de Candidatos
+                    </h2>
+                    <span className="text-sm text-slate-500 font-medium">mostrando {filteredCandidates.length} de {candidates.length}</span>
+                </div>
 
-                {candidates.length === 0 ? (
+                {filteredCandidates.length === 0 ? (
                     <div className="bg-slate-50 p-12 text-center rounded-2xl border border-dashed border-slate-300">
-                        <p className="text-slate-500">Nenhum colaborador com avaliação completa encontrado.</p>
+                        <p className="text-slate-500">Nenhum colaborador encontrado com os filtros atuais.</p>
                     </div>
                 ) : (
-                    candidates.map((cand: any, idx: number) => {
+                    filteredCandidates.map((cand: any, idx: number) => {
                         // Preparar dados para o gráfico deste candidato
                         const chartData = [
                             { subject: 'Abertura', A: idealScores.O, B: cand.dimensions.O, fullMark: 100 },
@@ -207,4 +297,25 @@ function translateDim(dim: string) {
         'N': 'Estabilidade'
     };
     return map[dim] || dim;
+}
+
+function FilterPill({ label, count, active, color = 'slate', onClick }: any) {
+    const colors: any = {
+        slate: active ? 'bg-slate-800 text-white shadow-lg shadow-slate-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+        green: active ? 'bg-green-600 text-white shadow-lg shadow-green-200' : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-100',
+        yellow: active ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-200' : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-100',
+        red: active ? 'bg-red-500 text-white shadow-lg shadow-red-200' : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-100',
+    };
+
+    return (
+        <button
+            onClick={onClick}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${colors[color]}`}
+        >
+            {label}
+            <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${active ? 'bg-white/20' : 'bg-black/5'}`}>
+                {count}
+            </span>
+        </button>
+    );
 }
