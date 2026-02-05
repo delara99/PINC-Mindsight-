@@ -1,273 +1,328 @@
-"use client";
-import React, { useEffect, useState } from 'react';
-import { Users, ArrowLeft, Plus, UserPlus, Trash2, PieChart, ShieldAlert, Sparkles, Loader2, Check } from 'lucide-react';
-import Link from 'next/link';
-import { HelpTooltip } from '@/src/components/ui/HelpTooltip';
+'use client';
 
-export default function TeamDetailsPage({ params }: { params: { id: string } }) {
-    const [team, setTeam] = useState<any>(null);
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Users, TrendingUp, AlertTriangle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { API_URL } from '@/src/config/api';
+import axios from 'axios';
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+
+const DIMENSION_LABELS: Record<string, string> = {
+    O: 'Abertura',
+    C: 'Conscienciosidade',
+    E: 'Extroversão',
+    A: 'Amabilidade',
+    N: 'Estabilidade'
+};
+
+const FACET_MAP: Record<string, { label: string; facets: Record<string, string> }> = {
+    O: {
+        label: 'Abertura',
+        facets: {
+            O_F1: 'Fantasia',
+            O_F2: 'Estética',
+            O_F3: 'Sentimentos',
+            O_F4: 'Ações',
+            O_F5: 'Ideias',
+            O_F6: 'Valores'
+        }
+    },
+    C: {
+        label: 'Conscienciosidade',
+        facets: {
+            C_F1: 'Competência',
+            C_F2: 'Ordem',
+            C_F3: 'Senso de Dever',
+            C_F4: 'Esforço',
+            C_F5: 'Autodisciplina',
+            C_F6: 'Ponderação'
+        }
+    },
+    E: {
+        label: 'Extroversão',
+        facets: {
+            E_F1: 'Cordialidade',
+            E_F2: 'Gregariedade',
+            E_F3: 'Assertividade',
+            E_F4: 'Atividade',
+            E_F5: 'Busca de Sensações',
+            E_F6: 'Emoções Positivas'
+        }
+    },
+    A: {
+        label: 'Amabilidade',
+        facets: {
+            A_F1: 'Confiança',
+            A_F2: 'Franqueza',
+            A_F3: 'Altruísmo',
+            A_F4: 'Complacência',
+            A_F5: 'Modéstia',
+            A_F6: 'Sensibilidade'
+        }
+    },
+    N: {
+        label: 'Estabilidade',
+        facets: {
+            N_F1: 'Ansiedade',
+            N_F2: 'Hostilidade',
+            N_F3: 'Depressão',
+            N_F4: 'Embaraço',
+            N_F5: 'Impulsividade',
+            N_F6: 'Vulnerabilidade'
+        }
+    }
+};
+
+export default function TeamAnalysisPage() {
+    const params = useParams();
+    const router = useRouter();
+    const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
-
-    // Add Member State
-    const [availableUsers, setAvailableUsers] = useState<any[]>([]); // Mock or Fetch
-    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-    const [isSaving, setIsSaving] = useState(false);
-
-    // Helper para URL da API
-    const getApiUrl = () => {
-        const url = process.env.NEXT_PUBLIC_API_URL || 'https://pinc-mindsight-production.up.railway.app';
-        const baseUrl = url.startsWith('http') ? url : `https://${url}`;
-        if (baseUrl.includes('/api/v1')) return baseUrl;
-        return `${baseUrl}/api/v1`;
-    };
+    const [expandedDimensions, setExpandedDimensions] = useState<Set<string>>(new Set());
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('accessToken');
-                if (!token) return;
-
-                // 1. Fetch Candidates (para cruzar dados e seleção)
-                const usersRes = await fetch(`${getApiUrl()}/business/talent-intelligence/candidates-list`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (usersRes.ok) {
-                    setAvailableUsers(await usersRes.json());
-                }
-
-                // 2. Fetch Team
-                const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const teams = await response.json();
-                    const foundTeam = teams.find((t: any) => t.id === params.id);
-                    if (foundTeam) {
-                        setTeam(foundTeam);
-                    }
-                }
-            } catch (error) {
-                console.error("Error", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
+        loadAnalysis();
     }, [params.id]);
 
-    const handleAddMembers = async () => {
-        setIsSaving(true);
+    const loadAnalysis = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await fetch(`${getApiUrl()}/business/talent-intelligence/teams/${params.id}/members`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ memberIds: selectedUsers })
-            });
-
-            if (response.ok) {
-                window.location.reload();
-            }
-        } catch (e) {
-            console.error(e);
+            const res = await axios.get(`${API_URL}/business/team/${params.id}/analysis`);
+            setData(res.data);
+        } catch (error) {
+            console.error('Failed to load team analysis:', error);
         } finally {
-            setIsSaving(false);
+            setLoading(false);
         }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-green-600" size={40} /></div>;
-    if (!team) return <div className="text-center py-20">Equipe não encontrada</div>;
+    const toggleDimension = (dim: string) => {
+        setExpandedDimensions(prev => {
+            const next = new Set(prev);
+            if (next.has(dim)) {
+                next.delete(dim);
+            } else {
+                next.add(dim);
+            }
+            return next;
+        });
+    };
 
-    const avgScores = team.avgScores || { O: 50, C: 50, E: 50, A: 50, N: 50 };
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 font-medium">Analisando equipe...</p>
+                </div>
+            </div>
+        );
+    }
 
-    // Resolve membros
-    const currentMemberIds = team.memberIds || [];
-    const memberDetails = currentMemberIds.map((id: string) => {
-        const user = availableUsers.find(u => u.id === id);
-        return { id, name: user ? user.name : `Usuário ${id.substring(0, 4)}`, email: user?.email };
-    });
-
-    // Filtra usuários disponíveis para adicionar (que não estão no time)
-    const usersToAdd = availableUsers.filter(u => !currentMemberIds.includes(u.id));
-
-    return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
-            <div>
-                <Link href="/business/dashboard/talent/teams" className="inline-flex items-center text-sm text-slate-500 hover:text-green-600 mb-4 transition-colors">
-                    <ArrowLeft size={16} className="mr-1" />
-                    Voltar para Equipes
-                </Link>
-                <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 bg-green-50 text-green-600 border border-green-100 rounded-xl flex items-center justify-center shadow-sm">
-                            <Users size={32} />
-                        </div>
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-900 mb-1">{team.name}</h1>
-                            <p className="text-slate-500 max-w-2xl">{team.description || "Sem descrição definida."}</p>
-                        </div>
-                    </div>
+    if (!data || !data.stats) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-8">
+                <div className="text-center">
+                    <AlertTriangle className="w-20 h-20 text-orange-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-black text-slate-900 mb-2">Dados Insuficientes</h2>
+                    <p className="text-slate-600 mb-6">Esta equipe não possui membros com avaliações completas.</p>
                     <button
-                        onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all font-medium"
+                        onClick={() => router.back()}
+                        className="px-6 py-3 bg-orange-500 text-white font-bold hover:bg-orange-600 transition-colors"
                     >
-                        <UserPlus size={18} />
-                        Gerenciar Membros
+                        Voltar
                     </button>
                 </div>
             </div>
+        );
+    }
 
-            {/* Team DNA Visualization */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Radar / Bars */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <PieChart size={20} className="text-green-600" />
-                        DNA da Equipe (Média)
-                        <HelpTooltip text="A média comportamental de todos os membros. Indica a tendência de comportamento do grupo." />
-                    </h3>
+    const { team, members, stats } = data;
+    const radarData = ['O', 'C', 'E', 'A', 'N'].map(dim => ({
+        dimension: DIMENSION_LABELS[dim],
+        value: stats.avgScores[dim] || 0
+    }));
 
-                    <div className="space-y-6">
-                        {[
-                            { k: 'O', label: 'Abertura', val: avgScores.O, color: 'indigo', desc: 'Nível de inovação' },
-                            { k: 'C', label: 'Conscienciosidade', val: avgScores.C, color: 'blue', desc: 'Organização e foco' },
-                            { k: 'E', label: 'Extroversão', val: avgScores.E, color: 'green', desc: 'Energia social' },
-                            { k: 'A', label: 'Amabilidade', val: avgScores.A, color: 'yellow', desc: 'Cooperação' },
-                            { k: 'N', label: 'Estabilidade', val: avgScores.N, color: 'pink', desc: 'Resiliência' }
-                        ].map((item) => (
-                            <div key={item.k}>
-                                <div className="flex justify-between items-end mb-1">
-                                    <span className="text-sm font-bold text-slate-700">{item.label}</span>
-                                    <span className="text-xs text-slate-400">{item.desc}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className={`h-full bg-${item.color}-500 rounded-full transition-all duration-1000`} style={{ width: `${item.val}%` }}></div>
-                                    </div>
-                                    <span className="w-8 text-right font-mono font-bold text-slate-900">{Math.round(item.val)}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100 p-8">
+            {/* Header */}
+            <div className="max-w-7xl mx-auto mb-8">
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-bold mb-6 transition-colors group"
+                >
+                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                    Voltar
+                </button>
 
-                {/* Cultural Insights */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <Sparkles size={20} className="text-purple-600" />
-                        Insights Culturais
-                        <HelpTooltip text="Análise automática baseada nos scores médios da equipe." />
-                    </h3>
-
-                    {/* Dynamic Insights based on scores */}
-                    <div className="space-y-4">
-                        {avgScores.C > 70 ? (
-                            <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                <h4 className="font-bold text-blue-700 mb-1">Alta Execução</h4>
-                                <p className="text-sm text-slate-600">Este time valoriza processos, prazos e qualidade técnica. Pode resistir a mudanças bruscas.</p>
-                            </div>
-                        ) : (
-                            <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                <h4 className="font-bold text-orange-700 mb-1">Flexibilidade e Rapidez</h4>
-                                <p className="text-sm text-slate-600">Time ágil, focado em entregas rápidas, mas pode precisar de ajuda com processos.</p>
-                            </div>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="text-6xl font-black text-slate-900 leading-none mb-2 tracking-tight">
+                            {team.name}
+                        </h1>
+                        <div className="h-2 w-32 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mb-4"></div>
+                        {team.description && (
+                            <p className="text-slate-600 text-lg max-w-2xl">{team.description}</p>
                         )}
+                    </div>
 
-                        {avgScores.A > 70 ? (
-                            <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                <h4 className="font-bold text-yellow-700 mb-1">Alta Coesão</h4>
-                                <p className="text-sm text-slate-600">Ambiente colaborativo e harmonioso. Feedback duro pode ser evitado para não ferir sentimentos.</p>
-                            </div>
-                        ) : null}
-
-                        {/* Mock Risk */}
-                        <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-                            <h4 className="font-bold text-red-700 mb-1 flex items-center gap-1"><ShieldAlert size={14} /> Ponto de Atenção</h4>
-                            <p className="text-sm text-red-600">Baixa diversidade em Extroversão (Todos muito {avgScores.E > 60 ? 'altos' : 'baixos'}).</p>
-                        </div>
+                    <div className="text-right">
+                        <div className="text-5xl font-black text-orange-600">{stats.count}</div>
+                        <div className="text-sm text-slate-500 font-bold uppercase tracking-wider">Membros Avaliados</div>
                     </div>
                 </div>
             </div>
 
-            {/* Members List */}
-            <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Membros ({memberDetails.length})</h3>
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    {memberDetails.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500">Nenhum membro adicionado.</div>
-                    ) : (
-                        <div className="divide-y divide-slate-100">
-                            {memberDetails.map((m: any) => (
-                                <div key={m.id} className="p-4 flex items-center justify-between hover:bg-slate-50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">
-                                            {m.name.substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <div className="font-medium text-slate-900">{m.name}</div>
-                                            <div className="text-xs text-slate-500">{m.email}</div>
-                                        </div>
+            {/* Main Grid - Assimétrico */}
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Coluna Esquerda - Radar + Diversidade */}
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Radar Chart */}
+                    <div className="bg-white border-4 border-slate-900 p-8">
+                        <h2 className="text-2xl font-black text-slate-900 mb-6 uppercase tracking-wider">
+                            Persona da Equipe
+                        </h2>
+                        <ResponsiveContainer width="100%" height={400}>
+                            <RadarChart data={radarData}>
+                                <PolarGrid stroke="#cbd5e1" />
+                                <PolarAngleAxis dataKey="dimension" tick={{ fill: '#1e293b', fontWeight: 'bold' }} />
+                                <PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#64748b' }} />
+                                <Radar
+                                    name="Média do Time"
+                                    dataKey="value"
+                                    stroke="#f97316"
+                                    fill="#f97316"
+                                    fillOpacity={0.3}
+                                    strokeWidth={3}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#1e293b',
+                                        border: '2px solid #f97316',
+                                        borderRadius: 0,
+                                        color: '#fff',
+                                        fontWeight: 'bold'
+                                    }}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* Breakdown de Facetas */}
+                    <div className="bg-white border-4 border-slate-900 p-8">
+                        <h2 className="text-2xl font-black text-slate-900 mb-6 uppercase tracking-wider">
+                            Análise Granular (30 Facetas)
+                        </h2>
+                        <div className="space-y-4">
+                            {['O', 'C', 'E', 'A', 'N'].map(dim => (
+                                <DimensionBreakdown
+                                    key={dim}
+                                    dimension={dim}
+                                    label={DIMENSION_LABELS[dim]}
+                                    score={stats.avgScores[dim] || 0}
+                                    facets={FACET_MAP[dim].facets}
+                                    facetScores={stats.avgScores}
+                                    expanded={expandedDimensions.has(dim)}
+                                    onToggle={() => toggleDimension(dim)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Coluna Direita - Insights */}
+                <div className="space-y-8">
+                    {/* Diversidade */}
+                    <div className="bg-gradient-to-br from-orange-500 to-red-500 border-4 border-slate-900 p-6 text-white">
+                        <div className="text-sm font-bold uppercase tracking-wider mb-2 opacity-90">
+                            Score de Diversidade
+                        </div>
+                        <div className="text-5xl font-black mb-2">{stats.diversityScore}</div>
+                        <div className="text-sm font-medium opacity-90">
+                            {stats.highDiversity
+                                ? '🌈 Time Heterogêneo (Alta Diversidade Cognitiva)'
+                                : '🎯 Time Homogêneo (Perfis Similares)'}
+                        </div>
+                    </div>
+
+                    {/* Traços Dominantes */}
+                    {stats.dominantTraits && stats.dominantTraits.length > 0 && (
+                        <div className="bg-white border-4 border-slate-900 p-6">
+                            <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-wider">
+                                Traços Dominantes
+                            </h3>
+                            <div className="space-y-2">
+                                {stats.dominantTraits.map((trait: string) => (
+                                    <div key={trait} className="flex items-center gap-2">
+                                        <CheckCircle className="w-5 h-5 text-green-600" />
+                                        <span className="font-bold text-slate-900">
+                                            {DIMENSION_LABELS[trait]}
+                                        </span>
                                     </div>
-                                    <button className="text-slate-400 hover:text-red-600" title="Remover"><Trash2 size={16} /></button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Lista de Membros */}
+                    <div className="bg-white border-4 border-slate-900 p-6">
+                        <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-wider">
+                            Membros ({members.length})
+                        </h3>
+                        <div className="space-y-3">
+                            {members.map((m: any) => (
+                                <div key={m.user.id} className="border-l-4 border-orange-500 pl-3 py-2">
+                                    <p className="font-bold text-slate-900">{m.user.name}</p>
+                                    <p className="text-sm text-slate-500">
+                                        {m.hasData ? '✅ Avaliado' : '⏳ Sem avaliação'}
+                                    </p>
                                 </div>
                             ))}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
+        </div>
+    );
+}
 
-            {/* Add Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-                    <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                        <h2 className="text-xl font-bold mb-4">Adicionar Membros</h2>
-                        <p className="text-sm text-slate-500 mb-4">Selecione os colaboradores para adicionar à equipe.</p>
-
-                        <div className="space-y-2 mb-6 overflow-y-auto flex-1">
-                            {usersToAdd.length === 0 ? (
-                                <p className="text-center text-slate-500 py-4">Todos os usuários disponíveis já estão na equipe.</p>
-                            ) : (
-                                usersToAdd.map(u => (
-                                    <label key={u.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
-                                            checked={selectedUsers.includes(u.id)}
-                                            onChange={(e) => {
-                                                if (e.target.checked) setSelectedUsers([...selectedUsers, u.id]);
-                                                else setSelectedUsers(selectedUsers.filter(id => id !== u.id));
-                                            }}
-                                        />
-                                        <div>
-                                            <div className="font-medium text-sm text-slate-900">{u.name}</div>
-                                            <div className="text-xs text-slate-500">{u.email}</div>
-                                        </div>
-                                    </label>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
-                            <button
-                                onClick={handleAddMembers}
-                                disabled={isSaving || selectedUsers.length === 0}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold shadow-lg shadow-green-100"
-                            >
-                                {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
-                                {isSaving ? 'Salvando...' : 'Adicionar Selecionados'}
-                            </button>
-                        </div>
+function DimensionBreakdown({ dimension, label, score, facets, facetScores, expanded, onToggle }: any) {
+    return (
+        <div className="border-2 border-slate-900">
+            <button
+                onClick={onToggle}
+                className="w-full flex items-center justify-between p-4 hover:bg-orange-50 transition-colors"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center border-2 border-slate-900">
+                        <span className="text-white font-black text-xl">{dimension}</span>
                     </div>
+                    <div className="text-left">
+                        <div className="font-black text-slate-900">{label}</div>
+                        <div className="text-sm text-slate-500">Média: {score}</div>
+                    </div>
+                </div>
+                {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
+
+            {expanded && (
+                <div className="border-t-2 border-slate-900 p-4 bg-slate-50 space-y-2">
+                    {Object.entries(facets).map(([code, name]) => {
+                        const facetScore = facetScores[code] || 0;
+                        return (
+                            <div key={code} className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-slate-700">{name}</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-32 h-2 bg-slate-200 border border-slate-900">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-orange-500 to-red-500"
+                                            style={{ width: `${facetScore}%` }}
+                                        ></div>
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-900 w-8 text-right">{facetScore}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>

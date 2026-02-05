@@ -7,13 +7,15 @@ import { TalkingToModule } from '../talking-to/talking-to.module';
 import { ReportsModule } from '../reports/reports.module';
 
 import { TalentIntelligenceModule } from './talent-intelligence/talent-intelligence.module';
+import { TeamModule } from './team/team.module';
 
 import { PublicBusinessController } from './public-business.controller';
 
 @Module({
-    imports: [PrismaModule, TalkingToModule, ReportsModule, TalentIntelligenceModule],
+    imports: [PrismaModule, TalkingToModule, ReportsModule, TalentIntelligenceModule, TeamModule],
     controllers: [BusinessController, PublicBusinessController],
     providers: [BusinessService],
-    exports: [BusinessService, TalentIntelligenceModule]
+    exports: [BusinessService, TalentIntelligenceModule, TeamModule]
 })
 export class BusinessModule { }
+
