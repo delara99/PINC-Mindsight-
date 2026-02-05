@@ -40,6 +40,21 @@ export class TeamService {
         return enriched;
     }
 
+    async getAvailableMembers(tenantId: string) {
+        return this.prisma.user.findMany({
+            where: {
+                tenantId,
+                role: 'MEMBER'
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true
+            },
+            orderBy: { name: 'asc' }
+        });
+    }
+
     async findOne(id: string) {
         const team = await this.prisma.team.findUnique({
             where: { id }

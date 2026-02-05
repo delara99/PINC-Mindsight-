@@ -24,6 +24,11 @@ export class TeamController {
         return this.teamService.findAll(tenantId);
     }
 
+    @Get('members')
+    async getMembers(@Request() req) {
+        return this.teamService.getAvailableMembers(req.user.tenantId);
+    }
+
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.teamService.findOne(id);
