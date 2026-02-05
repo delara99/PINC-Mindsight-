@@ -4,6 +4,15 @@
 
 ---
 
+## ⚠️ CRITICAL: CORE INTEGRITY PRINCIPLE
+**Lei Suprema do Projeto:**
+Toda e qualquer funcionalidade nova (Fit Cultural, Análise de Equipe, PDI, Dashboards) **DEVE** utilizar os métodos do `TalentIntelligenceService` (TalkingTo Core) para processar scores e resultados.
+- **PROIBIDO:** Replicar lógica de cálculo de score (Big Five) em outros services.
+- **PROIBIDO:** Criar parsers de notas paralelos.
+- **OBRIGATÓRIO:** O `TalentIntelligenceService` é a ÚNICA fonte de verdade (Single Source of Truth) para interpretação de dados dos colaboradores.
+
+---
+
 ## 📋 Overview
 
 Antigravity Kit is a modular system consisting of:

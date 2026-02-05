@@ -94,6 +94,10 @@ export class JobProfileService {
                     email: emp.email,
                     avatar: null // Futuro
                 },
+                source: {
+                    assignmentId: assignment.id,
+                    completedAt: assignment.completedAt
+                },
                 fit: fit.overall,
                 dimensions: fit.dimensions,
                 strengths: fit.strengths,

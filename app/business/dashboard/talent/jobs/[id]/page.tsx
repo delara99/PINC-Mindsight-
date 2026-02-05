@@ -91,6 +91,10 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                                             <div>
                                                 <h3 className="font-bold text-lg text-slate-900">{cand.user.name}</h3>
                                                 <p className="text-sm text-slate-500">{cand.user.email}</p>
+                                                <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                                    <CheckCircle size={10} />
+                                                    Avaliação: {new Date(cand.source?.completedAt).toLocaleDateString()}
+                                                </p>
                                             </div>
                                         </div>
 
