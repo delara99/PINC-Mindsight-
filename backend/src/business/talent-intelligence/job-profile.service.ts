@@ -98,6 +98,7 @@ export class JobProfileService {
                     assignmentId: assignment.id,
                     completedAt: assignment.completedAt
                 },
+                userScores: fit.userScores, // Corrigido: pegando do resultado do fit
                 fit: fit.overall,
                 dimensions: fit.dimensions,
                 strengths: fit.strengths,
@@ -147,6 +148,7 @@ export class JobProfileService {
         const overallFit = Math.max(0, 100 - (avgDiff * 1.2));
 
         return {
+            userScores, // Retornando para o controller
             overall: Math.round(overallFit),
             dimensions: dimensionFits,
             strengths,
