@@ -267,6 +267,16 @@ export class TalentIntelligenceService {
 
         const safeParse = (val: any) => {
             if (val === null || val === undefined) return 0;
+
+            // NOVO: Se for obj, tenta achar score ou normalizedScore lá dentro
+            if (typeof val === 'object') {
+                const subVal = val.normalizedScore ?? val.score ?? val.value;
+                if (subVal !== undefined && subVal !== null) {
+                    return safeParse(subVal); // Recursão segura
+                }
+                return 0;
+            }
+
             if (typeof val === 'number') return val;
             if (typeof val === 'string') {
                 const standardized = val.replace(',', '.');

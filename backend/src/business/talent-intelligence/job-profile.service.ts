@@ -102,7 +102,8 @@ export class JobProfileService {
                 fit: fit.overall,
                 dimensions: fit.dimensions,
                 strengths: fit.strengths,
-                gaps: fit.gaps
+                gaps: fit.gaps,
+                debug_raw: assignment.result // <--- CAMPO ESPIÃO PARA DEBUGAR O RETORNO DO PRISMA
             });
         }
 
