@@ -146,10 +146,16 @@ export class JobProfileService {
         }
 
         const avgDiff = totalDiff / 5;
-        const overallFit = Math.max(0, 100 - (avgDiff * 1.2));
+        let overallFit = Math.max(0, 100 - (avgDiff * 1.2));
+
+        // SAFEGUARD: Evitar NaN que quebra o frontend
+        if (isNaN(overallFit)) {
+            console.error(`[FitCalc] NaN detectado! uScores: ${JSON.stringify(userScores)} totalDiff: ${totalDiff}`);
+            overallFit = 0;
+        }
 
         return {
-            userScores, // Retornando para o controller
+            userScores,
             overall: Math.round(overallFit),
             dimensions: dimensionFits,
             strengths,
