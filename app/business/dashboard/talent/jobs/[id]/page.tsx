@@ -249,20 +249,14 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                                                 <Target size={12} /> Raio-X do Cálculo e Facetas
                                             </p>
                                             <div className="space-y-1">
-                                                {['O', 'C', 'E', 'A', 'N'].map(dim => {
-                                                    const uScore = cand.userScores?.[dim] ?? 0;
-                                                    const iScore = idealScores?.[dim] ?? 50;
-                                                    const diff = Math.abs(uScore - iScore);
-                                                    return (
-                                                        <div key={dim} className="flex justify-between items-center hover:bg-slate-100 p-0.5 rounded">
-                                                            <span>{translateDim(dim)}:</span>
-                                                            <span className="text-slate-900">
-                                                                {uScore} <span className="text-slate-400">vs</span> {iScore}
-                                                                <span className="text-red-400 ml-1">(-{diff})</span>
-                                                            </span>
-                                                        </div>
-                                                    )
-                                                })}
+                                                {['O', 'C', 'E', 'A', 'N'].map(dim => (
+                                                    <DimensionRow
+                                                        key={dim}
+                                                        dim={dim}
+                                                        userScores={cand.userScores}
+                                                        idealScores={idealScores}
+                                                    />
+                                                ))}
                                             </div>
                                         </div>
 
@@ -324,6 +318,89 @@ function translateDim(dim: string) {
         'N': 'Estabilidade'
     };
     return map[dim] || dim;
+}
+
+const FACET_MAP: any = {
+    E: [
+        { key: 'E_F1', label: 'Cordialidade' }, { key: 'E_F2', label: 'Gregariedade' },
+        { key: 'E_F3', label: 'Assertividade' }, { key: 'E_F4', label: 'Atividade' },
+        { key: 'E_F5', label: 'Busca de Sensações' }, { key: 'E_F6', label: 'Emoções Positivas' }
+    ],
+    A: [
+        { key: 'A_F1', label: 'Confiança' }, { key: 'A_F2', label: 'Franqueza' },
+        { key: 'A_F3', label: 'Altruísmo' }, { key: 'A_F4', label: 'Complacência' },
+        { key: 'A_F5', label: 'Modéstia' }, { key: 'A_F6', label: 'Sensibilidade' }
+    ],
+    C: [
+        { key: 'C_F1', label: 'Competência' }, { key: 'C_F2', label: 'Ordem' },
+        { key: 'C_F3', label: 'Senso de Dever' }, { key: 'C_F4', label: 'Esforço' },
+        { key: 'C_F5', label: 'Autodisciplina' }, { key: 'C_F6', label: 'Ponderação' }
+    ],
+    N: [
+        { key: 'N_F1', label: 'Ansiedade' }, { key: 'N_F2', label: 'Hostilidade' },
+        { key: 'N_F3', label: 'Depressão' }, { key: 'N_F4', label: 'Embaraço' },
+        { key: 'N_F5', label: 'Impulsividade' }, { key: 'N_F6', label: 'Vulnerabilidade' }
+    ],
+    O: [
+        { key: 'O_F1', label: 'Fantasia' }, { key: 'O_F2', label: 'Estética' },
+        { key: 'O_F3', label: 'Sentimentos' }, { key: 'O_F4', label: 'Ações' },
+        { key: 'O_F5', label: 'Ideias' }, { key: 'O_F6', label: 'Valores' }
+    ]
+};
+
+function DimensionRow({ dim, userScores, idealScores }: any) {
+    const [expanded, setExpanded] = useState(false);
+
+    const uScore = userScores?.[dim] ?? 0;
+    const iScore = idealScores?.[dim] ?? 50;
+    const diff = Math.abs(uScore - iScore);
+    const facets = FACET_MAP[dim] || [];
+
+    // Verifica se existem facetas relevantes para mostrar (se o ideal exigiu alguma calibração específica)
+    // Se o ideal tiver tudo 50 nas facetas, talvez não valha a pena expandir, mas vamos deixar liberado.
+
+    return (
+        <div className="border-b border-slate-100 last:border-0">
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="w-full flex justify-between items-center hover:bg-slate-100 p-1.5 rounded transition-colors group"
+            >
+                <div className="flex items-center gap-1">
+                    <span className={`text-[10px] text-slate-400 transform transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
+                    <span>{translateDim(dim)}:</span>
+                </div>
+                <span className="text-slate-900 font-mono">
+                    {uScore} <span className="text-slate-400 text-[10px]">vs</span> {iScore}
+                    <span className={`ml-1 text-[10px] ${diff > 20 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                        (-{diff})
+                    </span>
+                </span>
+            </button>
+
+            {expanded && (
+                <div className="pl-4 pr-1 pb-2 space-y-1 bg-slate-50/50 rounded-b-lg">
+                    {facets.map((f: any) => {
+                        const fuScore = userScores?.[f.key] ?? 0; // Se não tiver, assume 0
+                        const fiScore = idealScores?.[f.key] ?? 50; // Se não tiver ideal, assume neutro
+                        const fDiff = Math.abs(fuScore - fiScore);
+
+                        // Só mostrar se tiver alguma relevância (target != 50 ou user != 0)
+                        // Para limpar a view, vamos mostrar todos para o gestor ter certeza.
+                        return (
+                            <div key={f.key} className="flex justify-between items-center text-[10px] text-slate-600 pl-2 border-l-2 border-slate-200">
+                                <span>{f.label}</span>
+                                <div>
+                                    <span className={fuScore === 0 ? 'text-slate-300' : ''}>{fuScore}</span>
+                                    <span className="text-slate-300 mx-1">/</span>
+                                    <span className="font-bold text-slate-700">{fiScore}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
 }
 
 function FilterPill({ label, count, active, color = 'slate', onClick }: any) {
