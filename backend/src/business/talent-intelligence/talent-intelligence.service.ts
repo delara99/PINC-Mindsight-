@@ -232,14 +232,30 @@ export class TalentIntelligenceService {
 
     public extractScores(result: any): Record<string, number> {
         const scores = result.scores || {};
+
+        const safeParse = (val: any) => {
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return val;
+            if (typeof val === 'string') {
+                // Tratar vírgula decimal (ex: "3,5" -> 3.5)
+                const standardized = val.replace(',', '.');
+                const num = parseFloat(standardized);
+                return isNaN(num) ? 0 : num;
+            }
+            return 0;
+        };
+
         // 1. Mapeamento robusto (Siglas e Nomes Completos)
         const raw: any = {
-            O: Number(scores.O || scores.OPENNESS || 0),
-            C: Number(scores.C || scores.CONSCIENTIOUSNESS || 0),
-            E: Number(scores.E || scores.EXTRAVERSION || 0),
-            A: Number(scores.A || scores.AGREEABLENESS || 0),
-            N: Number(scores.N || scores.NEUROTICISM || scores.STABILITY || 0)
+            O: safeParse(scores.O || scores.OPENNESS),
+            C: safeParse(scores.C || scores.CONSCIENTIOUSNESS),
+            E: safeParse(scores.E || scores.EXTRAVERSION),
+            A: safeParse(scores.A || scores.AGREEABLENESS),
+            N: safeParse(scores.N || scores.NEUROTICISM || scores.STABILITY)
         };
+
+        // DEBUG
+        // console.log('[ExtractScores] Raw Parsed:', raw);
 
         // 2. Normalização de Escala (1-5 para 0-100)
         const maxVal = Math.max(raw.O, raw.C, raw.E, raw.A, raw.N);
@@ -251,9 +267,7 @@ export class TalentIntelligenceService {
             });
         }
 
-        // 3. Fallback para evitar zeros absolutos se não houver dados
-        // Mantemos 50 (neutro) se tudo for zero, ou 0? 
-        // Para consistência, se não tem dado, é 0.
+        // 3. Fallback: Se tudo for zero, retorna zero.
         if (maxVal === 0) {
             return { O: 0, C: 0, E: 0, A: 0, N: 0 };
         }
