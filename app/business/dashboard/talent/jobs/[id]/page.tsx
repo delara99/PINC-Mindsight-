@@ -33,6 +33,9 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
     if (loading) return <div className="p-12 text-center text-slate-500">Calculando compatibilidades...</div>;
     if (!data) return <div className="p-12 text-center text-red-500">Erro ao carregar dados.</div>;
 
+    const { profile, candidates } = data;
+    const idealScores = profile.idealScores || { O: 50, C: 50, E: 50, A: 50, N: 50 };
+
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'high' | 'medium' | 'low'>('all');
     const [sortBy, setSortBy] = useState<'fit' | 'date' | 'name'>('fit');
@@ -237,8 +240,32 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                                         </div>
                                     </div>
 
-                                    {/* Coluna 3: Insights */}
+                                    {/* Coluna 3: Insights e Raio-X */}
                                     <div className="space-y-4">
+
+                                        {/* Botão Raio-X */}
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-500 font-mono">
+                                            <p className="font-bold text-slate-700 mb-2 flex items-center gap-1">
+                                                <Target size={12} /> Raio-X do Cálculo e Facetas
+                                            </p>
+                                            <div className="space-y-1">
+                                                {['O', 'C', 'E', 'A', 'N'].map(dim => {
+                                                    const uScore = cand.userScores?.[dim] ?? 0;
+                                                    const iScore = idealScores?.[dim] ?? 50;
+                                                    const diff = Math.abs(uScore - iScore);
+                                                    return (
+                                                        <div key={dim} className="flex justify-between items-center hover:bg-slate-100 p-0.5 rounded">
+                                                            <span>{translateDim(dim)}:</span>
+                                                            <span className="text-slate-900">
+                                                                {uScore} <span className="text-slate-400">vs</span> {iScore}
+                                                                <span className="text-red-400 ml-1">(-{diff})</span>
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+
                                         <div>
                                             <h4 className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2 flex items-center gap-1">
                                                 <CheckCircle size={12} /> Pontos Fortes
@@ -254,7 +281,7 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
 
                                         <div>
                                             <h4 className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                                                <AlertCircle size={12} /> Pontos de Atenção (Gaps)
+                                                <AlertCircle size={12} /> Gaps (Atenção)
                                             </h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {cand.gaps.length > 0 ? cand.gaps.map((g: string) => (
