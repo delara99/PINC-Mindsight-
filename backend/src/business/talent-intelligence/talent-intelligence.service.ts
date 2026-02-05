@@ -262,8 +262,66 @@ export class TalentIntelligenceService {
         scanAndNormalize(result);        // 2. O raiz (fallback comum)
         scanAndNormalize(result.result); // 3. Aninhamento profundo (legacy)
 
-        // DEBUG: Ver o que achamos
-        // console.log('[ExtractScores] Keys Found:', Object.keys(normalized));
+        // --- MAPA DE TRADUÇÃO DE FACETAS (Nome -> Código Sistema) ---
+        const FACET_CODES: Record<string, string> = {
+            // Abertura (O)
+            'FANTASIA': 'O_F1', 'FANTASY': 'O_F1',
+            'ESTETICA': 'O_F2', 'ESTÉTICA': 'O_F2', 'AESTHETICS': 'O_F2',
+            'SENTIMENTOS': 'O_F3', 'FEELINGS': 'O_F3',
+            'ACOES': 'O_F4', 'AÇÕES': 'O_F4', 'ACTIONS': 'O_F4',
+            'IDEIAS': 'O_F5', 'IDEAS': 'O_F5',
+            'VALORES': 'O_F6', 'VALUES': 'O_F6',
+
+            // Conscienciosidade (C)
+            'COMPETENCIA': 'C_F1', 'COMPETÊNCIA': 'C_F1', 'COMPETENCE': 'C_F1',
+            'ORDEM': 'C_F2', 'ORDER': 'C_F2',
+            'SENSO': 'C_F3', 'SENSO DE DEVER': 'C_F3', 'DUTY': 'C_F3',
+            'ESFORCO': 'C_F4', 'ESFORÇO': 'C_F4', 'ACHIEVEMENT': 'C_F4',
+            'AUTODISCIPLINA': 'C_F5', 'SELF-DISCIPLINE': 'C_F5',
+            'PONDERACAO': 'C_F6', 'PONDERAÇÃO': 'C_F6', 'DELIBERATION': 'C_F6',
+
+            // Extroversão (E)
+            'CORDIALIDADE': 'E_F1', 'WARMTH': 'E_F1',
+            'GREGARIEDADE': 'E_F2', 'GREGARIOUSNESS': 'E_F2',
+            'ASSERTIVIDADE': 'E_F3', 'ASSERTIVENESS': 'E_F3',
+            'ATIVIDADE': 'E_F4', 'ACTIVITY': 'E_F4',
+            'BUSCA DE SENSACOES': 'E_F5', 'BUSCA DE SENSAÇÕES': 'E_F5', 'EXCITEMENT-SEEKING': 'E_F5',
+            'EMOCOES POSITIVAS': 'E_F6', 'EMOÇÕES POSITIVAS': 'E_F6', 'POSITIVE EMOTIONS': 'E_F6',
+
+            // Amabilidade (A)
+            'CONFIANCA': 'A_F1', 'CONFIANÇA': 'A_F1', 'TRUST': 'A_F1',
+            'FRANQUEZA': 'A_F2', 'STRAIGHTFORWARDNESS': 'A_F2',
+            'ALTRUISMO': 'A_F3', 'ALTRUÍSMO': 'A_F3', 'ALTRUISM': 'A_F3',
+            'COMPLACENCIA': 'A_F4', 'COMPLACÊNCIA': 'A_F4', 'COMPLIANCE': 'A_F4',
+            'MODESTIA': 'A_F5', 'MODÉSTIA': 'A_F5', 'MODESTY': 'A_F5',
+            'SENSIBILIDADE': 'A_F6', 'TENDER-MINDEDNESS': 'A_F6',
+
+            // Estabilidade / Neuroticismo (N)
+            'ANSIEDADE': 'N_F1', 'ANXIETY': 'N_F1',
+            'HOSTILIDADE': 'N_F2', 'ANGRY HOSTILITY': 'N_F2',
+            'DEPRESSAO': 'N_F3', 'DEPRESSÃO': 'N_F3', 'DEPRESSION': 'N_F3',
+            'EMBARACO': 'N_F4', 'EMBARAÇO': 'N_F4', 'SELF-CONSCIOUSNESS': 'N_F4',
+            'IMPULSIVIDADE': 'N_F5', 'IMPULSIVENESS': 'N_F5',
+            'VULNERABILIDADE': 'N_F6', 'VULNERABILITY': 'N_F6'
+        };
+
+        // --- VARREDURA DE FACETAS ---
+        Object.values(normalized).forEach((val: any) => {
+            if (val && typeof val === 'object' && Array.isArray(val.facets)) {
+                val.facets.forEach((f: any) => {
+                    const key = (f.facetKey || f.facetName || '').toUpperCase();
+                    const score = f.score ?? f.normalizedScore ?? f.rawScore;
+                    const sysCode = FACET_CODES[key];
+
+                    // Se achou código mapeado, salva. Se não, salva a chave original upper.
+                    if (sysCode) {
+                        if (normalized[sysCode] === undefined) normalized[sysCode] = score;
+                    } else if (key) {
+                        if (normalized[key] === undefined) normalized[key] = score;
+                    }
+                });
+            }
+        });
 
         const safeParse = (val: any) => {
             if (val === null || val === undefined) return 0;
@@ -292,7 +350,9 @@ export class TalentIntelligenceService {
             C: safeParse(normalized.C || normalized.CONSCIENTIOUSNESS || normalized.CONSCIENCIOSIDADE || normalized.ESTRUTURA),
             E: safeParse(normalized.E || normalized.EXTRAVERSION || normalized.EXTROVERSAO || normalized.EXTROVERSÃO),
             A: safeParse(normalized.A || normalized.AGREEABLENESS || normalized.AMABILIDADE),
-            N: safeParse(normalized.N || normalized.NEUROTICISM || normalized.STABILITY || normalized.ESTABILIDADE || normalized.ESTABILIDADE_EMOCIONAL)
+            N: safeParse(normalized.N || normalized.NEUROTICISM || normalized.STABILITY || normalized.ESTABILIDADE || normalized.ESTABILIDADE_EMOCIONAL),
+            // IMPORTANTE: Espalhar todas as facetas encontradas para retornar no raw
+            ...normalized
         };
 
         // DEBUG
