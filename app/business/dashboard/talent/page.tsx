@@ -24,7 +24,7 @@ export default function TalentIntelligenceDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {/* Card 1: Perfis de Cargo */}
-                <Link href="/business/dashboard/talent/profiles" className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-100/50 transition-all duration-300 relative overflow-hidden">
+                <Link href="/business/dashboard/talent/jobs/create" className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-100/50 transition-all duration-300 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
                     <div className="relative">
@@ -106,7 +106,7 @@ export default function TalentIntelligenceDashboard() {
                             <br />Crie seu primeiro Perfil de Cargo em menos de 2 minutos.
                         </p>
                     </div>
-                    <Link href="/business/dashboard/talent/profiles" className="whitespace-nowrap flex items-center px-8 py-4 bg-white text-purple-900 font-bold rounded-xl hover:bg-purple-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <Link href="/business/dashboard/talent/jobs/create" className="whitespace-nowrap flex items-center px-8 py-4 bg-white text-purple-900 font-bold rounded-xl hover:bg-purple-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                         <Sparkles size={20} className="mr-2 text-purple-600" />
                         Criar Perfil de Cargo
                     </Link>
