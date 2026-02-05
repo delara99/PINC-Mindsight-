@@ -229,35 +229,32 @@ export class TalentIntelligenceService {
         return this.extractScores(assignment.result);
     }
 
-    private extractScores(result: any): Record<string, number> {
+    public extractScores(result: any): Record<string, number> {
         const scores = result.scores || {};
-        // Tenta mapear tanto siglas quanto nomes completos
-        const raw = {
+        // 1. Mapeamento robusto (Siglas e Nomes Completos)
+        const raw: any = {
             O: Number(scores.O || scores.OPENNESS || 0),
             C: Number(scores.C || scores.CONSCIENTIOUSNESS || 0),
             E: Number(scores.E || scores.EXTRAVERSION || 0),
             A: Number(scores.A || scores.AGREEABLENESS || 0),
-            N: Number(scores.N || scores.NEUROTICISM || 0)
+            N: Number(scores.N || scores.NEUROTICISM || scores.STABILITY || 0)
         };
 
-        // Auto-detectar escala Likert (1-5) e normalizar para Percentual (0-100)
-        // Se o maior valor for <= 6, assumimos que é escala bruta e precisamos converter.
+        // 2. Normalização de Escala (1-5 para 0-100)
         const maxVal = Math.max(raw.O, raw.C, raw.E, raw.A, raw.N);
 
         if (maxVal > 0 && maxVal <= 6) {
             Object.keys(raw).forEach(key => {
-                // Converter 1-5 para 0-100
-                // (val - 1) / 4 * 100
-                // Clamp entre 1 e 5 antes
                 const val = Math.max(1, Math.min(5, raw[key]));
                 raw[key] = Math.round(((val - 1) / 4) * 100);
             });
         }
 
-        // Se por acaso vier 0 (valor default), manter ou definir padrão? 50 é neutro seguro.
-        // Mas se validamos acima > 0, ok. Se maxVal for 0, retorna tudo 0 ou 50?
+        // 3. Fallback para evitar zeros absolutos se não houver dados
+        // Mantemos 50 (neutro) se tudo for zero, ou 0? 
+        // Para consistência, se não tem dado, é 0.
         if (maxVal === 0) {
-            return { O: 50, C: 50, E: 50, A: 50, N: 50 };
+            return { O: 0, C: 0, E: 0, A: 0, N: 0 };
         }
 
         return raw;
