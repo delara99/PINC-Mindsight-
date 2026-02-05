@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TalentIntelligenceService } from './talent-intelligence.service';
 
 @Injectable()
 export class JobProfileService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private intelligenceService: TalentIntelligenceService
+    ) { }
 
     async createProfile(tenantId: String, data: any) {
         return this.prisma.jobProfile.create({
@@ -38,5 +42,122 @@ export class JobProfileService {
         return this.prisma.jobProfile.delete({
             where: { id }
         });
+    }
+
+    async getProfileAnalysis(tenantId: string, profileId: string) {
+        // 1. Buscar o Perfil
+        const profile = await this.prisma.jobProfile.findFirst({
+            where: { id: profileId, tenantId }
+        });
+
+        if (!profile) throw new Error('Profile not found');
+
+        // 2. Buscar todos os colaboradores do tenant com assessments concluídos
+        const employees = await this.prisma.user.findMany({
+            where: {
+                tenantId,
+                role: 'MEMBER', // Apenas colaboradores
+                assignments: {
+                    some: {
+                        status: 'COMPLETED',
+                        assessment: { type: 'BIG_FIVE' }
+                    }
+                }
+            },
+            include: {
+                assignments: {
+                    where: { status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
+                    orderBy: { completedAt: 'desc' },
+                    take: 1,
+                    include: { result: true }
+                }
+            }
+        });
+
+        // 3. Calcular Fit para cada um
+        const analysisResults = [];
+
+        for (const emp of employees) {
+            const assignment = emp.assignments[0];
+            if (!assignment) continue;
+
+            // Usar a lógica centralizada do TalentIntelligenceService (se possível)
+            // Ou implementar cálculo rápido aqui para evitar overhead de DB
+
+            // Simulação rápida para performance (o service original salva no DB, aqui queremos apenas visualizar)
+            const fit = await this.calculateFitInMemory(assignment, profile);
+
+            analysisResults.push({
+                user: {
+                    id: emp.id,
+                    name: emp.name,
+                    email: emp.email,
+                    avatar: null // Futuro
+                },
+                fit: fit.overall,
+                dimensions: fit.dimensions,
+                strengths: fit.strengths,
+                gaps: fit.gaps
+            });
+        }
+
+        // 4. Ordenar por maior Fit
+        return {
+            profile,
+            candidates: analysisResults.sort((a, b) => b.fit - a.fit)
+        };
+    }
+
+    private async calculateFitInMemory(assignment: any, profile: any) {
+        const result = assignment.result;
+        if (!result || !result.scores) return { overall: 0, dimensions: {}, strengths: [], gaps: [] };
+
+        const scores = result.scores; // Assumindo formato { O: 60, ... }
+
+        // Normalização de scores do usuário (garantir 0-100)
+        const userScores = {
+            O: Number(scores.O || 0),
+            C: Number(scores.C || 0),
+            E: Number(scores.E || 0),
+            A: Number(scores.A || 0),
+            N: Number(scores.N || 0)
+        };
+
+        // Ideal Scores
+        const ideal = profile.idealScores as any; // { O: 80, ... }
+
+        const dims = ['O', 'C', 'E', 'A', 'N'];
+        let totalDiff = 0;
+        const dimensionFits: any = {};
+        const strengths = [];
+        const gaps = [];
+
+        for (const d of dims) {
+            const uVal = userScores[d] || 50;
+            const iVal = ideal[d] || 50;
+            const diff = Math.abs(uVal - iVal);
+
+            // Score de 0 a 100 para essa dimensão
+            // Se diff = 0, fit = 100. Se diff = 50, fit = 25.
+            const dimFit = Math.max(0, 100 - (diff * 1.5));
+            dimensionFits[d] = Math.round(dimFit);
+
+            totalDiff += diff;
+
+            if (dimFit > 85) strengths.push(d);
+            if (dimFit < 60) gaps.push(d);
+        }
+
+        // Fit Geral
+        // Média simples das diferenças ponderada invertida
+        const avgDiff = totalDiff / 5;
+        const overallFit = Math.max(0, 100 - (avgDiff * 1.2)); // Fator 1.2 penaliza desvios grandes
+
+        return {
+            overall: Math.round(overallFit),
+            dimensions: dimensionFits,
+            strengths,
+            gaps
+        };
     }
 }

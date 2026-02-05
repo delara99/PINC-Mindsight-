@@ -22,6 +22,11 @@ export class JobProfileController {
         return this.jobProfileService.getProfile(id);
     }
 
+    @Get(':id/analysis')
+    async getAnalysis(@Request() req, @Param('id') id: string) {
+        return this.jobProfileService.getProfileAnalysis(req.user.tenantId, id);
+    }
+
     @Put(':id')
     async update(@Param('id') id: string, @Body() data: any) {
         return this.jobProfileService.updateProfile(id, data);
