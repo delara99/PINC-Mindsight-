@@ -329,7 +329,7 @@ export class TalentIntelligenceService {
                 ...emp,
                 fit: analysis ? analysis.overallFit : 0,
                 hasAnalysis: !!analysis,
-                trend: Math.random() > 0.5 ? 'up' : 'down' // Trend precisa de histórico (snapshots), MVP mockado
+                trend: 'neutral' // Sem histórico real ainda, então neutro. Nada de dados inventados.
             };
         });
 
@@ -342,7 +342,7 @@ export class TalentIntelligenceService {
         return {
             metrics: {
                 avgFit,
-                avgFitTrend: '+0%', // Placeholder: requer snapshots históricos
+                avgFitTrend: '0%', // Requer snapshots históricos reais
                 assessmentsCount: activeFits.length,
                 topPerformers: activeFits.filter(p => p.fit >= 80).length,
                 needsAttention: activeFits.filter(p => p.fit < 50).length
