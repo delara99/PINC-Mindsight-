@@ -493,25 +493,25 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white border-4 border-slate-900 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 p-6 border-b-4 border-slate-900">
-                    <h2 className="text-3xl font-black text-white">Simulador de Equipe</h2>
-                    <p className="text-white/90 mt-1">Analise o impacto de {candidate.user.name} em uma equipe</p>
+                <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-500 p-6 rounded-t-2xl">
+                    <h2 className="text-2xl font-bold text-white">Simulador de Equipe</h2>
+                    <p className="text-purple-100 text-sm mt-1">Analise o impacto de {candidate.user.name} em uma equipe</p>
                 </div>
 
                 <div className="p-6 space-y-6">
                     {/* Seleção de Equipe */}
                     {!simulation && (
                         <div>
-                            <label className="block text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">
+                            <label className="block text-sm font-medium text-slate-700 mb-3">
                                 Selecione uma Equipe
                             </label>
                             <select
                                 value={selectedTeam}
                                 onChange={(e) => setSelectedTeam(e.target.value)}
-                                className="w-full px-4 py-3 border-2 border-slate-900 font-bold focus:outline-none focus:border-orange-500"
+                                className="w-full px-4 py-3 border border-slate-200 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                             >
                                 <option value="">-- Escolha um time --</option>
                                 {teams.map(t => (
@@ -522,14 +522,14 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
                             <div className="flex gap-4 mt-6">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 px-6 py-3 border-2 border-slate-900 font-bold hover:bg-slate-100 transition-colors"
+                                    className="flex-1 px-6 py-3 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={runSimulation}
                                     disabled={!selectedTeam || loading}
-                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-purple-200 flex items-center justify-center gap-2"
                                 >
                                     {loading ? (
                                         <>
@@ -551,22 +551,22 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
                     {simulation && (
                         <div className="space-y-6">
                             {/* Recomendação Final */}
-                            <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-4 border-slate-900 p-6 text-white">
+                            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-6 text-white shadow-lg">
                                 <div className="text-sm font-bold uppercase tracking-wider opacity-75 mb-2">Recomendação Final</div>
-                                <div className="text-2xl font-black">{simulation.analysis.finalRecommendation}</div>
+                                <div className="text-2xl font-bold">{simulation.analysis.finalRecommendation}</div>
                             </div>
 
                             {/* Grid de Insights */}
                             <div className="grid md:grid-cols-2 gap-6">
                                 {/* Sinergias */}
-                                <div className="border-4 border-green-600 p-6">
-                                    <h3 className="text-lg font-black text-green-600 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                <div className="border-2 border-green-500 rounded-xl p-6 bg-green-50/50">
+                                    <h3 className="text-lg font-bold text-green-600 mb-4 flex items-center gap-2">
                                         <CheckCircle className="w-5 h-5" />
                                         Sinergias ({simulation.analysis.synergies.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {simulation.analysis.synergies.length > 0 ? simulation.analysis.synergies.map((s: any, i: number) => (
-                                            <div key={i} className="bg-green-50 border-l-4 border-green-600 p-3">
+                                            <div key={i} className="bg-white border-l-4 border-green-500 p-3 rounded-r">
                                                 <div className="font-bold text-green-900 text-sm">{s.label}</div>
                                                 <div className="text-xs text-green-700 mt-1">{s.message}</div>
                                             </div>
@@ -575,14 +575,14 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
                                 </div>
 
                                 {/* Riscos */}
-                                <div className="border-4 border-red-600 p-6">
-                                    <h3 className="text-lg font-black text-red-600 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                <div className="border-2 border-red-500 rounded-xl p-6 bg-red-50/50">
+                                    <h3 className="text-lg font-bold text-red-600 mb-4 flex items-center gap-2">
                                         <AlertCircle className="w-5 h-5" />
                                         Riscos ({simulation.analysis.risks.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {simulation.analysis.risks.length > 0 ? simulation.analysis.risks.map((r: any, i: number) => (
-                                            <div key={i} className="bg-red-50 border-l-4 border-red-600 p-3">
+                                            <div key={i} className="bg-white border-l-4 border-red-500 p-3 rounded-r">
                                                 <div className="font-bold text-red-900 text-sm">{r.label}</div>
                                                 <div className="text-xs text-red-700 mt-1">{r.message}</div>
                                             </div>
@@ -593,24 +593,24 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
 
                             {/* Alerta de Gestor */}
                             {simulation.analysis.managerConflict && (
-                                <div className="bg-orange-50 border-4 border-orange-500 p-6">
-                                    <h3 className="text-lg font-black text-orange-600 mb-2 uppercase tracking-wider">
+                                <div className="bg-orange-50 border-2 border-orange-500 rounded-xl p-6">
+                                    <h3 className="text-lg font-bold text-orange-600 mb-2">
                                         ⚠️ Atenção: Conflito com Gestor
                                     </h3>
                                     <p className="text-sm text-orange-800">{simulation.analysis.managerConflict.message}</p>
-                                    <span className="inline-block mt-2 px-3 py-1 bg-orange-600 text-white text-xs font-bold uppercase">
+                                    <span className="inline-block mt-2 px-3 py-1 bg-orange-600 text-white text-xs font-bold rounded-full">
                                         Severidade: {simulation.analysis.managerConflict.severity}
                                     </span>
                                 </div>
                             )}
 
                             {/* Impacto na Diversidade */}
-                            <div className="border-4 border-slate-900 p-6">
-                                <h3 className="text-lg font-black text-slate-900 mb-3 uppercase tracking-wider">
+                            <div className="border-2 border-purple-200 rounded-xl p-6 bg-purple-50/50">
+                                <h3 className="text-lg font-bold text-slate-900 mb-3">
                                     Impacto na Diversidade
                                 </h3>
                                 <div className="flex items-center gap-4">
-                                    <div className="text-4xl font-black text-orange-600">
+                                    <div className="text-4xl font-black text-purple-600">
                                         {simulation.analysis.diversityImpact.current}
                                     </div>
                                     <div>
@@ -621,13 +621,13 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
                             </div>
 
                             {/* Recomendações */}
-                            <div className="border-4 border-slate-900 p-6">
-                                <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-wider">
+                            <div className="border-2 border-slate-200 rounded-xl p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4">
                                     Recomendações Estratégicas
                                 </h3>
                                 <div className="space-y-2">
                                     {simulation.analysis.recommendations.map((rec: string, i: number) => (
-                                        <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 border-l-4 border-orange-500">
+                                        <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 border-l-4 border-purple-500 rounded-r">
                                             <span className="text-lg">{rec.startsWith('✅') ? '✅' : '⚠️'}</span>
                                             <p className="text-sm text-slate-700 font-medium">{rec.replace(/^[✅⚠️]\s*/, '')}</p>
                                         </div>
@@ -639,13 +639,13 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => setSimulation(null)}
-                                    className="flex-1 px-6 py-3 border-2 border-slate-900 font-bold hover:bg-slate-100 transition-colors"
+                                    className="flex-1 px-6 py-3 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors"
                                 >
                                     Nova Simulação
                                 </button>
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:shadow-lg transition-all"
+                                    className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all shadow-lg hover:shadow-purple-200"
                                 >
                                     Fechar
                                 </button>
