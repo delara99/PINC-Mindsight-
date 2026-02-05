@@ -130,13 +130,16 @@ export class JobProfileService {
         const gaps = [];
 
         for (const d of dims) {
-            // CORREÇÃO CRÍTICA: Aceitar 0 como valor válido. Antes (userScores[d] || 50) transformava 0 em 50.
+            // CORREÇÃO CRÍTICA: Aceitar 0 como valor válido
             const uVal = userScores[d] !== undefined && userScores[d] !== null ? userScores[d] : 50;
-            const iVal = ideal[d] || 50;
+            const iVal = ideal[d] ?? 50; // Usar nullish coalesce para garantir
             const diff = Math.abs(uVal - iVal);
 
+            // DEBUG EXTREMO (Remover depois)
+            console.log(`[FitCalc DEBUG] User: ${uVal} | Ideal: ${iVal} | Diff: ${diff} | Dim: ${d}`);
+
             // Score de 0 a 100 para essa dimensão
-            const dimFit = Math.max(0, 100 - (diff * 1.5));
+            const dimFit = Math.max(0, 100 - (diff * 1.2)); // Usando fator 1.2 conforme ajuste recente
             dimensionFits[d] = Math.round(dimFit);
 
             totalDiff += diff;

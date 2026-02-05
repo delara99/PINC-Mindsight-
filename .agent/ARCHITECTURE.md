@@ -19,6 +19,81 @@ Toda e qualquer funcionalidade nova (Fit Cultural, Análise de Equipe, PDI, Dash
 
 ---
 
+## 🧠 TALKINGTO ANALYTICS ENGINE (CORE)
+
+O **TalkingTo** é o "cérebro" psicométrico da plataforma. Sua arquitetura é sustentada por três pilares fundamentais que devem ser respeitados rigorosamente:
+
+### 1. Estrutura do Modelo Psicométrico
+A base científica da ferramenta, definida no **Motor PINC**.
+- **Modelo:** Big Five (Os 5 Grandes Fatores - OCEAN).
+- **Dimensões:**
+    - **O (Openness):** Abertura à Experiência / Mentalidade.
+    - **C (Conscientiousness):** Conscienciosidade / Estrutura de Trabalho.
+    - **E (Extraversion):** Extroversão / Energia Social.
+    - **A (Agreeableness):** Amabilidade / Estilo Relacional.
+    - **N (Neuroticismo):** Estabilidade Emocional (Resiliência).
+- **Facetas (Granularidade):** Cada grande fator pode ser quebrado em sub-traços (ex: "Imaginação" dentro de Abertura) para análises profundas.
+
+### 2. Motor de Cálculos (Math Engine & Configs)
+Responsável pela precisão matemática. As regras de negócio "vivem" no banco de dados e são geridas pelo `BigFiveConfigService`.
+
+#### A. Estrutura de Classificação (Ranges)
+Os scores são classificados dinamicamente com base nos limites definidos na tabela `BigFiveConfig`:
+- **Muito Baixo:** 0 a `veryLowMax` (Default: 20)
+- **Baixo:** `veryLowMax` a `lowMax` (Default: 40)
+- **Médio:** `lowMax` a `averageMax` (Default: 60)
+- **Alto:** `averageMax` a `highMax` (Default: 80)
+- **Muito Alto:** Acima de `highMax`.
+
+#### B. Fórmulas de Cálculo
+1.  **Normalização de Input:**
+    - Inputs `1-5` (escala Likert) são convertidos para `0-100`:
+    - `Score = ((Valor - 1) / 4) * 100` -> Ex: 3 vira 50.
+2.  **Cálculo de Fit (Compatibilidade):**
+    - `Diff = |ScoreCandidato - ScoreIdeal|`
+    - `FitDimensão = Max(0, 100 - (Diff * 1.5))`
+    - `FitGeral = Média(FitDimensões)`
+
+#### C. Integridade e Sincronização
+O sistema possui um mecanismo de **Sincronização Automática** (ver `BigFiveConfigService`) que garante que textos criados em ambiente de homologação sejam replicados para produção (configs `b8d1...` e `ae20...`), mantendo consistência total.
+
+### 3. Motor de Regras Semânticas (Semantic Engine)
+O tradutor que transforma números em narrativas humanas.
+
+- **Menu de Gestão:** "Gerenciar TalkingTo > Motor PINC"
+- **Estrutura de Dados:**
+    - `Traits` (5 Fatores)
+    - `Facets` (30 Sub-traços, ex: "Gregariedade" em "Extroversão")
+    - `InterpretativeTexts` (Textos condicionais por Range e Categoria)
+
+#### Lógica de Cruzamento (Combinatória)
+O sistema não analisa apenas dimensões isoladas.
+- **Arquétipos:** Define perfis combinando os 2 fatores mais fortes.
+    - Ex: Alta Abertura + Alta Conscienciosidade = "Arquiteto Inovador".
+- **Recomendações:** Gera dicas de PDI baseadas na intersecção de gaps.
+
+---
+
+---
+
+### 4. Fluxos de Dados (Data Flow)
+
+#### A. Fluxo B2C (O Colaborador)
+`Respostas` → **Motor de Cálculos** → `Scores (0-100)` → **Motor Semântico** → `Relatório de Perfil (Arquétipo)`
+
+#### B. Fluxo B2B (A Empresa)
+`Vaga (Perfil Ideal)` + `Candidato (Scores Reais)` → **Motor de Cálculos (Fit)** → `Gráfico de Compatibilidade`
+
+### 5. Princípio de Dinamismo Absoluto (101% Dinâmico)
+O sistema foi arquitetado para que **NENHUMA** regra de negócio psicométrica fique refém de deploy ou código "chumbado".
+- **Autonomia Total do Admin:** Através do painel **"Gerenciar TalkingTo > Motor PINC"**, o administrador pode alterar em tempo real:
+    - **Ranges de Classificação:** (Ex: decidir que "Alto" começa em 75 e não 80).
+    - **Pesos:** (Ex: Aumentar o impacto de "Disciplina" dentro de Conscienciosidade).
+    - **Textos e Narrativas:** (Ajuste fino de copy sem TI).
+- **Código como Executor:** O backend (`TalentIntelligenceService`) é apenas um **interpretador agnóstico**. Ele não "sabe" o que é alto ou baixo; ele pergunta ao banco de dados "qual é a regra vigente agora?" e aplica.
+
+---
+
 ## 📋 Overview
 
 Antigravity Kit is a modular system consisting of:
