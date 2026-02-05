@@ -211,7 +211,16 @@ export default function JobProfileEditor({ tenantId, onSuccess }: JobProfileEdit
     );
 }
 
-function SliderControl({ label, description, value, onChange, color, bg }: any) {
+interface SliderControlProps {
+    label: string;
+    description: string;
+    value: number;
+    onChange: (val: number) => void;
+    color: string;
+    bg: string;
+}
+
+function SliderControl({ label, description, value, onChange, color, bg }: SliderControlProps) {
     return (
         <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors">
             <div className="flex justify-between items-center mb-2">
