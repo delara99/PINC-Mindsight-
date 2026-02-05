@@ -179,4 +179,177 @@ export class TeamService {
             }
         };
     }
+
+    // --- SIMULADOR DE IMPACTO ---
+    async simulateCandidate(teamId: string, candidateId: string) {
+        // 1. Buscar análise atual do time
+        const teamAnalysis = await this.getAnalysis(teamId);
+        if (!teamAnalysis.stats) {
+            throw new Error('Team has no valid data for simulation');
+        }
+
+        const team = teamAnalysis.team;
+        const teamAvg = teamAnalysis.stats.avgScores;
+
+        // 2. Buscar dados do candidato
+        const candidate = await this.prisma.user.findUnique({
+            where: { id: candidateId },
+            include: {
+                assignments: {
+                    where: { status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
+                    orderBy: { completedAt: 'desc' },
+                    take: 1,
+                    include: { result: true }
+                }
+            }
+        });
+
+        if (!candidate || !candidate.assignments[0]) {
+            throw new Error('Candidate has no completed assessment');
+        }
+
+        const candidateScores = this.intelligence.extractScores(candidate.assignments[0].result);
+
+        // 3. Análise de Complementariedade e Conflito
+        const dimensions = ['O', 'C', 'E', 'A', 'N'];
+        const dimensionLabels: Record<string, string> = {
+            O: 'Abertura',
+            C: 'Conscienciosidade',
+            E: 'Extroversão',
+            A: 'Amabilidade',
+            N: 'Estabilidade'
+        };
+
+        const synergies: any[] = [];
+        const risks: any[] = [];
+        const recommendations: string[] = [];
+
+        dimensions.forEach(dim => {
+            const teamScore = teamAvg[dim] || 50;
+            const candScore = candidateScores[dim] || 50;
+            const diff = candScore - teamScore;
+
+            // COMPLEMENTARIEDADE: Candidato preenche lacuna
+            if (teamScore < 45 && candScore > 65) {
+                synergies.push({
+                    dimension: dim,
+                    label: dimensionLabels[dim],
+                    type: 'complement',
+                    message: `Candidato eleva ${dimensionLabels[dim]} (Time: ${teamScore} → +${Math.abs(diff)} pontos)`,
+                    impact: 'positive'
+                });
+                recommendations.push(`✅ Forte complemento em ${dimensionLabels[dim]} - Preenche lacuna crítica do time`);
+            }
+
+            // RISCO: Candidato muito diferente (pode gerar atrito ou isolamento)
+            if (Math.abs(diff) > 30) {
+                risks.push({
+                    dimension: dim,
+                    label: dimensionLabels[dim],
+                    type: 'mismatch',
+                    message: `Grande diferença em ${dimensionLabels[dim]} (Candidato: ${candScore} vs Time: ${teamScore})`,
+                    impact: 'warning'
+                });
+                recommendations.push(`⚠️ Atenção: Diferença significativa em ${dimensionLabels[dim]} - Pode exigir adaptação cultural`);
+            }
+
+            // SINERGIA: Candidato reforça ponto forte
+            if (teamScore > 65 && candScore > 65) {
+                synergies.push({
+                    dimension: dim,
+                    label: dimensionLabels[dim],
+                    type: 'reinforce',
+                    message: `Reforça ponto forte do time em ${dimensionLabels[dim]}`,
+                    impact: 'neutral'
+                });
+            }
+        });
+
+        // 4. Análise de Conflito com Gestor (se houver)
+        let managerConflict = null;
+        if (team.managerId) {
+            const manager = await this.prisma.user.findUnique({
+                where: { id: team.managerId },
+                include: {
+                    assignments: {
+                        where: { status: 'COMPLETED', assessment: { type: 'BIG_FIVE' } },
+                        orderBy: { completedAt: 'desc' },
+                        take: 1,
+                        include: { result: true }
+                    }
+                }
+            });
+
+            if (manager && manager.assignments[0]) {
+                const managerScores = this.intelligence.extractScores(manager.assignments[0].result);
+
+                // Conflito em Extroversão (2 muito altos = competição por atenção)
+                if (managerScores.E > 70 && candidateScores.E > 70) {
+                    managerConflict = {
+                        type: 'dominance',
+                        message: 'Ambos têm alta Extroversão - Risco de competição por liderança',
+                        severity: 'medium'
+                    };
+                }
+
+                // Conflito em Amabilidade (gestor baixo + candidato baixo = atrito)
+                if (managerScores.A < 40 && candidateScores.A < 40) {
+                    managerConflict = {
+                        type: 'friction',
+                        message: 'Baixa Amabilidade em ambos - Risco de conflitos diretos',
+                        severity: 'high'
+                    };
+                }
+            }
+        }
+
+        // 5. Impacto na Diversidade
+        const currentDiversity = teamAnalysis.stats.diversityScore;
+        // Simulação simplificada: se candidato é muito diferente, aumenta diversidade
+        const avgDiff = dimensions.reduce((sum, dim) => {
+            return sum + Math.abs((candidateScores[dim] || 50) - (teamAvg[dim] || 50));
+        }, 0) / 5;
+
+        const diversityImpact = avgDiff > 20 ? 'increase' : avgDiff < 10 ? 'decrease' : 'neutral';
+
+        // 6. Recomendação Final
+        let finalRecommendation = '';
+        if (synergies.filter(s => s.type === 'complement').length >= 2) {
+            finalRecommendation = '🎯 ALTAMENTE RECOMENDADO - Complementa bem o perfil do time';
+        } else if (risks.length >= 3) {
+            finalRecommendation = '⚠️ AVALIAR COM CAUTELA - Perfil muito divergente pode exigir gestão ativa';
+        } else {
+            finalRecommendation = '✅ COMPATÍVEL - Boa adição ao time com ajustes mínimos';
+        }
+
+        return {
+            candidate: {
+                id: candidate.id,
+                name: candidate.name,
+                email: candidate.email,
+                scores: candidateScores
+            },
+            team: {
+                id: team.id,
+                name: team.name,
+                avgScores: teamAvg
+            },
+            analysis: {
+                synergies,
+                risks,
+                managerConflict,
+                diversityImpact: {
+                    current: currentDiversity,
+                    direction: diversityImpact,
+                    message: diversityImpact === 'increase'
+                        ? '📈 Aumenta diversidade cognitiva do time'
+                        : diversityImpact === 'decrease'
+                            ? '📉 Perfil similar ao time atual'
+                            : '➡️ Impacto neutro na diversidade'
+                },
+                recommendations,
+                finalRecommendation
+            }
+        };
+    }
 }

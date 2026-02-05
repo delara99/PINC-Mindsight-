@@ -32,6 +32,11 @@ export class TeamController {
         return this.teamService.getAnalysis(id);
     }
 
+    @Post(':id/simulate')
+    simulateCandidate(@Param('id') id: string, @Body() data: { candidateId: string }) {
+        return this.teamService.simulateCandidate(id, data.candidateId);
+    }
+
     @Patch(':id')
     update(@Param('id') id: string, @Body() data: any) {
         return this.teamService.update(id, data);

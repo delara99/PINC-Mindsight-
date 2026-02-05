@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
-import { ArrowLeft, Target, TrendingUp, AlertCircle, CheckCircle, User, Search } from 'lucide-react';
+import { ArrowLeft, Target, TrendingUp, AlertCircle, CheckCircle, User, Search, Users, Zap } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip } from 'recharts';
 
 export default function JobProfileAnalysisPage({ params }: { params: { id: string } }) {
@@ -16,6 +16,10 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'high' | 'medium' | 'low'>('all');
     const [sortBy, setSortBy] = useState<'fit' | 'date' | 'name'>('fit');
+
+    // ESTADO DO SIMULADOR
+    const [showSimulator, setShowSimulator] = useState(false);
+    const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -285,6 +289,18 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                                                 )) : <span className="text-xs text-slate-400">Sem gaps críticos</span>}
                                             </div>
                                         </div>
+
+                                        {/* Botão Simulador de Equipe */}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedCandidate(cand);
+                                                setShowSimulator(true);
+                                            }}
+                                            className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2 group"
+                                        >
+                                            <Zap className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                                            Simular com Equipe
+                                        </button>
                                     </div>
 
                                 </div>
@@ -293,6 +309,17 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                     })
                 )}
             </div>
+
+            {/* Modal de Simulação */}
+            {showSimulator && selectedCandidate && (
+                <TeamSimulationModal
+                    candidate={selectedCandidate}
+                    onClose={() => {
+                        setShowSimulator(false);
+                        setSelectedCandidate(null);
+                    }}
+                />
+            )}
         </div>
     );
 }
@@ -421,5 +448,206 @@ function FilterPill({ label, count, active, color = 'slate', onClick }: any) {
                 {count}
             </span>
         </button>
+    );
+}
+
+function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: () => void }) {
+    const [teams, setTeams] = useState<any[]>([]);
+    const [selectedTeam, setSelectedTeam] = useState<string>('');
+    const [simulation, setSimulation] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        loadTeams();
+    }, []);
+
+    const loadTeams = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/business/team`);
+            setTeams(res.data);
+        } catch (error) {
+            console.error('Failed to load teams:', error);
+        }
+    };
+
+    const runSimulation = async () => {
+        if (!selectedTeam) return;
+        setLoading(true);
+        try {
+            const res = await axios.post(`${API_URL}/business/team/${selectedTeam}/simulate`, {
+                candidateId: candidate.user.id
+            });
+            setSimulation(res.data);
+        } catch (error) {
+            console.error('Simulation failed:', error);
+            alert('Erro ao simular. Verifique se o time e candidato têm dados válidos.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white border-4 border-slate-900 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 p-6 border-b-4 border-slate-900">
+                    <h2 className="text-3xl font-black text-white">Simulador de Equipe</h2>
+                    <p className="text-white/90 mt-1">Analise o impacto de {candidate.user.name} em uma equipe</p>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    {/* Seleção de Equipe */}
+                    {!simulation && (
+                        <div>
+                            <label className="block text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">
+                                Selecione uma Equipe
+                            </label>
+                            <select
+                                value={selectedTeam}
+                                onChange={(e) => setSelectedTeam(e.target.value)}
+                                className="w-full px-4 py-3 border-2 border-slate-900 font-bold focus:outline-none focus:border-orange-500"
+                            >
+                                <option value="">-- Escolha um time --</option>
+                                {teams.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name} ({t.memberCount} membros)</option>
+                                ))}
+                            </select>
+
+                            <div className="flex gap-4 mt-6">
+                                <button
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 border-2 border-slate-900 font-bold hover:bg-slate-100 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={runSimulation}
+                                    disabled={!selectedTeam || loading}
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Simulando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Zap className="w-5 h-5" />
+                                            Simular
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Resultados da Simulação */}
+                    {simulation && (
+                        <div className="space-y-6">
+                            {/* Recomendação Final */}
+                            <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-4 border-slate-900 p-6 text-white">
+                                <div className="text-sm font-bold uppercase tracking-wider opacity-75 mb-2">Recomendação Final</div>
+                                <div className="text-2xl font-black">{simulation.analysis.finalRecommendation}</div>
+                            </div>
+
+                            {/* Grid de Insights */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Sinergias */}
+                                <div className="border-4 border-green-600 p-6">
+                                    <h3 className="text-lg font-black text-green-600 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                        <CheckCircle className="w-5 h-5" />
+                                        Sinergias ({simulation.analysis.synergies.length})
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {simulation.analysis.synergies.length > 0 ? simulation.analysis.synergies.map((s: any, i: number) => (
+                                            <div key={i} className="bg-green-50 border-l-4 border-green-600 p-3">
+                                                <div className="font-bold text-green-900 text-sm">{s.label}</div>
+                                                <div className="text-xs text-green-700 mt-1">{s.message}</div>
+                                            </div>
+                                        )) : <p className="text-sm text-slate-500">Nenhuma sinergia forte identificada</p>}
+                                    </div>
+                                </div>
+
+                                {/* Riscos */}
+                                <div className="border-4 border-red-600 p-6">
+                                    <h3 className="text-lg font-black text-red-600 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                        <AlertCircle className="w-5 h-5" />
+                                        Riscos ({simulation.analysis.risks.length})
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {simulation.analysis.risks.length > 0 ? simulation.analysis.risks.map((r: any, i: number) => (
+                                            <div key={i} className="bg-red-50 border-l-4 border-red-600 p-3">
+                                                <div className="font-bold text-red-900 text-sm">{r.label}</div>
+                                                <div className="text-xs text-red-700 mt-1">{r.message}</div>
+                                            </div>
+                                        )) : <p className="text-sm text-slate-500">Nenhum risco crítico identificado</p>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Alerta de Gestor */}
+                            {simulation.analysis.managerConflict && (
+                                <div className="bg-orange-50 border-4 border-orange-500 p-6">
+                                    <h3 className="text-lg font-black text-orange-600 mb-2 uppercase tracking-wider">
+                                        ⚠️ Atenção: Conflito com Gestor
+                                    </h3>
+                                    <p className="text-sm text-orange-800">{simulation.analysis.managerConflict.message}</p>
+                                    <span className="inline-block mt-2 px-3 py-1 bg-orange-600 text-white text-xs font-bold uppercase">
+                                        Severidade: {simulation.analysis.managerConflict.severity}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Impacto na Diversidade */}
+                            <div className="border-4 border-slate-900 p-6">
+                                <h3 className="text-lg font-black text-slate-900 mb-3 uppercase tracking-wider">
+                                    Impacto na Diversidade
+                                </h3>
+                                <div className="flex items-center gap-4">
+                                    <div className="text-4xl font-black text-orange-600">
+                                        {simulation.analysis.diversityImpact.current}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-slate-700">{simulation.analysis.diversityImpact.message}</div>
+                                        <div className="text-xs text-slate-500 mt-1">Score atual de diversidade do time</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Recomendações */}
+                            <div className="border-4 border-slate-900 p-6">
+                                <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-wider">
+                                    Recomendações Estratégicas
+                                </h3>
+                                <div className="space-y-2">
+                                    {simulation.analysis.recommendations.map((rec: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 border-l-4 border-orange-500">
+                                            <span className="text-lg">{rec.startsWith('✅') ? '✅' : '⚠️'}</span>
+                                            <p className="text-sm text-slate-700 font-medium">{rec.replace(/^[✅⚠️]\s*/, '')}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Botões de Ação */}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setSimulation(null)}
+                                    className="flex-1 px-6 py-3 border-2 border-slate-900 font-bold hover:bg-slate-100 transition-colors"
+                                >
+                                    Nova Simulação
+                                </button>
+                                <button
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:shadow-lg transition-all"
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }
