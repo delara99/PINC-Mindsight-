@@ -285,7 +285,18 @@ export default function TeamAnalysisPage() {
     );
 }
 
-function DimensionBreakdown({ dimension, label, score, facets, facetScores, expanded, onToggle }: any) {
+
+interface DimensionBreakdownProps {
+    dimension: string;
+    label: string;
+    score: number;
+    facets: Record<string, string>;
+    facetScores: Record<string, number>;
+    expanded: boolean;
+    onToggle: () => void;
+}
+
+function DimensionBreakdown({ dimension, label, score, facets, facetScores, expanded, onToggle }: DimensionBreakdownProps) {
     return (
         <div className="border-2 border-slate-900">
             <button
@@ -306,7 +317,7 @@ function DimensionBreakdown({ dimension, label, score, facets, facetScores, expa
 
             {expanded && (
                 <div className="border-t-2 border-slate-900 p-4 bg-slate-50 space-y-2">
-                    {Object.entries(facets).map(([code, name]) => {
+                    {(Object.entries(facets) as [string, string][]).map(([code, name]) => {
                         const facetScore = facetScores[code] || 0;
                         return (
                             <div key={code} className="flex items-center justify-between">
@@ -328,3 +339,4 @@ function DimensionBreakdown({ dimension, label, score, facets, facetScores, expa
         </div>
     );
 }
+
