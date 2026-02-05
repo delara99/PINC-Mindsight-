@@ -464,7 +464,7 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
     const loadTeams = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(`${API_URL}/business/team`, {
+            const res = await axios.get(`${API_URL}/api/v1/business/team`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setTeams(res.data);
@@ -478,7 +478,7 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
         setLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.post(`${API_URL}/business/team/${selectedTeam}/simulate`, {
+            const res = await axios.post(`${API_URL}/api/v1/business/team/${selectedTeam}/simulate`, {
                 candidateId: candidate.user.id
             }, {
                 headers: { Authorization: `Bearer ${token}` }

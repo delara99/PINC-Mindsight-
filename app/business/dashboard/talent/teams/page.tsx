@@ -19,7 +19,7 @@ export default function TeamsPage() {
     const loadTeams = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(`${API_URL}/business/team`, {
+            const res = await axios.get(`${API_URL}/api/v1/business/team`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setTeams(res.data);
@@ -34,7 +34,7 @@ export default function TeamsPage() {
         if (!confirm('Tem certeza que deseja excluir esta equipe?')) return;
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.delete(`${API_URL}/business/team/${id}`, {
+            await axios.delete(`${API_URL}/api/v1/business/team/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             loadTeams();
@@ -214,7 +214,7 @@ function TeamModal({ onClose, onSuccess }: any) {
         setLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${API_URL}/business/team`, {
+            await axios.post(`${API_URL}/api/v1/business/team`, {
                 name,
                 description,
                 memberIds: members
