@@ -200,7 +200,7 @@ function TeamModal({ onClose, onSuccess }: any) {
     const loadUsers = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(`${API_URL}/business/team/members`, {
+            const res = await axios.get(`${API_URL}/api/v1/business/employees`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAvailableUsers(res.data);
