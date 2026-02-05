@@ -463,7 +463,10 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
 
     const loadTeams = async () => {
         try {
-            const res = await axios.get(`${API_URL}/business/team`);
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get(`${API_URL}/business/team`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setTeams(res.data);
         } catch (error) {
             console.error('Failed to load teams:', error);
@@ -474,8 +477,11 @@ function TeamSimulationModal({ candidate, onClose }: { candidate: any; onClose: 
         if (!selectedTeam) return;
         setLoading(true);
         try {
+            const token = localStorage.getItem('accessToken');
             const res = await axios.post(`${API_URL}/business/team/${selectedTeam}/simulate`, {
                 candidateId: candidate.user.id
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             setSimulation(res.data);
         } catch (error) {

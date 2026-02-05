@@ -1,11 +1,13 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { TeamService } from './team.service';
 
 // Assumindo guards padrão do projeto, ajuste conforme necessário
 // import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('business/team')
+@UseGuards(AuthGuard('jwt'))
 export class TeamController {
     constructor(private readonly teamService: TeamService) { }
 

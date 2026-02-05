@@ -18,7 +18,10 @@ export default function TeamsPage() {
 
     const loadTeams = async () => {
         try {
-            const res = await axios.get(`${API_URL}/business/team`);
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get(`${API_URL}/business/team`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setTeams(res.data);
         } catch (error) {
             console.error('Failed to load teams:', error);
@@ -30,7 +33,10 @@ export default function TeamsPage() {
     const deleteTeam = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir esta equipe?')) return;
         try {
-            await axios.delete(`${API_URL}/business/team/${id}`);
+            const token = localStorage.getItem('accessToken');
+            await axios.delete(`${API_URL}/business/team/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             loadTeams();
         } catch (error) {
             console.error('Failed to delete team:', error);
@@ -193,7 +199,10 @@ function TeamModal({ onClose, onSuccess }: any) {
 
     const loadUsers = async () => {
         try {
-            const res = await axios.get(`${API_URL}/user`);
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get(`${API_URL}/user`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setAvailableUsers(res.data.filter((u: any) => u.role === 'MEMBER'));
         } catch (error) {
             console.error('Failed to load users:', error);
@@ -204,10 +213,13 @@ function TeamModal({ onClose, onSuccess }: any) {
         e.preventDefault();
         setLoading(true);
         try {
+            const token = localStorage.getItem('accessToken');
             await axios.post(`${API_URL}/business/team`, {
                 name,
                 description,
                 memberIds: members
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             onSuccess();
         } catch (error) {

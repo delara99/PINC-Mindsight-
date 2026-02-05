@@ -86,7 +86,10 @@ export default function TeamAnalysisPage() {
 
     const loadAnalysis = async () => {
         try {
-            const res = await axios.get(`${API_URL}/business/team/${params.id}/analysis`);
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get(`${API_URL}/business/team/${params.id}/analysis`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setData(res.data);
         } catch (error) {
             console.error('Failed to load team analysis:', error);
