@@ -11,6 +11,12 @@ Toda e qualquer funcionalidade nova (Fit Cultural, Análise de Equipe, PDI, Dash
 - **PROIBIDO:** Criar parsers de notas paralelos.
 - **OBRIGATÓRIO:** O `TalentIntelligenceService` é a ÚNICA fonte de verdade (Single Source of Truth) para interpretação de dados dos colaboradores.
 
+### 🚫 Princípio de Integridade de Dados (Zero Inferência)
+É estritamente **PROIBIDO** utilizar "valores padrão de fallback" (ex: `value || 50`) para preencher dados de colaboradores.
+- Se a nota é 0, o cálculo deve usar 0.
+- Se a nota é null/undefined, a análise deve falhar ou sinalizar dados incompletos.
+- **JAMAIS** assuma que um dado ausente é uma média (50%). A precisão do TalkingTo deve ser absoluta.
+
 ---
 
 ## 📋 Overview

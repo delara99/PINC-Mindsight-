@@ -149,8 +149,9 @@ export class TalentIntelligenceService {
         const risks: string[] = [];
 
         ['O', 'C', 'E', 'A', 'N'].forEach(dim => {
-            const tScore = teamScores[dim] || 50;
-            const cScore = candidateScores[dim] || 50;
+            const tScore = teamScores[dim] !== undefined ? teamScores[dim] : 50;
+            // CORREÇÃO CRÍTICA: Respeitar nota 0 do candidato
+            const cScore = candidateScores[dim] !== undefined && candidateScores[dim] !== null ? candidateScores[dim] : 50;
 
             // Complemento: Time baixo, Candidato alto
             if (tScore < 40 && cScore > 60) {
