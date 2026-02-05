@@ -158,6 +158,9 @@ export class JobProfileService {
             N: Number(scores.N || scores.NEUROTICISM || scores.STABILITY || 0)
         };
 
+        // DEBUG: Verificar se estamos extraindo zeros
+        // console.warn(`[FitCalculation] RAW: ${JSON.stringify(raw)}`);
+
         // 2. Normalização de Escala (1-5 para 0-100)
         const maxVal = Math.max(raw.O, raw.C, raw.E, raw.A, raw.N);
 

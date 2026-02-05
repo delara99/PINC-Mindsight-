@@ -98,7 +98,9 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nota de Fit</span>
                                             <div className="flex items-end gap-2 mt-1">
                                                 <span className={`text-4xl font-bold ${getFitTextColor(cand.fit)}`}>{cand.fit}%</span>
-                                                <span className="text-sm font-medium text-slate-400 mb-2">compatível</span>
+                                                <span className="text-sm font-medium text-slate-400 mb-2">
+                                                    {cand.fit >= 80 ? 'alta compatibilidade' : cand.fit >= 50 ? 'compatibilidade média' : 'baixa compatibilidade'}
+                                                </span>
                                             </div>
                                             <div className="w-full h-2 bg-slate-200 rounded-full mt-2 overflow-hidden">
                                                 <div className={`h-full rounded-full ${getFitColor(cand.fit)}`} style={{ width: `${cand.fit}%` }}></div>
@@ -188,7 +190,7 @@ function getFitColor(score: number) {
 
 function getFitTextColor(score: number) {
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
+    if (score >= 50) return 'text-yellow-600';
     return 'text-red-600';
 }
 
