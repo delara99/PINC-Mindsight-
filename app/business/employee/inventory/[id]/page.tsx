@@ -223,17 +223,36 @@ export default function EmployeeTakeAssessmentPage() {
                 <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-700 transition-colors flex items-center gap-1">
                     <ArrowLeft size={18} /> <span className="text-sm font-bold">Voltar</span>
                 </button>
-                <div className="flex flex-col items-center flex-1 mx-4">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                        Questão {currentQuestionIndex + 1} / {assessment.questions.length}
-                    </span>
-                    <div className="w-full max-w-xs h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <motion.div
-                            className="h-full bg-purple-600"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ duration: 0.5 }}
-                        />
+                <div className="flex flex-col items-center flex-1 mx-4 max-w-3xl">
+                    <div className="flex items-center justify-between w-full mb-2 px-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                            Questão {currentQuestionIndex + 1} de {assessment.questions.length}
+                        </span>
+                        <span className="text-xs font-bold text-slate-400">
+                            {Math.round(progress)}% Concluído
+                        </span>
+                    </div>
+
+                    {/* Visual Dots Navigation */}
+                    <div className="w-full flex flex-wrap gap-1.5 justify-center max-h-[64px] overflow-y-auto p-1 custom-scrollbar">
+                        {assessment.questions.map((q, idx) => {
+                            const isAnswered = !!answers[q.id];
+                            const isCurrent = idx === currentQuestionIndex;
+
+                            return (
+                                <button
+                                    key={q.id}
+                                    onClick={() => setCurrentQuestionIndex(idx)}
+                                    className={`
+                                        w-2.5 h-2.5 rounded-full transition-all duration-300
+                                        ${isCurrent ? 'ring-2 ring-offset-2 ring-purple-600 scale-125 z-10 bg-purple-600' : ''}
+                                        ${!isCurrent && isAnswered ? 'bg-green-500 hover:bg-green-600' : ''}
+                                        ${!isCurrent && !isAnswered ? 'bg-slate-200 hover:bg-slate-300' : ''}
+                                    `}
+                                    title={`Ir para questão ${idx + 1}`}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full">
