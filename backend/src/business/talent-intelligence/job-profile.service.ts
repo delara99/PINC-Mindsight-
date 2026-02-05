@@ -115,7 +115,8 @@ export class JobProfileService {
 
     private async calculateFitInMemory(assignment: any, profile: any) {
         const result = assignment.result;
-        if (!result || !result.scores) return { overall: 0, dimensions: {}, strengths: [], gaps: [] };
+        // CORREÇÃO: Não exigir result.scores, pois o extrator lida com formatos flat e legados
+        if (!result) return { overall: 0, dimensions: {}, strengths: [], gaps: [] };
 
         // CONEXÃO DIRETA COM O 'CORE'
         // Usamos o serviço central para garantir que a lógica de leitura de notas seja IDÊNTICA em todo o sistema.
@@ -134,9 +135,6 @@ export class JobProfileService {
             const uVal = userScores[d] !== undefined && userScores[d] !== null ? userScores[d] : 50;
             const iVal = ideal[d] ?? 50; // Usar nullish coalesce para garantir
             const diff = Math.abs(uVal - iVal);
-
-            // DEBUG EXTREMO (Remover depois)
-            console.log(`[FitCalc DEBUG] User: ${uVal} | Ideal: ${iVal} | Diff: ${diff} | Dim: ${d}`);
 
             // Score de 0 a 100 para essa dimensão
             const dimFit = Math.max(0, 100 - (diff * 1.2)); // Usando fator 1.2 conforme ajuste recente
