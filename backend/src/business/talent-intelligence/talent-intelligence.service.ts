@@ -233,6 +233,16 @@ export class TalentIntelligenceService {
     public extractScores(result: any): Record<string, number> {
         if (!result) return { O: 0, C: 0, E: 0, A: 0, N: 0 };
 
+        // VACINA: Se vier como string (comum em alguns drivers/bancos), converte para objeto
+        if (typeof result === 'string') {
+            try {
+                result = JSON.parse(result);
+            } catch (e) {
+                console.error('[ExtractScores] Failed to parse JSON string:', e);
+                return { O: 0, C: 0, E: 0, A: 0, N: 0 };
+            }
+        }
+
         // 0. Coleta Agressiva: Tenta pegar de result.scores, do próprio result, ou result.result
         const normalized: Record<string, any> = {};
 
