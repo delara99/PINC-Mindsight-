@@ -231,7 +231,16 @@ export class TalentIntelligenceService {
     }
 
     public extractScores(result: any): Record<string, number> {
-        const scores = result.scores || {};
+        let scores = result.scores || {};
+
+        // 0. Normalizar chaves para UPPERCASE para garantir busca Case Insensitive
+        if (scores && typeof scores === 'object') {
+            const normalized = {};
+            Object.keys(scores).forEach(k => {
+                normalized[k.toUpperCase()] = scores[k];
+            });
+            scores = normalized;
+        }
 
         const safeParse = (val: any) => {
             if (val === null || val === undefined) return 0;
@@ -245,13 +254,13 @@ export class TalentIntelligenceService {
             return 0;
         };
 
-        // 1. Mapeamento robusto (Siglas e Nomes Completos)
+        // 1. Mapeamento robusto (Siglas, Inglês e Português)
         const raw: any = {
-            O: safeParse(scores.O || scores.OPENNESS),
-            C: safeParse(scores.C || scores.CONSCIENTIOUSNESS),
-            E: safeParse(scores.E || scores.EXTRAVERSION),
-            A: safeParse(scores.A || scores.AGREEABLENESS),
-            N: safeParse(scores.N || scores.NEUROTICISM || scores.STABILITY)
+            O: safeParse(scores.O || scores.OPENNESS || scores.ABERTURA),
+            C: safeParse(scores.C || scores.CONSCIENTIOUSNESS || scores.CONSCIENCIOSIDADE),
+            E: safeParse(scores.E || scores.EXTRAVERSION || scores.EXTROVERSAO || scores.EXTROVERSÃO),
+            A: safeParse(scores.A || scores.AGREEABLENESS || scores.AMABILIDADE),
+            N: safeParse(scores.N || scores.NEUROTICISM || scores.STABILITY || scores.ESTABILIDADE || scores.ESTABILIDADE_EMOCIONAL)
         };
 
         // DEBUG
