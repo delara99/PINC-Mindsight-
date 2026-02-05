@@ -265,44 +265,44 @@ export class TalentIntelligenceService {
         // --- MAPA DE TRADUÇÃO DE FACETAS (Nome -> Código Sistema) ---
         const FACET_CODES: Record<string, string> = {
             // Abertura (O)
-            'FANTASIA': 'O_F1', 'FANTASY': 'O_F1',
-            'ESTETICA': 'O_F2', 'ESTÉTICA': 'O_F2', 'AESTHETICS': 'O_F2',
-            'SENTIMENTOS': 'O_F3', 'FEELINGS': 'O_F3',
-            'ACOES': 'O_F4', 'AÇÕES': 'O_F4', 'ACTIONS': 'O_F4',
-            'IDEIAS': 'O_F5', 'IDEAS': 'O_F5',
-            'VALORES': 'O_F6', 'VALUES': 'O_F6',
+            'FANTASIA': 'O_F1', 'FANTASY': 'O_F1', 'IMAGINACAO': 'O_F1', 'IMAGINAÇÃO': 'O_F1',
+            'ESTETICA': 'O_F2', 'ESTÉTICA': 'O_F2', 'AESTHETICS': 'O_F2', 'ARTISTIC INTERESTS': 'O_F2',
+            'SENTIMENTOS': 'O_F3', 'FEELINGS': 'O_F3', 'EMOCIONALIDADE': 'O_F3',
+            'ACOES': 'O_F4', 'AÇÕES': 'O_F4', 'ACTIONS': 'O_F4', 'ADVENTUROUSNESS': 'O_F4',
+            'IDEIAS': 'O_F5', 'IDEAS': 'O_F5', 'INTELECTO': 'O_F5', 'INTELLECT': 'O_F5',
+            'VALORES': 'O_F6', 'VALUES': 'O_F6', 'LIBERALISMO': 'O_F6',
 
             // Conscienciosidade (C)
-            'COMPETENCIA': 'C_F1', 'COMPETÊNCIA': 'C_F1', 'COMPETENCE': 'C_F1',
-            'ORDEM': 'C_F2', 'ORDER': 'C_F2',
-            'SENSO': 'C_F3', 'SENSO DE DEVER': 'C_F3', 'DUTY': 'C_F3',
-            'ESFORCO': 'C_F4', 'ESFORÇO': 'C_F4', 'ACHIEVEMENT': 'C_F4',
-            'AUTODISCIPLINA': 'C_F5', 'SELF-DISCIPLINE': 'C_F5',
-            'PONDERACAO': 'C_F6', 'PONDERAÇÃO': 'C_F6', 'DELIBERATION': 'C_F6',
+            'COMPETENCIA': 'C_F1', 'COMPETÊNCIA': 'C_F1', 'COMPETENCE': 'C_F1', 'AUTOEFICACIA': 'C_F1',
+            'ORDEM': 'C_F2', 'ORDER': 'C_F2', 'ORDERLINESS': 'C_F2', 'ORGANIZACAO': 'C_F2', 'ORGANIZAÇÃO': 'C_F2', 'ORDEM / ORGANIZACAO': 'C_F2', 'ORDEM / ORGANIZAÇÃO': 'C_F2',
+            'SENSO': 'C_F3', 'SENSO DE DEVER': 'C_F3', 'DUTY': 'C_F3', 'DUTIFULNESS': 'C_F3', 'RESPONSABILIDADE': 'C_F3',
+            'ESFORCO': 'C_F4', 'ESFORÇO': 'C_F4', 'ACHIEVEMENT': 'C_F4', 'ACHIEVEMENT STRIVING': 'C_F4', 'REALIZACAO': 'C_F4',
+            'AUTODISCIPLINA': 'C_F5', 'SELF-DISCIPLINE': 'C_F5', 'DISCIPLINA': 'C_F5',
+            'PONDERACAO': 'C_F6', 'PONDERAÇÃO': 'C_F6', 'DELIBERATION': 'C_F6', 'CAUTELA': 'C_F6',
 
             // Extroversão (E)
-            'CORDIALIDADE': 'E_F1', 'WARMTH': 'E_F1',
-            'GREGARIEDADE': 'E_F2', 'GREGARIOUSNESS': 'E_F2',
-            'ASSERTIVIDADE': 'E_F3', 'ASSERTIVENESS': 'E_F3',
-            'ATIVIDADE': 'E_F4', 'ACTIVITY': 'E_F4',
-            'BUSCA DE SENSACOES': 'E_F5', 'BUSCA DE SENSAÇÕES': 'E_F5', 'EXCITEMENT-SEEKING': 'E_F5',
-            'EMOCOES POSITIVAS': 'E_F6', 'EMOÇÕES POSITIVAS': 'E_F6', 'POSITIVE EMOTIONS': 'E_F6',
+            'CORDIALIDADE': 'E_F1', 'WARMTH': 'E_F1', 'FRIENDLINESS': 'E_F1', 'AMABILIDADE (E)': 'E_F1',
+            'GREGARIEDADE': 'E_F2', 'GREGARIOUSNESS': 'E_F2', 'SOCIABILIDADE': 'E_F2',
+            'ASSERTIVIDADE': 'E_F3', 'ASSERTIVENESS': 'E_F3', 'DOMINANCIA': 'E_F3',
+            'ATIVIDADE': 'E_F4', 'ACTIVITY': 'E_F4', 'ACTIVITY LEVEL': 'E_F4', 'ENERGIA': 'E_F4',
+            'BUSCA DE SENSACOES': 'E_F5', 'BUSCA DE SENSAÇÕES': 'E_F5', 'EXCITEMENT-SEEKING': 'E_F5', 'BUSCA DE EXCITACAO': 'E_F5', 'BUSCA DE EXCITAÇÃO': 'E_F5',
+            'EMOCOES POSITIVAS': 'E_F6', 'EMOÇÕES POSITIVAS': 'E_F6', 'POSITIVE EMOTIONS': 'E_F6', 'CHEERFULNESS': 'E_F6', 'ALEGRIA': 'E_F6',
 
             // Amabilidade (A)
             'CONFIANCA': 'A_F1', 'CONFIANÇA': 'A_F1', 'TRUST': 'A_F1',
-            'FRANQUEZA': 'A_F2', 'STRAIGHTFORWARDNESS': 'A_F2',
+            'FRANQUEZA': 'A_F2', 'STRAIGHTFORWARDNESS': 'A_F2', 'SINCERIDADE': 'A_F2', 'MORALITY': 'A_F2',
             'ALTRUISMO': 'A_F3', 'ALTRUÍSMO': 'A_F3', 'ALTRUISM': 'A_F3',
-            'COMPLACENCIA': 'A_F4', 'COMPLACÊNCIA': 'A_F4', 'COMPLIANCE': 'A_F4',
-            'MODESTIA': 'A_F5', 'MODÉSTIA': 'A_F5', 'MODESTY': 'A_F5',
-            'SENSIBILIDADE': 'A_F6', 'TENDER-MINDEDNESS': 'A_F6',
+            'COMPLACENCIA': 'A_F4', 'COMPLACÊNCIA': 'A_F4', 'COMPLIANCE': 'A_F4', 'COOPERACAO': 'A_F4', 'COOPERAÇÃO': 'A_F4',
+            'MODESTIA': 'A_F5', 'MODÉSTIA': 'A_F5', 'MODESTY': 'A_F5', 'HUMILDADE': 'A_F5',
+            'SENSIBILIDADE': 'A_F6', 'TENDER-MINDEDNESS': 'A_F6', 'SYMPATHY': 'A_F6', 'EMPATIA': 'A_F6',
 
             // Estabilidade / Neuroticismo (N)
             'ANSIEDADE': 'N_F1', 'ANXIETY': 'N_F1',
-            'HOSTILIDADE': 'N_F2', 'ANGRY HOSTILITY': 'N_F2',
-            'DEPRESSAO': 'N_F3', 'DEPRESSÃO': 'N_F3', 'DEPRESSION': 'N_F3',
-            'EMBARACO': 'N_F4', 'EMBARAÇO': 'N_F4', 'SELF-CONSCIOUSNESS': 'N_F4',
-            'IMPULSIVIDADE': 'N_F5', 'IMPULSIVENESS': 'N_F5',
-            'VULNERABILIDADE': 'N_F6', 'VULNERABILITY': 'N_F6'
+            'HOSTILIDADE': 'N_F2', 'ANGRY HOSTILITY': 'N_F2', 'RAIVA': 'N_F2', 'ANGER': 'N_F2',
+            'DEPRESSAO': 'N_F3', 'DEPRESSÃO': 'N_F3', 'DEPRESSION': 'N_F3', 'TRISTEZA': 'N_F3',
+            'EMBARACO': 'N_F4', 'EMBARAÇO': 'N_F4', 'SELF-CONSCIOUSNESS': 'N_F4', 'TIMIDEZ': 'N_F4',
+            'IMPULSIVIDADE': 'N_F5', 'IMPULSIVENESS': 'N_F5', 'MODERATION': 'N_F5',
+            'VULNERABILIDADE': 'N_F6', 'VULNERABILITY': 'N_F6', 'VULNERABILIDADE AO ESTRESSE': 'N_F6'
         };
 
         // --- VARREDURA DE FACETAS ---
