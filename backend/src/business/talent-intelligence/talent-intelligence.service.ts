@@ -231,22 +231,34 @@ export class TalentIntelligenceService {
     }
 
     public extractScores(result: any): Record<string, number> {
-        let scores = result.scores || {};
+        if (!result) return { O: 0, C: 0, E: 0, A: 0, N: 0 };
 
-        // 0. Normalizar chaves para UPPERCASE para garantir busca Case Insensitive
-        if (scores && typeof scores === 'object') {
-            const normalized = {};
-            Object.keys(scores).forEach(k => {
-                normalized[k.toUpperCase()] = scores[k];
+        // 0. Coleta Agressiva: Tenta pegar de result.scores, do próprio result, ou result.result
+        const normalized: Record<string, any> = {};
+
+        const scanAndNormalize = (obj: any) => {
+            if (!obj || typeof obj !== 'object') return;
+            Object.keys(obj).forEach(k => {
+                const upper = k.toUpperCase();
+                // Se ainda não temos esse valor e o valor atual é válido (não nulo)
+                if (normalized[upper] === undefined && obj[k] !== null && obj[k] !== undefined) {
+                    normalized[upper] = obj[k];
+                }
             });
-            scores = normalized;
-        }
+        };
+
+        // Ordem de prioridade de varredura:
+        scanAndNormalize(result.scores); // 1. O padrão correto
+        scanAndNormalize(result);        // 2. O raiz (fallback comum)
+        scanAndNormalize(result.result); // 3. Aninhamento profundo (legacy)
+
+        // DEBUG: Ver o que achamos
+        // console.log('[ExtractScores] Keys Found:', Object.keys(normalized));
 
         const safeParse = (val: any) => {
             if (val === null || val === undefined) return 0;
             if (typeof val === 'number') return val;
             if (typeof val === 'string') {
-                // Tratar vírgula decimal (ex: "3,5" -> 3.5)
                 const standardized = val.replace(',', '.');
                 const num = parseFloat(standardized);
                 return isNaN(num) ? 0 : num;
@@ -254,13 +266,13 @@ export class TalentIntelligenceService {
             return 0;
         };
 
-        // 1. Mapeamento robusto (Siglas, Inglês e Português)
+        // 1. Mapeamento Final com Fallbacks em cascata
         const raw: any = {
-            O: safeParse(scores.O || scores.OPENNESS || scores.ABERTURA),
-            C: safeParse(scores.C || scores.CONSCIENTIOUSNESS || scores.CONSCIENCIOSIDADE),
-            E: safeParse(scores.E || scores.EXTRAVERSION || scores.EXTROVERSAO || scores.EXTROVERSÃO),
-            A: safeParse(scores.A || scores.AGREEABLENESS || scores.AMABILIDADE),
-            N: safeParse(scores.N || scores.NEUROTICISM || scores.STABILITY || scores.ESTABILIDADE || scores.ESTABILIDADE_EMOCIONAL)
+            O: safeParse(normalized.O || normalized.OPENNESS || normalized.ABERTURA),
+            C: safeParse(normalized.C || normalized.CONSCIENTIOUSNESS || normalized.CONSCIENCIOSIDADE || normalized.ESTRUTURA),
+            E: safeParse(normalized.E || normalized.EXTRAVERSION || normalized.EXTROVERSAO || normalized.EXTROVERSÃO),
+            A: safeParse(normalized.A || normalized.AGREEABLENESS || normalized.AMABILIDADE),
+            N: safeParse(normalized.N || normalized.NEUROTICISM || normalized.STABILITY || normalized.ESTABILIDADE || normalized.ESTABILIDADE_EMOCIONAL)
         };
 
         // DEBUG
