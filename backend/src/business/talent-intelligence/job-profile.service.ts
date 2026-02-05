@@ -112,18 +112,7 @@ export class JobProfileService {
         const result = assignment.result;
         if (!result || !result.scores) return { overall: 0, dimensions: {}, strengths: [], gaps: [] };
 
-        const scores = result.scores; // Assumindo formato { O: 60, ... }
-
-        // Normalização de scores do usuário (garantir 0-100)
-        const userScores = {
-            O: Number(scores.O || 0),
-            C: Number(scores.C || 0),
-            E: Number(scores.E || 0),
-            A: Number(scores.A || 0),
-            N: Number(scores.N || 0)
-        };
-
-        // Ideal Scores
+        const userScores = this.extractScores(result); // Usando extrator robusto
         const ideal = profile.idealScores as any; // { O: 80, ... }
 
         const dims = ['O', 'C', 'E', 'A', 'N'];
@@ -138,7 +127,6 @@ export class JobProfileService {
             const diff = Math.abs(uVal - iVal);
 
             // Score de 0 a 100 para essa dimensão
-            // Se diff = 0, fit = 100. Se diff = 50, fit = 25.
             const dimFit = Math.max(0, 100 - (diff * 1.5));
             dimensionFits[d] = Math.round(dimFit);
 
@@ -148,10 +136,8 @@ export class JobProfileService {
             if (dimFit < 60) gaps.push(d);
         }
 
-        // Fit Geral
-        // Média simples das diferenças ponderada invertida
         const avgDiff = totalDiff / 5;
-        const overallFit = Math.max(0, 100 - (avgDiff * 1.2)); // Fator 1.2 penaliza desvios grandes
+        const overallFit = Math.max(0, 100 - (avgDiff * 1.2));
 
         return {
             overall: Math.round(overallFit),
@@ -159,5 +145,34 @@ export class JobProfileService {
             strengths,
             gaps
         };
+    }
+
+    private extractScores(result: any): Record<string, number> {
+        const scores = result.scores || {};
+        // 1. Mapeamento robusto (Siglas e Nomes Completos)
+        const raw: any = {
+            O: Number(scores.O || scores.OPENNESS || 0),
+            C: Number(scores.C || scores.CONSCIENTIOUSNESS || 0),
+            E: Number(scores.E || scores.EXTRAVERSION || 0),
+            A: Number(scores.A || scores.AGREEABLENESS || 0),
+            N: Number(scores.N || scores.NEUROTICISM || scores.STABILITY || 0)
+        };
+
+        // 2. Normalização de Escala (1-5 para 0-100)
+        const maxVal = Math.max(raw.O, raw.C, raw.E, raw.A, raw.N);
+
+        if (maxVal > 0 && maxVal <= 6) {
+            Object.keys(raw).forEach(key => {
+                const val = Math.max(1, Math.min(5, raw[key]));
+                raw[key] = Math.round(((val - 1) / 4) * 100);
+            });
+        }
+
+        // 3. Fallback para evitar zeros absolutos se não houver dados
+        if (maxVal === 0) {
+            return { O: 50, C: 50, E: 50, A: 50, N: 50 };
+        }
+
+        return raw;
     }
 }
