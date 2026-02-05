@@ -130,7 +130,8 @@ export class JobProfileService {
         const gaps = [];
 
         for (const d of dims) {
-            const uVal = userScores[d] || 50;
+            // CORREÇÃO CRÍTICA: Aceitar 0 como valor válido. Antes (userScores[d] || 50) transformava 0 em 50.
+            const uVal = userScores[d] !== undefined && userScores[d] !== null ? userScores[d] : 50;
             const iVal = ideal[d] || 50;
             const diff = Math.abs(uVal - iVal);
 

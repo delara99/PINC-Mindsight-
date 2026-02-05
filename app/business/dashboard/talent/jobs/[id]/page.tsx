@@ -95,13 +95,6 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                                                     <CheckCircle size={10} />
                                                     Avaliação: {new Date(cand.source?.completedAt).toLocaleDateString()}
                                                 </p>
-                                                <div className="mt-1 flex gap-2 text-[10px] text-slate-400 font-mono">
-                                                    <span>O:{cand.userScores?.O}</span>
-                                                    <span>C:{cand.userScores?.C}</span>
-                                                    <span>E:{cand.userScores?.E}</span>
-                                                    <span>A:{cand.userScores?.A}</span>
-                                                    <span>N:{cand.userScores?.N}</span>
-                                                </div>
                                             </div>
                                         </div>
 
