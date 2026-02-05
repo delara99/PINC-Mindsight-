@@ -114,7 +114,7 @@ export default function TeamAnalysisPage() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-600 font-medium">Analisando equipe...</p>
                 </div>
             </div>
@@ -125,12 +125,12 @@ export default function TeamAnalysisPage() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-8">
                 <div className="text-center">
-                    <AlertTriangle className="w-20 h-20 text-orange-500 mx-auto mb-4" />
+                    <AlertTriangle className="w-20 h-20 text-purple-600 mx-auto mb-4" />
                     <h2 className="text-2xl font-black text-slate-900 mb-2">Dados Insuficientes</h2>
                     <p className="text-slate-600 mb-6">Esta equipe não possui membros com avaliações completas.</p>
                     <button
                         onClick={() => router.back()}
-                        className="px-6 py-3 bg-orange-500 text-white font-bold hover:bg-orange-600 transition-colors"
+                        className="px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all shadow-lg hover:shadow-purple-200"
                     >
                         Voltar
                     </button>
@@ -146,12 +146,12 @@ export default function TeamAnalysisPage() {
     }));
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100 p-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/20 to-slate-100 p-8">
             {/* Header */}
             <div className="max-w-7xl mx-auto mb-8">
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-bold mb-6 transition-colors group"
+                    className="flex items-center gap-2 text-slate-600 hover:text-purple-600 font-bold mb-6 transition-colors group"
                 >
                     <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                     Voltar
@@ -162,14 +162,14 @@ export default function TeamAnalysisPage() {
                         <h1 className="text-6xl font-black text-slate-900 leading-none mb-2 tracking-tight">
                             {team.name}
                         </h1>
-                        <div className="h-2 w-32 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mb-4"></div>
+                        <div className="h-2 w-32 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full mb-4"></div>
                         {team.description && (
                             <p className="text-slate-600 text-lg max-w-2xl">{team.description}</p>
                         )}
                     </div>
 
                     <div className="text-right">
-                        <div className="text-5xl font-black text-orange-600">{stats.count}</div>
+                        <div className="text-5xl font-black text-purple-600">{stats.count}</div>
                         <div className="text-sm text-slate-500 font-bold uppercase tracking-wider">Membros Avaliados</div>
                     </div>
                 </div>
@@ -180,8 +180,9 @@ export default function TeamAnalysisPage() {
                 {/* Coluna Esquerda - Radar + Diversidade */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Radar Chart */}
-                    <div className="bg-white border-4 border-slate-900 p-8">
-                        <h2 className="text-2xl font-black text-slate-900 mb-6 uppercase tracking-wider">
+                    <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-sm hover:shadow-lg hover:border-purple-200 transition-all">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                             Persona da Equipe
                         </h2>
                         <ResponsiveContainer width="100%" height={400}>
@@ -192,16 +193,16 @@ export default function TeamAnalysisPage() {
                                 <Radar
                                     name="Média do Time"
                                     dataKey="value"
-                                    stroke="#f97316"
-                                    fill="#f97316"
+                                    stroke="#9333ea"
+                                    fill="#9333ea"
                                     fillOpacity={0.3}
                                     strokeWidth={3}
                                 />
                                 <Tooltip
                                     contentStyle={{
                                         backgroundColor: '#1e293b',
-                                        border: '2px solid #f97316',
-                                        borderRadius: 0,
+                                        border: '2px solid #9333ea',
+                                        borderRadius: '8px',
                                         color: '#fff',
                                         fontWeight: 'bold'
                                     }}
@@ -211,8 +212,9 @@ export default function TeamAnalysisPage() {
                     </div>
 
                     {/* Breakdown de Facetas */}
-                    <div className="bg-white border-4 border-slate-900 p-8">
-                        <h2 className="text-2xl font-black text-slate-900 mb-6 uppercase tracking-wider">
+                    <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-sm">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                             Análise Granular (30 Facetas)
                         </h2>
                         <div className="space-y-4">
@@ -235,7 +237,7 @@ export default function TeamAnalysisPage() {
                 {/* Coluna Direita - Insights */}
                 <div className="space-y-8">
                     {/* Diversidade */}
-                    <div className="bg-gradient-to-br from-orange-500 to-red-500 border-4 border-slate-900 p-6 text-white">
+                    <div className="bg-gradient-to-br from-purple-600 to-purple-500 rounded-xl border border-purple-700 p-6 text-white shadow-lg hover:shadow-purple-200 transition-all">
                         <div className="text-sm font-bold uppercase tracking-wider mb-2 opacity-90">
                             Score de Diversidade
                         </div>
@@ -249,8 +251,9 @@ export default function TeamAnalysisPage() {
 
                     {/* Traços Dominantes */}
                     {stats.dominantTraits && stats.dominantTraits.length > 0 && (
-                        <div className="bg-white border-4 border-slate-900 p-6">
-                            <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-wider">
+                        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                                 Traços Dominantes
                             </h3>
                             <div className="space-y-2">
@@ -267,13 +270,14 @@ export default function TeamAnalysisPage() {
                     )}
 
                     {/* Lista de Membros */}
-                    <div className="bg-white border-4 border-slate-900 p-6">
-                        <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-wider">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                             Membros ({members.length})
                         </h3>
                         <div className="space-y-3">
                             {members.map((m: any) => (
-                                <div key={m.user.id} className="border-l-4 border-orange-500 pl-3 py-2">
+                                <div key={m.user.id} className="border-l-4 border-purple-600 pl-3 py-2 bg-purple-50/50 rounded-r">
                                     <p className="font-bold text-slate-900">{m.user.name}</p>
                                     <p className="text-sm text-slate-500">
                                         {m.hasData ? '✅ Avaliado' : '⏳ Sem avaliação'}
@@ -301,34 +305,34 @@ interface DimensionBreakdownProps {
 
 function DimensionBreakdown({ dimension, label, score, facets, facetScores, expanded, onToggle }: DimensionBreakdownProps) {
     return (
-        <div className="border-2 border-slate-900">
+        <div className="border border-slate-200 rounded-lg overflow-hidden hover:border-purple-200 transition-colors">
             <button
                 onClick={onToggle}
-                className="w-full flex items-center justify-between p-4 hover:bg-orange-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-purple-50 transition-colors"
             >
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center border-2 border-slate-900">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center rounded-lg shadow-sm">
                         <span className="text-white font-black text-xl">{dimension}</span>
                     </div>
                     <div className="text-left">
-                        <div className="font-black text-slate-900">{label}</div>
+                        <div className="font-bold text-slate-900">{label}</div>
                         <div className="text-sm text-slate-500">Média: {score}</div>
                     </div>
                 </div>
-                {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {expanded ? <ChevronUp className="w-5 h-5 text-purple-600" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
             </button>
 
             {expanded && (
-                <div className="border-t-2 border-slate-900 p-4 bg-slate-50 space-y-2">
+                <div className="border-t border-slate-200 p-4 bg-slate-50 space-y-2">
                     {(Object.entries(facets) as [string, string][]).map(([code, name]) => {
                         const facetScore = facetScores[code] || 0;
                         return (
                             <div key={code} className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-slate-700">{name}</span>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-32 h-2 bg-slate-200 border border-slate-900">
+                                    <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-orange-500 to-red-500"
+                                            className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all"
                                             style={{ width: `${facetScore}%` }}
                                         ></div>
                                     </div>
