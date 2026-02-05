@@ -12,6 +12,11 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    // ESTADO DOS FILTROS (Movido para cima para respeitar Regras dos Hooks)
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+    const [sortBy, setSortBy] = useState<'fit' | 'date' | 'name'>('fit');
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -22,7 +27,6 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
                 setData(res.data);
             } catch (error) {
                 console.error(error);
-                // alert('Erro ao carregar análise.');
             } finally {
                 setLoading(false);
             }
@@ -35,10 +39,6 @@ export default function JobProfileAnalysisPage({ params }: { params: { id: strin
 
     const { profile, candidates } = data;
     const idealScores = profile.idealScores || { O: 50, C: 50, E: 50, A: 50, N: 50 };
-
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-    const [sortBy, setSortBy] = useState<'fit' | 'date' | 'name'>('fit');
 
     // Lógica de Filtragem e Ordenação
     const filteredCandidates = candidates?.filter((c: any) => {
