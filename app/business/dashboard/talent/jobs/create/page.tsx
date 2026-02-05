@@ -23,7 +23,7 @@ export default function CreateJobProfilePage() {
             </header>
 
             <JobProfileEditor
-                onSuccess={() => router.push('/business/talent')}
+                onSuccess={() => router.push('/business/dashboard/talent')}
             />
         </div>
     );
