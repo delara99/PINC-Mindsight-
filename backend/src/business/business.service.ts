@@ -412,7 +412,10 @@ export class BusinessService {
         // 4. Rodar TalkingTo Engine
         const analysis = await this.talkingToService.analyzeProfile(input);
 
-        // 5. Harmonizar
+        // 5. Buscar Dicas de Interação (Crossings) - NOVO
+        const crossings = await this.talkingToService.getCrossingsForAnalysis(analysis.talkingto_analysis);
+
+        // 6. Harmonizar
         const mappedScores = analysis.talkingto_analysis.map(dim => {
             let traitKey = '';
             let finalScore = 0;
@@ -464,6 +467,7 @@ export class BusinessService {
 
         return {
             ...assignment,
+            crossings: crossings, // INJETA CROSSINGS
             calculatedScores: {
                 scores: mappedScores,
                 profile_summary: analysis.profile_summary,
