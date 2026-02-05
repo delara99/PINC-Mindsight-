@@ -1,7 +1,9 @@
 
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards } from '@nestjs/common';
+
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TeamService } from './team.service';
+import { Role } from '@prisma/client';
 
 // Assumindo guards padrão do projeto, ajuste conforme necessário
 // import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -11,21 +13,28 @@ import { TeamService } from './team.service';
 export class TeamController {
     constructor(private readonly teamService: TeamService) { }
 
+    // Helper para validar acesso
+    private validateCompanyAccess(user: any) {
+        if (!user.tenantId || (user.role !== Role.TENANT_ADMIN && user.role !== Role.SUPER_ADMIN)) {
+            throw new ForbiddenException('Acesso restrito a gestores de empresa.');
+        }
+    }
+
     @Post()
     create(@Request() req, @Body() data: any) {
-        // Pegar tenantId do usuário logado (simulado aqui se não tiver guard)
-        const tenantId = req.user?.tenantId || 'default-tenant';
-        return this.teamService.create(tenantId, data);
+        this.validateCompanyAccess(req.user);
+        return this.teamService.create(req.user.tenantId, data);
     }
 
     @Get()
     findAll(@Request() req) {
-        const tenantId = req.user?.tenantId || 'default-tenant';
-        return this.teamService.findAll(tenantId);
+        this.validateCompanyAccess(req.user);
+        return this.teamService.findAll(req.user.tenantId);
     }
 
     @Get('members')
     async getMembers(@Request() req) {
+        this.validateCompanyAccess(req.user);
         return this.teamService.getAvailableMembers(req.user.tenantId);
     }
 
