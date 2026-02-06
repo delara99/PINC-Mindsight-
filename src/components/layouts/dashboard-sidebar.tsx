@@ -11,18 +11,17 @@ import {
     FileText,
     Settings,
     LogOut,
-    Building2,
     BrainCircuit,
     PlayCircle,
     UserPlus,
-    TrendingUp,
     Lock,
     Crown,
     Menu,
     X,
     Sparkles,
     MessageSquare,
-    Sliders
+    ShieldCheck,
+    AlertTriangle
 } from 'lucide-react';
 import clsx from 'clsx';
 import { UpgradeModal } from '../../../src/components/common/upgrade-modal';
@@ -58,18 +57,22 @@ const menuItems = [
     { label: 'Fale com um Especialista', href: '/dashboard/devolutiva', icon: Sparkles, roles: ['MEMBER'], premium: true },
 ];
 
+const PROTECTED_LABELS = ['Gerenciar TalkingTO', 'Clientes'];
+const SECURITY_PIN = '8813';
+
 interface SidebarContentProps {
     user: any;
     pathname: string;
     onLogout: () => void;
     onUpgradeOpen: () => void;
     notifications?: any;
+    onProtectedClick: (href: string) => void;
+    isPinVerified: boolean;
 }
 
-function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications }: SidebarContentProps) {
+function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications, onProtectedClick, isPinVerified }: SidebarContentProps) {
     return (
         <div className="flex flex-col h-full bg-white text-slate-800">
-            {/* Header / Logo */}
             {/* Header / Logo */}
             <div className="p-6 flex items-center gap-3 border-b border-gray-50 bg-gray-50/50">
                 <img src="/logo.png" alt="PINC" className="h-8 w-auto object-contain" />
@@ -105,6 +108,7 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications
                     const isSuperAdmin = user?.role === 'SUPER_ADMIN';
                     const isLocked = item.label === 'Minhas Conexões' && user?.plan === 'START' && !isSuperAdmin;
                     const notificationCount = item.notificationKey && notifications ? notifications[item.notificationKey] : 0;
+                    const isProtected = PROTECTED_LABELS.includes(item.label);
 
                     return (
                         <Link
@@ -114,6 +118,11 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications
                                 if (isLocked) {
                                     e.preventDefault();
                                     onUpgradeOpen();
+                                    return;
+                                }
+                                if (isProtected && !isPinVerified) {
+                                    e.preventDefault();
+                                    onProtectedClick(item.href);
                                 }
                             }}
                             className={clsx(
@@ -125,7 +134,12 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications
                             )}
                         >
                             <Icon size={20} className={clsx(isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600")} />
-                            <span className="flex-1">{item.label}</span>
+                            <span className="flex-1">
+                                {item.label}
+                                {isProtected && !isPinVerified && (
+                                    <Lock size={12} className="inline ml-2 text-gray-300 mb-0.5" />
+                                )}
+                            </span>
                             {isLocked && <Lock size={16} className="text-gray-400" />}
                             {notificationCount > 0 && (
                                 <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
@@ -151,6 +165,94 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications
     );
 }
 
+function PinModal({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess: () => void }) {
+    const [pin, setPin] = useState('');
+    const [error, setError] = useState(false);
+    const [shaking, setShaking] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setPin('');
+            setError(false);
+        }
+    }, [isOpen]);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pin === SECURITY_PIN) {
+            onSuccess();
+        } else {
+            setError(true);
+            setShaking(true);
+            setTimeout(() => setShaking(false), 500);
+            setPin('');
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1, x: shaking ? [0, -10, 10, -10, 10, 0] : 0 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full border border-gray-100"
+            >
+                <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                        <ShieldCheck size={32} className="text-red-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Área Restrita</h3>
+                    <p className="text-sm text-gray-500 mb-6">
+                        Para sua segurança, confirme o PIN de acesso administrativo para visualizar esta seção.
+                    </p>
+
+                    <form onSubmit={handleSubmit} className="w-full">
+                        <input
+                            type="password"
+                            value={pin}
+                            onChange={(e) => {
+                                setPin(e.target.value);
+                                if (error) setError(false);
+                            }}
+                            maxLength={4}
+                            autoFocus
+                            className={`w-full text-center text-2xl tracking-[0.5em] font-bold py-3 border-2 rounded-xl outline-none transition-all placeholder:tracking-normal
+                                ${error
+                                    ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-200'
+                                    : 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'
+                                }`}
+                            placeholder="••••"
+                        />
+                        {error && (
+                            <p className="text-red-500 text-xs font-bold mt-2 flex items-center justify-center gap-1">
+                                <AlertTriangle size={12} /> PIN Incorreto
+                            </p>
+                        )}
+                        <div className="grid grid-cols-2 gap-3 mt-8">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="py-2.5 px-4 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-100 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={pin.length < 4}
+                                className="py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200"
+                            >
+                                Validar Acesso
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </motion.div>
+        </div>
+    );
+}
+
 export function DashboardSidebar() {
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
@@ -159,6 +261,34 @@ export function DashboardSidebar() {
     const router = useRouter();
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    // PIN Security State
+    const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+    const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+    const [isPinVerified, setIsPinVerified] = useState(false);
+
+    useEffect(() => {
+        // Checar sessão ao carregar
+        const verified = sessionStorage.getItem('pinc_admin_pin_verified');
+        if (verified === 'true') {
+            setIsPinVerified(true);
+        }
+    }, []);
+
+    const handlePinSuccess = () => {
+        setIsPinVerified(true);
+        sessionStorage.setItem('pinc_admin_pin_verified', 'true');
+        setIsPinModalOpen(false);
+        if (pendingRoute) {
+            router.push(pendingRoute);
+            setPendingRoute(null);
+        }
+    };
+
+    const handleProtectedClick = (href: string) => {
+        setPendingRoute(href);
+        setIsPinModalOpen(true);
+    };
 
     // Buscar notificações para admin
     const { data: notifications } = useQuery({
@@ -182,14 +312,16 @@ export function DashboardSidebar() {
 
     const handleLogout = async () => {
         try {
+            // Limpar sessão do PIN
+            sessionStorage.removeItem('pinc_admin_pin_verified');
+
             // Notifica o backend para remover status online imediatamente
             if (token) {
                 await fetch(`${API_URL}/api/v1/auth/logout`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
-                    // Timeout curto caso algo trave
                     signal: AbortSignal.timeout(2000)
-                }).catch(() => { }); // Ignora erros de rede no logout
+                }).catch(() => { });
             }
         } catch (e) {
             // Ignora
@@ -201,6 +333,15 @@ export function DashboardSidebar() {
 
     return (
         <>
+            <PinModal
+                isOpen={isPinModalOpen}
+                onClose={() => {
+                    setIsPinModalOpen(false);
+                    setPendingRoute(null);
+                }}
+                onSuccess={handlePinSuccess}
+            />
+
             {/* Mobile Header / Navbar */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-40 shadow-sm">
                 <div className="flex items-center gap-2">
@@ -226,6 +367,8 @@ export function DashboardSidebar() {
                     onLogout={handleLogout}
                     onUpgradeOpen={() => setIsUpgradeModalOpen(true)}
                     notifications={notifications}
+                    onProtectedClick={handleProtectedClick}
+                    isPinVerified={isPinVerified}
                 />
             </aside>
 
@@ -264,6 +407,8 @@ export function DashboardSidebar() {
                                 onLogout={handleLogout}
                                 onUpgradeOpen={() => setIsUpgradeModalOpen(true)}
                                 notifications={notifications}
+                                onProtectedClick={handleProtectedClick}
+                                isPinVerified={isPinVerified}
                             />
                         </motion.aside>
                     </>
