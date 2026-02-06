@@ -364,8 +364,31 @@ export class UserController {
                 await tx.assessmentAssignment.deleteMany({ where: { id: { in: assignmentIds } } });
             }
 
+            // 10. Remover Relatórios de Comparação (Cross-Profile)
+            await tx.crossProfileReport.deleteMany({
+                where: { OR: [{ authorId: id }, { targetId: id }] }
+            });
 
-            // 10. Enfim, remover o usuário
+            // 11. Remover Auditorias e Simulações de Cálculo
+            await tx.calculationConfigAudit.deleteMany({ where: { userId: id } });
+            await tx.calculationSimulation.deleteMany({ where: { userId: id } });
+
+            // 12. Contexto Business 2.0 (Snapshots e Planos)
+            // Remover Snapshots de Performance
+            try {
+                await tx.performanceSnapshot.deleteMany({ where: { employeeId: id } });
+            } catch (e) { }
+
+            // Remover Planos de Ação (Se funcionário -> delete, Se gerente -> null)
+            try {
+                await tx.actionPlan.deleteMany({ where: { employeeId: id } });
+                await tx.actionPlan.updateMany({
+                    where: { managerId: id },
+                    data: { managerId: null }
+                });
+            } catch (e) { }
+
+            // 13. Enfim, remover o usuário
             return tx.user.delete({
                 where: { id }
             });
