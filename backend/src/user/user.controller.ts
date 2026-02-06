@@ -316,6 +316,11 @@ export class UserController {
 
         // Realizar exclusão em cascata manual via transação
         return this.prisma.$transaction(async (tx) => {
+            // 0. Remover Relatórios de Comparação (CRÍTICO: Deve ser antes de Conexões)
+            await tx.crossProfileReport.deleteMany({
+                where: { OR: [{ authorId: id }, { targetId: id }] }
+            });
+
             // 1. Remover Solicitações de Crédito
             await tx.creditSolicitation.deleteMany({ where: { userId: id } });
 
@@ -364,10 +369,6 @@ export class UserController {
                 await tx.assessmentAssignment.deleteMany({ where: { id: { in: assignmentIds } } });
             }
 
-            // 10. Remover Relatórios de Comparação (Cross-Profile)
-            await tx.crossProfileReport.deleteMany({
-                where: { OR: [{ authorId: id }, { targetId: id }] }
-            });
 
             // 11. Remover Auditorias e Simulações de Cálculo
             await tx.calculationConfigAudit.deleteMany({ where: { userId: id } });
