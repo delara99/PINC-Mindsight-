@@ -403,8 +403,8 @@ export default function DashboardPage() {
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
 
-                {/* Left Column (Main Data) */}
-                <div className="xl:col-span-8 space-y-8">
+                {/* Main Data Column (Expanded to Full Width) */}
+                <div className="xl:col-span-12 space-y-8">
                     {/* Charts */}
                     <div className="h-[350px]">
                         <ActivityChart stats={stats} />
@@ -422,60 +422,6 @@ export default function DashboardPage() {
                     <RecentCandidatesTable candidates={stats?.recentCandidates} />
                 </div>
 
-                {/* Right Column (Actions & Notifications) */}
-                <div className="xl:col-span-4 space-y-6">
-                    {/* Search Mockup */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Buscar candidato..."
-                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
-                        />
-                    </div>
-
-                    {/* Notifications (Credit Requests) */}
-                    <CreditNotificationWidget requests={stats?.creditRequests} token={token || ''} />
-
-                    {/* Quick Access Card */}
-                    <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
-                        <h3 className="font-bold text-lg mb-2 relative z-10">Central de Ajuda</h3>
-                        <p className="text-indigo-200 text-sm mb-4 relative z-10">
-                            Precisa de suporte para interpretar os resultados do Big Five?
-                        </p>
-                        <button className="w-full bg-white text-indigo-900 font-bold py-2.5 rounded-lg text-sm hover:bg-indigo-50 transition-colors relative z-10">
-                            Falar com Especialista
-                        </button>
-                    </div>
-
-                    {/* Users without Credits Lists */}
-                    {stats?.usersWithoutCredits?.length > 0 && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <h3 className="font-bold text-gray-800 mb-4 text-sm flex items-center justify-between">
-                                Sem Créditos
-                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{stats.usersWithoutCredits.length}</span>
-                            </h3>
-                            <div className="space-y-3">
-                                {stats.usersWithoutCredits.slice(0, 5).map((u: any) => (
-                                    <div key={u.id} className="flex justify-between items-center text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
-                                                {u.name.charAt(0)}
-                                            </div>
-                                            <span className="text-gray-600 truncate max-w-[120px]">{u.name}</span>
-                                        </div>
-                                        <Link href={`/dashboard/clients?id=${u.id}`}>
-                                            <button className="text-indigo-600 hover:text-indigo-800 text-xs font-bold">
-                                                Visitar
-                                            </button>
-                                        </Link>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
             </div>
         </div>
     );
