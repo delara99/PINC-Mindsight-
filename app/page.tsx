@@ -116,8 +116,8 @@ export default function Home() {
                 <div className="max-w-[1440px] mx-auto grid lg:grid-cols-12 gap-16 items-center">
                     <div className="lg:col-span-7 space-y-8">
                         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.95] text-black">
-                            Revele quem <br />
-                            <span className="text-purple-600">você é.</span>
+                            {settings?.heroTitle || 'Revele quem'} <br />
+                            <span className="text-purple-600">{settings?.heroSubtitle || 'você é.'}</span>
                         </h1>
 
                         <p className="text-xl md:text-2xl text-gray-500 font-medium leading-relaxed max-w-2xl tracking-tight">
