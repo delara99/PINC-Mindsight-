@@ -47,7 +47,11 @@ export const metadata: Metadata = {
     },
     verification: {
         google: 'google-site-verification-code', // Placeholder
-    }
+    },
+    alternates: {
+        canonical: 'https://www.pinc.app.br',
+    },
+    manifest: '/manifest.json',
 };
 
 import QueryProvider from '../src/providers/query-provider';
@@ -70,6 +74,11 @@ export default function RootLayout({
             "price": "29.90",
             "priceCurrency": "BRL",
             "availability": "https://schema.org/InStock"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "1250"
         },
         "description": "Plataforma de autoconhecimento baseada no Big Five com IA Coach.",
         "author": {

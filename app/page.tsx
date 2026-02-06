@@ -1,6 +1,8 @@
 'use client';
 
+
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -67,7 +69,14 @@ export default function Home() {
             <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <img src="/logo.png" alt="PINC Logo" className="h-10 w-auto object-contain" />
+                        <Image
+                            src="/logo.png"
+                            alt="PINC - Plataforma de Inteligência Comportamental"
+                            width={120}
+                            height={40}
+                            className="h-10 w-auto object-contain"
+                            priority
+                        />
                     </div>
 
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide text-gray-500">
@@ -493,7 +502,13 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
                         <div className="flex flex-col items-center md:items-start gap-4">
-                            <img src="/logo.png" alt="PINC Logo" className="h-10 w-auto" />
+                            <Image
+                                src="/logo.png"
+                                alt="PINC Logo"
+                                width={100}
+                                height={32}
+                                className="h-10 w-auto"
+                            />
                             <p className="text-gray-500 text-sm">
                                 © 2025 Sued Inc. Todos os direitos reservados.
                             </p>
