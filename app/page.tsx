@@ -458,7 +458,9 @@ export default function Home() {
                                         <span className="text-4xl font-bold tracking-tight">
                                             R$ {Number(String(plan.price).replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                         </span>
-                                        <span className="text-gray-500 text-sm">/{plan.period === 'monthly' ? 'mês' : 'ano'}</span>
+                                        <span className="text-gray-500 text-sm ml-1">
+                                            {plan.period === 'monthly' ? '/mês' : plan.period === 'yearly' ? '/ano' : `/${plan.period}`}
+                                        </span>
                                     </div>
 
                                     <ul className="space-y-4 mb-8">
