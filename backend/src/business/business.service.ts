@@ -238,7 +238,9 @@ export class BusinessService {
 
     async createEmployee(tenantId: string, data: { name: string; accessCode?: string, initialCredits?: number }) {
         // Gera um email fictício para unicidade no banco se não fornecido
-        const accessCode = data.accessCode || Math.random().toString(36).slice(-6).toUpperCase();
+        // CHANGE: Enforce PINC-XXXX format
+        const codeSuffix = Math.floor(1000 + Math.random() * 9000);
+        const accessCode = data.accessCode || `PINC-${codeSuffix}`;
 
         // Email placeholder único
         const dummyEmail = `${accessCode.toLowerCase()}.${Date.now()}@func.pinc.app`;
