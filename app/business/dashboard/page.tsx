@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import {
-    Users, FileCheck, TrendingUp, Zap, Target,
+    Users, FileCheck, TrendingUp, Zap,
     ArrowUpRight, ArrowDownRight,
     Activity, UserCheck, BarChart3
 } from 'lucide-react';
@@ -121,12 +121,6 @@ export default function BusinessDashboardHome() {
                                 label="Convidar Colaborador"
                                 href="/business/dashboard/candidates"
                                 color="purple"
-                            />
-                            <QuickActionButton
-                                icon={Target}
-                                label="Criar Perfil de Cargo"
-                                href="/business/dashboard/talent/profiles"
-                                color="blue"
                             />
                             <QuickActionButton
                                 icon={Users}
