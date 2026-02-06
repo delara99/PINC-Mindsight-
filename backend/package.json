@@ -37,7 +37,7 @@
         "@types/passport-linkedin-oauth2": "^1.5.6",
         "@types/passport-oauth2": "^1.8.0",
         "@types/puppeteer": "^5.4.7",
-        "axios": "^1.13.2",
+        "axios": "^1.13.4",
         "bcryptjs": "^3.0.3",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.0",

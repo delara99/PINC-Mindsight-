@@ -2,7 +2,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-linkedin-oauth2';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InternalOAuthError } from 'passport-oauth2';
+import axios from 'axios';
 
 @Injectable()
 export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
@@ -11,7 +11,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
         const clientSecret = configService.get<string>('LINKEDIN_CLIENT_SECRET');
         const callbackURL = configService.get<string>('LINKEDIN_CALLBACK_URL');
 
-        console.log('🔍 LinkedIn OAuth Config (Hybrid):', {
+        console.log('🔍 LinkedIn OAuth Config (Manual):', {
             clientID: clientID ? `${clientID.substring(0, 5)}...` : 'MISSING',
             clientSecret: clientSecret ? 'SET' : 'MISSING',
             callbackURL: callbackURL || 'MISSING'
@@ -26,57 +26,41 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
             clientSecret,
             callbackURL,
             scope: ['openid', 'profile', 'email'],
-            state: false, // Critical for stateless NestJS
-        });
-    }
-
-    // SOBRESCREVER método de profile para usar OIDC (UserInfo) em vez da API v2/me legada
-    userProfile(accessToken: string, done: Function) {
-        // @ts-ignore - _oauth2 property exists on the strategy instance
-        this._oauth2.get('https://api.linkedin.com/v2/userinfo', accessToken, (err: any, body: string, res: any) => {
-            if (err) {
-                console.error('LinkedIn UserInfo Error:', err);
-                return done(new InternalOAuthError('failed to fetch user profile', err));
-            }
-            try {
-                const json = JSON.parse(body);
-
-                // Mapeamento manual do OIDC Response
-                const profile = {
-                    provider: 'linkedin',
-                    id: json.sub,
-                    displayName: json.name,
-                    email: json.email,
-                    picture: json.picture,
-                    emails: [{ value: json.email }],
-                    photos: [{ value: json.picture }],
-                    _raw: body,
-                    _json: json
-                };
-
-                done(null, profile);
-            } catch (e) {
-                done(e);
-            }
+            state: false,
+            skipUserProfile: true, // 🚨 CRUCIAL: Pula o fetch automático quebrado da biblioteca
         });
     }
 
     async validate(
         accessToken: string,
         refreshToken: string,
-        profile: any,
+        _profile: any, // Perfil vem vazio pois pulamos o fetch
         done: Function,
     ): Promise<any> {
-        console.log('🔍 LinkedIn Validated Profile:', JSON.stringify(profile));
+        try {
+            console.log('🔍 LinkedIn Manual Fetch with Token:', accessToken ? 'PRESENT' : 'MISSING');
 
-        const user = {
-            linkedinId: profile.id,
-            email: profile.email, // Já mapeado acima
-            name: profile.displayName,
-            picture: profile.picture,
-            accessToken,
-        };
+            // Fetch manual robusto usando a API OIDC nova
+            const response = await axios.get('https://api.linkedin.com/v2/userinfo', {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
 
-        done(null, user);
+            console.log('🔍 LinkedIn UserInfo Response:', JSON.stringify(response.data));
+
+            const json = response.data;
+
+            const user = {
+                linkedinId: json.sub,
+                email: json.email,
+                name: json.name,
+                picture: json.picture,
+                accessToken,
+            };
+
+            done(null, user);
+        } catch (error) {
+            console.error('LinkedIn Manual Fetch Error:', error?.response?.data || error.message);
+            done(error, null);
+        }
     }
 }
