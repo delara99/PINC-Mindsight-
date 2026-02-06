@@ -28,7 +28,7 @@ export class UserController {
                         { tenantId: req.user.tenantId, role: 'MEMBER' }
                     ]
                 },
-                select: { id: true, name: true, email: true, role: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true, mustChangePassword: true }
+                select: { id: true, name: true, email: true, role: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true, mustChangePassword: true, googleId: true }
             });
         }
 
@@ -39,7 +39,7 @@ export class UserController {
                     tenantId: req.user.tenantId,
                     role: 'MEMBER'
                 },
-                select: { id: true, name: true, email: true, role: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true, mustChangePassword: true }
+                select: { id: true, name: true, email: true, role: true, credits: true, createdAt: true, status: true, companyName: true, userType: true, plan: true, viewedByAdmin: true, phone: true, cpf: true, cnpj: true, mustChangePassword: true, googleId: true }
             });
         }
 
