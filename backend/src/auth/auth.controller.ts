@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Query, Response } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -39,7 +39,7 @@ export class AuthController {
     // Google OAuth - Callback
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
-    async googleAuthRedirect(@Request() req) {
+    async googleAuthRedirect(@Request() req, @Response() res) {
         // req.user contém dados do Google (vem da strategy)
         const result = await this.authService.googleLogin(req.user);
 
@@ -47,10 +47,7 @@ export class AuthController {
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.pinc.app.br';
         const redirectUrl = `${frontendUrl}/auth/google/success?token=${result.access_token}`;
 
-        return {
-            statusCode: 302,
-            url: redirectUrl
-        };
+        return res.redirect(redirectUrl);
     }
 
     @Get('me')
