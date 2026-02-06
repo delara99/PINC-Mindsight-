@@ -133,20 +133,7 @@ function WelcomeHeader({ user }: { user: any }) {
                 <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Visão Geral</h1>
                 <p className="text-gray-500 mt-1 capitalize">{date}</p>
             </div>
-            <div className="flex gap-3">
-                <Link href="/dashboard/assessments/new">
-                    <button className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-gray-200">
-                        <Target size={18} />
-                        Nova Avaliação
-                    </button>
-                </Link>
-                <Link href="/dashboard/clients">
-                    <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-200">
-                        <UserPlus size={18} />
-                        Convidar Candidato
-                    </button>
-                </Link>
-            </div>
+            {/* Buttons removed as requested */}
         </div>
     );
 }
@@ -405,10 +392,7 @@ export default function DashboardPage() {
 
                 {/* Main Data Column (Expanded to Full Width) */}
                 <div className="xl:col-span-12 space-y-8">
-                    {/* Charts */}
-                    <div className="h-[350px]">
-                        <ActivityChart stats={stats} />
-                    </div>
+                    {/* Charts removed as requested */}
 
                     {/* Live Users Widget (New) */}
                     <motion.div
