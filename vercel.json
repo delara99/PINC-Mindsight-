@@ -1,5 +1,11 @@
 {
     "framework": "nextjs",
     "buildCommand": "npm run build",
-    "installCommand": "npm install"
+    "installCommand": "npm install",
+    "rewrites": [
+        {
+            "source": "/api/v1/:path*",
+            "destination": "https://pinc-mindsight-production.up.railway.app/api/v1/:path*"
+        }
+    ]
 }
