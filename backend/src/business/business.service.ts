@@ -18,6 +18,7 @@ export class BusinessService {
     async getDashboardStats(tenantId: string) {
         if (!tenantId) throw new BadRequestException('Tenant ID obrigatório');
 
+        // 1. Stats Básicos
         const totalEmployees = await this.prisma.user.count({
             where: { tenantId, role: Role.MEMBER }
         });
@@ -27,26 +28,125 @@ export class BusinessService {
         });
 
         const assessments = await this.prisma.assessmentAssignment.findMany({
-            where: {
-                user: { tenantId }
-            },
-            select: { status: true }
+            where: { user: { tenantId } },
+            select: { status: true, completedAt: true, assignedAt: true }
         });
 
         const completed = assessments.filter(a => a.status === 'COMPLETED').length;
         const pending = assessments.filter(a => a.status === 'PENDING' || a.status === 'IN_PROGRESS').length;
 
+        // 2. Créditos
         const adminUsers = await this.prisma.user.findMany({
             where: { tenantId, role: { in: [Role.TENANT_ADMIN, Role.SUPER_ADMIN] } }
         });
-
-        // Soma créditos de todos os admins do tenant para evitar confusão se houver múltiplas contas
         const totalCredits = adminUsers.reduce((sum, user) => sum + (user.credits || 0), 0);
+
+        // 3. Atividade Recente (Feed)
+        // Busca assignments recentes e criação de times
+        const recentAssignments = await this.prisma.assessmentAssignment.findMany({
+            where: { user: { tenantId } },
+            take: 5,
+            orderBy: { assignedAt: 'desc' },
+            include: { user: { select: { name: true } } }
+        });
+
+        const recentTeams = await this.prisma.team.findMany({
+            where: { tenantId },
+            take: 2,
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const activities = [
+            ...recentAssignments.map(a => ({
+                id: a.id,
+                type: a.status === 'COMPLETED' ? 'assessment_completed' : 'assessment_assigned',
+                message: a.status === 'COMPLETED'
+                    ? `${a.user.name} completou a avaliação`
+                    : `Avaliação enviada para ${a.user.name}`,
+                time: a.completedAt || a.assignedAt
+            })),
+            ...recentTeams.map(t => ({
+                id: t.id,
+                type: 'team_created',
+                message: `Equipe "${t.name}" criada`,
+                time: t.createdAt
+            }))
+        ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
+
+        // 4. Tendência (Últimos 7 dias)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const completedLast7Days = assessments.filter(a =>
+            a.status === 'COMPLETED' &&
+            a.completedAt &&
+            new Date(a.completedAt) >= sevenDaysAgo
+        );
+
+        const trendData = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - (6 - i));
+            const dateStr = d.toISOString().split('T')[0];
+            const count = completedLast7Days.filter(a =>
+                a.completedAt && new Date(a.completedAt).toISOString().startsWith(dateStr)
+            ).length;
+
+            const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            return { day: days[d.getDay()], value: count, date: dateStr };
+        });
+
+        // 5. Top Performers (Baseado em Fit de Job Profile)
+        // 5. Top Performers (Baseado em Fit de Job Profile)
+        const topAnalyses = await this.prisma.candidateFitAnalysis.findMany({
+            where: { jobProfile: { tenantId } },
+            take: 5,
+            orderBy: { overallFit: 'desc' },
+            include: {
+                jobProfile: { select: { name: true } }
+            }
+        });
+
+        const userIds = topAnalyses.map(a => a.candidateId);
+        const users = await this.prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: { id: true, name: true }
+        });
+
+        const topPerformers = topAnalyses.map(analysis => {
+            const user = users.find(u => u.id === analysis.candidateId);
+            return {
+                name: user?.name || 'Usuário',
+                role: analysis.jobProfile.name,
+                score: Math.round(analysis.overallFit * 10) / 10 // Arredonda 1 casa decimal
+            };
+        });
+
+        // 6. Distribuição de Personalidade (Média Big 5 do time)
+        // Isso é pesado, então simplificamos pegando os assignments completados e seus reports
+        // Para uma versão real otimizada, deveríamos ter uma tabela de agregados
+        // Aqui vamos buscar um subset para não matar o banco
+
+        // Simulação baseada em dados reais se existirem reports
+        // Numa implementação ideal, o PersonalityProfile estaria salvo de forma acessível
+        // Aqui retornaremos uma estrutura padrão que o front vai renderizar, 
+        // mas com valores placeholder calculados se possível no futuro.
+        // Por enquanto, mantemos fixo ou zerado para não quebrar se não houver dados complexos.
+        const personalityDistribution = [
+            { name: 'Abertura', value: 0, color: 'bg-indigo-500' },
+            { name: 'Conscienciosidade', value: 0, color: 'bg-blue-500' },
+            { name: 'Extroversão', value: 0, color: 'bg-green-500' },
+            { name: 'Amabilidade', value: 0, color: 'bg-yellow-500' },
+            { name: 'Neuroticismo', value: 0, color: 'bg-pink-500' }
+        ];
 
         return {
             employees: { total: totalEmployees, active: activeEmployees },
             assessments: { completed, pending, total: assessments.length },
-            credits: totalCredits
+            credits: totalCredits,
+            activities,
+            performanceTrend: trendData,
+            topPerformers,
+            personalityDistribution
         };
     }
 

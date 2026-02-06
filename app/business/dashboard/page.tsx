@@ -12,8 +12,6 @@ import Link from 'next/link';
 export default function BusinessDashboardHome() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [activities, setActivities] = useState<any[]>([]);
-    const [topPerformers, setTopPerformers] = useState<any[]>([]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -27,9 +25,6 @@ export default function BusinessDashboardHome() {
             });
             setStats(res.data);
 
-            // Simular atividades recentes (você pode substituir por dados reais da API)
-            setActivities(generateRecentActivities());
-            setTopPerformers(generateTopPerformers(res.data));
         } catch (error) {
             console.error("Failed to fetch dashboard stats", error);
         } finally {
@@ -64,32 +59,24 @@ export default function BusinessDashboardHome() {
                 <StatCard
                     title="Total de Colaboradores"
                     value={stats?.employees?.total || 0}
-                    change="+12%"
-                    trend="up"
                     icon={Users}
                     color="bg-blue-50 text-blue-600"
                 />
                 <StatCard
                     title="Avaliações Concluídas"
                     value={stats?.assessments?.completed || 0}
-                    change="+8%"
-                    trend="up"
                     icon={FileCheck}
                     color="bg-green-50 text-green-600"
                 />
                 <StatCard
                     title="Taxa de Engajamento"
-                    value={`${Math.round(((stats?.assessments?.completed || 0) / (stats?.employees?.total || 1)) * 100)}%`}
-                    change="+5%"
-                    trend="up"
+                    value={`${stats?.employees?.total ? Math.round(((stats?.assessments?.completed || 0) / (stats?.employees?.total)) * 100) : 0}%`}
                     icon={TrendingUp}
                     color="bg-purple-50 text-purple-600"
                 />
                 <StatCard
                     title="Seus Créditos"
                     value={stats?.credits || 0}
-                    change="-15"
-                    trend="down"
                     icon={Zap}
                     color="bg-amber-50 text-amber-600"
                 />
@@ -109,12 +96,12 @@ export default function BusinessDashboardHome() {
                             <Activity className="text-purple-600" size={20} />
                         </div>
                         <div className="space-y-4">
-                            {activities.length > 0 ? activities.map((activity, idx) => (
+                            {stats?.activities && stats.activities.length > 0 ? stats.activities.map((activity: any, idx: number) => (
                                 <ActivityItem key={idx} activity={activity} />
                             )) : (
                                 <div className="text-center py-8 text-slate-400">
                                     <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                    <p className="text-sm">Nenhuma atividade recente</p>
+                                    <p className="text-sm">Nenhuma atividade recente encontrada</p>
                                 </div>
                             )}
                         </div>
@@ -129,7 +116,7 @@ export default function BusinessDashboardHome() {
                             </div>
                             <LineChart className="text-purple-600" size={20} />
                         </div>
-                        <PerformanceChart />
+                        <PerformanceChart data={stats?.performanceTrend || []} />
                     </div>
 
                     {/* Personality Distribution */}
@@ -141,7 +128,7 @@ export default function BusinessDashboardHome() {
                             </div>
                             <Brain className="text-purple-600" size={20} />
                         </div>
-                        <PersonalityDistribution />
+                        <PersonalityDistribution data={stats?.personalityDistribution || []} />
                     </div>
                 </div>
 
@@ -154,9 +141,13 @@ export default function BusinessDashboardHome() {
                             <h3 className="text-lg font-bold text-slate-900">Top Performers</h3>
                         </div>
                         <div className="space-y-3">
-                            {topPerformers.map((performer, idx) => (
+                            {stats?.topPerformers && stats.topPerformers.length > 0 ? stats.topPerformers.map((performer: any, idx: number) => (
                                 <TopPerformerItem key={idx} performer={performer} rank={idx + 1} />
-                            ))}
+                            )) : (
+                                <p className="text-sm text-slate-500 text-center py-4">
+                                    Nenhum fit análise realizado ainda.
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -242,20 +233,33 @@ function StatCard({ title, value, change, trend, icon: Icon, color }: any) {
 function ActivityItem({ activity }: any) {
     const getIcon = () => {
         switch (activity.type) {
-            case 'assessment': return <FileCheck className="text-green-600" size={16} />;
-            case 'invite': return <UserCheck className="text-blue-600" size={16} />;
-            case 'team': return <Users className="text-purple-600" size={16} />;
-            case 'profile': return <Target className="text-amber-600" size={16} />;
+            case 'assessment_completed': return <FileCheck className="text-green-600" size={16} />;
+            case 'assessment_assigned': return <UserCheck className="text-blue-600" size={16} />;
+            case 'team_created': return <Users className="text-purple-600" size={16} />;
+            // case 'profile': return <Target className="text-amber-600" size={16} />;
             default: return <Activity className="text-slate-600" size={16} />;
         }
     };
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 60) return `${diffMins} min atrás`;
+        if (diffHours < 24) return `${diffHours} horas atrás`;
+        return `${diffDays} dias atrás`;
+    }
 
     return (
         <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="mt-0.5">{getIcon()}</div>
             <div className="flex-1 min-w-0">
                 <p className="text-sm text-slate-900 font-medium">{activity.message}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{activity.time}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{formatDate(activity.time)}</p>
             </div>
         </div>
     );
@@ -314,27 +318,27 @@ function InsightCard({ type, message }: any) {
     );
 }
 
-function PerformanceChart() {
-    const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    const data = [12, 19, 15, 25, 22, 18, 24];
-    const maxValue = Math.max(...data);
+function PerformanceChart({ data }: { data: any[] }) {
+    if (!data || data.length === 0) return <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Sem dados recentes</div>;
+
+    const maxValue = Math.max(...data.map(d => d.value)) || 1;
 
     return (
         <div className="space-y-4">
             <div className="flex items-end justify-between gap-2 h-48">
-                {data.map((value, idx) => (
+                {data.map((item, idx) => (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                        <div className="w-full bg-slate-100 rounded-t-lg relative overflow-hidden" style={{ height: '100%' }}>
+                        <div className="w-full bg-slate-100 rounded-t-lg relative overflow-hidden group" style={{ height: '100%' }}>
                             <div
                                 className="absolute bottom-0 w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-lg transition-all duration-500 hover:from-purple-700 hover:to-purple-500"
-                                style={{ height: `${(value / maxValue) * 100}%` }}
+                                style={{ height: `${(item.value / maxValue) * 100}%` }}
                             >
-                                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-white">
-                                    {value}
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {item.value}
                                 </div>
                             </div>
                         </div>
-                        <span className="text-xs text-slate-500 font-medium">{days[idx]}</span>
+                        <span className="text-xs text-slate-500 font-medium">{item.day}</span>
                     </div>
                 ))}
             </div>
@@ -342,18 +346,12 @@ function PerformanceChart() {
     );
 }
 
-function PersonalityDistribution() {
-    const traits = [
-        { name: 'Abertura', value: 72, color: 'bg-indigo-500' },
-        { name: 'Conscienciosidade', value: 85, color: 'bg-blue-500' },
-        { name: 'Extroversão', value: 64, color: 'bg-green-500' },
-        { name: 'Amabilidade', value: 78, color: 'bg-yellow-500' },
-        { name: 'Neuroticismo', value: 45, color: 'bg-pink-500' }
-    ];
+function PersonalityDistribution({ data }: { data: any[] }) {
+    if (!data || data.every(d => d.value === 0)) return <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Sem dados de personalidade suficientes</div>;
 
     return (
         <div className="space-y-4">
-            {traits.map((trait, idx) => (
+            {data.map((trait, idx) => (
                 <div key={idx}>
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-slate-700">{trait.name}</span>
@@ -371,44 +369,3 @@ function PersonalityDistribution() {
     );
 }
 
-// Helper functions
-function generateRecentActivities() {
-    const now = new Date();
-    return [
-        {
-            type: 'assessment',
-            message: 'João Silva completou a avaliação de personalidade',
-            time: 'Há 5 minutos'
-        },
-        {
-            type: 'invite',
-            message: 'Novo colaborador convidado: Maria Santos',
-            time: 'Há 15 minutos'
-        },
-        {
-            type: 'team',
-            message: 'Equipe "Vendas" foi atualizada com 2 novos membros',
-            time: 'Há 1 hora'
-        },
-        {
-            type: 'profile',
-            message: 'Perfil de cargo "Analista de Marketing" criado',
-            time: 'Há 2 horas'
-        },
-        {
-            type: 'assessment',
-            message: 'Ana Costa completou a avaliação de personalidade',
-            time: 'Há 3 horas'
-        }
-    ];
-}
-
-function generateTopPerformers(stats: any) {
-    return [
-        { name: 'Carlos Mendes', role: 'Gerente de Vendas', score: 95 },
-        { name: 'Juliana Lima', role: 'Analista de Marketing', score: 92 },
-        { name: 'Pedro Oliveira', role: 'Desenvolvedor', score: 89 },
-        { name: 'Fernanda Costa', role: 'Designer UX', score: 87 },
-        { name: 'Roberto Santos', role: 'Analista de Dados', score: 85 }
-    ];
-}
