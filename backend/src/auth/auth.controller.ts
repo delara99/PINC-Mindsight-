@@ -48,6 +48,28 @@ export class AuthController {
         const redirectUrl = `${frontendUrl}/auth/google/success?token=${result.access_token}`;
 
         return res.redirect(redirectUrl);
+
+    }
+
+    // LinkedIn OAuth - Inicia o fluxo
+    @Get('linkedin')
+    @UseGuards(AuthGuard('linkedin'))
+    async linkedinAuth(@Request() req) {
+        // Guard redireciona para LinkedIn
+    }
+
+    // LinkedIn OAuth - Callback
+    @Get('linkedin/callback')
+    @UseGuards(AuthGuard('linkedin'))
+    async linkedinAuthRedirect(@Request() req, @Response() res) {
+        // req.user contém dados do LinkedIn (vem da strategy)
+        const result = await this.authService.linkedinLogin(req.user);
+
+        // Redirecionar para frontend com token
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.pinc.app.br';
+        const redirectUrl = `${frontendUrl}/auth/linkedin/success?token=${result.access_token}`;
+
+        return res.redirect(redirectUrl);
     }
 
     @Get('me')

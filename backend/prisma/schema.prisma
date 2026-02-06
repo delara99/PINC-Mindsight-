@@ -47,6 +47,7 @@ model User {
   email    String     @unique
   password String?    // ← Agora opcional (Google users não têm senha)
   googleId String?    @unique // ← Novo campo para Google OAuth
+  linkedinId String?  @unique // ← Novo campo para LinkedIn OAuth
   name     String?
   role     Role       @default(MEMBER)
   status   UserStatus @default(pending)

@@ -138,6 +138,94 @@ export class AuthService {
         return this.login(user);
     }
 
+    async linkedinLogin(linkedinUser: {
+        linkedinId: string;
+        email: string;
+        name: string;
+        picture?: string;
+    }) {
+        // 1. Buscar usuário existente por linkedinId
+        let user = await this.prisma.user.findUnique({
+            where: { linkedinId: linkedinUser.linkedinId }
+        });
+
+        // 2. Se não encontrou por linkedinId, buscar por email (merge de contas)
+        if (!user) {
+            user = await this.prisma.user.findUnique({
+                where: { email: linkedinUser.email }
+            });
+
+            // Se encontrou por email, vincular linkedinId
+            if (user) {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { linkedinId: linkedinUser.linkedinId }
+                });
+            }
+        }
+
+        // 3. Se ainda não existe, criar novo usuário
+        if (!user) {
+            // Criar tenant para o novo usuário
+            const tenantSlug = linkedinUser.email.split('@')[0] + '-' + Date.now();
+            const tenant = await this.prisma.tenant.create({
+                data: {
+                    name: linkedinUser.name || 'Novo Cliente',
+                    slug: tenantSlug
+                }
+            });
+
+            // Criar usuário
+            user = await this.prisma.user.create({
+                data: {
+                    email: linkedinUser.email,
+                    linkedinId: linkedinUser.linkedinId,
+                    name: linkedinUser.name,
+                    password: null, // LinkedIn users não têm senha
+                    role: 'TENANT_ADMIN',
+                    status: 'active',
+                    userType: 'INDIVIDUAL',
+                    tenantId: tenant.id
+                }
+            });
+
+            // Auto-atribuir inventário Big Five
+            let assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE', isDefault: true },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            if (!assessmentModel) {
+                assessmentModel = await this.prisma.assessmentModel.findFirst({
+                    where: { type: 'BIG_FIVE' },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
+
+            if (assessmentModel) {
+                await this.prisma.assessmentAssignment.create({
+                    data: {
+                        userId: user.id,
+                        assessmentId: assessmentModel.id,
+                        status: 'IN_PROGRESS',
+                        assignedAt: new Date(),
+                    }
+                });
+            }
+        }
+
+        // 4. Validar status
+        if (user.status === 'pending') {
+            throw new UnauthorizedException('Sua conta aguarda aprovação do administrador.');
+        }
+        if (user.status === 'inactive') {
+            throw new UnauthorizedException('Sua conta foi desativada.');
+        }
+
+        // 5. Retornar token (mesmo fluxo do login normal)
+        return this.login(user);
+    }
+
     async login(user: any) {
         const payload = {
             email: user.email,
