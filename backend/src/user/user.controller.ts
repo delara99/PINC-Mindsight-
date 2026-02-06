@@ -364,9 +364,8 @@ export class UserController {
                 await tx.assessmentAssignment.deleteMany({ where: { id: { in: assignmentIds } } });
             }
 
-            // 10. Remover OauthTokens se houver (opcional)
 
-            // 11. Enfim, remover o usuário
+            // 10. Enfim, remover o usuário
             return tx.user.delete({
                 where: { id }
             });
