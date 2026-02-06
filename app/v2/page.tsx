@@ -2,27 +2,24 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     LayoutDashboard, Users, BrainCircuit, ShieldCheck, CheckCircle,
     ArrowRight, Target, Grid3x3, Shield, FileText, Star, Loader2,
-    Menu, X, Sparkles, Layers, Zap, Globe
+    Menu, X, Sparkles, Layers, Zap, Globe, MessageSquare, Layout, BarChart3, Bot
 } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 /**
- * 🎨 DESIGN COMMITMENT: SWISS PUNK / OPENAI-INSPIRED
+ * 🎨 DESIGN COMMITMENT: SWISS PUNK / OPENAI-INSPIRED (V2 REFINED)
  * 
- * - **Topological Choice:** Strict Grids with Asymmetric Typography. Abandoned the "Soft SaaS" look.
- * - **Geometry:** Sharp edges (rounded-sm or none) vs High Contrast.
- * - **Typography:** Massive, high-tracking headings. Inter predominantly.
- * - **Palette:** Monochrome (Black/White/Slate-50) + PINC Purple (#7c3aed) as sole accent.
- * - **Risk Factor:** Using heavy black borders and raw layout structures instead of shadows.
- * - **Cliché Liquidation:** No soft shadows, no gradient blobs, no glassmorphism cards.
+ * - **Refinements:** Removed "Version" pill. Centralized Pricing. Added Coach Section.
+ * - **Footer:** Exact match of Production footer.
+ * - **Coach Section:** Adapted to Swiss Style (Light Mode + High Contrast).
  */
 
-// Icon mapping
+// Icon mapping (Matches V1 FeaturesGrid)
 const iconMap: any = {
     'target': Target,
     'grid': Grid3x3,
@@ -31,13 +28,17 @@ const iconMap: any = {
     'file-text': FileText,
     'star': Star,
     'check': CheckCircle,
-    'brain': BrainCircuit
+    'brain': BrainCircuit,
+    'zap': Zap,
+    'layout': Layout,
+    'chart': BarChart3,
+    'message': MessageSquare
 };
 
 export default function HomeV2() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Fetch site settings (reusing existing API)
+    // Fetch site settings
     const { data: settings, isLoading } = useQuery({
         queryKey: ['site-settings'],
         queryFn: async () => {
@@ -62,14 +63,13 @@ export default function HomeV2() {
     return (
         <main className="min-h-screen bg-white text-black font-sans selection:bg-purple-100 selection:text-purple-900">
 
-            {/* HEADER - Kept White as requested, but cleaner */}
+            {/* HEADER */}
             <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <img src="/logo.png" alt="PINC Logo" className="h-10 w-auto object-contain" />
                     </div>
 
-                    {/* Desktop Nav - Swiss Style: Uppercase/Small/Bold or Normal? PINC is friendly. */}
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide text-gray-500">
                         <Link href="#features" className="hover:text-black transition-colors">Funcionalidades</Link>
                         <Link href="/company" className="hover:text-black transition-colors">Metodologia</Link>
@@ -111,16 +111,10 @@ export default function HomeV2() {
                 )}
             </header>
 
-            {/* HERO SECTION - OPENAI STYLE: Massive Typography, Left Aligned, Clean */}
+            {/* HERO SECTION - Updated (Removed Pill) */}
             <section className="pt-40 pb-24 md:pt-52 md:pb-32 px-6 border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto grid lg:grid-cols-12 gap-16 items-center">
                     <div className="lg:col-span-7 space-y-8">
-                        {/* Status Pill */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 mb-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            Ciência Comportamental v2.0
-                        </div>
-
                         <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.9] text-black">
                             Revele quem <br />
                             <span className="text-purple-600">você é.</span>
@@ -146,19 +140,17 @@ export default function HomeV2() {
                         </div>
                     </div>
 
-                    {/* Right Visual - Abstract / Geometric */}
+                    {/* Right Visual */}
                     <div className="lg:col-span-5 relative">
                         <div className="relative aspect-square md:aspect-[4/5] bg-slate-50 border border-gray-200 rounded-lg overflow-hidden">
-                            {/* Abstract Grid Background */}
                             <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-                            {/* Floating UI Elements matching OpenAI generic/tech vibe */}
-                            <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center sh">
                                 <motion.div
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ duration: 0.8 }}
-                                    className="w-64 bg-white border border-gray-200 rounded-md shadow-xl p-6 relative z-10"
+                                    className="w-64 bg-white border border-gray-200 rounded-md shadow-2xl p-6 relative z-10"
                                 >
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="w-10 h-10 bg-purple-600 rounded-md flex items-center justify-center text-white"><Sparkles size={20} /></div>
@@ -182,25 +174,13 @@ export default function HomeV2() {
                                         ))}
                                     </div>
                                 </motion.div>
-
-                                {/* Background Elements */}
-                                <motion.div
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                                    className="absolute -top-10 -right-10 w-48 h-48 border border-dashed border-purple-200 rounded-full z-0"
-                                />
-                                <motion.div
-                                    animate={{ rotate: -360 }}
-                                    transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-                                    className="absolute -bottom-10 -left-10 w-64 h-64 border border-dashed border-gray-200 rounded-full z-0"
-                                />
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* TEASER / TRUST SECTION - Minimal Grid */}
+            {/* TEASER */}
             <section className="py-24 border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto px-6">
                     <div className="grid md:grid-cols-3 gap-8 md:gap-px bg-gray-100 border border-gray-100 rounded-lg overflow-hidden">
@@ -219,9 +199,102 @@ export default function HomeV2() {
                 </div>
             </section>
 
-            {/* FEATURES GRID - Swiss Style */}
+            {/* PINC COACH SECTION (NEW) - Swiss Style */}
+            <section className="py-32 bg-white border-b border-gray-100 overflow-hidden relative">
+                {/* Subtle BG Patter */}
+                <div className="absolute top-0 right-0 opacity-5">
+                    <Bot size={400} />
+                </div>
+
+                <div className="max-w-[1440px] mx-auto px-6 grid lg:grid-cols-2 gap-24 items-center relative z-10">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold uppercase mb-4 border border-purple-100">
+                            <Sparkles size={12} />
+                            IA de Interpretação Pessoal
+                        </div>
+                        <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-8 leading-tight">
+                            PINC Coach. <br />
+                            <span className="text-purple-600">Seu perfil, explicado.</span>
+                        </h2>
+                        <p className="text-xl text-gray-500 mb-8 leading-relaxed">
+                            Não basta saber seu perfil. O diferencial é saber usar isso na prática.
+                            A PINC Coach interpreta seu relatório com você, em tempo real, sem linguagem técnica.
+                        </p>
+
+                        <div className="space-y-4 mb-10">
+                            {[
+                                "Tire dúvidas sobre seu perfil 24h por dia",
+                                "Melhore sua comunicação e tomada de decisão",
+                                "Explicações diretas e acionáveis"
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-center gap-3 text-lg font-medium text-gray-800">
+                                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+                                        <CheckCircle size={14} />
+                                    </div>
+                                    {item}
+                                </div>
+                            ))}
+                        </div>
+
+                        <Link
+                            href="/auth/register?plan=pro"
+                            className="inline-flex items-center gap-2 border-b-2 border-black pb-1 text-lg font-bold hover:text-purple-600 hover:border-purple-600 transition-all"
+                        >
+                            Quero acesso à PINC Coach <ArrowRight size={18} />
+                        </Link>
+                    </div>
+
+                    {/* Chat Simulation - V2 Style */}
+                    <div className="relative">
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-2xl skew-y-1 transform transition-all hover:skew-y-0 duration-500">
+                            {/* Header */}
+                            <div className="flex items-center gap-4 border-b border-gray-200 pb-4 mb-6">
+                                <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
+                                    <Bot size={24} className="text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-black text-lg">Dra. PINC</h3>
+                                    <p className="text-xs text-green-600 flex items-center gap-1 font-bold">
+                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                        Online
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Chat */}
+                            <div className="space-y-6">
+                                <div className="flex justify-end">
+                                    <div className="bg-black text-white px-6 py-4 rounded-2xl rounded-tr-none max-w-[90%] text-sm font-medium">
+                                        Tenho dificuldade em delegar... O que meu perfil diz?
+                                    </div>
+                                </div>
+
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="flex justify-start"
+                                >
+                                    <div className="bg-white border border-gray-200 text-gray-800 px-6 py-4 rounded-2xl rounded-tl-none max-w-[95%] text-sm shadow-sm">
+                                        <p className="mb-3 font-medium">Você tem <strong>Conscienciosidade Alta (88)</strong>.</p>
+                                        <p className="text-gray-500">Isso te torna um excelente executor, mas gera a crença de "se eu não fizer, sai errado".</p>
+
+                                        <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-100 text-purple-900 text-xs font-bold flex gap-2 items-center">
+                                            <Sparkles size={14} />
+                                            Dica: Delegue o "resultado", não o "processo".
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            {/* FEATURES GRID - Title Hardcoded but Cards Dynamic */}
             {settings?.showFeatures && (
-                <section id="features" className="py-32 bg-slate-50">
+                <section id="features" className="py-32 bg-slate-50 border-b border-gray-100">
                     <div className="max-w-[1440px] mx-auto px-6">
                         <div className="mb-20 max-w-2xl">
                             <h2 className="text-4xl md:text-5xl font-bold text-black tracking-tight mb-6">Funcionalidades Poderosas.</h2>
@@ -246,7 +319,7 @@ export default function HomeV2() {
                 </section>
             )}
 
-            {/* METHODOLOGY - Dark Section for Contrast (OpenAI often alternates) */}
+            {/* METHODOLOGY */}
             <section className="py-32 bg-black text-white selection:bg-purple-900 selection:text-white">
                 <div className="max-w-[1440px] mx-auto px-6 grid lg:grid-cols-2 gap-24 items-center">
                     <div>
@@ -274,7 +347,6 @@ export default function HomeV2() {
                         </div>
                     </div>
                     <div className="relative border border-white/10 rounded-lg p-8 bg-white/5 backdrop-blur-sm">
-                        {/* Mockup Illustration */}
                         <div className="space-y-6 opacity-80">
                             <div className="h-4 bg-white/10 rounded w-1/3 mb-8"></div>
                             <div className="space-y-3">
@@ -292,7 +364,7 @@ export default function HomeV2() {
                 </div>
             </section>
 
-            {/* PRICING - Clean Table */}
+            {/* PRICING - Centralized */}
             {settings?.showPricing && (
                 <section id="plans" className="py-32 bg-white">
                     <div className="max-w-[1440px] mx-auto px-6">
@@ -301,11 +373,12 @@ export default function HomeV2() {
                             <p className="text-xl text-gray-500">Transparência total. Sem custos ocultos.</p>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-8">
+                        {/* Flex Container for Centralizing */}
+                        <div className="flex flex-wrap justify-center gap-8">
                             {settings.pricingPlans?.map((plan: any, idx: number) => (
                                 <div
                                     key={plan.id}
-                                    className={`relative p-8 rounded-lg border ${plan.highlighted ? 'border-black bg-slate-50 shadow-xl' : 'border-gray-200 bg-white'}`}
+                                    className={`relative p-8 rounded-lg border w-full md:w-[350px] ${plan.highlighted ? 'border-black bg-slate-50 shadow-xl' : 'border-gray-200 bg-white'}`}
                                 >
                                     {plan.highlighted && <div className="absolute top-0 right-0 bg-black text-white text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>}
 
@@ -329,8 +402,8 @@ export default function HomeV2() {
                                     <Link
                                         href="/auth/register"
                                         className={`block w-full py-3 text-center rounded-md font-bold text-sm transition-all ${plan.highlighted
-                                            ? 'bg-black text-white hover:bg-gray-800'
-                                            : 'bg-white border border-gray-200 text-black hover:bg-gray-50'
+                                                ? 'bg-black text-white hover:bg-gray-800'
+                                                : 'bg-white border border-gray-200 text-black hover:bg-gray-50'
                                             }`}
                                     >
                                         {plan.buttonText}
@@ -342,20 +415,22 @@ export default function HomeV2() {
                 </section>
             )}
 
-            {/* FOOTER - Minimal */}
-            <footer className="py-12 border-t border-gray-100 bg-white">
-                <div className="max-w-[1440px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-black rounded-md flex items-center justify-center text-white font-bold text-xs">P</div>
-                        <span className="font-bold text-lg tracking-tight">PINC.</span>
-                    </div>
-                    <div className="flex gap-8 text-sm text-gray-500 font-medium">
-                        <Link href="#" className="hover:text-black">Termos</Link>
-                        <Link href="#" className="hover:text-black">Privacidade</Link>
-                        <Link href="#" className="hover:text-black">Contato</Link>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                        © 2025 Sued Inc.
+            {/* FOOTER - Production Replica */}
+            <footer className="bg-white border-t border-gray-200 py-12">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
+                        <div className="flex flex-col items-center md:items-start gap-4">
+                            <img src="/logo.png" alt="PINC Logo" className="h-10 w-auto" />
+                            <p className="text-gray-500 text-sm">
+                                © 2025 Sued Inc. Todos os direitos reservados.
+                            </p>
+                        </div>
+
+                        <div className="max-w-lg text-center md:text-right">
+                            <p className="text-gray-400 text-xs leading-relaxed">
+                                O PINC é uma ferramenta de autoconhecimento e desenvolvimento. Os relatórios gerados não substituem avaliações psicológicas clínicas ou acompanhamento profissional especializado quando necessário.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </footer>
