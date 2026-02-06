@@ -266,6 +266,37 @@ export class BusinessService {
         return { ...newUser, accessCode };
     }
 
+    async createEmployeesBulk(tenantId: string, employees: { name: string, accessCode?: string, initialCredits?: number }[]) {
+        const results = [];
+        const errors = [];
+
+        // Process in chunks to avoid overwhelming the server/DB
+        const chunkSize = 10;
+        for (let i = 0; i < employees.length; i += chunkSize) {
+            const chunk = employees.slice(i, i + chunkSize);
+            const promises = chunk.map(async (emp) => {
+                try {
+                    const res = await this.createEmployee(tenantId, emp);
+                    return { status: 'fulfilled', value: res };
+                } catch (e) {
+                    return { status: 'rejected', reason: e.message, employee: emp };
+                }
+            });
+
+            const chunkResults = await Promise.all(promises);
+
+            chunkResults.forEach((res: any) => {
+                if (res.status === 'fulfilled') {
+                    results.push(res.value);
+                } else {
+                    errors.push({ name: res.employee.name, error: res.reason });
+                }
+            });
+        }
+
+        return { created: results.length, failed: errors.length, errors, results };
+    }
+
     // --- REPORTS ---
     async getAllReports(tenantId: string) {
         console.log(`[getAllReports] Buscando relatórios para tenant: ${tenantId}`);

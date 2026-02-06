@@ -39,6 +39,12 @@ export class BusinessController {
         return this.service.createEmployee(req.user.tenantId, body);
     }
 
+    @Post('employees/bulk')
+    async createEmployeesBulk(@Request() req, @Body() body: { employees: any[] }) {
+        this.validateCompanyAccess(req.user);
+        return this.service.createEmployeesBulk(req.user.tenantId, body.employees);
+    }
+
     @Post('employees/:id/toggle-status')
     async toggleEmployeeStatus(@Request() req, @Param('id') id: string) {
         this.validateCompanyAccess(req.user);
