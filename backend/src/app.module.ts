@@ -24,9 +24,11 @@ import { BusinessModule } from './business/business.module';
 import { CalculationEngineModule } from './calculation-engine/calculation-engine.module';
 import { SeedModule } from './seed/seed.module';
 import { AiModule } from './ai/ai.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
     imports: [
+        ConfigModule.forRoot({ isGlobal: true }), // ← Adicionar aqui
         AuthModule,
         UserModule,
         PrismaModule,

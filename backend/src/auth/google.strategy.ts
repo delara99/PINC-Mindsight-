@@ -6,10 +6,25 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     constructor(private configService: ConfigService) {
+        const clientID = configService.get<string>('GOOGLE_CLIENT_ID');
+        const clientSecret = configService.get<string>('GOOGLE_CLIENT_SECRET');
+        const callbackURL = configService.get<string>('GOOGLE_CALLBACK_URL');
+
+        // Debug log (remover depois)
+        console.log('🔍 Google OAuth Config:', {
+            clientID: clientID ? `${clientID.substring(0, 20)}...` : 'MISSING',
+            clientSecret: clientSecret ? 'SET' : 'MISSING',
+            callbackURL: callbackURL || 'MISSING'
+        });
+
+        if (!clientID || !clientSecret || !callbackURL) {
+            throw new Error('Google OAuth environment variables are not set properly. Check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_CALLBACK_URL');
+        }
+
         super({
-            clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
-            clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
-            callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
+            clientID,
+            clientSecret,
+            callbackURL,
             scope: ['email', 'profile'],
         });
     }
