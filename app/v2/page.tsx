@@ -140,42 +140,117 @@ export default function HomeV2() {
                         </div>
                     </div>
 
-                    {/* Right Visual */}
-                    <div className="lg:col-span-5 relative">
-                        <div className="relative aspect-square md:aspect-[4/5] bg-slate-50 border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                    {/* Right Visual - Rich 'Desdobramento' Card */}
+                    <div className="lg:col-span-5 relative perspective-1000">
+                        {/* Abstract Background Elements */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 to-white rounded-3xl transform rotate-3 scale-105 opacity-50 blur-xl"></div>
 
-                            <div className="absolute inset-0 flex items-center justify-center sh">
+                        <motion.div
+                            initial={{ rotateY: -10, rotateX: 5, opacity: 0 }}
+                            animate={{ rotateY: 0, rotateX: 0, opacity: 1 }}
+                            transition={{ duration: 1, type: "spring" }}
+                            className="relative bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-w-2xl mx-auto lg:mx-0 min-h-[500px]"
+                        >
+                            {/* Animated Shine Effect */}
+                            <motion.div
+                                animate={{ x: ['-200%', '200%'] }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear", delay: 2 }}
+                                className="absolute top-0 bottom-0 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 z-20 pointer-events-none"
+                            />
+
+                            {/* Sidebar (Analise Resumo) */}
+                            <div className="bg-yellow-50 w-full md:w-1/3 p-8 flex flex-col items-center justify-center border-r border-yellow-100 text-center relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-yellow-400"></div>
+
                                 <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8 }}
-                                    className="w-64 bg-white border border-gray-200 rounded-md shadow-2xl p-6 relative z-10"
+                                    whileHover={{ scale: 1.1, rotate: 10 }}
+                                    className="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-yellow-200"
                                 >
-                                    <div className="flex justify-between items-center mb-6">
-                                        <div className="w-10 h-10 bg-purple-600 rounded-md flex items-center justify-center text-white"><Sparkles size={20} /></div>
-                                        <div className="text-right">
-                                            <div className="text-xs font-bold text-gray-400 uppercase">Score</div>
-                                            <div className="text-2xl font-bold text-black">98%</div>
+                                    <Sparkles size={40} className="text-yellow-900" />
+                                </motion.div>
+
+                                <h3 className="text-xl font-bold text-gray-900 leading-tight mb-2">Abertura à <br />Experiência</h3>
+
+                                <div className="my-4 relative">
+                                    <span className="text-8xl font-black text-gray-900 tracking-tighter">53</span>
+                                </div>
+
+                                <span className="bg-white border border-yellow-200 text-yellow-800 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
+                                    Médio
+                                </span>
+                            </div>
+
+                            {/* Main Content (Detalhes) */}
+                            <div className="w-full md:w-2/3 p-8 bg-white relative">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <BarChart3 size={16} className="text-gray-400" />
+                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Análise Comportamental Detalhada</span>
+                                </div>
+
+                                <p className="text-xs text-gray-600 leading-relaxed font-medium mb-8 text-justify">
+                                    Você é <strong>"Imaginativo, Conceitual e Aberto ao Novo"</strong>. Essa combinação reflete uma abordagem criativa, impulsionada por uma disposição em explorar novas ideias.
+                                    Você tende a pensar de maneira inovadora e buscar perspectivas não convencionais, usando seu pensamento abstrato para conectar conceitos distintos.
+                                </p>
+
+                                {/* Insights Grid */}
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-blue-700 mb-1 uppercase">
+                                            <Zap size={10} /> Potencializadores
                                         </div>
+                                        <p className="text-[10px] text-blue-900 leading-tight">Inovação com propósito prático e visão de futuro.</p>
                                     </div>
-                                    <div className="space-y-4">
+                                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-orange-700 mb-1 uppercase">
+                                            <Shield size={10} /> Atenção
+                                        </div>
+                                        <p className="text-[10px] text-orange-900 leading-tight">Teorias sem aplicação ou estagnação total.</p>
+                                    </div>
+                                </div>
+
+                                {/* Facetas (Animated Bars) */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <CheckCircle size={14} className="text-green-500" />
+                                        <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">Composição (Facetas)</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                                         {[
-                                            { l: 'Abertura', v: 85, c: 'bg-purple-600' },
-                                            { l: 'Conscienciosidade', v: 92, c: 'bg-black' },
-                                            { l: 'Extroversão', v: 64, c: 'bg-gray-400' }
-                                        ].map((stat, i) => (
-                                            <div key={i}>
-                                                <div className="flex justify-between text-xs font-bold mb-1">{stat.l}</div>
+                                            { label: "Valores", val: 50, color: "bg-yellow-400" },
+                                            { label: "Fantasia", val: 86, color: "bg-yellow-400" },
+                                            { label: "Ideias", val: 50, color: "bg-yellow-400" },
+                                            { label: "Ações", val: 44, color: "bg-yellow-400" }
+                                        ].map((faceta, idx) => (
+                                            <div key={idx}>
+                                                <div className="flex justify-between text-[10px] font-bold text-gray-600 mb-1">
+                                                    <span>{faceta.label}</span>
+                                                    <span>{faceta.val}</span>
+                                                </div>
                                                 <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                    <div className={`h-full ${stat.c}`} style={{ width: `${stat.v}%` }}></div>
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        whileInView={{ width: `${faceta.val}%` }}
+                                                        transition={{ duration: 1, delay: 0.5 + (idx * 0.1) }}
+                                                        className={`h-full ${faceta.color}`}
+                                                    />
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                </motion.div>
+                                </div>
                             </div>
-                        </div>
+                        </motion.div>
+
+                        {/* Floating Badge (Diferencial) */}
+                        <motion.div
+                            animate={{ y: [0, -10, 0] }}
+                            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                            className="absolute -top-6 -right-6 bg-black text-white px-5 py-3 rounded-xl shadow-xl z-30 flex items-center gap-3 border border-gray-800"
+                        >
+                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                            <span className="font-bold text-sm">IA Analisando...</span>
+                        </motion.div>
                     </div>
                 </div>
             </section>
