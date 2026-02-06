@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_URL } from '../../../src/config/api';
-import { CheckCircle, AlertCircle, Lock, User, Phone, Building, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { CheckCircle, AlertCircle, Lock, User, Phone, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,7 +12,7 @@ export default function ResetPasswordPage() {
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
-    const [document, setDocument] = useState(''); // CPF ou CNPJ
+    // const [document, setDocument] = useState(''); // REMOVIDO: Simplificação solicitada
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -44,8 +44,7 @@ export default function ResetPasswordPage() {
                     email,
                     name,
                     phone,
-                    cnpj: document, // Backend aceita 'cpf' ou 'cnpj'. Mandando como cnpj ele valida.
-                    cpf: document,  // Mandando como cpf também por garantia semântica futura
+                    // cpf/cnpj removidos do payload
                     newPassword
                 })
             });
@@ -114,7 +113,7 @@ export default function ResetPasswordPage() {
                                     </h2>
                                     <p className="text-gray-500 text-sm mt-1">
                                         {step === 1 && 'Comece informando seu email principal'}
-                                        {step === 2 && 'Confirme nome, telefone e documento'}
+                                        {step === 2 && 'Confirme nome e telefone'}
                                         {step === 3 && 'Defina uma senha forte e segura'}
                                     </p>
                                 </div>
@@ -219,22 +218,7 @@ export default function ResetPasswordPage() {
                                                     </div>
                                                 </div>
 
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1 ml-1">
-                                                        Documento (CPF ou CNPJ)
-                                                    </label>
-                                                    <div className="relative">
-                                                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                                        <input
-                                                            type="text"
-                                                            value={document}
-                                                            onChange={(e) => setDocument(e.target.value)}
-                                                            required
-                                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none font-mono"
-                                                            placeholder="Digite apenas os números"
-                                                        />
-                                                    </div>
-                                                </div>
+                                                {/* DOCUMENTO REMOVIDO DAQUI */}
 
                                                 <div className="flex gap-3 pt-2">
                                                     <button
@@ -248,7 +232,7 @@ export default function ResetPasswordPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setStep(3)}
-                                                        disabled={!name || !phone || !document}
+                                                        disabled={!name || !phone}
                                                         className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                                                     >
                                                         Verificar Dados <ArrowRight size={18} />

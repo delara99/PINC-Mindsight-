@@ -572,22 +572,9 @@ export class AuthService {
             throw new BadRequestException('❌ O telefone informado não confere com o cadastro.');
         }
 
-        // 3.2 Validar Documento (CPF ou CNPJ)
-        const suppliedDoc = (data.cpf || data.cnpj || '').replace(/\D/g, '');
-
-        if (!suppliedDoc) {
-            throw new BadRequestException('❌ CPF ou CNPJ obrigatórios para segurança extra.');
-        }
-
-        const userCpf = user.cpf?.replace(/\D/g, '');
-        const userCnpj = user.cnpj?.replace(/\D/g, '');
-
-        // Verifica se o documento fornecido bate com CPF ou CNPJ do usuário
-        const docMatch = (userCpf && userCpf === suppliedDoc) || (userCnpj && userCnpj === suppliedDoc);
-
-        if (!docMatch) {
-            throw new BadRequestException('❌ O CPF/CNPJ informado não confere.');
-        }
+        // 3.2 Validação de Documento APOSENTADA 
+        // Solicitado remoção da validação de CPF/CNPJ para simplificar o fluxo.
+        // A segurança continua via Email + Nome + Telefone.
 
         // 4. Tudo OK! Atualizar senha
         const hashedPassword = await bcrypt.hash(data.newPassword, 10);
