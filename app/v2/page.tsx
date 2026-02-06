@@ -112,10 +112,10 @@ export default function HomeV2() {
             </header>
 
             {/* HERO SECTION - Updated (Removed Pill) */}
-            <section className="pt-40 pb-24 md:pt-52 md:pb-32 px-6 border-b border-gray-100">
+            <section className="pt-32 pb-20 md:pt-52 md:pb-32 px-6 border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto grid lg:grid-cols-12 gap-16 items-center">
                     <div className="lg:col-span-7 space-y-8">
-                        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.9] text-black">
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.95] text-black">
                             Revele quem <br />
                             <span className="text-purple-600">você é.</span>
                         </h1>
@@ -206,17 +206,13 @@ export default function HomeV2() {
                     <Bot size={400} />
                 </div>
 
-                <div className="max-w-[1440px] mx-auto px-6 grid lg:grid-cols-2 gap-24 items-center relative z-10">
+                <div className="max-w-[1440px] mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-24 items-center relative z-10">
                     <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold uppercase mb-4 border border-purple-100">
-                            <Sparkles size={12} />
-                            IA de Interpretação Pessoal
-                        </div>
-                        <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-8 leading-tight">
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-8 leading-tight">
                             PINC Coach. <br />
                             <span className="text-purple-600">Seu perfil, explicado.</span>
                         </h2>
-                        <p className="text-xl text-gray-500 mb-8 leading-relaxed">
+                        <p className="text-lg md:text-xl text-gray-500 mb-8 leading-relaxed">
                             Não basta saber seu perfil. O diferencial é saber usar isso na prática.
                             A PINC Coach interpreta seu relatório com você, em tempo real, sem linguagem técnica.
                         </p>
@@ -227,11 +223,11 @@ export default function HomeV2() {
                                 "Melhore sua comunicação e tomada de decisão",
                                 "Explicações diretas e acionáveis"
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 text-lg font-medium text-gray-800">
-                                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+                                <div key={i} className="flex items-start gap-3 text-base md:text-lg font-medium text-gray-800">
+                                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
                                         <CheckCircle size={14} />
                                     </div>
-                                    {item}
+                                    <span className="leading-tight">{item}</span>
                                 </div>
                             ))}
                         </div>
@@ -245,15 +241,15 @@ export default function HomeV2() {
                     </div>
 
                     {/* Chat Simulation - V2 Style */}
-                    <div className="relative">
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-2xl skew-y-1 transform transition-all hover:skew-y-0 duration-500">
+                    <div className="relative mt-10 lg:mt-0">
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 md:p-6 shadow-2xl skew-y-1 transform transition-all hover:skew-y-0 duration-500 max-w-md mx-auto lg:mx-0">
                             {/* Header */}
                             <div className="flex items-center gap-4 border-b border-gray-200 pb-4 mb-6">
                                 <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
                                     <Bot size={24} className="text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-black text-lg">Dra. PINC</h3>
+                                    <h3 className="font-bold text-black text-lg">PINC Coach</h3>
                                     <p className="text-xs text-green-600 flex items-center gap-1 font-bold">
                                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                         Online
@@ -402,8 +398,8 @@ export default function HomeV2() {
                                     <Link
                                         href="/auth/register"
                                         className={`block w-full py-3 text-center rounded-md font-bold text-sm transition-all ${plan.highlighted
-                                                ? 'bg-black text-white hover:bg-gray-800'
-                                                : 'bg-white border border-gray-200 text-black hover:bg-gray-50'
+                                            ? 'bg-black text-white hover:bg-gray-800'
+                                            : 'bg-white border border-gray-200 text-black hover:bg-gray-50'
                                             }`}
                                     >
                                         {plan.buttonText}
