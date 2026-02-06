@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import {
-    Users, FileCheck, Clock, TrendingUp, Target, Zap, Brain,
-    Award, AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
-    Activity, UserCheck, Briefcase, BarChart3, PieChart, LineChart
+    Users, FileCheck, TrendingUp, Zap, Target,
+    ArrowUpRight, ArrowDownRight,
+    Activity, UserCheck, BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '@/src/config/api';
@@ -107,49 +107,10 @@ export default function BusinessDashboardHome() {
                         </div>
                     </div>
 
-                    {/* Performance Chart */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">Tendência de Avaliações</h3>
-                                <p className="text-sm text-slate-500">Últimos 7 dias</p>
-                            </div>
-                            <LineChart className="text-purple-600" size={20} />
-                        </div>
-                        <PerformanceChart data={stats?.performanceTrend || []} />
-                    </div>
-
-                    {/* Personality Distribution */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">Distribuição de Personalidade</h3>
-                                <p className="text-sm text-slate-500">Big Five - Média da equipe</p>
-                            </div>
-                            <Brain className="text-purple-600" size={20} />
-                        </div>
-                        <PersonalityDistribution data={stats?.personalityDistribution || []} />
-                    </div>
                 </div>
 
                 {/* Right Column - 1/3 width */}
                 <div className="space-y-6">
-                    {/* Top Performers */}
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl border border-purple-200 p-6">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Award className="text-purple-600" size={20} />
-                            <h3 className="text-lg font-bold text-slate-900">Top Performers</h3>
-                        </div>
-                        <div className="space-y-3">
-                            {stats?.topPerformers && stats.topPerformers.length > 0 ? stats.topPerformers.map((performer: any, idx: number) => (
-                                <TopPerformerItem key={idx} performer={performer} rank={idx + 1} />
-                            )) : (
-                                <p className="text-sm text-slate-500 text-center py-4">
-                                    Nenhum fit análise realizado ainda.
-                                </p>
-                            )}
-                        </div>
-                    </div>
 
                     {/* Quick Actions */}
                     <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -182,27 +143,6 @@ export default function BusinessDashboardHome() {
                         </div>
                     </div>
 
-                    {/* Insights & Alerts */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <AlertCircle className="text-purple-600" size={20} />
-                            <h3 className="text-lg font-bold text-slate-900">Insights</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <InsightCard
-                                type="success"
-                                message="Taxa de conclusão acima da média do setor (85%)"
-                            />
-                            <InsightCard
-                                type="warning"
-                                message="3 colaboradores pendentes de avaliação há mais de 7 dias"
-                            />
-                            <InsightCard
-                                type="info"
-                                message="Novo perfil de cargo disponível para análise"
-                            />
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -265,24 +205,6 @@ function ActivityItem({ activity }: any) {
     );
 }
 
-function TopPerformerItem({ performer, rank }: any) {
-    return (
-        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-100 hover:border-purple-300 transition-colors">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold">
-                {rank}
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{performer.name}</p>
-                <p className="text-xs text-slate-500">{performer.role}</p>
-            </div>
-            <div className="text-right">
-                <p className="text-sm font-bold text-purple-600">{performer.score}%</p>
-                <p className="text-xs text-slate-500">fit</p>
-            </div>
-        </div>
-    );
-}
-
 function QuickActionButton({ icon: Icon, label, href, color }: any) {
     const colorClasses = {
         purple: 'hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200',
@@ -298,74 +220,6 @@ function QuickActionButton({ icon: Icon, label, href, color }: any) {
                 <span className="text-sm font-medium">{label}</span>
             </button>
         </Link>
-    );
-}
-
-function InsightCard({ type, message }: any) {
-    const config = {
-        success: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
-        warning: { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-        info: { icon: AlertCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' }
-    };
-
-    const { icon: Icon, color, bg, border } = config[type as keyof typeof config];
-
-    return (
-        <div className={`flex items-start gap-3 p-3 rounded-lg border ${border} ${bg}`}>
-            <Icon className={color} size={16} />
-            <p className="text-sm text-slate-700 flex-1">{message}</p>
-        </div>
-    );
-}
-
-function PerformanceChart({ data }: { data: any[] }) {
-    if (!data || data.length === 0) return <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Sem dados recentes</div>;
-
-    const maxValue = Math.max(...data.map(d => d.value)) || 1;
-
-    return (
-        <div className="space-y-4">
-            <div className="flex items-end justify-between gap-2 h-48">
-                {data.map((item, idx) => (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                        <div className="w-full bg-slate-100 rounded-t-lg relative overflow-hidden group" style={{ height: '100%' }}>
-                            <div
-                                className="absolute bottom-0 w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-lg transition-all duration-500 hover:from-purple-700 hover:to-purple-500"
-                                style={{ height: `${(item.value / maxValue) * 100}%` }}
-                            >
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {item.value}
-                                </div>
-                            </div>
-                        </div>
-                        <span className="text-xs text-slate-500 font-medium">{item.day}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function PersonalityDistribution({ data }: { data: any[] }) {
-    if (!data || data.every(d => d.value === 0)) return <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Sem dados de personalidade suficientes</div>;
-
-    return (
-        <div className="space-y-4">
-            {data.map((trait, idx) => (
-                <div key={idx}>
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-slate-700">{trait.name}</span>
-                        <span className="text-sm font-bold text-slate-900">{trait.value}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                            className={`h-full ${trait.color} rounded-full transition-all duration-500`}
-                            style={{ width: `${trait.value}%` }}
-                        />
-                    </div>
-                </div>
-            ))}
-        </div>
     );
 }
 
