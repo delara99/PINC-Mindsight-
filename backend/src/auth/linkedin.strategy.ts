@@ -1,7 +1,8 @@
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-openidconnect';
+import { Strategy } from 'passport-linkedin-oauth2';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InternalOAuthError } from 'passport-oauth2';
 
 @Injectable()
 export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
@@ -10,7 +11,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
         const clientSecret = configService.get<string>('LINKEDIN_CLIENT_SECRET');
         const callbackURL = configService.get<string>('LINKEDIN_CALLBACK_URL');
 
-        console.log('🔍 LinkedIn OAuth Config (OIDC):', {
+        console.log('🔍 LinkedIn OAuth Config (Hybrid):', {
             clientID: clientID ? `${clientID.substring(0, 5)}...` : 'MISSING',
             clientSecret: clientSecret ? 'SET' : 'MISSING',
             callbackURL: callbackURL || 'MISSING'
@@ -21,42 +22,59 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
         }
 
         super({
-            issuer: 'https://www.linkedin.com',
-            authorizationURL: 'https://www.linkedin.com/oauth/v2/authorization',
-            tokenURL: 'https://www.linkedin.com/oauth/v2/accessToken',
-            userInfoURL: 'https://api.linkedin.com/v2/userinfo',
             clientID,
             clientSecret,
             callbackURL,
             scope: ['openid', 'profile', 'email'],
-            state: false // Stateless
+            state: false, // Critical for stateless NestJS
+        });
+    }
+
+    // SOBRESCREVER método de profile para usar OIDC (UserInfo) em vez da API v2/me legada
+    userProfile(accessToken: string, done: Function) {
+        // @ts-ignore - _oauth2 property exists on the strategy instance
+        this._oauth2.get('https://api.linkedin.com/v2/userinfo', accessToken, (err: any, body: string, res: any) => {
+            if (err) {
+                console.error('LinkedIn UserInfo Error:', err);
+                return done(new InternalOAuthError('failed to fetch user profile', err));
+            }
+            try {
+                const json = JSON.parse(body);
+
+                // Mapeamento manual do OIDC Response
+                const profile = {
+                    provider: 'linkedin',
+                    id: json.sub,
+                    displayName: json.name,
+                    email: json.email,
+                    picture: json.picture,
+                    emails: [{ value: json.email }],
+                    photos: [{ value: json.picture }],
+                    _raw: body,
+                    _json: json
+                };
+
+                done(null, profile);
+            } catch (e) {
+                done(e);
+            }
         });
     }
 
     async validate(
-        issuer: string,
+        accessToken: string,
+        refreshToken: string,
         profile: any,
         done: Function,
     ): Promise<any> {
-        console.log('🔍 LinkedIn OIDC Profile:', JSON.stringify(profile));
-
-        // Note: passport-openidconnect returns a normalized profile.
-        // id -> sub
-        // displayName -> name
-        // emails -> from userinfo (maybe)
-
-        // profile structure:
-        // { provider: 'openid', id: '...', displayName: '...', name: { familyName, givenName }, emails: [ { value: '...' } ], ... }
-
-        // Handling LinkedIn Specifics (sometimes email is not mapped directly if claim is different)
-        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+        console.log('🔍 LinkedIn Validated Profile:', JSON.stringify(profile));
 
         const user = {
             linkedinId: profile.id,
-            email: email,
+            email: profile.email, // Já mapeado acima
             name: profile.displayName,
-            picture: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
-            accessToken: 'oidc-access-token', // We might not get raw access token in this signature easily without passReqToCallback, but we don't need it for DB.
+            picture: profile.picture,
+            accessToken,
         };
 
         done(null, user);
