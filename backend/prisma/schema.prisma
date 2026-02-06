@@ -45,7 +45,8 @@ enum PlanType {
 model User {
   id       String     @id @default(uuid())
   email    String     @unique
-  password String
+  password String?    // ← Agora opcional (Google users não têm senha)
+  googleId String?    @unique // ← Novo campo para Google OAuth
   name     String?
   role     Role       @default(MEMBER)
   status   UserStatus @default(pending)

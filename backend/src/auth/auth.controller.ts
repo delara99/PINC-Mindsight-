@@ -29,6 +29,30 @@ export class AuthController {
         return this.authService.register(body);
     }
 
+    // Google OAuth - Inicia o fluxo
+    @Get('google')
+    @UseGuards(AuthGuard('google'))
+    async googleAuth(@Request() req) {
+        // Guard redireciona para Google
+    }
+
+    // Google OAuth - Callback
+    @Get('google/callback')
+    @UseGuards(AuthGuard('google'))
+    async googleAuthRedirect(@Request() req) {
+        // req.user contém dados do Google (vem da strategy)
+        const result = await this.authService.googleLogin(req.user);
+
+        // Redirecionar para frontend com token
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.pinc.app.br';
+        const redirectUrl = `${frontendUrl}/auth/google/success?token=${result.access_token}`;
+
+        return {
+            statusCode: 302,
+            url: redirectUrl
+        };
+    }
+
     @Get('me')
     @UseGuards(AuthGuard('jwt'))
     async getMe(@Request() req) {

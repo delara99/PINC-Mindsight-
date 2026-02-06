@@ -47,6 +47,97 @@ export class AuthService {
         return null;
     }
 
+    async googleLogin(googleUser: {
+        googleId: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        picture?: string;
+    }) {
+        // 1. Buscar usuário existente por googleId
+        let user = await this.prisma.user.findUnique({
+            where: { googleId: googleUser.googleId }
+        });
+
+        // 2. Se não encontrou por googleId, buscar por email (merge de contas)
+        if (!user) {
+            user = await this.prisma.user.findUnique({
+                where: { email: googleUser.email }
+            });
+
+            // Se encontrou por email, vincular googleId
+            if (user) {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { googleId: googleUser.googleId }
+                });
+            }
+        }
+
+        // 3. Se ainda não existe, criar novo usuário
+        if (!user) {
+            const fullName = `${googleUser.firstName} ${googleUser.lastName}`.trim();
+
+            // Criar tenant para o novo usuário
+            const tenantSlug = googleUser.email.split('@')[0] + '-' + Date.now();
+            const tenant = await this.prisma.tenant.create({
+                data: {
+                    name: fullName || 'Novo Cliente',
+                    slug: tenantSlug
+                }
+            });
+
+            // Criar usuário
+            user = await this.prisma.user.create({
+                data: {
+                    email: googleUser.email,
+                    googleId: googleUser.googleId,
+                    name: fullName,
+                    password: null, // Google users não têm senha
+                    role: 'TENANT_ADMIN',
+                    status: 'active',
+                    userType: 'INDIVIDUAL',
+                    tenantId: tenant.id
+                }
+            });
+
+            // Auto-atribuir inventário Big Five (igual ao register normal)
+            let assessmentModel = await this.prisma.assessmentModel.findFirst({
+                where: { type: 'BIG_FIVE', isDefault: true },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            if (!assessmentModel) {
+                assessmentModel = await this.prisma.assessmentModel.findFirst({
+                    where: { type: 'BIG_FIVE' },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
+
+            if (assessmentModel) {
+                await this.prisma.assessmentAssignment.create({
+                    data: {
+                        userId: user.id,
+                        assessmentId: assessmentModel.id,
+                        status: 'IN_PROGRESS',
+                        assignedAt: new Date(),
+                    }
+                });
+            }
+        }
+
+        // 4. Validar status
+        if (user.status === 'pending') {
+            throw new UnauthorizedException('Sua conta aguarda aprovação do administrador.');
+        }
+        if (user.status === 'inactive') {
+            throw new UnauthorizedException('Sua conta foi desativada.');
+        }
+
+        // 5. Retornar token (mesmo fluxo do login normal)
+        return this.login(user);
+    }
+
     async login(user: any) {
         const payload = {
             email: user.email,
