@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key, FileText, Coins, ArrowRight } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, CheckCircle, XCircle, Clock, UserCheck, Shield, Trash2, RefreshCw, Key, FileText, Coins, ArrowRight, Download } from 'lucide-react';
 import { API_URL } from '@/src/config/api';
+import QRCode from 'qrcode';
 
 export default function CandidatesPage() {
     const [employees, setEmployees] = useState<any[]>([]);
@@ -204,6 +205,153 @@ export default function CandidatesPage() {
         }
     };
 
+    const downloadInvite = async (employee: any) => {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1920;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            // Background gradient (purple theme)
+            const gradient = ctx.createLinearGradient(0, 0, 0, 1920);
+            gradient.addColorStop(0, '#7c3aed'); // purple-600
+            gradient.addColorStop(1, '#5b21b6'); // purple-800
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1080, 1920);
+
+            // White card container
+            ctx.fillStyle = '#ffffff';
+            ctx.roundRect(60, 120, 960, 1680, 32);
+            ctx.fill();
+
+            // PINC Logo text
+            ctx.fillStyle = '#7c3aed';
+            ctx.font = 'bold 72px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PINC', 540, 280);
+
+            // Subtitle
+            ctx.fillStyle = '#64748b';
+            ctx.font = '32px Arial';
+            ctx.fillText('Inventário de Personalidade', 540, 340);
+
+            // Divider
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(140, 400);
+            ctx.lineTo(940, 400);
+            ctx.stroke();
+
+            // Welcome message
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Olá, ' + employee.name + '!', 540, 500);
+
+            // Instructions
+            ctx.fillStyle = '#475569';
+            ctx.font = '28px Arial';
+            ctx.textAlign = 'left';
+            const instructions = [
+                'Você foi convidado(a) para responder',
+                'o Inventário de Personalidade PINC.',
+                '',
+                'Para acessar, siga os passos:',
+            ];
+            let yPos = 580;
+            instructions.forEach(line => {
+                ctx.fillText(line, 140, yPos);
+                yPos += 45;
+            });
+
+            // Steps box
+            ctx.fillStyle = '#f8fafc';
+            ctx.roundRect(140, yPos + 20, 800, 420, 16);
+            ctx.fill();
+
+            // Steps
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 32px Arial';
+            yPos += 80;
+            const steps = [
+                '1. Acesse o link abaixo ou escaneie o QR Code',
+                '2. Clique na aba "Candidato"',
+                '3. Use seu código de acesso para entrar',
+                '4. Responda todas as perguntas com sinceridade',
+                '5. Ao finalizar, seu relatório será gerado',
+            ];
+            steps.forEach(step => {
+                ctx.fillText(step, 180, yPos);
+                yPos += 70;
+            });
+
+            // Access code box
+            ctx.fillStyle = '#7c3aed';
+            ctx.roundRect(140, yPos + 40, 800, 140, 16);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '28px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SEU CÓDIGO DE ACESSO:', 540, yPos + 100);
+
+            ctx.font = 'bold 56px monospace';
+            ctx.fillText(employee.companyName || 'N/A', 540, yPos + 160);
+
+            // QR Code
+            const qrCodeDataUrl = await QRCode.toDataURL('https://www.pinc.app.br/business/login?tab=candidate', {
+                width: 300,
+                margin: 2,
+                color: {
+                    dark: '#7c3aed',
+                    light: '#ffffff'
+                }
+            });
+
+            const qrImage = new Image();
+            await new Promise((resolve) => {
+                qrImage.onload = resolve;
+                qrImage.src = qrCodeDataUrl;
+            });
+
+            ctx.drawImage(qrImage, 390, yPos + 240, 300, 300);
+
+            // QR Code label
+            ctx.fillStyle = '#64748b';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Escaneie para acessar', 540, yPos + 580);
+
+            // Link
+            ctx.fillStyle = '#7c3aed';
+            ctx.font = 'bold 26px Arial';
+            ctx.fillText('www.pinc.app.br/business/login', 540, yPos + 640);
+
+            // Footer
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '22px Arial';
+            ctx.fillText('Dúvidas? Entre em contato com seu gestor.', 540, yPos + 720);
+
+            // Download
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `convite-pinc-${employee.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            setOpenMenuId(null);
+        } catch (error) {
+            console.error('Erro ao gerar convite:', error);
+            alert('Erro ao gerar convite.');
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
@@ -335,6 +483,12 @@ export default function CandidatesPage() {
                                                             className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2 rounded-md transition-colors"
                                                         >
                                                             <Coins size={14} /> Transferir Créditos
+                                                        </button>
+                                                        <button
+                                                            onClick={() => downloadInvite(emp)}
+                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2 rounded-md transition-colors"
+                                                        >
+                                                            <Download size={14} /> Baixar Convite
                                                         </button>
                                                         <div className="h-px bg-slate-100 my-1"></div>
                                                         <button
