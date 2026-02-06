@@ -25,7 +25,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
             clientSecret,
             callbackURL,
             scope: ['openid', 'profile', 'email'],
-            state: true
+            state: false
         });
     }
 
