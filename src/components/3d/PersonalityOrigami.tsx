@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { motion, useSpring } from 'framer-motion';
+import { motion, useSpring, useAnimationFrame } from 'framer-motion';
 
 // --- CONFIGURAÇÃO DOS SUBTRAÇOS (GRID INTERNO) ---
 const GRID_DATA: any = {
@@ -79,6 +79,13 @@ export default function PersonalityOrigami({ progress, activeTraits = [], custom
     const rotateX = useSpring(0, { stiffness: 60, damping: 20 });
     const rotateY = useSpring(0, { stiffness: 60, damping: 20 });
 
+    // Rotação Automática Infinita (Pause Suave)
+    useAnimationFrame(() => {
+        if (autoRotate && is3D) {
+            rotateY.set(rotateY.get() + 0.3); // Roda 0.3 graus por frame
+        }
+    });
+
     return (
         <div className="perspective-[2500px] w-full h-full flex items-center justify-center py-20 cursor-grab active:cursor-grabbing scale-75 md:scale-90 lg:scale-100">
             <motion.div
@@ -91,14 +98,13 @@ export default function PersonalityOrigami({ progress, activeTraits = [], custom
                     rotateY: rotateY,
                 }}
                 animate={{
-                    // Permite rotação automática apenas se ativado. 
-                    // Caso contrário, deixa o Spring (Drag) controlar ou mantém o ângulo atual.
-                    rotateY: autoRotate ? [0, 360] : undefined
+                    // Pequena inclinação inicial ao entrar no modo 3D, mas respeitando o controle manual (spring)
+                    rotateX: is3D && rotateX.get() === 0 ? -25 : rotateX.get()
                 }}
                 transition={{
-                    rotateY: autoRotate ? { repeat: Infinity, duration: 20, ease: "linear" } : { duration: 0 },
+                    default: { type: "spring", stiffness: 60, damping: 15 }
                 }}
-                drag // Drag habilitado SEMPRE (2D e 3D)
+                drag // Habilitado sempre
                 dragElastic={0.1}
                 onDrag={(event, info) => {
                     rotateY.set(rotateY.get() + info.delta.x * 0.4);
@@ -108,20 +114,26 @@ export default function PersonalityOrigami({ progress, activeTraits = [], custom
                 {/* --- FACE CENTRAL (BASE) --- */}
                 <Face type="front" activeTraits={derivedTraits} />
 
-                {/* --- LATERAIS (ESQUERDA / DIREITA) --- */}
+                {/* --- LATERAIS --- */}
                 <FoldableFace type="left" angle={-foldAngle} origin="right" activeTraits={derivedTraits} />
                 <FoldableFace type="right" angle={foldAngle} origin="left" activeTraits={derivedTraits} />
 
-                {/* --- TOPO E TRASEIRA (CASCATA) --- */}
-                {/* O Back é filho do Top, dobrando +90 sobre o Top que já dobrou +90, totalizando 180 (fundo do cubo) */}
+                {/* --- TOPO E TRASEIRA --- */}
                 <FoldableFace type="top" angle={foldAngle} origin="bottom" activeTraits={derivedTraits}>
-                    <FoldableFace type="back" angle={foldAngle} origin="bottom" yOffset={-FACE_SIZE} activeTraits={derivedTraits} />
+                    {/* Ajuste de precisão para fechamento visual */}
+                    <FoldableFace
+                        type="back"
+                        angle={foldAngle + (is3D ? 0.5 : 0)}
+                        origin="bottom"
+                        yOffset={-FACE_SIZE}
+                        activeTraits={derivedTraits}
+                    />
                 </FoldableFace>
 
                 {/* --- BASE INFERIOR --- */}
                 <FoldableFace type="bottom" angle={-foldAngle} origin="top" activeTraits={derivedTraits} />
 
-                {/* --- CAMADA DE COMBINAÇÕES (Vísivel apenas em 2D) --- */}
+                {/* --- CAMADA DE COMBINAÇÕES --- */}
                 <CombinationsOverlay opacity={1 - progress * 3} />
 
             </motion.div>
