@@ -598,7 +598,30 @@ function translateFacetGlobal(name: string): string | null {
 
     // 2. Dicionário de Tradução (UPPERCASE)
     const map: Record<string, string> = {
-        // Neuroticism / Estabilidade
+        // PINC MODEL (Novos Subtraços)
+        'communication': 'COMUNICAÇÃO (Ouvinte - Falante)',
+        'social_interaction': 'INTERAÇÃO SOCIAL (Seletivo - Interativo)',
+        'authority': 'AUTORIDADE (Contido - Afirmativo)',
+        'action_orientation': 'ORIENTAÇÃO P/ AÇÃO (Reflexivo - Ativo)',
+
+        'logic': 'LÓGICA (Crítico - Tolerante)',
+        'independence': 'INDEPENDÊNCIA (Independente - Conectado)',
+        'competitiveness': 'COMPETITIVIDADE (Competitivo - Colaborativo)',
+
+        'planning': 'PLANEJAMENTO (Aventureiro - Planejado)',
+        'discipline': 'DISCIPLINA (Espontâneo - Disciplinado)',
+        'persistence': 'PERSISTÊNCIA (Flexível - Persistente)',
+
+        'imagination': 'IMAGINAÇÃO (Realista - Imaginativo)',
+        'intellect': 'INTELECTUALIDADE (Prático - Conceitual)',
+        'openness_to_new': 'ABERTURA AO NOVO (Conservador - Aberto)',
+
+        'confidence': 'CONFIANÇA (Inquieto - Despreocupado)',
+        'self_confidence': 'AUTOCONFIANÇA (Inseguro - Autoconfiante)',
+        'temperament': 'TEMPERAMENTO (Irritável - Tranquilo)',
+        'control': 'CONTROLE (Reativo - Controlado)',
+
+        // IPIP-NEO Legacy (Mantido para compatibilidade, mas abaixo dos novos)
         'anxiety': 'ANSIEDADE', 'ansiedade': 'ANSIEDADE', 'factors_anxiety': 'ANSIEDADE',
         'angryhostility': 'HOSTILIDADE', 'hostilidade': 'HOSTILIDADE', 'factors_angryhostility': 'HOSTILIDADE',
         'depression': 'DEPRESSÃO', 'depressao': 'DEPRESSÃO', 'factors_depression': 'DEPRESSÃO',
@@ -606,7 +629,6 @@ function translateFacetGlobal(name: string): string | null {
         'impulsiveness': 'IMPULSIVIDADE', 'impulsividade': 'IMPULSIVIDADE', 'factors_impulsiveness': 'IMPULSIVIDADE',
         'vulnerability': 'VULNERABILIDADE', 'factors_vulnerability': 'VULNERABILIDADE',
 
-        // Extroversão
         'warmth': 'ACOLHIMENTO', 'acolhimento': 'ACOLHIMENTO', 'factors_warmth': 'ACOLHIMENTO',
         'gregariousness': 'GREGARISMO', 'gregarismo': 'GREGARISMO', 'factors_gregariousness': 'GREGARISMO',
         'assertiveness': 'ASSERTIVIDADE', 'factors_assertiveness': 'ASSERTIVIDADE',
@@ -614,7 +636,6 @@ function translateFacetGlobal(name: string): string | null {
         'excitementseeking': 'BUSCA POR EMOÇÃO', 'busca de excitacao': 'BUSCA POR EMOÇÃO', 'factors_excitementseeking': 'BUSCA POR EMOÇÃO',
         'positiveemotions': 'EMOÇÕES POSITIVAS', 'emocoes positivas': 'EMOÇÕES POSITIVAS', 'factors_positiveemotions': 'EMOÇÕES POSITIVAS',
 
-        // Abertura
         'fantasy': 'FANTASIA', 'fantasia': 'FANTASIA', 'factors_fantasy': 'FANTASIA',
         'aesthetics': 'ESTÉTICA', 'estetica': 'ESTÉTICA', 'factors_aesthetics': 'ESTÉTICA',
         'feelings': 'SENTIMENTOS', 'sentimentos': 'SENTIMENTOS', 'factors_feelings': 'SENTIMENTOS',
@@ -622,15 +643,13 @@ function translateFacetGlobal(name: string): string | null {
         'ideas': 'IDEIAS', 'factors_ideas': 'IDEIAS',
         'values': 'VALORES', 'factors_values': 'VALORES',
 
-        // Amabilidade
-        'trust': 'CONFIANÇA', 'confianca': 'CONFIANÇA', 'factors_trust': 'CONFIANÇA',
+        'trust': 'CONFIANÇA (IPIP)', 'confianca': 'CONFIANÇA (IPIP)', 'factors_trust': 'CONFIANÇA (IPIP)',
         'straightforwardness': 'FRANQUEZA', 'franqueza': 'FRANQUEZA', 'factors_straightforwardness': 'FRANQUEZA',
         'altruism': 'ALTRUÍSMO', 'altruismo': 'ALTRUÍSMO', 'factors_altruism': 'ALTRUÍSMO',
         'compliance': 'COMPLACÊNCIA', 'complacencia': 'COMPLACÊNCIA', 'factors_compliance': 'COMPLACÊNCIA',
         'modesty': 'MODÉSTIA', 'modestia': 'MODÉSTIA', 'factors_modesty': 'MODÉSTIA',
         'tendermindedness': 'SENSIBILIDADE', 'sensibilidade': 'SENSIBILIDADE', 'factors_tendermindedness': 'SENSIBILIDADE',
 
-        // Conscienciosidade
         'competence': 'COMPETÊNCIA', 'competencia': 'COMPETÊNCIA', 'factors_competence': 'COMPETÊNCIA',
         'order': 'ORDEM / ORGANIZAÇÃO', 'ordem': 'ORDEM / ORGANIZAÇÃO', 'factors_order': 'ORDEM / ORGANIZAÇÃO',
         'dutifulness': 'SENSO DE DEVER', 'dever': 'SENSO DE DEVER', 'factors_dutifulness': 'SENSO DE DEVER',
