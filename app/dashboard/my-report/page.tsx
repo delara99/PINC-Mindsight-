@@ -8,7 +8,12 @@ import { Calendar, History, Sparkles, ArrowUpRight } from 'lucide-react';
 import TalkingToReport from '@/src/components/reports/TalkingToReport';
 import { AIPincWidget } from '../../../src/components/ai/AIPincWidget';
 
+import { useSearchParams } from 'next/navigation';
+
 export default function MyReportPage() {
+    const searchParams = useSearchParams();
+    const queryReportId = searchParams.get('reportId');
+
     const [history, setHistory] = useState<any[]>([]);
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
     const [report, setReport] = useState<any>(null);
@@ -50,7 +55,13 @@ export default function MyReportPage() {
                 }
             } catch (e) { console.error("Erro carregando user", e); }
 
-            // Load History
+            // PRIORIDADE: Se tiver ID na URL (ex: Admin vendo cliente), carrega direto e ignora histórico
+            if (queryReportId) {
+                await handleSelectReport(queryReportId, t);
+                return;
+            }
+
+            // Load History (Normal User Flow)
             try {
                 const res = await fetch(`${API_URL}/api/v1/talking-to/history`, {
                     headers: { 'Authorization': `Bearer ${t}` }
@@ -75,7 +86,7 @@ export default function MyReportPage() {
         };
 
         setTimeout(init, 100);
-    }, [token]);
+    }, [token, queryReportId]);
 
     const fetchLegacyReport = async (authToken: string) => {
         try {

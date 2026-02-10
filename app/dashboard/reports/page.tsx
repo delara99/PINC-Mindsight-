@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/auth-store';
-import { FileText, User, Calendar, Award, CheckCircle, Trash2, RefreshCw, AlertCircle } from 'lucide-react';
+import { FileText, User, Calendar, Award, CheckCircle, Trash2, RefreshCw, AlertCircle, MessageCircle } from 'lucide-react';
 import { API_URL } from '../../../src/config/api';
 import { useState } from 'react';
 
@@ -232,6 +232,14 @@ export default function ReportsPage() {
                                 <div className="flex flex-col gap-2 w-full md:w-auto">
                                     {activeTab === 'active' ? (
                                         <>
+                                            <button
+                                                onClick={() => router.push(`/dashboard/my-report?reportId=${report.id}`)}
+                                                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex items-center justify-center gap-2 flex-shrink-0"
+                                            >
+                                                <MessageCircle size={16} />
+                                                TalkingTO
+                                            </button>
+
                                             <button
                                                 onClick={() => router.push(`/dashboard/reports/${report.id}`)}
                                                 className="text-white hover:text-white/90 bg-[#cc0058] hover:bg-[#a30046] px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex-shrink-0"

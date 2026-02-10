@@ -117,13 +117,21 @@ export class TalkingToController {
     @Get('report/:id')
     async getReportById(@Request() req, @Param('id') id: string) {
         const userId = req.user.userId;
+        const userRole = req.user.role;
+        const isAdm = userRole === 'SUPER_ADMIN' || userRole === 'TENANT_ADMIN';
+
+        const whereCondition: any = {
+            id: id,
+            status: 'COMPLETED'
+        };
+
+        // Se NÃO for admin, restringe ao próprio usuário
+        if (!isAdm) {
+            whereCondition.userId = userId;
+        }
 
         const assignment = await this.prisma.assessmentAssignment.findFirst({
-            where: {
-                id: id,
-                userId: userId,
-                status: 'COMPLETED'
-            },
+            where: whereCondition,
             include: { responses: { include: { question: true } }, assessment: true, config: true }
         });
 
