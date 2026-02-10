@@ -121,8 +121,73 @@ export default function PersonalityOrigami({ progress, activeTraits = [], custom
                 {/* --- BASE INFERIOR --- */}
                 <FoldableFace type="bottom" angle={-foldAngle} origin="top" activeTraits={derivedTraits} />
 
+                {/* --- CAMADA DE COMBINAÇÕES (Vísivel apenas em 2D) --- */}
+                <CombinationsOverlay opacity={1 - progress * 3} />
+
             </motion.div>
         </div>
+    );
+}
+
+// --- CAMADA DE COMBINAÇÕES ---
+function CombinationsOverlay({ opacity }: { opacity: number }) {
+    if (opacity <= 0) return null;
+
+    return (
+        <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{ opacity }}
+        >
+            {/* QUADRANTE SUPERIOR ESQUERDO (Laranja + Amarelo) */}
+            <div className="absolute top-[-320px] left-[-320px] w-[320px] h-[320px] flex flex-col items-center justify-center text-center">
+                <Bubble text="Necessidade de pertencer" />
+                <Bubble text="Necessidade de objetividade" className="mt-8" />
+                <CurvedArrow rotation={0} />
+            </div>
+
+            {/* QUADRANTE SUPERIOR DIREITO (Laranja + Roxo) */}
+            <div className="absolute top-[-320px] right-[-320px] w-[320px] h-[320px] flex flex-col items-center justify-center text-center">
+                <Bubble text="Necessidade de ação" />
+                <Bubble text="Necessidade de socialização" className="mt-8" />
+                <CurvedArrow rotation={90} />
+            </div>
+
+            {/* QUADRANTE INFERIOR ESQUERDO (Verde + Amarelo) */}
+            <div className="absolute bottom-[-320px] left-[-320px] w-[320px] h-[320px] flex flex-col items-center justify-center text-center">
+                <Bubble text="Necessidade de estrutura" />
+                <Bubble text="Necessidade de autoafirmação" className="mt-8" />
+                <CurvedArrow rotation={-90} />
+            </div>
+
+            {/* QUADRANTE INFERIOR DIREITO (Verde + Roxo) */}
+            <div className="absolute bottom-[-320px] right-[-320px] w-[320px] h-[320px] flex flex-col items-center justify-center text-center">
+                <Bubble text="Necessidade de autonomia" />
+                <Bubble text="Necessidade de empatia" className="mt-8" />
+                <CurvedArrow rotation={180} />
+            </div>
+        </motion.div>
+    );
+}
+
+function Bubble({ text, className = "" }: { text: string, className?: string }) {
+    return (
+        <div className={`bg-white shadow-lg rounded-xl px-4 py-2 border border-slate-200 z-20 max-w-[160px] ${className}`}>
+            <span className="text-xs font-bold text-slate-600 leading-tight block">
+                {text}
+            </span>
+        </div>
+    );
+}
+
+function CurvedArrow({ rotation }: { rotation: number }) {
+    return (
+        <svg
+            width="120" height="120" viewBox="0 0 100 100"
+            className="absolute opacity-20 z-10"
+            style={{ transform: `rotate(${rotation}deg)` }}
+        >
+            <path d="M 10 90 Q 50 50 90 10" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="6 4" />
+        </svg>
     );
 }
 
