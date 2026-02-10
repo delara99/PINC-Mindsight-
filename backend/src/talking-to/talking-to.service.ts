@@ -272,7 +272,7 @@ export class TalkingToService {
 
         return {
             traitKey: 'EXTRAVERSION',
-            dimension: 'Energia Social (Extroversão)',
+            dimension: 'Extroversão',
             classification,
             labels,
             needs,
@@ -321,7 +321,7 @@ export class TalkingToService {
 
         return {
             traitKey: 'AGREEABLENESS',
-            dimension: 'Estilo Relacional (Agradabilidade)',
+            dimension: 'Amabilidade',
             classification,
             labels,
             needs,
@@ -370,7 +370,7 @@ export class TalkingToService {
 
         return {
             traitKey: 'CONSCIENTIOUSNESS',
-            dimension: 'Estilo de Trabalho (Estrutura)',
+            dimension: 'Estrutura',
             classification,
             labels,
             needs,
@@ -419,7 +419,7 @@ export class TalkingToService {
 
         return {
             traitKey: 'OPENNESS',
-            dimension: 'Mentalidade (Abertura)',
+            dimension: 'Abertura',
             classification,
             labels,
             needs,
@@ -469,7 +469,7 @@ export class TalkingToService {
 
         return {
             traitKey: 'NEUROTICISM',
-            dimension: 'Resiliência (Estabilidade)',
+            dimension: 'Estabilidade Emocional',
             classification,
             labels,
             needs,
@@ -541,11 +541,11 @@ export class TalkingToService {
     // --- COMPARISON LOGIC ---
     analyzeRelationship(myScores: TalkingToInput, partnerScores: TalkingToInput): any[] {
         const dimensions = [
-            { key: 'E', name: 'Energia Social (Extroversão)', trait: 'EXTRAVERSION' },
-            { key: 'A', name: 'Estilo Relacional (Agradabilidade)', trait: 'AGREEABLENESS' },
-            { key: 'C', name: 'Estilo de Trabalho (Estrutura)', trait: 'CONSCIENTIOUSNESS' },
-            { key: 'O', name: 'Mentalidade (Abertura)', trait: 'OPENNESS' },
-            { key: 'N', name: 'Resiliência (Estabilidade)', trait: 'NEUROTICISM' }
+            { key: 'E', name: 'Extroversão', trait: 'EXTRAVERSION' },
+            { key: 'A', name: 'Amabilidade', trait: 'AGREEABLENESS' },
+            { key: 'C', name: 'Estrutura', trait: 'CONSCIENTIOUSNESS' },
+            { key: 'O', name: 'Abertura', trait: 'OPENNESS' },
+            { key: 'N', name: 'Estabilidade Emocional', trait: 'NEUROTICISM' }
         ];
 
         return dimensions.map(dim => {
@@ -586,11 +586,11 @@ export class TalkingToService {
 
     private generateArchetypeName(traits: string[]): string {
         const map: Record<string, string> = {
-            'Energia Social (Extroversão)': 'Comunicador',
-            'Estilo Relacional (Agradabilidade)': 'Mediador',
-            'Estilo de Trabalho (Estrutura)': 'Executor',
-            'Mentalidade (Abertura)': 'Visionário',
-            'Resiliência (Estabilidade)': 'Porto Seguro'
+            'Extroversão': 'Comunicador',
+            'Amabilidade': 'Mediador',
+            'Estrutura': 'Executor',
+            'Abertura': 'Visionário',
+            'Estabilidade Emocional': 'Porto Seguro'
         };
 
         if (!traits || traits.length === 0) return "Perfil Equilibrado";
