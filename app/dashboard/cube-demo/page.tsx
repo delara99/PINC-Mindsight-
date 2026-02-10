@@ -207,20 +207,30 @@ export default function CubeDemoPage() {
                                             {autoRotate ? 'Pausar Rotação' : 'Girar Auto'}
                                         </button>
 
-                                        {/* Sliders de Rotação Manual */}
                                         <div className="w-full space-y-3 pt-2 border-t border-slate-100">
                                             <div className="flex items-center gap-3">
                                                 <span className="text-[10px] font-bold text-slate-400 uppercase w-12 text-right">Eixo Y</span>
                                                 <input
                                                     type="range" min="0" max="360"
+                                                    step="1"
                                                     value={sliderY}
                                                     onPointerDown={() => setIsDraggingSlider(true)}
                                                     onPointerUp={() => setIsDraggingSlider(false)}
                                                     onChange={(e) => {
                                                         const val = parseFloat(e.target.value);
-                                                        setSliderY(val); // Atualiza visual local imediatamente
+                                                        setSliderY(val);
                                                         setAutoRotate(false);
-                                                        rotateY.set(val); // Atualiza física
+
+                                                        // Lógica inteligente: Menor caminho angular
+                                                        const current = rotateY.get();
+                                                        const currentMod = ((current % 360) + 360) % 360;
+                                                        let delta = val - currentMod;
+
+                                                        // Se o salto for > 180, inverte o sentido (ex: 350 -> 10, vira +20, não -340)
+                                                        if (delta > 180) delta -= 360;
+                                                        if (delta < -180) delta += 360;
+
+                                                        rotateY.set(current + delta);
                                                     }}
                                                     className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                                 />
