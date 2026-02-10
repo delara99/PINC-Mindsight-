@@ -248,31 +248,36 @@ export class TalkingToController {
 
         const pincMapping = {
             'EXTRAVERSION': [
-                { ipip: 'warmth', pinc: 'COMMUNICATION', label: 'Comunicação', invert: false },
-                { ipip: 'gregariousness', pinc: 'SOCIAL_INTERACTION', label: 'Interação Social', invert: false },
-                { ipip: 'assertiveness', pinc: 'AUTHORITY', label: 'Autoridade', invert: false },
-                { ipip: 'activity', pinc: 'ACTION_ORIENTATION', label: 'Orientação p/ Ação', invert: false }
+                { ipip: 'acolhimento', pinc: 'COMMUNICATION', label: 'Comunicação', invert: false },
+                { ipip: 'gregarismo', pinc: 'SOCIAL_INTERACTION', label: 'Interação Social', invert: false },
+                { ipip: 'assertividade', pinc: 'AUTHORITY', label: 'Autoridade', invert: false },
+                { ipip: 'atividade', pinc: 'ACTION_ORIENTATION', label: 'Orientação p/ Ação', invert: false }
             ],
             'AGREEABLENESS': [
-                { ipip: 'straightforwardness', pinc: 'LOGIC', label: 'Lógica', invert: true }, // Low Agreeableness = High Logic
-                { ipip: 'altruism', pinc: 'INDEPENDENCE', label: 'Independência', invert: true }, // Low Agreeableness = High Independence
-                { ipip: 'compliance', pinc: 'COMPETITIVENESS', label: 'Competitividade', invert: true } // Low Agreeableness = High Competitiveness
+                { ipip: 'franqueza', pinc: 'LOGIC', label: 'Lógica', invert: true }, // Low Agreeableness = High Logic
+                { ipip: 'altruísmo', pinc: 'INDEPENDENCE', label: 'Independência', invert: true }, // Low Agreeableness = High Independence (Accent sensitive check)
+                { ipip: 'altruismo', pinc: 'INDEPENDENCE', label: 'Independência', invert: true }, // Fallback without accent
+                { ipip: 'complacência', pinc: 'COMPETITIVENESS', label: 'Competitividade', invert: true },
+                { ipip: 'complacencia', pinc: 'COMPETITIVENESS', label: 'Competitividade', invert: true }
             ],
             'CONSCIENTIOUSNESS': [
-                { ipip: 'deliberation', pinc: 'PLANNING', label: 'Planejamento', invert: false },
-                { ipip: 'self_discipline', pinc: 'DISCIPLINE', label: 'Disciplina', invert: false },
-                { ipip: 'achievement_striving', pinc: 'PERSISTENCE', label: 'Persistência', invert: false }
+                { ipip: 'deliberação', pinc: 'PLANNING', label: 'Planejamento', invert: false },
+                { ipip: 'deliberacao', pinc: 'PLANNING', label: 'Planejamento', invert: false },
+                { ipip: 'autodisciplina', pinc: 'DISCIPLINE', label: 'Disciplina', invert: false },
+                { ipip: 'realização', pinc: 'PERSISTENCE', label: 'Persistência', invert: false },
+                { ipip: 'realizacao', pinc: 'PERSISTENCE', label: 'Persistência', invert: false }
             ],
             'OPENNESS': [
-                { ipip: 'fantasy', pinc: 'IMAGINATION', label: 'Imaginação', invert: false },
-                { ipip: 'ideas', pinc: 'INTELLECT', label: 'Intelectualidade', invert: false },
-                { ipip: 'values', pinc: 'OPENNESS_TO_NEW', label: 'Abertura ao Novo', invert: false }
+                { ipip: 'fantasia', pinc: 'IMAGINATION', label: 'Imaginação', invert: false },
+                { ipip: 'ideias', pinc: 'INTELLECT', label: 'Intelectualidade', invert: false },
+                { ipip: 'valores', pinc: 'OPENNESS_TO_NEW', label: 'Abertura ao Novo', invert: false }
             ],
             'NEUROTICISM': [
-                { ipip: 'anxiety', pinc: 'CONFIDENCE', label: 'Confiança', invert: true }, // Low Neuroticism = High Confidence
-                { ipip: 'depression', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
-                { ipip: 'angry_hostility', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true }, // Low Neuroticism (Hostility) = High Temperament (Calm)
-                { ipip: 'impulsiveness', pinc: 'CONTROL', label: 'Controle', invert: true }
+                { ipip: 'ansiedade', pinc: 'CONFIDENCE', label: 'Confiança', invert: true }, // Low Neuroticism = High Confidence
+                { ipip: 'depressão', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
+                { ipip: 'depressao', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
+                { ipip: 'hostilidade', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true }, // Low Neuroticism (Hostility) = High Temperament (Calm)
+                { ipip: 'impulsividade', pinc: 'CONTROL', label: 'Controle', invert: true }
             ]
         };
 
