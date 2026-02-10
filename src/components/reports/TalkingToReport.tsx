@@ -35,7 +35,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         scores = reportData.calculatedScores.scores.map((s: any) => ({
             ...s,
             key: s.traitKey || s.key || 'UNKNOWN',
-            name: s.traitName || s.name || 'Sem Nome'
+            name: mapTraitToLabel(s.traitKey || s.key || 'UNKNOWN') // Força nome oficial também no formato B2B
         }));
     } else if (reportData?.unifiedScores) {
         // FORMATO B2C Legacy / Misto (Objeto)
@@ -100,7 +100,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
             return {
                 key: finalKey,
-                name: displayName,
+                name: mapTraitToLabel(finalKey), // Força o nome oficial PINC (ex: ESTRUTURA ao invés de Conscienciosidade)
                 score: val.normalizedScore || val.score || 0,
                 level: val.level,
                 interpretation: val.interpretation,

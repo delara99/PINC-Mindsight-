@@ -248,40 +248,31 @@ export class TalkingToController {
 
         const pincMapping = {
             'EXTRAVERSION': [
-                { ipip: 'acolhimento', pinc: 'COMMUNICATION', label: 'Comunicação', invert: false },
-                { ipip: 'gregarismo', pinc: 'SOCIAL_INTERACTION', label: 'Interação Social', invert: false },
-                { ipip: 'assertividade', pinc: 'AUTHORITY', label: 'Autoridade', invert: false },
-                { ipip: 'atividade', pinc: 'ACTION_ORIENTATION', label: 'Orientação p/ Ação', invert: false }
+                { pinc: 'COMMUNICATION', sources: ['acolhimento', 'warmth'], label: 'Comunicação', invert: false },
+                { pinc: 'SOCIAL_INTERACTION', sources: ['gregarismo', 'gregariousness', 'social'], label: 'Interação Social', invert: false },
+                { pinc: 'AUTHORITY', sources: ['assertividade', 'assertiveness', 'autoridade'], label: 'Autoridade', invert: false },
+                { pinc: 'ACTION_ORIENTATION', sources: ['atividade', 'activity', 'nivel de atividade', 'acao'], label: 'Orientação p/ Ação', invert: false }
             ],
             'AGREEABLENESS': [
-                { ipip: 'franqueza', pinc: 'LOGIC', label: 'Lógica', invert: true }, // Low Agreeableness = High Logic
-                { ipip: 'altruísmo', pinc: 'INDEPENDENCE', label: 'Independência', invert: true }, // Low Agreeableness = High Independence (Accent sensitive check)
-                { ipip: 'altruismo', pinc: 'INDEPENDENCE', label: 'Independência', invert: true }, // Fallback without accent
-                { ipip: 'complacência', pinc: 'COMPETITIVENESS', label: 'Competitividade', invert: true },
-                { ipip: 'complacencia', pinc: 'COMPETITIVENESS', label: 'Competitividade', invert: true }
+                { pinc: 'LOGIC', sources: ['franqueza', 'straightforwardness', 'sinceridade'], label: 'Lógica', invert: true },
+                { pinc: 'INDEPENDENCE', sources: ['altruismo', 'altruísmo', 'altruism'], label: 'Independência', invert: true },
+                { pinc: 'COMPETITIVENESS', sources: ['complacencia', 'complacência', 'compliance'], label: 'Competitividade', invert: true }
             ],
             'CONSCIENTIOUSNESS': [
-                { ipip: 'deliberação', pinc: 'PLANNING', label: 'Planejamento', invert: false },
-                { ipip: 'deliberacao', pinc: 'PLANNING', label: 'Planejamento', invert: false },
-                { ipip: 'autodisciplina', pinc: 'DISCIPLINE', label: 'Disciplina', invert: false },
-                { ipip: 'realização', pinc: 'PERSISTENCE', label: 'Persistência', invert: false },
-                { ipip: 'realizacao', pinc: 'PERSISTENCE', label: 'Persistência', invert: false },
-                { ipip: 'esforço', pinc: 'PERSISTENCE', label: 'Persistência', invert: false } // Esforço por Realização
+                { pinc: 'PLANNING', sources: ['deliberacao', 'deliberação', 'deliberation', 'planejamento', 'ponderacao', 'ponderação'], label: 'Planejamento', invert: false },
+                { pinc: 'DISCIPLINE', sources: ['autodisciplina', 'selfdiscipline', 'disciplina'], label: 'Disciplina', invert: false },
+                { pinc: 'PERSISTENCE', sources: ['realizacao', 'realização', 'achievement', 'esforço', 'esforco por realizacao'], label: 'Persistência', invert: false }
             ],
             'OPENNESS': [
-                { ipip: 'fantasia', pinc: 'IMAGINATION', label: 'Imaginação', invert: false },
-                { ipip: 'ideias', pinc: 'INTELLECT', label: 'Intelectualidade', invert: false },
-                { ipip: 'valores', pinc: 'OPENNESS_TO_NEW', label: 'Abertura ao Novo', invert: false }
+                { pinc: 'IMAGINATION', sources: ['fantasia', 'fantasy', 'imaginacao'], label: 'Imaginação', invert: false },
+                { pinc: 'INTELLECT', sources: ['ideias', 'ideas', 'intelecto'], label: 'Intelectualidade', invert: false },
+                { pinc: 'OPENNESS_TO_NEW', sources: ['valores', 'values', 'abertura'], label: 'Abertura ao Novo', invert: false }
             ],
             'NEUROTICISM': [
-                { ipip: 'ansiedade', pinc: 'CONFIDENCE', label: 'Confiança', invert: true },
-                { ipip: 'depressão', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
-                { ipip: 'depressao', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
-                { ipip: 'hostilidade', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true },
-                { ipip: 'raiva', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true }, // Mapped from RAIVA
-                { ipip: 'impulsividade', pinc: 'CONTROL', label: 'Controle', invert: true },
-                { ipip: 'imoderação', pinc: 'CONTROL', label: 'Controle', invert: true }, // Mapped from IMODERAÇÃO
-                { ipip: 'imoderacao', pinc: 'CONTROL', label: 'Controle', invert: true }
+                { pinc: 'CONFIDENCE', sources: ['ansiedade', 'anxiety'], label: 'Confiança', invert: true },
+                { pinc: 'SELF_CONFIDENCE', sources: ['depressao', 'depressão', 'depression'], label: 'Autoconfiança', invert: true },
+                { pinc: 'TEMPERAMENT', sources: ['hostilidade', 'angryhostility', 'raiva', 'temperamento'], label: 'Temperamento', invert: true },
+                { pinc: 'CONTROL', sources: ['impulsividade', 'impulsiveness', 'imoderacao', 'imoderação', 'controle'], label: 'Controle', invert: true }
             ]
         };
 
@@ -297,26 +288,30 @@ export class TalkingToController {
                         needs: dimResult.needs.primary
                     };
 
-                    // 2. Transforma Facetas (IPIP -> PINC)
+                    // 2. Transforma Facetas (IPIP -> PINC) com Lógica de Sinônimos
                     const mapping = pincMapping[key];
                     if (mapping && scores[key].facets) {
                         const newFacets = mapping.map(m => {
-                            // Encontra a faceta original (tentando vários nomes comuns do IPIP)
-                            const original = scores[key].facets.find((f: any) =>
-                                f.name?.toLowerCase().includes(m.ipip) ||
-                                f.facetName?.toLowerCase().includes(m.ipip)
-                            );
+                            // Tenta encontrar match em qualquer um dos sources
+                            let original: any = null;
+
+                            for (const src of m.sources) {
+                                original = scores[key].facets.find((f: any) =>
+                                    (f.name || f.facetName || '').toLowerCase().includes(src)
+                                );
+                                if (original) break; // Achou!
+                            }
 
                             let rawScore = original ? ((original as any).score || (original as any).normalizedScore || 50) : 50;
 
-                            // Aplica Inversão se necessário (ex: Baixa Ansiedade = Alta Confiança)
+                            // Aplica Inversão se necessário
                             const finalScore = m.invert ? (100 - rawScore) : rawScore;
 
                             // Classificação simples (inline para evitar erro de acesso privado)
-                            const level = finalScore <= 35 ? 'BAIXO' : finalScore <= 64 ? 'FLEX' : 'ALTO';
+                            const level = finalScore <= 50 ? 'BAIXO' : 'ALTO'; // Binário conforme update recente
 
                             return {
-                                name: m.pinc, // Chave PINC (ex: COMMUNICATION) para o Frontend traduzir
+                                name: m.pinc,
                                 score: finalScore,
                                 normalizedScore: finalScore,
                                 level: level
