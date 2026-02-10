@@ -265,7 +265,8 @@ export class TalkingToController {
                 { ipip: 'deliberacao', pinc: 'PLANNING', label: 'Planejamento', invert: false },
                 { ipip: 'autodisciplina', pinc: 'DISCIPLINE', label: 'Disciplina', invert: false },
                 { ipip: 'realização', pinc: 'PERSISTENCE', label: 'Persistência', invert: false },
-                { ipip: 'realizacao', pinc: 'PERSISTENCE', label: 'Persistência', invert: false }
+                { ipip: 'realizacao', pinc: 'PERSISTENCE', label: 'Persistência', invert: false },
+                { ipip: 'esforço', pinc: 'PERSISTENCE', label: 'Persistência', invert: false } // Esforço por Realização
             ],
             'OPENNESS': [
                 { ipip: 'fantasia', pinc: 'IMAGINATION', label: 'Imaginação', invert: false },
@@ -273,11 +274,14 @@ export class TalkingToController {
                 { ipip: 'valores', pinc: 'OPENNESS_TO_NEW', label: 'Abertura ao Novo', invert: false }
             ],
             'NEUROTICISM': [
-                { ipip: 'ansiedade', pinc: 'CONFIDENCE', label: 'Confiança', invert: true }, // Low Neuroticism = High Confidence
+                { ipip: 'ansiedade', pinc: 'CONFIDENCE', label: 'Confiança', invert: true },
                 { ipip: 'depressão', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
                 { ipip: 'depressao', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
-                { ipip: 'hostilidade', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true }, // Low Neuroticism (Hostility) = High Temperament (Calm)
-                { ipip: 'impulsividade', pinc: 'CONTROL', label: 'Controle', invert: true }
+                { ipip: 'hostilidade', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true },
+                { ipip: 'raiva', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true }, // Mapped from RAIVA
+                { ipip: 'impulsividade', pinc: 'CONTROL', label: 'Controle', invert: true },
+                { ipip: 'imoderação', pinc: 'CONTROL', label: 'Controle', invert: true }, // Mapped from IMODERAÇÃO
+                { ipip: 'imoderacao', pinc: 'CONTROL', label: 'Controle', invert: true }
             ]
         };
 
