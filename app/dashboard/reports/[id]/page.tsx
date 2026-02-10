@@ -63,6 +63,105 @@ const parseChatHistory = (fullText: string) => {
     return history;
 };
 
+// --- PINC ADAPTER LOGIC ---
+const PINC_ADAPTER: any = {
+    'EXTRAVERSION': {
+        label: 'EXTROVERSÃO',
+        facets: [
+            { key: 'COMUNICAÇÃO', sources: ['FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO'], invert: false },
+            { key: 'INTERAÇÃO SOCIAL', sources: ['GREGARIOUSNESS', 'GREGARIEDADE', 'SOCIAL'], invert: false },
+            { key: 'AUTORIDADE', sources: ['ASSERTIVENESS', 'ASSERTIVIDADE'], invert: false },
+            { key: 'ORIENTAÇÃO P/ AÇÃO', sources: ['ACTIVITY', 'ATIVIDADE'], invert: false }
+        ]
+    },
+    'AGREEABLENESS': {
+        label: 'AMABILIDADE',
+        invertDimension: true, // Score Average (Logic/Indep) is inverse of Amabilidade
+        facets: [
+            { key: 'LÓGICA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS'], invert: true },
+            { key: 'INDEPENDÊNCIA', sources: ['ALTRUISM', 'ALTRUÍSMO'], invert: true },
+            { key: 'COMPETITIVIDADE', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE'], invert: true }
+        ]
+    },
+    'CONSCIENTIOUSNESS': {
+        label: 'ESTRUTURA',
+        facets: [
+            { key: 'PLANEJAMENTO', sources: ['CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO'], invert: false },
+            { key: 'DISCIPLINA', sources: ['SELF-DISCIPLINE', 'AUTODISCIPLINA', 'DISCIPLINA'], invert: false },
+            { key: 'PERSISTÊNCIA', sources: ['ACHIEVEMENT', 'REALIZAÇÕES', 'PERSISTENCE'], invert: false }
+        ]
+    },
+    'NEUROTICISM': {
+        label: 'ESTABILIDADE EMOCIONAL',
+        // No invertDimension: Facets (Confidence, Control) are already Stability markers. Average IS Stability.
+        facets: [
+            { key: 'CONFIANÇA', sources: ['ANXIETY', 'ANSIEDADE'], invert: true },
+            { key: 'AUTOCONFIANÇA', sources: ['DEPRESSION', 'DEPRESSÃO'], invert: true },
+            { key: 'TEMPERAMENTO', sources: ['ANGER', 'HOSTILITY', 'HOSTILIDADE', 'RAIVA'], invert: true },
+            { key: 'CONTROLE', sources: ['IMPULSIVENESS', 'IMPULSIVIDADE', 'IMODERAÇÃO'], invert: true }
+        ]
+    },
+    'OPENNESS': {
+        label: 'ABERTURA',
+        facets: [
+            { key: 'IMAGINAÇÃO', sources: ['IMAGINATION', 'FANTASIA'], invert: false },
+            { key: 'INTELECTUALIDADE', sources: ['INTELLECT', 'IDEIAS'], invert: false },
+            { key: 'ABERTURA AO NOVO', sources: ['LIBERALISM', 'VALORES', 'ABERTURA'], invert: false }
+        ]
+    }
+};
+
+const adaptTraitToPINC = (trait: any) => {
+    const rawKey = (trait.traitKey || trait.name || '').toUpperCase();
+
+    // Find adapter config (handle aliases)
+    let config = PINC_ADAPTER[rawKey];
+    if (!config && rawKey.includes('ESTABILIDADE')) config = PINC_ADAPTER['NEUROTICISM'];
+    if (!config && (rawKey.includes('CONSCIENTIOUSNESS') || rawKey.includes('CONSCIENCIOSIDADE') || rawKey.includes('ESTRUTURA'))) config = PINC_ADAPTER['CONSCIENTIOUSNESS'];
+
+    if (!config) return null; // Not a main PINC dimension
+
+    // Filter and Map Facets
+    const adaptedFacets: any[] = [];
+    let sumScores = 0;
+
+    config.facets.forEach((rule: any) => {
+        // Find raw facet
+        const rawFacet = trait.facets?.find((f: any) => {
+            const fName = (f.name || f.facetName || '').toUpperCase();
+            return rule.sources.some((src: string) => fName.includes(src));
+        });
+
+        // Default to 50 if missing
+        let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 50) : 50;
+
+        // Apply Inversion
+        if (rule.invert) score = 100 - score;
+
+        sumScores += score;
+        adaptedFacets.push({
+            facet: rule.key,
+            normalizedScore: score
+        });
+    });
+
+    // Recalculate Dimension Score (Average of PINC Facets)
+    let finalScore = adaptedFacets.length > 0 ? sumScores / adaptedFacets.length : (trait.score || 50);
+
+    // Apply Dimension Inversion (Neuroticism -> Stability)
+    if (config.invertDimension) {
+        finalScore = 100 - finalScore;
+    }
+
+    return {
+        traitName: config.label,
+        score: finalScore,
+        facets: adaptedFacets,
+        originalInterpretation: trait.interpretation,
+        originalCustomTexts: trait.customTexts
+    };
+};
+
 // --- MODERN UI COMPONENTS ---
 
 const ModernTraitCard = ({ traitName, overallScore, interpretation, facets, customTexts }: any) => {
@@ -204,22 +303,35 @@ export default function AssessmentDetailsPage() {
     const reportRef = useRef<HTMLDivElement>(null);
 
     // --- TRANSLATION HELPER (Shared) ---
+    // Legacy mapping (just in case), but we prefer adapting to PINC via PINC_ADAPTER logic
     const TERMS_MAP: Record<string, string> = {
-        'OPENNESS': 'ABERTURA À EXPERIÊNCIA',
-        'CONSCIENTIOUSNESS': 'CONSCIENCIOSIDADE',
+        'OPENNESS': 'ABERTURA',
+        'CONSCIENTIOUSNESS': 'ESTRUTURA',
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
         'NEUROTICISM': 'ESTABILIDADE EMOCIONAL', 'ESTABILIDADE': 'ESTABILIDADE EMOCIONAL',
-        // Facetas
-        'ANXIETY': 'ANSIEDADE', 'ANGER': 'HOSTILIDADE', 'HOSTILITY': 'HOSTILIDADE', 'DEPRESSION': 'DEPRESSÃO',
-        'SELF-CONSCIOUSNESS': 'EMBARAÇO', 'IMPULSIVENESS': 'IMPULSIVIDADE', 'VULNERABILITY': 'VULNERABILIDADE',
-        'FRIENDLINESS': 'CORDIALIDADE', 'GREGARIOUSNESS': 'GREGARIEDADE', 'ASSERTIVENESS': 'ASSERTIVIDADE',
-        'ACTIVITY LEVEL': 'ATIVIDADE', 'EXCITEMENT-SEEKING': 'BUSCA DE SENSAÇÕES', 'CHEERFULNESS': 'EMOÇÕES POSITIVAS',
-        'TRUST': 'CONFIANÇA', 'MORALITY': 'FRANQUEZA', 'ALTRUISM': 'ALTRUÍSMO', 'COOPERATION': 'COMPLACÊNCIA',
-        'MODESTY': 'MODÉSTIA', 'SYMPATHY': 'SENSIBILIDADE', 'SELF-EFFICACY': 'COMPETÊNCIA', 'ORDERLINESS': 'ORDEM',
-        'DUTIFULNESS': 'SENSO DE DEVER', 'ACHIEVEMENT-STRIVING': 'ESFORÇO POR REALIZAÇÕES', 'SELF-DISCIPLINE': 'AUTODISCIPLINA',
-        'CAUTIOUSNESS': 'PONDERAÇÃO', 'IMAGINATION': 'FANTASIA', 'ARTISTIC INTERESTS': 'ESTÉTICA', 'EMOTIONALITY': 'SENTIMENTOS',
-        'ADVENTUROUSNESS': 'AÇÕES', 'INTELLECT': 'IDEIAS', 'LIBERALISM': 'VALORES'
+
+        'FRIENDLINESS': 'COMUNICAÇÃO', 'CORDIALIDADE': 'COMUNICAÇÃO',
+        'GREGARIOUSNESS': 'INTERAÇÃO SOCIAL', 'GREGARIEDADE': 'INTERAÇÃO SOCIAL',
+        'ASSERTIVENESS': 'AUTORIDADE', 'ASSERTIVIDADE': 'AUTORIDADE',
+        'ACTIVITY LEVEL': 'ORIENTAÇÃO P/ AÇÃO', 'ATIVIDADE': 'ORIENTAÇÃO P/ AÇÃO',
+
+        'MORALITY': 'LÓGICA', 'FRANQUEZA': 'LÓGICA',
+        'ALTRUISM': 'INDEPENDÊNCIA', 'ALTRUÍSMO': 'INDEPENDÊNCIA',
+        'COOPERATION': 'COMPETITIVIDADE', 'COMPLACÊNCIA': 'COMPETITIVIDADE',
+
+        'CAUTIOUSNESS': 'PLANEJAMENTO', 'PONDERAÇÃO': 'PLANEJAMENTO', 'DELIBERATION': 'PLANEJAMENTO',
+        'SELF-DISCIPLINE': 'DISCIPLINA', 'AUTODISCIPLINA': 'DISCIPLINA',
+        'ACHIEVEMENT-STRIVING': 'PERSISTÊNCIA', 'ESFORÇO POR REALIZAÇÕES': 'PERSISTÊNCIA',
+
+        'ANXIETY': 'CONFIANÇA', 'ANSIEDADE': 'CONFIANÇA',
+        'DEPRESSION': 'AUTOCONFIANÇA', 'DEPRESSÃO': 'AUTOCONFIANÇA',
+        'ANGER': 'TEMPERAMENTO', 'HOSTILITY': 'TEMPERAMENTO', 'HOSTILIDADE': 'TEMPERAMENTO',
+        'IMPULSIVENESS': 'CONTROLE', 'IMPULSIVIDADE': 'CONTROLE',
+
+        'IMAGINATION': 'IMAGINAÇÃO', 'FANTASIA': 'IMAGINAÇÃO',
+        'INTELLECT': 'INTELECTUALIDADE', 'IDEIAS': 'INTELECTUALIDADE',
+        'LIBERALISM': 'ABERTURA AO NOVO', 'VALORES': 'ABERTURA AO NOVO'
     };
 
     const translateAndFormat = (text: string) => {
@@ -319,31 +431,40 @@ export default function AssessmentDetailsPage() {
                     {/* SECTION 1: TRAITS */}
                     <section>
                         <h2 className="text-2xl font-bold flex items-center gap-3 mb-8">
-                            <Layers className="text-indigo-500" /> Detalhamento dos Traços
+                            <Layers className="text-indigo-500" /> Detalhamento dos Traços (PINC-View)
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {(() => {
                                 const calcScores = assignment.calculatedScores?.scores;
                                 if (calcScores) {
                                     const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
-                                    return scoresList.map((trait: any, idx: number) => (
-                                        <ModernTraitCard
-                                            key={idx}
-                                            traitName={translateAndFormat(trait.traitKey || trait.name)}
-                                            overallScore={Math.min(100, trait.score)}
-                                            interpretation={((({
-                                                'HIGH': 'ALTO', 'AVERAGE': 'MÉDIO', 'LOW': 'BAIXO',
-                                                'VERY_HIGH': 'MUITO ALTO', 'VERY_LOW': 'MUITO BAIXO'
-                                            })[trait.level as string] || trait.level || ''))}
-                                            facets={trait.facets?.map((f: any) => ({
-                                                facet: translateAndFormat(f.name || f.facetName),
-                                                normalizedScore: Math.min(100, Math.max(0, typeof f.score === 'number' ? f.score : 0))
-                                            })) || []}
-                                            customTexts={{
-                                                summary: trait.customTexts?.text_interpretation || trait.customTexts?.summary || trait.interpretation
-                                            }}
-                                        />
-                                    ));
+
+                                    // PINC Adaptation
+                                    return scoresList
+                                        .map((t: any) => adaptTraitToPINC(t))
+                                        .filter(Boolean)
+                                        .sort((a: any, b: any) => {
+                                            const order = ['ABERTURA', 'ESTRUTURA', 'EXTROVERSÃO', 'AMABILIDADE', 'ESTABILIDADE EMOCIONAL'];
+                                            return order.indexOf(a.traitName) - order.indexOf(b.traitName);
+                                        })
+                                        .map((pincTrait: any, idx: number) => (
+                                            <ModernTraitCard
+                                                key={idx}
+                                                traitName={pincTrait.traitName}
+                                                overallScore={pincTrait.score}
+                                                interpretation={
+                                                    // PINC Level: <= 35 Low, <= 65 Med, > 65 High (or match PINC binary?)
+                                                    // User asked for binary in main report. Specialist report can be more granular (Red/Orange/Green) for detail.
+                                                    // Let's keep granular for specialist.
+                                                    pincTrait.score <= 35 ? 'BAIXO' :
+                                                        pincTrait.score <= 65 ? 'MÉDIO' : 'ALTO'
+                                                }
+                                                facets={pincTrait.facets}
+                                                customTexts={{
+                                                    summary: pincTrait.originalCustomTexts?.text_interpretation || pincTrait.originalInterpretation
+                                                }}
+                                            />
+                                        ));
                                 }
                                 return null;
                             })()}
@@ -368,15 +489,18 @@ export default function AssessmentDetailsPage() {
                                         const scoresList = Array.isArray(calcScores) ? calcScores : Object.values(calcScores);
                                         const chartData: any = {};
                                         scoresList.forEach((t: any) => {
-                                            const kn = t.traitKey || t.traitName || t.name;
-                                            const tn = translateAndFormat(kn);
-                                            if (!tn) return;
-                                            if (t.facets) {
-                                                t.facets.forEach((f: any) => {
-                                                    let v = typeof f.score === 'number' ? f.score : 0;
+                                            const pincTrait = adaptTraitToPINC(t);
+                                            if (!pincTrait) return;
+
+                                            const tn = pincTrait.traitName;
+
+                                            if (pincTrait.facets) {
+                                                pincTrait.facets.forEach((f: any) => {
+                                                    let v = f.normalizedScore || 0;
+                                                    // Normalize for Chart (likely expects 0-5 scale if >5 check suggests 100 scale input)
                                                     if (v > 5) v = v / 20;
-                                                    const fn = translateAndFormat(f.name || f.facetName);
-                                                    chartData[`${tn}::${fn}`] = v;
+
+                                                    chartData[`${tn}::${f.facet}`] = v;
                                                 });
                                             }
                                         });
