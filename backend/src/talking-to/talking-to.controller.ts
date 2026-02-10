@@ -243,23 +243,83 @@ export class TalkingToController {
         // 3.1 Busca Crossings (Como falar com...)
         const crossings = await this.service.getCrossingsForAnalysis(analysis.talkingto_analysis);
 
-        // --- MERGE CRUCIAL: Injetar textos do TalkingTo dentro dos Scores (Flattened para evitar erro React #31) ---
+        // --- MERGE CRUCIAL: Injetar textos do TalkingTo dentro dos Scores ---
+        // E AGORA: TRANSFORMAR FACETAS IPIP -> PINC (Para exibição correta)
+
+        const pincMapping = {
+            'EXTRAVERSION': [
+                { ipip: 'warmth', pinc: 'COMMUNICATION', label: 'Comunicação', invert: false },
+                { ipip: 'gregariousness', pinc: 'SOCIAL_INTERACTION', label: 'Interação Social', invert: false },
+                { ipip: 'assertiveness', pinc: 'AUTHORITY', label: 'Autoridade', invert: false },
+                { ipip: 'activity', pinc: 'ACTION_ORIENTATION', label: 'Orientação p/ Ação', invert: false }
+            ],
+            'AGREEABLENESS': [
+                { ipip: 'straightforwardness', pinc: 'LOGIC', label: 'Lógica', invert: true }, // Low Agreeableness = High Logic
+                { ipip: 'altruism', pinc: 'INDEPENDENCE', label: 'Independência', invert: true }, // Low Agreeableness = High Independence
+                { ipip: 'compliance', pinc: 'COMPETITIVENESS', label: 'Competitividade', invert: true } // Low Agreeableness = High Competitiveness
+            ],
+            'CONSCIENTIOUSNESS': [
+                { ipip: 'deliberation', pinc: 'PLANNING', label: 'Planejamento', invert: false },
+                { ipip: 'self_discipline', pinc: 'DISCIPLINE', label: 'Disciplina', invert: false },
+                { ipip: 'achievement_striving', pinc: 'PERSISTENCE', label: 'Persistência', invert: false }
+            ],
+            'OPENNESS': [
+                { ipip: 'fantasy', pinc: 'IMAGINATION', label: 'Imaginação', invert: false },
+                { ipip: 'ideas', pinc: 'INTELLECT', label: 'Intelectualidade', invert: false },
+                { ipip: 'values', pinc: 'OPENNESS_TO_NEW', label: 'Abertura ao Novo', invert: false }
+            ],
+            'NEUROTICISM': [
+                { ipip: 'anxiety', pinc: 'CONFIDENCE', label: 'Confiança', invert: true }, // Low Neuroticism = High Confidence
+                { ipip: 'depression', pinc: 'SELF_CONFIDENCE', label: 'Autoconfiança', invert: true },
+                { ipip: 'angry_hostility', pinc: 'TEMPERAMENT', label: 'Temperamento', invert: true }, // Low Neuroticism (Hostility) = High Temperament (Calm)
+                { ipip: 'impulsiveness', pinc: 'CONTROL', label: 'Controle', invert: true }
+            ]
+        };
+
         if (analysis && analysis.talkingto_analysis) {
             analysis.talkingto_analysis.forEach((dimResult: any) => {
                 const key = dimResult.traitKey; // EXTRAVERSION, etc.
                 if (scores[key]) {
+                    // 1. Injeta Textos
                     (scores[key] as any).customTexts = {
                         text_interpretation: dimResult.text_interpretation,
-                        // Flattening 'needs' object to strings because Frontend expects strings e.g. {trait.customTexts.risk}
                         environment: dimResult.needs.environment,
                         risk: dimResult.needs.risk,
-                        needs: dimResult.needs.primary // Frontend uses (needs || environment), so primary fits perfectly here
+                        needs: dimResult.needs.primary
                     };
+
+                    // 2. Transforma Facetas (IPIP -> PINC)
+                    const mapping = pincMapping[key];
+                    if (mapping && scores[key].facets) {
+                        const newFacets = mapping.map(m => {
+                            // Encontra a faceta original (tentando vários nomes comuns do IPIP)
+                            const original = scores[key].facets.find((f: any) =>
+                                f.name?.toLowerCase().includes(m.ipip) ||
+                                f.facetName?.toLowerCase().includes(m.ipip)
+                            );
+
+                            let rawScore = original ? ((original as any).score || (original as any).normalizedScore || 50) : 50;
+
+                            // Aplica Inversão se necessário (ex: Baixa Ansiedade = Alta Confiança)
+                            const finalScore = m.invert ? (100 - rawScore) : rawScore;
+
+                            // Classificação simples (inline para evitar erro de acesso privado)
+                            const level = finalScore <= 35 ? 'BAIXO' : finalScore <= 64 ? 'FLEX' : 'ALTO';
+
+                            return {
+                                name: m.pinc, // Chave PINC (ex: COMMUNICATION) para o Frontend traduzir
+                                score: finalScore,
+                                normalizedScore: finalScore,
+                                level: level
+                            };
+                        });
+
+                        // SUBSTITUI as facetas antigas pelas novas
+                        scores[key].facets = newFacets;
+                    }
                 }
             });
         }
-
-
 
         return {
             id: assignment.id,
