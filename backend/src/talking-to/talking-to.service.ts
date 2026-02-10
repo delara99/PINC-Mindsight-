@@ -222,10 +222,13 @@ export class TalkingToService {
         }
     }
 
-    // --- CLASSIFICATION LOGIC (0-35, 36-64, 65-100) ---
-    private classify(score: number): 'BAIXO' | 'FLEX' | 'ALTO' {
-        if (score <= 35) return 'BAIXO';
-        if (score <= 64) return 'FLEX';
+    // --- CLASSIFICATION LOGIC (BINARY: LOW vs HIGH) ---
+    private classify(score: number): 'BAIXO' | 'ALTO' {
+        // Ponto de corte simples em 50.
+        // <= 50 -> BAIXO
+        // > 50 -> ALTO
+        // Não existe mais FLEX/NEUTRO no modelo PINC.
+        if (score <= 50) return 'BAIXO';
         return 'ALTO';
     }
 
