@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { motion, useSpring, useAnimationFrame } from 'framer-motion';
+import { motion, useSpring, useAnimationFrame, MotionValue } from 'framer-motion';
 
 // --- CONFIGURAÇÃO DOS SUBTRAÇOS (GRID INTERNO) ---
 const GRID_DATA: any = {
@@ -56,9 +56,15 @@ interface OrigamiProps {
     activeTraits?: string[];
     customScores?: { [key: string]: number };
     autoRotate?: boolean;
+
+    // Controles Externos Opcionais (para sliders manuais)
+    externalRotation?: {
+        rotateX: MotionValue<number>;
+        rotateY: MotionValue<number>;
+    };
 }
 
-export default function PersonalityOrigami({ progress, activeTraits = [], customScores, autoRotate = false }: OrigamiProps) {
+export default function PersonalityOrigami({ progress, activeTraits = [], customScores, autoRotate = false, externalRotation }: OrigamiProps) {
     let derivedTraits = [...activeTraits];
     if (customScores) {
         derivedTraits = [];
@@ -75,9 +81,13 @@ export default function PersonalityOrigami({ progress, activeTraits = [], custom
     // Animação fluida com Spring para a dobra
     const foldAngle = progress * 90;
 
-    // Controles de rotação com física (Spring)
-    const rotateX = useSpring(0, { stiffness: 60, damping: 20 });
-    const rotateY = useSpring(0, { stiffness: 60, damping: 20 });
+    // --- CONTROLE DE ROTAÇÃO ---
+    // Se vier externo, usa. Se não, cria local.
+    const internalX = useSpring(0, { stiffness: 60, damping: 20 });
+    const internalY = useSpring(0, { stiffness: 60, damping: 20 });
+
+    const rotateX = externalRotation?.rotateX || internalX;
+    const rotateY = externalRotation?.rotateY || internalY;
 
     // Rotação Automática Infinita (Pause Suave)
     useAnimationFrame(() => {

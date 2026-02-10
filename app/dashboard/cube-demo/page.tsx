@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion, useSpring, useMotionValueEvent } from 'framer-motion';
 import PersonalityOrigami from '@/src/components/3d/PersonalityOrigami';
 import { Box, Maximize, Cuboid, Hand } from 'lucide-react';
 
@@ -35,6 +36,16 @@ export default function CubeDemoPage() {
     const [currentProfile, setCurrentProfile] = useState<keyof typeof MOCK_PROFILES>('cliente_real');
     const [foldProgress, setFoldProgress] = useState(0);
     const [autoRotate, setAutoRotate] = useState(false);
+
+    // Controles Manuais de Rotação (Springs elevadas para a Page)
+    const rotateX = useSpring(0, { stiffness: 50, damping: 20 });
+    const rotateY = useSpring(0, { stiffness: 50, damping: 20 });
+    const [sliderX, setSliderX] = useState(0);
+    const [sliderY, setSliderY] = useState(0);
+
+    // Sincroniza sliders visualmente com os springs (seja por auto-rotate ou drag)
+    useMotionValueEvent(rotateY, "change", (latest) => setSliderY(latest % 360));
+    useMotionValueEvent(rotateX, "change", (latest) => setSliderX(latest));
 
     // State for manual overrides
     const [manualScores, setManualScores] = useState(MOCK_PROFILES['cliente_real'].scores);
@@ -167,19 +178,49 @@ export default function CubeDemoPage() {
                                     // Let's pass `customScores={activeScores}` and update the component next if needed.
                                     customScores={activeScores}
                                     autoRotate={autoRotate}
+                                    externalRotation={{ rotateX, rotateY }}
                                 />
                             </div>
 
                             {/* Controles Flutuantes */}
                             <div className="absolute bottom-6 left-0 w-full flex flex-col items-center gap-4 pointer-events-none">
                                 {foldProgress > 0.8 && (
-                                    <div className="flex gap-2 pointer-events-auto">
+                                    <div className="pointer-events-auto flex flex-col items-center gap-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-slate-200 shadow-xl w-[90%] max-w-sm">
+
+                                        {/* Botão Girar/Pausar */}
                                         <button
                                             onClick={() => setAutoRotate(!autoRotate)}
-                                            className="px-6 py-2 bg-white text-slate-900 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all shadow-lg flex items-center gap-2 border border-slate-200"
+                                            className="px-8 py-2 bg-indigo-600 text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg flex items-center gap-2"
                                         >
-                                            {autoRotate ? 'Pausar' : 'Girar'}
+                                            {autoRotate ? 'Pausar Rotação' : 'Girar Auto'}
                                         </button>
+
+                                        {/* Sliders de Rotação Manual */}
+                                        <div className="w-full space-y-3 pt-2 border-t border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase w-12 text-right">Eixo Y</span>
+                                                <input
+                                                    type="range" min="0" max="360"
+                                                    value={Math.abs(sliderY)}
+                                                    onChange={(e) => {
+                                                        setAutoRotate(false); // Pausa ao mexer manualmente
+                                                        rotateY.set(parseFloat(e.target.value));
+                                                    }}
+                                                    className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase w-12 text-right">Eixo X</span>
+                                                <input
+                                                    type="range" min="-90" max="90"
+                                                    value={sliderX}
+                                                    onChange={(e) => {
+                                                        rotateX.set(parseFloat(e.target.value));
+                                                    }}
+                                                    className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
