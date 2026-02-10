@@ -520,8 +520,8 @@ function safeRender(content: any) {
 
 function mapTraitToLabel(key: string) {
     const map: Record<string, string> = {
-        'OPENNESS': 'ABERTURA À EXPERIÊNCIA',
-        'CONSCIENTIOUSNESS': 'CONSCIENCIOSIDADE',
+        'OPENNESS': 'ABERTURA',
+        'CONSCIENTIOUSNESS': 'ESTRUTURA',
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
         'NEUROTICISM': 'ESTABILIDADE EMOCIONAL'
