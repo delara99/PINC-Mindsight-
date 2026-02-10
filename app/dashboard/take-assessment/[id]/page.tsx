@@ -240,7 +240,7 @@ export default function TakeAssessmentPage() {
                             {[
                                 { value: 1, label: 'Discordo totalmente' },
                                 { value: 2, label: 'Discordo' },
-                                { value: 3, label: 'Neutro' },
+                                // Neutro removido para forçar escolha (Modelo PINC)
                                 { value: 4, label: 'Concordo' },
                                 { value: 5, label: 'Concordo totalmente' }
                             ].map((option) => {

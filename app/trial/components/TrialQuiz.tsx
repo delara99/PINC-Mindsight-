@@ -55,7 +55,7 @@ export function TrialQuiz() {
     const OPTIONS = [
         { score: 1, label: "Discordo totalmente" },
         { score: 2, label: "Discordo parcialmente" },
-        { score: 3, label: "Neutro" },
+        // Neutro removido
         { score: 4, label: "Concordo parcialmente" },
         { score: 5, label: "Concordo totalmente" }
     ];
