@@ -152,10 +152,10 @@ export default function CubeDemoPage() {
                         </div>
 
                         {/* PALCO */}
-                        <div className="h-[500px] md:h-[600px] bg-slate-100 rounded-[2.5rem] relative flex items-center justify-center overflow-hidden inner-shadow shadow-inner border border-slate-200 group perspective-1000">
+                        <div className="h-[600px] md:h-[900px] bg-slate-100 rounded-[2.5rem] relative flex items-center justify-center overflow-hidden inner-shadow shadow-inner border border-slate-200 group perspective-1000">
 
                             {/* Componente Origami com Dados Reais/Manuais */}
-                            <div className="transition-transform duration-500">
+                            <div className="transition-transform duration-500 w-full h-full flex items-center justify-center">
                                 <PersonalityOrigami
                                     progress={foldProgress}
                                     activeTraits={MOCK_PROFILES[currentProfile as keyof typeof MOCK_PROFILES]?.activeTraits || []}

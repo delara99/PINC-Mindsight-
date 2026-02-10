@@ -91,14 +91,14 @@ export default function PersonalityOrigami({ progress, activeTraits = [], custom
                     rotateY: rotateY,
                 }}
                 animate={{
-                    rotateX: is3D ? -25 : 0,
-                    rotateY: is3D && autoRotate ? 360 + 35 : (is3D ? rotateY.get() || 0 : 0)
+                    // Permite rotação automática apenas se ativado. 
+                    // Caso contrário, deixa o Spring (Drag) controlar ou mantém o ângulo atual.
+                    rotateY: autoRotate ? [0, 360] : undefined
                 }}
                 transition={{
-                    rotateY: autoRotate ? { repeat: Infinity, duration: 20, ease: "linear" } : { type: "spring", stiffness: 50, damping: 20 },
-                    default: { type: "spring", stiffness: 60, damping: 15 } // Fluidez geral
+                    rotateY: autoRotate ? { repeat: Infinity, duration: 20, ease: "linear" } : { duration: 0 },
                 }}
-                drag={is3D}
+                drag // Drag habilitado SEMPRE (2D e 3D)
                 dragElastic={0.1}
                 onDrag={(event, info) => {
                     rotateY.set(rotateY.get() + info.delta.x * 0.4);
