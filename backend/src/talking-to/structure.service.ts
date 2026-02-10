@@ -84,7 +84,7 @@ export class TalkingToStructureService {
                 color: '#F59E0B',
                 facets: [
                     { dichotomy: 'ouvinte-falante', low: 'ouvinte', high: 'falante', concept: 'comunicação', key: 'COMMUNICATION' },
-                    { dichotomy: 'seletivo-sociável', low: 'seletivo', high: 'sociável', concept: 'interação social', key: 'SOCIAL_INTERACTION' },
+                    { dichotomy: 'seletivo-interativo', low: 'seletivo', high: 'interativo', concept: 'interação social', key: 'SOCIAL_INTERACTION' },
                     { dichotomy: 'contido-afirmativo', low: 'contido', high: 'afirmativo', concept: 'autoridade', key: 'AUTHORITY' },
                     { dichotomy: 'reflexivo-ativo', low: 'reflexivo', high: 'ativo', concept: 'orientação para ação', key: 'ACTION_ORIENTATION' }
                 ]
@@ -138,9 +138,10 @@ export class TalkingToStructureService {
                 facets: [
                     { dichotomy: 'inquieto-despreocupado', low: 'inquieto', high: 'despreocupado', concept: 'confiança', key: 'CONFIDENCE' },
                     { dichotomy: 'inseguro-autoconfiante', low: 'inseguro', high: 'autoconfiante', concept: 'autoconfiança', key: 'SELF_CONFIDENCE' },
-                    { dichotomy: 'irritável-paciente', low: 'irritável', high: 'paciente', concept: 'temperamento', key: 'TEMPERAMENT' },
+                    { dichotomy: 'irritável-tranquilo', low: 'irritável', high: 'tranquilo', concept: 'temperamento', key: 'TEMPERAMENT' },
                     { dichotomy: 'reativo-controlado', low: 'reativo', high: 'controlado', concept: 'controlado', key: 'CONTROL' }
                 ]
+
             }
         ];
 
