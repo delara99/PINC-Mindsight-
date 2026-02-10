@@ -54,10 +54,38 @@ const FACE_SIZE = 260;
 interface OrigamiProps {
     progress: number; // 0 a 1
     activeTraits?: string[]; // Lista de códigos ativos ex: ['N1+', 'E2+']
+    customScores?: { [key: string]: number }; // Ex: { EXTRAVERSION: 60 }
     autoRotate?: boolean;
 }
 
-export default function PersonalityOrigami({ progress, activeTraits = [], autoRotate = false }: OrigamiProps) {
+export default function PersonalityOrigami({ progress, activeTraits = [], customScores, autoRotate = false }: OrigamiProps) {
+    // Se customScores for fornecido, calcula os traços ativos dinamicamente
+    let derivedTraits = [...activeTraits];
+    if (customScores) {
+        derivedTraits = [];
+        const THRESHOLD = 50;
+
+        // Extroversão (E)
+        if ((customScores.EXTRAVERSION || 0) > THRESHOLD) derivedTraits.push('E1+', 'E2+');
+        else derivedTraits.push('E1-', 'E2-');
+
+        // Amabilidade (A)
+        if ((customScores.AGREEABLENESS || 0) > THRESHOLD) derivedTraits.push('A1+', 'A2+');
+        else derivedTraits.push('A1-', 'A2-');
+
+        // Conscienciosidade (S - Self-Control)
+        if ((customScores.CONSCIENTIOUSNESS || 0) > THRESHOLD) derivedTraits.push('S1+', 'S2+');
+        else derivedTraits.push('S1-', 'S2-');
+
+        // Abertura (O)
+        if ((customScores.OPENNESS || 0) > THRESHOLD) derivedTraits.push('O1+', 'O2+');
+        else derivedTraits.push('O1-', 'O2-');
+
+        // Neuroticismo (N)
+        if ((customScores.NEUROTICISM || 0) > THRESHOLD) derivedTraits.push('N1+', 'N2+', 'N3+', 'N4+');
+        else derivedTraits.push('N1-', 'N2-', 'N3-', 'N4-');
+    }
+
     const is3D = progress > 0.8;
     const foldAngle = progress * 90;
 
@@ -94,16 +122,16 @@ export default function PersonalityOrigami({ progress, activeTraits = [], autoRo
                 }}
             >
                 {/* --- FACE CENTRAL (BASE FIXA) --- */}
-                <Face type="front" activeTraits={activeTraits} />
+                <Face type="front" activeTraits={derivedTraits} />
 
                 {/* --- FACES DOBRÁVEIS --- */}
-                <FoldableFace type="top" angle={foldAngle} origin="bottom" activeTraits={activeTraits}>
-                    <FoldableFace type="back" angle={foldAngle} origin="bottom" yOffset={-FACE_SIZE} activeTraits={activeTraits} />
+                <FoldableFace type="top" angle={foldAngle} origin="bottom" activeTraits={derivedTraits}>
+                    <FoldableFace type="back" angle={foldAngle} origin="bottom" yOffset={-FACE_SIZE} activeTraits={derivedTraits} />
                 </FoldableFace>
 
-                <FoldableFace type="bottom" angle={-foldAngle} origin="top" activeTraits={activeTraits} />
-                <FoldableFace type="left" angle={-foldAngle} origin="right" activeTraits={activeTraits} />
-                <FoldableFace type="right" angle={foldAngle} origin="left" activeTraits={activeTraits} />
+                <FoldableFace type="bottom" angle={-foldAngle} origin="top" activeTraits={derivedTraits} />
+                <FoldableFace type="left" angle={-foldAngle} origin="right" activeTraits={derivedTraits} />
+                <FoldableFace type="right" angle={foldAngle} origin="left" activeTraits={derivedTraits} />
 
             </motion.div>
         </div>
