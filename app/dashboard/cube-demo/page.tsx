@@ -42,10 +42,22 @@ export default function CubeDemoPage() {
     const rotateY = useSpring(0, { stiffness: 50, damping: 20 });
     const [sliderX, setSliderX] = useState(0);
     const [sliderY, setSliderY] = useState(0);
+    const [isDraggingSlider, setIsDraggingSlider] = useState(false);
 
     // Sincroniza sliders visualmente com os springs (seja por auto-rotate ou drag)
-    useMotionValueEvent(rotateY, "change", (latest) => setSliderY(latest % 360));
-    useMotionValueEvent(rotateX, "change", (latest) => setSliderX(latest));
+    // MAS APENAS se o usuário não estiver arrastando o slider manualmente.
+    useMotionValueEvent(rotateY, "change", (latest) => {
+        if (!isDraggingSlider) {
+            // Garante valor positivo entre 0-360 para visualização do slider
+            const normalized = ((latest % 360) + 360) % 360;
+            setSliderY(normalized);
+        }
+    });
+    useMotionValueEvent(rotateX, "change", (latest) => {
+        if (!isDraggingSlider) {
+            setSliderX(latest);
+        }
+    });
 
     // State for manual overrides
     const [manualScores, setManualScores] = useState(MOCK_PROFILES['cliente_real'].scores);
@@ -201,10 +213,14 @@ export default function CubeDemoPage() {
                                                 <span className="text-[10px] font-bold text-slate-400 uppercase w-12 text-right">Eixo Y</span>
                                                 <input
                                                     type="range" min="0" max="360"
-                                                    value={Math.abs(sliderY)}
+                                                    value={sliderY}
+                                                    onPointerDown={() => setIsDraggingSlider(true)}
+                                                    onPointerUp={() => setIsDraggingSlider(false)}
                                                     onChange={(e) => {
-                                                        setAutoRotate(false); // Pausa ao mexer manualmente
-                                                        rotateY.set(parseFloat(e.target.value));
+                                                        const val = parseFloat(e.target.value);
+                                                        setSliderY(val); // Atualiza visual local imediatamente
+                                                        setAutoRotate(false);
+                                                        rotateY.set(val); // Atualiza física
                                                     }}
                                                     className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                                 />
@@ -214,8 +230,12 @@ export default function CubeDemoPage() {
                                                 <input
                                                     type="range" min="-90" max="90"
                                                     value={sliderX}
+                                                    onPointerDown={() => setIsDraggingSlider(true)}
+                                                    onPointerUp={() => setIsDraggingSlider(false)}
                                                     onChange={(e) => {
-                                                        rotateX.set(parseFloat(e.target.value));
+                                                        const val = parseFloat(e.target.value);
+                                                        setSliderX(val);
+                                                        rotateX.set(val);
                                                     }}
                                                     className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                                 />
