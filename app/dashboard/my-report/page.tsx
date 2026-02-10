@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { API_URL } from '../../../src/config/api';
 import { useAuthStore } from '../../../src/store/auth-store';
 import Link from 'next/link';
@@ -8,9 +9,16 @@ import { Calendar, History, Sparkles, ArrowUpRight } from 'lucide-react';
 import TalkingToReport from '@/src/components/reports/TalkingToReport';
 import { AIPincWidget } from '../../../src/components/ai/AIPincWidget';
 
-import { useSearchParams } from 'next/navigation';
+function Spinner() {
+    return (
+        <div className="flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+            <p className="text-slate-400 text-sm font-bold animate-pulse">Carregando...</p>
+        </div>
+    )
+}
 
-export default function MyReportPage() {
+function MyReportContent() {
     const searchParams = useSearchParams();
     const queryReportId = searchParams.get('reportId');
 
@@ -277,11 +285,14 @@ export default function MyReportPage() {
     );
 }
 
-function Spinner() {
+export default function MyReportPage() {
     return (
-        <div className="flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-slate-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-400 text-sm font-bold animate-pulse">Carregando...</p>
-        </div>
-    )
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <Spinner />
+            </div>
+        }>
+            <MyReportContent />
+        </Suspense>
+    );
 }
