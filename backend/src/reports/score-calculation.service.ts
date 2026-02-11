@@ -187,22 +187,25 @@ export class ScoreCalculationService {
             const score = dimensionScores[dimKey];
             const fullKey = dimKey; // Chave original do Banco (PT) - Ex: CONCRETO-ABSTRATO
 
-            // MAPEAR DE VOLTA PARA INGLÊS (COMPATIBILIDADE API)
+            // MAPEAR DE VOLTA PARA INGLÊS (COM NORMALIZAÇÃO DE ACENTOS)
+            const normalizeKey = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            const normalizedFullKey = normalizeKey(fullKey);
+
             const ptToEnMap: Record<string, string> = {
                 'CONCRETO-ABSTRATO': 'OPENNESS',
-                'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
-                'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION',
-                'LÓGICO-SENTIMENTAL': 'AGREEABLENESS',
-                'EMOÇÃO-RAZÃO': 'NEUROTICISM',
-                // Variações sem acento
                 'ADAPTAVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
                 'INTROVERSAO-EXTROVERSAO': 'EXTRAVERSION',
                 'LOGICO-SENTIMENTAL': 'AGREEABLENESS',
                 'EMOCAO-RAZAO': 'NEUROTICISM',
-                'EMOCAO-RAZÃO': 'NEUROTICISM',
-                'EMOÇÃO-RAZAO': 'NEUROTICISM'
+                // Manter compatibilidade com chaves já sem acento se houver
+                'OPENNESS': 'OPENNESS',
+                'CONSCIENTIOUSNESS': 'CONSCIENTIOUSNESS',
+                'EXTRAVERSION': 'EXTRAVERSION',
+                'AGREEABLENESS': 'AGREEABLENESS',
+                'NEUROTICISM': 'NEUROTICISM'
             };
-            const englishKey = ptToEnMap[fullKey] || fullKey;
+            // Tenta mapear pela chave normalizada (sem acento)
+            const englishKey = ptToEnMap[normalizedFullKey] || ptToEnMap[fullKey] || fullKey;
 
             const classification = classifications.find(c =>
                 c.dimension === fullKey &&

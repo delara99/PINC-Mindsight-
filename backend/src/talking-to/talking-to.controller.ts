@@ -240,11 +240,11 @@ export class TalkingToController {
 
         // 2. Extrair inputs para o TalkingTo Service (O, C, E, A, N)
         const talkingToInput: TalkingToInput = {
-            O: scores['OPENNESS']?.normalizedScore || 51,
-            C: scores['CONSCIENTIOUSNESS']?.normalizedScore || 51,
-            E: scores['EXTRAVERSION']?.normalizedScore || 51,
-            A: scores['AGREEABLENESS']?.normalizedScore || 51,
-            N: scores['NEUROTICISM']?.normalizedScore || 51, // Note: TalkingToService expects Stability?
+            O: scores['OPENNESS']?.normalizedScore || 50,
+            C: scores['CONSCIENTIOUSNESS']?.normalizedScore || 50,
+            E: scores['EXTRAVERSION']?.normalizedScore || 50,
+            A: scores['AGREEABLENESS']?.normalizedScore || 50,
+            N: scores['NEUROTICISM']?.normalizedScore || 50, // Note: TalkingToService expects Stability?
             facets: {
                 EXTRAVERSION: scores['EXTRAVERSION']?.facets || [],
                 AGREEABLENESS: scores['AGREEABLENESS']?.facets || [],
