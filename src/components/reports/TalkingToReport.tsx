@@ -537,7 +537,13 @@ function mapTraitToLabel(key: string) {
         'CONSCIENTIOUSNESS': 'ESTRUTURA',
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
-        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL'
+        'NEUROTICISM': 'ESTABILIDADE EMOCIONAL',
+        // PT Support
+        'CONCRETO-ABSTRATO': 'ABERTURA',
+        'ADAPTÁVEL-ESTRUTURADO': 'ESTRUTURA',
+        'INTROVERSÃO-EXTROVERSÃO': 'EXTROVERSÃO',
+        'LÓGICO-SENTIMENTAL': 'AMABILIDADE',
+        'EMOÇÃO-RAZÃO': 'ESTABILIDADE EMOCIONAL'
     };
     return map[key] || key.toUpperCase();
 }
@@ -572,7 +578,13 @@ function getTraitColor(key: string, type: 'bg' | 'text' | 'text-dark' | 'fill' |
         'CONSCIENTIOUSNESS': { bg: 'bg-blue-400', text: 'text-blue-600', 'text-dark': 'text-blue-900', fill: 'bg-blue-500', 'light-bg': 'bg-blue-50' },
         'EXTRAVERSION': { bg: 'bg-orange-400', text: 'text-orange-600', 'text-dark': 'text-orange-900', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
         'AGREEABLENESS': { bg: 'bg-emerald-400', text: 'text-emerald-600', 'text-dark': 'text-emerald-900', fill: 'bg-emerald-500', 'light-bg': 'bg-emerald-50' },
-        'NEUROTICISM': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' }
+        'NEUROTICISM': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' },
+        // PT Support
+        'CONCRETO-ABSTRATO': { bg: 'bg-yellow-400', text: 'text-yellow-600', 'text-dark': 'text-yellow-900', fill: 'bg-yellow-500', 'light-bg': 'bg-yellow-50' },
+        'ADAPTÁVEL-ESTRUTURADO': { bg: 'bg-blue-400', text: 'text-blue-600', 'text-dark': 'text-blue-900', fill: 'bg-blue-500', 'light-bg': 'bg-blue-50' },
+        'INTROVERSÃO-EXTROVERSÃO': { bg: 'bg-orange-400', text: 'text-orange-600', 'text-dark': 'text-orange-900', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
+        'LÓGICO-SENTIMENTAL': { bg: 'bg-emerald-400', text: 'text-emerald-600', 'text-dark': 'text-emerald-900', fill: 'bg-emerald-500', 'light-bg': 'bg-emerald-50' },
+        'EMOÇÃO-RAZÃO': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' }
     };
     const def = { bg: 'bg-slate-200', text: 'text-slate-600', 'text-dark': 'text-slate-800', fill: 'bg-slate-500', 'light-bg': 'bg-slate-50' };
     return (colors[key] || def)[type];
@@ -584,7 +596,13 @@ function getTraitIcon(key: string) {
         'CONSCIENTIOUSNESS': <ShieldCheck />,
         'EXTRAVERSION': <Zap />,
         'AGREEABLENESS': <Users />,
-        'NEUROTICISM': <BrainCircuit />
+        'NEUROTICISM': <BrainCircuit />,
+        // PT Support
+        'CONCRETO-ABSTRATO': <Sparkles />,
+        'ADAPTÁVEL-ESTRUTURADO': <ShieldCheck />,
+        'INTROVERSÃO-EXTROVERSÃO': <Zap />,
+        'LÓGICO-SENTIMENTAL': <Users />,
+        'EMOÇÃO-RAZÃO': <BrainCircuit />
     };
     return icons[key] || <Target />;
 }
