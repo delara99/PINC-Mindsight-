@@ -132,7 +132,7 @@ export class TalkingToController {
 
         const assignment = await this.prisma.assessmentAssignment.findFirst({
             where: whereCondition,
-            include: { responses: { include: { question: true } }, assessment: true, config: true }
+            include: { responses: { include: { question: true } }, assessment: true, config: true, result: true }
         });
 
         if (!assignment) {
@@ -153,7 +153,7 @@ export class TalkingToController {
                 status: 'COMPLETED'
             },
             orderBy: { completedAt: 'desc' },
-            include: { responses: { include: { question: true } }, assessment: true, config: true }
+            include: { responses: { include: { question: true } }, assessment: true, config: true, result: true }
         });
 
         if (!assignment) {
@@ -175,12 +175,12 @@ export class TalkingToController {
             assignment = await this.prisma.assessmentAssignment.findFirst({
                 where: { userId: userId, status: 'COMPLETED' },
                 orderBy: { completedAt: 'desc' },
-                include: { responses: { include: { question: true } }, assessment: true, config: true, user: true }
+                include: { responses: { include: { question: true } }, assessment: true, config: true, user: true, result: true }
             });
         } else {
             assignment = await this.prisma.assessmentAssignment.findFirst({
                 where: { id: id, userId: userId, status: 'COMPLETED' },
-                include: { responses: { include: { question: true } }, assessment: true, config: true, user: true }
+                include: { responses: { include: { question: true } }, assessment: true, config: true, user: true, result: true }
             });
         }
 
@@ -209,8 +209,8 @@ export class TalkingToController {
 
     // --- NOVA LÓGICA UNIFICADA ---
     private async generateUnifiedAnalysis(assignment: any) {
-        // 1. Priorizar scores salvos no banco (Consistência com Relatório Especialista)
-        let rawScores = assignment.calculatedScores?.scores;
+        // 1. Priorizar scores salvos no banco (assignment.result?.scores) - Consistência com Especialista
+        let rawScores = assignment.result?.scores;
 
         // Se não houver scores salvos, calcular agora
         if (!rawScores) {
