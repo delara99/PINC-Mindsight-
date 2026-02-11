@@ -115,6 +115,9 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         });
     }
 
+    // ADAPT TO PINC MODEL (Filter Facets, Invert Scores)
+    scores = scores.map(s => adaptTraitToPINC(s)).filter(Boolean);
+
     // Ordenar scores para consistência visual (O-C-E-A-N)
     const orderMap: Record<string, number> = { 'OPENNESS': 1, 'CONSCIENTIOUSNESS': 2, 'EXTRAVERSION': 3, 'AGREEABLENESS': 4, 'NEUROTICISM': 5 };
     scores.sort((a, b) => (orderMap[a.key] || 99) - (orderMap[b.key] || 99));
@@ -575,6 +578,113 @@ function getTraitIcon(key: string) {
     };
     return icons[key] || <Target />;
 }
+
+// --- PINC ADAPTER LOGIC (SHARED) ---
+const PINC_ADAPTER: any = {
+    'EXTRAVERSION': {
+        label: 'EXTROVERSÃO',
+        facets: [
+            { key: 'COMUNICAÇÃO', sources: ['FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO'], invert: false },
+            { key: 'INTERAÇÃO SOCIAL', sources: ['GREGARIOUSNESS', 'GREGARIEDADE', 'SOCIAL'], invert: false },
+            { key: 'AUTORIDADE', sources: ['ASSERTIVENESS', 'ASSERTIVIDADE'], invert: false },
+            { key: 'ORIENTAÇÃO P/ AÇÃO', sources: ['ACTIVITY', 'ATIVIDADE'], invert: false }
+        ]
+    },
+    'AGREEABLENESS': {
+        label: 'AMABILIDADE',
+        invertDimension: true, // Score Average (Logic/Indep) is inverse of Amabilidade
+        facets: [
+            { key: 'LÓGICA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS'], invert: true },
+            { key: 'INDEPENDÊNCIA', sources: ['ALTRUISM', 'ALTRUÍSMO'], invert: true },
+            { key: 'COMPETITIVIDADE', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE'], invert: true }
+        ]
+    },
+    'CONSCIENTIOUSNESS': {
+        label: 'ESTRUTURA',
+        facets: [
+            { key: 'PLANEJAMENTO', sources: ['CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO'], invert: false },
+            { key: 'DISCIPLINA', sources: ['SELF-DISCIPLINE', 'AUTODISCIPLINA', 'DISCIPLINA'], invert: false },
+            { key: 'PERSISTÊNCIA', sources: ['ACHIEVEMENT', 'REALIZAÇÕES', 'PERSISTENCE'], invert: false }
+        ]
+    },
+    'NEUROTICISM': {
+        label: 'ESTABILIDADE EMOCIONAL',
+        // No invertDimension: Facets (Confidence, Control) are already Stability markers. Average IS Stability.
+        facets: [
+            { key: 'CONFIANÇA', sources: ['ANXIETY', 'ANSIEDADE'], invert: true },
+            { key: 'AUTOCONFIANÇA', sources: ['DEPRESSION', 'DEPRESSÃO'], invert: true },
+            { key: 'TEMPERAMENTO', sources: ['ANGER', 'HOSTILITY', 'HOSTILIDADE', 'RAIVA'], invert: true },
+            { key: 'CONTROLE', sources: ['IMPULSIVENESS', 'IMPULSIVIDADE', 'IMODERAÇÃO'], invert: true }
+        ]
+    },
+    'OPENNESS': {
+        label: 'ABERTURA',
+        facets: [
+            { key: 'IMAGINAÇÃO', sources: ['IMAGINATION', 'FANTASIA'], invert: false },
+            { key: 'INTELECTUALIDADE', sources: ['INTELLECT', 'IDEIAS'], invert: false },
+            { key: 'ABERTURA AO NOVO', sources: ['LIBERALISM', 'VALORES', 'ABERTURA'], invert: false }
+        ]
+    }
+};
+
+const adaptTraitToPINC = (trait: any) => {
+    const rawKey = (trait.key || trait.traitKey || trait.name || '').toUpperCase();
+
+    // Find adapter config (handle aliases)
+    let config = PINC_ADAPTER[rawKey];
+    if (!config && rawKey.includes('ESTABILIDADE')) config = PINC_ADAPTER['NEUROTICISM'];
+    if (!config && (rawKey.includes('CONSCIENTIOUSNESS') || rawKey.includes('CONSCIENCIOSIDADE') || rawKey.includes('ESTRUTURA'))) config = PINC_ADAPTER['CONSCIENTIOUSNESS'];
+
+    if (!config) return null; // Not a main PINC dimension
+
+    // Filter and Map Facets
+    const adaptedFacets: any[] = [];
+    let sumScores = 0;
+
+    config.facets.forEach((rule: any) => {
+        // Find raw facet
+        const rawFacet = trait.facets?.find((f: any) => {
+            const fName = (f.name || f.facetName || '').toUpperCase();
+            return rule.sources.some((src: string) => fName.includes(src));
+        });
+
+        // Default to 50 if missing
+        let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 50) : 50;
+
+        // Apply Inversion
+        if (rule.invert) score = 100 - score;
+
+        sumScores += score;
+        adaptedFacets.push({
+            facetName: rule.key, // Use facetName property for compatibility with TalkingToReport rendering which looks for f.name or f.facetName
+            name: rule.key,      // Also name for safety
+            normalizedScore: score,
+            score: score
+        });
+    });
+
+    // Recalculate Dimension Score (Average of PINC Facets)
+    let finalScore = adaptedFacets.length > 0 ? sumScores / adaptedFacets.length : (trait.score || 50);
+
+    // Apply Dimension Inversion (Neuroticism -> Stability)
+    if (config.invertDimension) {
+        finalScore = 100 - finalScore;
+    }
+
+    // Recalculate Level
+    let level = 'MÉDIO';
+    if (finalScore >= 65) level = 'ALTO';
+    else if (finalScore <= 35) level = 'BAIXO';
+
+    return {
+        ...trait,
+        key: rawKey, // Maintain original Key for Icon/Color mapping (e.g. NEUROTICISM)
+        name: config.label,
+        score: Math.round(finalScore),
+        facets: adaptedFacets,
+        level: level
+    };
+};
 
 // Helper Global de Tradução de Facetas
 function translateFacetGlobal(name: string): string | null {
