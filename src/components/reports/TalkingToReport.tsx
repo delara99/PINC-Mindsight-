@@ -584,44 +584,44 @@ const PINC_ADAPTER: any = {
     'EXTRAVERSION': {
         label: 'INTROVERSÃO-EXTROVERSÃO',
         facets: [
-            { key: 'ouvinte-falante', sources: ['FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO', 'COMUNICAÇÃO', 'COMUNICACAO', 'FACTORS_FRIENDLINESS', 'FACTORS_WARMTH'], invert: false },
-            { key: 'seletivo-interativo', sources: ['GREGARIOUSNESS', 'GREGARIEDADE', 'SOCIAL', 'INTERAÇÃO', 'INTERACAO', 'FACTORS_GREGARIOUSNESS'], invert: false },
-            { key: 'contido-afirmativo', sources: ['ASSERTIVENESS', 'ASSERTIVIDADE', 'AUTORIDADE', 'FACTORS_ASSERTIVENESS'], invert: false },
-            { key: 'reflexivo-ativo', sources: ['ACTIVITY', 'ATIVIDADE', 'ORIENTAÇÃO', 'ORIENTACAO', 'FACTORS_ACTIVITY'], invert: false }
+            { key: 'ouvinte-falante', sources: ['ouvinte-falante', 'OUVINTE-FALANTE', 'FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO', 'COMUNICAÇÃO', 'COMUNICACAO', 'FACTORS_FRIENDLINESS', 'FACTORS_WARMTH'], invert: false },
+            { key: 'seletivo-interativo', sources: ['seletivo-interativo', 'SELETIVO-INTERATIVO', 'GREGARIOUSNESS', 'GREGARIEDADE', 'SOCIAL', 'INTERAÇÃO', 'INTERACAO', 'FACTORS_GREGARIOUSNESS'], invert: false },
+            { key: 'contido-afirmativo', sources: ['contido-afirmativo', 'CONTIDO-AFIRMATIVO', 'ASSERTIVENESS', 'ASSERTIVIDADE', 'AUTORIDADE', 'FACTORS_ASSERTIVENESS'], invert: false },
+            { key: 'reflexivo-ativo', sources: ['reflexivo-ativo', 'REFLEXIVO-ATIVO', 'ACTIVITY', 'ATIVIDADE', 'ORIENTAÇÃO', 'ORIENTACAO', 'FACTORS_ACTIVITY'], invert: false }
         ]
     },
     'AGREEABLENESS': {
         label: 'LÓGICO-SENTIMENTAL',
         facets: [
-            { key: 'crítico-tolerante', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LOGICA', 'LÓGICA', 'CRITICO', 'CRÍTICO', 'TOLERÂNCIA', 'TOLERANCIA', 'FACTORS_STRAIGHTFORWARDNESS', 'FACTORS_MORALITY'], invert: false },
-            { key: 'independente-conectado', sources: ['ALTRUISM', 'ALTRUÍSMO', 'ALTRUISMO', 'INDEPENDÊNCIA', 'INDEPENDENCIA', 'CONEXÃO', 'CONEXAO', 'FACTORS_ALTRUISM'], invert: false },
-            { key: 'competitivo-colaborativo', sources: ['COOPERATION', 'COOPERAÇÃO', 'COOPERACAO', 'COMPLACÊNCIA', 'COMPLIANCE', 'COMPETITIVIDADE', 'COLABORAÇÃO', 'COLABORACAO', 'FACTORS_COMPLIANCE', 'FACTORS_COOPERATION'], invert: false }
+            { key: 'crítico-tolerante', sources: ['crítico-tolerante', 'CRÍTICO-TOLERANTE', 'CRITICO-TOLERANTE', 'MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LOGICA', 'LÓGICA', 'CRITICO', 'CRÍTICO', 'TOLERÂNCIA', 'TOLERANCIA', 'FACTORS_STRAIGHTFORWARDNESS', 'FACTORS_MORALITY'], invert: false },
+            { key: 'independente-conectado', sources: ['independente-conectado', 'INDEPENDENTE-CONECTADO', 'ALTRUISM', 'ALTRUÍSMO', 'ALTRUISMO', 'INDEPENDÊNCIA', 'INDEPENDENCIA', 'CONEXÃO', 'CONEXAO', 'FACTORS_ALTRUISM'], invert: false },
+            { key: 'competitivo-colaborativo', sources: ['competitivo-colaborativo', 'COMPETITIVO-COLABORATIVO', 'COOPERATION', 'COOPERAÇÃO', 'COOPERACAO', 'COMPLACÊNCIA', 'COMPLIANCE', 'COMPETITIVIDADE', 'COLABORAÇÃO', 'COLABORACAO', 'FACTORS_COMPLIANCE', 'FACTORS_COOPERATION'], invert: false }
         ]
     },
     'CONSCIENTIOUSNESS': {
         label: 'ADAPTÁVEL-ESTRUTURADO',
         facets: [
-            { key: 'aventureiro-planejado', sources: ['CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO', 'FACTORS_DELIBERATION'], invert: false },
-            { key: 'espontâneo-disciplinado', sources: ['SELF-DISCIPLINE', 'AUTODISCIPLINA', 'DISCIPLINA', 'FACTORS_SELFDISCIPLINE'], invert: false },
-            { key: 'flexível-persistente', sources: ['ACHIEVEMENT', 'REALIZAÇÕES', 'PERSISTENCE', 'PERSISTÊNCIA', 'PERSISTENCIA', 'FACTORS_ACHIEVEMENT', 'FACTORS_ACHIEVEMENTSTRIVING'], invert: false }
+            { key: 'aventureiro-planejado', sources: ['aventureiro-planejado', 'AVENTUREIRO-PLANEJADO', 'CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO', 'FACTORS_DELIBERATION'], invert: false },
+            { key: 'espontâneo-disciplinado', sources: ['espontâneo-disciplinado', 'ESPONTÂNEO-DISCIPLINADO', 'ESPONTANEO-DISCIPLINADO', 'SELF-DISCIPLINE', 'AUTODISCIPLINA', 'DISCIPLINA', 'FACTORS_SELFDISCIPLINE'], invert: false },
+            { key: 'flexível-persistente', sources: ['flexível-persistente', 'FLEXÍVEL-PERSISTENTE', 'FLEXIVEL-PERSISTENTE', 'ACHIEVEMENT', 'REALIZAÇÕES', 'PERSISTENCE', 'PERSISTÊNCIA', 'PERSISTENCIA', 'FACTORS_ACHIEVEMENT', 'FACTORS_ACHIEVEMENTSTRIVING'], invert: false }
         ]
     },
     'NEUROTICISM': {
         label: 'EMOÇÃO-RAZÃO',
         // No invertDimension: Facets (Confidence, Control) are already Stability markers. Average IS Stability.
         facets: [
-            { key: 'inquieto-despreocupado', sources: ['ANXIETY', 'ANSIEDADE', 'CONFIANÇA', 'CONFIANCA', 'FACTORS_ANXIETY'], invert: true },
-            { key: 'inseguro-autoconfiante', sources: ['DEPRESSION', 'DEPRESSÃO', 'AUTOCONFIANÇA', 'AUTOCONFIANCA', 'FACTORS_DEPRESSION'], invert: true },
-            { key: 'irritável-tranquilo', sources: ['ANGER', 'HOSTILITY', 'HOSTILIDADE', 'RAIVA', 'TEMPERAMENTO', 'FACTORS_ANGRYHOSTILITY', 'FACTORS_ANGER'], invert: true },
-            { key: 'reativo-controlado', sources: ['IMPULSIVENESS', 'IMPULSIVIDADE', 'IMODERAÇÃO', 'CONTROLE', 'FACTORS_IMPULSIVENESS', 'VULNERABILITY', 'VULNERABILIDADE', 'FACTORS_VULNERABILITY'], invert: true }
+            { key: 'inquieto-despreocupado', sources: ['inquieto-despreocupado', 'INQUIETO-DESPREOCUPADO', 'ANXIETY', 'ANSIEDADE', 'CONFIANÇA', 'CONFIANCA', 'FACTORS_ANXIETY'], invert: true },
+            { key: 'inseguro-autoconfiante', sources: ['inseguro-autoconfiante', 'INSEGURO-AUTOCONFIANTE', 'DEPRESSION', 'DEPRESSÃO', 'AUTOCONFIANÇA', 'AUTOCONFIANCA', 'FACTORS_DEPRESSION'], invert: true },
+            { key: 'irritável-tranquilo', sources: ['irritável-tranquilo', 'IRRITÁVEL-TRANQUILO', 'IRRITAVEL-TRANQUILO', 'ANGER', 'HOSTILITY', 'HOSTILIDADE', 'RAIVA', 'TEMPERAMENTO', 'FACTORS_ANGRYHOSTILITY', 'FACTORS_ANGER'], invert: true },
+            { key: 'reativo-controlado', sources: ['reativo-controlado', 'REATIVO-CONTROLADO', 'IMPULSIVENESS', 'IMPULSIVIDADE', 'IMODERAÇÃO', 'CONTROLE', 'FACTORS_IMPULSIVENESS', 'VULNERABILITY', 'VULNERABILIDADE', 'FACTORS_VULNERABILITY'], invert: true }
         ]
     },
     'OPENNESS': {
         label: 'CONCRETO-ABSTRATO',
         facets: [
-            { key: 'realista-imaginativo', sources: ['IMAGINATION', 'FANTASIA', 'IMAGINAÇÃO', 'IMAGINACAO', 'FACTORS_FANTASY', 'FACTORS_IMAGINATION'], invert: false },
-            { key: 'prático-conceitual', sources: ['INTELLECT', 'IDEIAS', 'INTELECTUALIDADE', 'FACTORS_IDEAS', 'FACTORS_INTELLECT', 'AESTHETICS', 'ESTÉTICA', 'ESTETICA', 'FACTORS_AESTHETICS'], invert: false },
-            { key: 'conservador-aberto', sources: ['LIBERALISM', 'VALORES', 'ABERTURA', 'ABERTURA AO NOVO', 'FACTORS_VALUES', 'FACTORS_LIBERALISM'], invert: false }
+            { key: 'realista-imaginativo', sources: ['realista-imaginativo', 'REALISTA-IMAGINATIVO', 'IMAGINATION', 'FANTASIA', 'IMAGINAÇÃO', 'IMAGINACAO', 'FACTORS_FANTASY', 'FACTORS_IMAGINATION'], invert: false },
+            { key: 'prático-conceitual', sources: ['prático-conceitual', 'PRÁTICO-CONCEITUAL', 'PRATICO-CONCEITUAL', 'INTELLECT', 'IDEIAS', 'INTELECTUALIDADE', 'FACTORS_IDEAS', 'FACTORS_INTELLECT', 'AESTHETICS', 'ESTÉTICA', 'ESTETICA', 'FACTORS_AESTHETICS'], invert: false },
+            { key: 'conservador-aberto', sources: ['conservador-aberto', 'CONSERVADOR-ABERTO', 'LIBERALISM', 'VALORES', 'ABERTURA', 'ABERTURA AO NOVO', 'FACTORS_VALUES', 'FACTORS_LIBERALISM'], invert: false }
         ]
     }
 };
