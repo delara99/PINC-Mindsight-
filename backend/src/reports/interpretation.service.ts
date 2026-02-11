@@ -197,10 +197,13 @@ export class InterpretationService {
             };
             const rangeEnum = levelMap[level] || 'AVERAGE';
 
+            // Mapear chave PT -> EN para buscar textos no banco
+            const traitKeyForLookup = this.mapPortugueseToEnglishKey(trait.traitKey);
+
             // Filtrar textos da config específica
             // @ts-ignore
             let relevantTexts = config.interpretativeTexts ? config.interpretativeTexts.filter((t: any) =>
-                t.traitKey === trait.traitKey && t.scoreRange === rangeEnum
+                t.traitKey === traitKeyForLookup && t.scoreRange === rangeEnum
             ) : [];
 
             console.log(`[InterpretationService] Buscando textos para ${trait.traitKey} - ${rangeEnum}`);
@@ -219,7 +222,7 @@ export class InterpretationService {
                         tenantId: tenantId,
                         interpretativeTexts: {
                             some: {
-                                traitKey: trait.traitKey,
+                                traitKey: traitKeyForLookup,
                                 scoreRange: rangeEnum
                             }
                         }
@@ -227,7 +230,7 @@ export class InterpretationService {
                     include: {
                         interpretativeTexts: {
                             where: {
-                                traitKey: trait.traitKey,
+                                traitKey: traitKeyForLookup,
                                 scoreRange: rangeEnum
                             }
                         }
@@ -244,7 +247,7 @@ export class InterpretationService {
 
                     relevantTexts = await this.prisma.bigFiveInterpretativeText.findMany({
                         where: {
-                            traitKey: trait.traitKey,
+                            traitKey: traitKeyForLookup,
                             scoreRange: rangeEnum
                         },
                         orderBy: {
@@ -259,7 +262,7 @@ export class InterpretationService {
                         // FALLBACK 3: Universal (seed/padrão)
                         console.warn(`[InterpretationService] ⚠️ NENHUM texto encontrado no banco!`);
                         console.log(`[InterpretationService] Usando fallback universal (seed)...`);
-                        relevantTexts = await this.getFallbackTexts(trait.traitKey, rangeEnum);
+                        relevantTexts = await this.getFallbackTexts(traitKeyForLookup, rangeEnum);
                         console.log(`[InterpretationService] Fallback retornou ${relevantTexts.length} textos`);
                     }
                 }
@@ -478,5 +481,20 @@ export class InterpretationService {
 
         console.log(`[FALLBACK] Encontrados ${fallbackTexts.length} textos universais`);
         return fallbackTexts;
+    }
+
+    /**
+     * Mapeia chaves em português para inglês (para buscar textos no banco)
+     */
+    private mapPortugueseToEnglishKey(key: string): string {
+        const map: Record<string, string> = {
+            'CONCRETO-ABSTRATO': 'OPENNESS',
+            'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
+            'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION',
+            'LÓGICO-SENTIMENTAL': 'AGREEABLENESS',
+            'EMOÇÃO-RAZÃO': 'NEUROTICISM'
+        };
+
+        return map[key] || key; // Se não achar mapeamento, retorna a própria chave
     }
 }
