@@ -159,6 +159,15 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         }
     };
 
+    // --- DIAGNÓSTICO DO USUÁRIO ---
+    React.useEffect(() => {
+        console.log("=== DIAGNÓSTICO TALKINGTO REPORT ===");
+        console.log("Recebidos scores do Backend:", scores);
+        console.log("Dados do Radar:", radarData);
+        console.log("Crossings:", crossings);
+        console.log("====================================");
+    }, [scores, radarData, crossings]);
+
     return (
         <div className="space-y-10 animate-in fade-in duration-700 font-sans relative">
             {/* --- HEADER PREMIUM --- */}
