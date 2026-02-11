@@ -115,8 +115,15 @@ const adaptTraitToPINC = (trait: any) => {
 
     // Find adapter config (handle aliases)
     let config = PINC_ADAPTER[rawKey];
-    if (!config && rawKey.includes('ESTABILIDADE')) config = PINC_ADAPTER['NEUROTICISM'];
-    if (!config && (rawKey.includes('CONSCIENTIOUSNESS') || rawKey.includes('CONSCIENCIOSIDADE') || rawKey.includes('ESTRUTURA'))) config = PINC_ADAPTER['CONSCIENTIOUSNESS'];
+
+    // Fallback: Detect by keyword allowing Portuguese Variations
+    if (!config) {
+        if (rawKey.includes('ESTABILIDADE') || rawKey.includes('NEUROTICISM') || rawKey.includes('EMOÇÃO') || rawKey.includes('EMOCAO') || rawKey.includes('RAZÃO') || rawKey.includes('RAZAO')) config = PINC_ADAPTER['NEUROTICISM'];
+        else if (rawKey.includes('CONSCIENTIOUSNESS') || rawKey.includes('CONSCIENCIOSIDADE') || rawKey.includes('ESTRUTURA') || rawKey.includes('ADAPTÁVEL') || rawKey.includes('ADAPTAVEL')) config = PINC_ADAPTER['CONSCIENTIOUSNESS'];
+        else if (rawKey.includes('AGREEABLENESS') || rawKey.includes('AMABILIDADE') || rawKey.includes('LÓGICO') || rawKey.includes('LOGICO') || rawKey.includes('SENTIMENTAL')) config = PINC_ADAPTER['AGREEABLENESS'];
+        else if (rawKey.includes('OPENNESS') || rawKey.includes('ABERTURA') || rawKey.includes('CONCRETO') || rawKey.includes('ABSTRATO')) config = PINC_ADAPTER['OPENNESS'];
+        else if (rawKey.includes('EXTRAVERSION') || rawKey.includes('EXTROVERSÃO') || rawKey.includes('INTROVERSÃO') || rawKey.includes('INTROVERSAO')) config = PINC_ADAPTER['EXTRAVERSION'];
+    }
 
     if (!config) return null; // Not a main PINC dimension
 

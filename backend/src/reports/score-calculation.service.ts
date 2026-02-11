@@ -183,23 +183,9 @@ export class ScoreCalculationService {
             'N': 'EMOÇÃO-RAZÃO'             // Was: Estabilidade Emocional
         };
 
-        const dimensionKeysMap: Record<string, string> = {
-            'O': 'OPENNESS',
-            'CONCRETO-ABSTRATO': 'OPENNESS',
-            'C': 'CONSCIENTIOUSNESS',
-            'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
-            'E': 'EXTRAVERSION',
-            'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION',
-            'A': 'AGREEABLENESS',
-            'LÓGICO-SENTIMENTAL': 'AGREEABLENESS',
-            'N': 'NEUROTICISM',
-            'EMOÇÃO-RAZÃO': 'NEUROTICISM'
-        };
-
         Object.keys(dimensionScores).forEach(dimKey => {
             const score = dimensionScores[dimKey];
-            // Mapeia O->OPENNESS, ou ADAPTÁVEL-ESTRUTURADO->CONSCIENTIOUSNESS
-            const fullKey = dimensionKeysMap[dimKey] || dimKey;
+            const fullKey = dimKey; // Usar chave original (Ex: CONCRETO-ABSTRATO)
 
             const classification = classifications.find(c =>
                 c.dimension === fullKey &&

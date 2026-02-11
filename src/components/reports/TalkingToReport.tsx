@@ -119,8 +119,18 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     scores = scores.map(s => adaptTraitToPINC(s)).filter(Boolean);
 
     // Ordenar scores para consistência visual (O-C-E-A-N)
-    const orderMap: Record<string, number> = { 'OPENNESS': 1, 'CONSCIENTIOUSNESS': 2, 'EXTRAVERSION': 3, 'AGREEABLENESS': 4, 'NEUROTICISM': 5 };
-    scores.sort((a, b) => (orderMap[a.key] || 99) - (orderMap[b.key] || 99));
+    const orderMap: Record<string, number> = {
+        'OPENNESS': 1, 'CONCRETO-ABSTRATO': 1, 'CONCRETO - ABSTRATO': 1,
+        'CONSCIENTIOUSNESS': 2, 'ADAPTÁVEL-ESTRUTURADO': 2, 'ADAPTAVEL-ESTRUTURADO': 2,
+        'EXTRAVERSION': 3, 'INTROVERSÃO-EXTROVERSÃO': 3, 'INTROVERSAO-EXTROVERSAO': 3,
+        'AGREEABLENESS': 4, 'LÓGICO-SENTIMENTAL': 4, 'LOGICO-SENTIMENTAL': 4,
+        'NEUROTICISM': 5, 'EMOÇÃO-RAZÃO': 5, 'EMOCAO-RAZAO': 5
+    };
+    scores.sort((a, b) => {
+        const keyA = (a.key || a.traitKey || '').toUpperCase();
+        const keyB = (b.key || b.traitKey || '').toUpperCase();
+        return (orderMap[keyA] || 99) - (orderMap[keyB] || 99);
+    });
 
     // Dados para o Radar Chart
     const radarData = scores.map((s: any) => ({
@@ -582,6 +592,7 @@ function getTraitIcon(key: string) {
 // --- PINC ADAPTER LOGIC (SHARED) ---
 const PINC_ADAPTER: any = {
     'EXTRAVERSION': {
+        traitKey: 'EXTRAVERSION',
         label: 'INTROVERSÃO-EXTROVERSÃO',
         facets: [
             { key: 'ouvinte-falante', sources: ['ouvinte-falante', 'OUVINTE-FALANTE', 'FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO', 'COMUNICAÇÃO', 'COMUNICACAO', 'FACTORS_FRIENDLINESS', 'FACTORS_WARMTH'], invert: false },
@@ -591,6 +602,7 @@ const PINC_ADAPTER: any = {
         ]
     },
     'AGREEABLENESS': {
+        traitKey: 'AGREEABLENESS',
         label: 'LÓGICO-SENTIMENTAL',
         facets: [
             { key: 'crítico-tolerante', sources: ['crítico-tolerante', 'CRÍTICO-TOLERANTE', 'CRITICO-TOLERANTE', 'MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LOGICA', 'LÓGICA', 'CRITICO', 'CRÍTICO', 'TOLERÂNCIA', 'TOLERANCIA', 'FACTORS_STRAIGHTFORWARDNESS', 'FACTORS_MORALITY'], invert: false },
@@ -599,6 +611,7 @@ const PINC_ADAPTER: any = {
         ]
     },
     'CONSCIENTIOUSNESS': {
+        traitKey: 'CONSCIENTIOUSNESS',
         label: 'ADAPTÁVEL-ESTRUTURADO',
         facets: [
             { key: 'aventureiro-planejado', sources: ['aventureiro-planejado', 'AVENTUREIRO-PLANEJADO', 'CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO', 'FACTORS_DELIBERATION'], invert: false },
@@ -607,6 +620,7 @@ const PINC_ADAPTER: any = {
         ]
     },
     'NEUROTICISM': {
+        traitKey: 'NEUROTICISM',
         label: 'EMOÇÃO-RAZÃO',
         // No invertDimension: Facets (Confidence, Control) are already Stability markers. Average IS Stability.
         facets: [
@@ -617,6 +631,7 @@ const PINC_ADAPTER: any = {
         ]
     },
     'OPENNESS': {
+        traitKey: 'OPENNESS',
         label: 'CONCRETO-ABSTRATO',
         facets: [
             { key: 'realista-imaginativo', sources: ['realista-imaginativo', 'REALISTA-IMAGINATIVO', 'IMAGINATION', 'FANTASIA', 'IMAGINAÇÃO', 'IMAGINACAO', 'FACTORS_FANTASY', 'FACTORS_IMAGINATION'], invert: false },
@@ -631,8 +646,15 @@ const adaptTraitToPINC = (trait: any) => {
 
     // Find adapter config (handle aliases)
     let config = PINC_ADAPTER[rawKey];
-    if (!config && rawKey.includes('ESTABILIDADE')) config = PINC_ADAPTER['NEUROTICISM'];
-    if (!config && (rawKey.includes('CONSCIENTIOUSNESS') || rawKey.includes('CONSCIENCIOSIDADE') || rawKey.includes('ESTRUTURA'))) config = PINC_ADAPTER['CONSCIENTIOUSNESS'];
+
+    // Fallback: Detect by keyword allowing Portuguese Variations
+    if (!config) {
+        if (rawKey.includes('ESTABILIDADE') || rawKey.includes('NEUROTICISM') || rawKey.includes('EMOÇÃO') || rawKey.includes('EMOCAO') || rawKey.includes('RAZÃO') || rawKey.includes('RAZAO')) config = PINC_ADAPTER['NEUROTICISM'];
+        else if (rawKey.includes('CONSCIENTIOUSNESS') || rawKey.includes('CONSCIENCIOSIDADE') || rawKey.includes('ESTRUTURA') || rawKey.includes('ADAPTÁVEL') || rawKey.includes('ADAPTAVEL')) config = PINC_ADAPTER['CONSCIENTIOUSNESS'];
+        else if (rawKey.includes('AGREEABLENESS') || rawKey.includes('AMABILIDADE') || rawKey.includes('LÓGICO') || rawKey.includes('LOGICO') || rawKey.includes('SENTIMENTAL')) config = PINC_ADAPTER['AGREEABLENESS'];
+        else if (rawKey.includes('OPENNESS') || rawKey.includes('ABERTURA') || rawKey.includes('CONCRETO') || rawKey.includes('ABSTRATO')) config = PINC_ADAPTER['OPENNESS'];
+        else if (rawKey.includes('EXTRAVERSION') || rawKey.includes('EXTROVERSÃO') || rawKey.includes('INTROVERSÃO') || rawKey.includes('INTROVERSAO')) config = PINC_ADAPTER['EXTRAVERSION'];
+    }
 
     if (!config) return null; // Not a main PINC dimension
 
@@ -677,7 +699,7 @@ const adaptTraitToPINC = (trait: any) => {
 
     return {
         ...trait,
-        key: rawKey, // Maintain original Key for Icon/Color mapping (e.g. NEUROTICISM)
+        key: config.traitKey || rawKey, // Use Canonical Key for Colors/Icons/Order
         name: config.label,
         score: Math.round(finalScore),
         facets: adaptedFacets,
@@ -685,12 +707,10 @@ const adaptTraitToPINC = (trait: any) => {
     };
 };
 
-// Helper Global de Tradução de Facetas
 function translateFacetGlobal(name: string): string | null {
     if (!name) return null;
     const normalized = name.toLowerCase().replace(/[^a-z_]/g, '');
 
-    // 1. Filtro de Bloqueio (Remove Traços Principais se aparecerem como facetas)
     const blocked = [
         'extraversion', 'extroversao', 'neuroticism', 'neuroticismo', 'estabilidade', 'estabilidadeemocional',
         'openness', 'abertura', 'agreeableness', 'amabilidade', 'conscientiousness', 'conscienciosidade'
