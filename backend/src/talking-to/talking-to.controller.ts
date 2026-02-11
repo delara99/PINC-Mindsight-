@@ -210,11 +210,35 @@ export class TalkingToController {
     // --- NOVA LÓGICA UNIFICADA ---
     private async generateUnifiedAnalysis(assignment: any) {
         // 1. Usar o Motor Central de Cálculo (já blindado com fallback do TalkingTo)
-        const { scores } = await this.scoreService.calculateScores(assignment.id);
+        const { scores: rawScores } = await this.scoreService.calculateScores(assignment.id);
+
+        // --- CORREÇÃO DE COMPATIBILIDADE: Mapear chaves PT -> EN ---
+        // O ScoreService agora retorna chaves nativas (CONCRETO-ABSTRATO), mas este controller
+        // e o TalkingToService esperam chaves em Inglês (OPENNESS).
+        const scores: any = {};
+        const keyMap: Record<string, string> = {
+            // Mapeamentos PINC (PT -> EN)
+            'CONCRETO-ABSTRATO': 'OPENNESS',
+            'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS', 'ADAPTAVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
+            'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION', 'INTROVERSAO-EXTROVERSAO': 'EXTRAVERSION',
+            'LÓGICO-SENTIMENTAL': 'AGREEABLENESS', 'LOGICO-SENTIMENTAL': 'AGREEABLENESS',
+            'EMOÇÃO-RAZÃO': 'NEUROTICISM', 'EMOCAO-RAZAO': 'NEUROTICISM', 'EMOÇÃO-RAZAO': 'NEUROTICISM', 'EMOCAO-RAZÃO': 'NEUROTICISM',
+
+            // Legacy / Direct
+            'OPENNESS': 'OPENNESS', 'ABERTURA': 'OPENNESS',
+            'CONSCIENTIOUSNESS': 'CONSCIENTIOUSNESS', 'CONSCIENCIOSIDADE': 'CONSCIENTIOUSNESS',
+            'EXTRAVERSION': 'EXTRAVERSION', 'EXTROVERSAO': 'EXTRAVERSION',
+            'AGREEABLENESS': 'AGREEABLENESS', 'AMABILIDADE': 'AGREEABLENESS',
+            'NEUROTICISM': 'NEUROTICISM', 'ESTABILIDADE': 'NEUROTICISM'
+        };
+
+        Object.keys(rawScores).forEach(k => {
+            const norm = k.toUpperCase();
+            const target = keyMap[norm] || k;
+            scores[target] = rawScores[k];
+        });
 
         // 2. Extrair inputs para o TalkingTo Service (O, C, E, A, N)
-        // O ScoreService retorna chaves normalizadas (EXTRAVERSION, NEUROTICISM, etc.)
-        // Precisamos mapear para O, C, E, A, N
         const talkingToInput: TalkingToInput = {
             O: scores['OPENNESS']?.normalizedScore || 50,
             C: scores['CONSCIENTIOUSNESS']?.normalizedScore || 50,
@@ -280,8 +304,8 @@ export class TalkingToController {
             analysis.talkingto_analysis.forEach((dimResult: any) => {
                 const key = dimResult.traitKey; // EXTRAVERSION, etc.
                 if (scores[key]) {
-                    // 1. Injeta Textos
                     (scores[key] as any).customTexts = {
+                        summary: dimResult.text_interpretation, // COMPATIBILIDADE FRONTEND
                         text_interpretation: dimResult.text_interpretation,
                         environment: dimResult.needs.environment,
                         risk: dimResult.needs.risk,
