@@ -66,46 +66,46 @@ const parseChatHistory = (fullText: string) => {
 // --- PINC ADAPTER LOGIC ---
 const PINC_ADAPTER: any = {
     'EXTRAVERSION': {
-        label: 'EXTROVERSÃO',
+        label: 'INTROVERSÃO-EXTROVERSÃO',
         facets: [
-            { key: 'COMUNICAÇÃO', sources: ['FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO'], invert: false },
-            { key: 'INTERAÇÃO SOCIAL', sources: ['GREGARIOUSNESS', 'GREGARIEDADE', 'SOCIAL'], invert: false },
-            { key: 'AUTORIDADE', sources: ['ASSERTIVENESS', 'ASSERTIVIDADE'], invert: false },
-            { key: 'ORIENTAÇÃO P/ AÇÃO', sources: ['ACTIVITY', 'ATIVIDADE'], invert: false }
+            { key: 'ouvinte-falante', sources: ['FRIENDLINESS', 'CORDIALIDADE', 'WARMTH', 'ACOLHIMENTO', 'COMUNICAÇÃO', 'COMUNICACAO'], invert: false },
+            { key: 'seletivo-interativo', sources: ['GREGARIOUSNESS', 'GREGARIEDADE', 'SOCIAL', 'INTERAÇÃO', 'INTERACAO'], invert: false },
+            { key: 'contido-afirmativo', sources: ['ASSERTIVENESS', 'ASSERTIVIDADE', 'AUTORIDADE'], invert: false },
+            { key: 'reflexivo-ativo', sources: ['ACTIVITY', 'ATIVIDADE', 'ORIENTAÇÃO', 'ORIENTACAO'], invert: false }
         ]
     },
     'AGREEABLENESS': {
-        label: 'AMABILIDADE',
+        label: 'LÓGICO-SENTIMENTAL',
         facets: [
-            { key: 'TOLERÂNCIA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LÓGICA'], invert: false },
-            { key: 'CONEXÃO', sources: ['ALTRUISM', 'ALTRUÍSMO', 'INDEPENDÊNCIA'], invert: false },
-            { key: 'COLABORAÇÃO', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE', 'COMPETITIVIDADE'], invert: false }
+            { key: 'crítico-tolerante', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LOGICA', 'LÓGICA', 'CRITICO', 'CRÍTICO', 'TOLERÂNCIA', 'TOLERANCIA'], invert: false },
+            { key: 'independente-conectado', sources: ['ALTRUISM', 'ALTRUÍSMO', 'ALTRUISMO', 'INDEPENDÊNCIA', 'INDEPENDENCIA', 'CONEXÃO', 'CONEXAO'], invert: false },
+            { key: 'competitivo-colaborativo', sources: ['COOPERATION', 'COOPERAÇÃO', 'COOPERACAO', 'COMPLACÊNCIA', 'COMPLIANCE', 'COMPETITIVIDADE', 'COLABORAÇÃO', 'COLABORACAO'], invert: false }
         ]
     },
     'CONSCIENTIOUSNESS': {
-        label: 'ESTRUTURA',
+        label: 'ADAPTÁVEL-ESTRUTURADO',
         facets: [
-            { key: 'PLANEJAMENTO', sources: ['CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO'], invert: false },
-            { key: 'DISCIPLINA', sources: ['SELF-DISCIPLINE', 'AUTODISCIPLINA', 'DISCIPLINA'], invert: false },
-            { key: 'PERSISTÊNCIA', sources: ['ACHIEVEMENT', 'REALIZAÇÕES', 'PERSISTENCE'], invert: false }
+            { key: 'aventureiro-planejado', sources: ['CAUTIOUSNESS', 'PONDERAÇÃO', 'PONDERACAO', 'DELIBERATION', 'PLANEJAMENTO'], invert: false },
+            { key: 'espontâneo-disciplinado', sources: ['SELF-DISCIPLINE', 'AUTODISCIPLINA', 'DISCIPLINA'], invert: false },
+            { key: 'flexível-persistente', sources: ['ACHIEVEMENT', 'REALIZAÇÕES', 'PERSISTENCE', 'PERSISTÊNCIA', 'PERSISTENCIA'], invert: false }
         ]
     },
     'NEUROTICISM': {
-        label: 'ESTABILIDADE EMOCIONAL',
+        label: 'EMOÇÃO-RAZÃO',
         // No invertDimension: Facets (Confidence, Control) are already Stability markers. Average IS Stability.
         facets: [
-            { key: 'CONFIANÇA', sources: ['ANXIETY', 'ANSIEDADE'], invert: true },
-            { key: 'AUTOCONFIANÇA', sources: ['DEPRESSION', 'DEPRESSÃO'], invert: true },
-            { key: 'TEMPERAMENTO', sources: ['ANGER', 'HOSTILITY', 'HOSTILIDADE', 'RAIVA'], invert: true },
-            { key: 'CONTROLE', sources: ['IMPULSIVENESS', 'IMPULSIVIDADE', 'IMODERAÇÃO'], invert: true }
+            { key: 'inquieto-despreocupado', sources: ['ANXIETY', 'ANSIEDADE', 'CONFIANÇA', 'CONFIANCA'], invert: true },
+            { key: 'inseguro-autoconfiante', sources: ['DEPRESSION', 'DEPRESSÃO', 'AUTOCONFIANÇA', 'AUTOCONFIANCA'], invert: true },
+            { key: 'irritável-tranquilo', sources: ['ANGER', 'HOSTILITY', 'HOSTILIDADE', 'RAIVA', 'TEMPERAMENTO'], invert: true },
+            { key: 'reativo-controlado', sources: ['IMPULSIVENESS', 'IMPULSIVIDADE', 'IMODERAÇÃO', 'CONTROLE'], invert: true }
         ]
     },
     'OPENNESS': {
-        label: 'ABERTURA',
+        label: 'CONCRETO-ABSTRATO',
         facets: [
-            { key: 'IMAGINAÇÃO', sources: ['IMAGINATION', 'FANTASIA'], invert: false },
-            { key: 'INTELECTUALIDADE', sources: ['INTELLECT', 'IDEIAS'], invert: false },
-            { key: 'ABERTURA AO NOVO', sources: ['LIBERALISM', 'VALORES', 'ABERTURA'], invert: false }
+            { key: 'realista-imaginativo', sources: ['IMAGINATION', 'FANTASIA', 'IMAGINAÇÃO', 'IMAGINACAO'], invert: false },
+            { key: 'prático-conceitual', sources: ['INTELLECT', 'IDEIAS', 'INTELECTUALIDADE'], invert: false },
+            { key: 'conservador-aberto', sources: ['LIBERALISM', 'VALORES', 'ABERTURA', 'ABERTURA AO NOVO'], invert: false }
         ]
     }
 };
