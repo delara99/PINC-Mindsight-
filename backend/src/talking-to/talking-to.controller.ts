@@ -231,7 +231,18 @@ export class TalkingToController {
         // 1. Priorizar scores salvos no banco (assignment.result?.scores) - Consistência com Especialista
         let rawScores = assignment.result?.scores;
 
-        // Se não houver scores salvos, calcular agora
+        // FALLBACK EXPLÍCITO: Se a relação falhou, buscar direto na tabela de resultados
+        if (!rawScores) {
+            const explicitResult = await this.prisma.assessmentResult.findUnique({
+                where: { assignmentId: assignment.id }
+            });
+            if (explicitResult?.scores) {
+                rawScores = explicitResult.scores;
+                console.log(`[TalkingTo] Recovered scores via explicit query for ${assignment.id}`);
+            }
+        }
+
+        // Se não houver scores salvos, calcular agora (Último recurso)
         if (!rawScores) {
             const result = await this.scoreService.calculateScores(assignment.id);
             rawScores = result.scores;
@@ -344,22 +355,22 @@ export class TalkingToController {
                         const newFacets = mapping.map(m => {
                             // Tenta encontrar match em qualquer um dos sources
                             let original: any = null;
-
+        
                             for (const src of m.sources) {
                                 original = scores[key].facets.find((f: any) =>
                                     (f.name || f.facetName || '').toLowerCase().includes(src)
                                 );
                                 if (original) break; // Achou!
                             }
-
+        
                             let rawScore = original ? ((original as any).score || (original as any).normalizedScore || 50) : 50;
-
+        
                             // Aplica Inversão se necessário
                             const finalScore = m.invert ? (100 - rawScore) : rawScore;
-
+        
                             // Classificação simples (inline para evitar erro de acesso privado)
                             const level = finalScore <= 50 ? 'BAIXO' : 'ALTO'; // Binário conforme update recente
-
+        
                             return {
                                 name: m.pinc,
                                 score: finalScore,
@@ -367,7 +378,7 @@ export class TalkingToController {
                                 level: level
                             };
                         });
-
+        
                         // SUBSTITUI as facetas antigas pelas novas
                         scores[key].facets = newFacets;
                     */
