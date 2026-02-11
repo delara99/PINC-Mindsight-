@@ -161,6 +161,25 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
 
 
+    // --- DIAGNÓSTICO FACETAS (TEMPORÁRIO) ---
+    React.useEffect(() => {
+        console.log("=== DIAGNÓSTICO FACETAS ===");
+        scores.forEach((t: any) => {
+            console.group(t.key);
+            console.log("Main Trait Score:", t.normalizedScore || t.score);
+            if (t.facets) {
+                t.facets.forEach((f: any) => {
+                    const fname = f.name || f.facetName;
+                    console.log(`Facet [${fname}]: score=${f.score}, norm=${f.normalizedScore}`);
+                });
+            } else {
+                console.log("Sem facetas.");
+            }
+            console.groupEnd();
+        });
+        console.log("===========================");
+    }, [scores]);
+
     return (
         <div className="space-y-10 animate-in fade-in duration-700 font-sans relative">
             {/* --- HEADER PREMIUM --- */}
