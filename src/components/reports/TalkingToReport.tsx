@@ -592,11 +592,10 @@ const PINC_ADAPTER: any = {
     },
     'AGREEABLENESS': {
         label: 'AMABILIDADE',
-        invertDimension: true, // Score Average (Logic/Indep) is inverse of Amabilidade
         facets: [
-            { key: 'LÓGICA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS'], invert: true },
-            { key: 'INDEPENDÊNCIA', sources: ['ALTRUISM', 'ALTRUÍSMO'], invert: true },
-            { key: 'COMPETITIVIDADE', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE'], invert: true }
+            { key: 'TOLERÂNCIA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LÓGICA'], invert: false },
+            { key: 'CONEXÃO', sources: ['ALTRUISM', 'ALTRUÍSMO', 'INDEPENDÊNCIA'], invert: false },
+            { key: 'COLABORAÇÃO', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE', 'COMPETITIVIDADE'], invert: false }
         ]
     },
     'CONSCIENTIOUSNESS': {

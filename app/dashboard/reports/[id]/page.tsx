@@ -76,11 +76,10 @@ const PINC_ADAPTER: any = {
     },
     'AGREEABLENESS': {
         label: 'AMABILIDADE',
-        invertDimension: true, // Score Average (Logic/Indep) is inverse of Amabilidade
         facets: [
-            { key: 'LÓGICA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS'], invert: true },
-            { key: 'INDEPENDÊNCIA', sources: ['ALTRUISM', 'ALTRUÍSMO'], invert: true },
-            { key: 'COMPETITIVIDADE', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE'], invert: true }
+            { key: 'TOLERÂNCIA', sources: ['MORALITY', 'FRANQUEZA', 'STRAIGHTFORWARDNESS', 'LÓGICA'], invert: false },
+            { key: 'CONEXÃO', sources: ['ALTRUISM', 'ALTRUÍSMO', 'INDEPENDÊNCIA'], invert: false },
+            { key: 'COLABORAÇÃO', sources: ['COOPERATION', 'COMPLACÊNCIA', 'COMPLIANCE', 'COMPETITIVIDADE'], invert: false }
         ]
     },
     'CONSCIENTIOUSNESS': {
@@ -316,9 +315,9 @@ export default function AssessmentDetailsPage() {
         'ASSERTIVENESS': 'AUTORIDADE', 'ASSERTIVIDADE': 'AUTORIDADE',
         'ACTIVITY LEVEL': 'ORIENTAÇÃO P/ AÇÃO', 'ATIVIDADE': 'ORIENTAÇÃO P/ AÇÃO',
 
-        'MORALITY': 'LÓGICA', 'FRANQUEZA': 'LÓGICA',
-        'ALTRUISM': 'INDEPENDÊNCIA', 'ALTRUÍSMO': 'INDEPENDÊNCIA',
-        'COOPERATION': 'COMPETITIVIDADE', 'COMPLACÊNCIA': 'COMPETITIVIDADE',
+        'MORALITY': 'TOLERÂNCIA', 'FRANQUEZA': 'TOLERÂNCIA',
+        'ALTRUISM': 'CONEXÃO', 'ALTRUÍSMO': 'CONEXÃO',
+        'COOPERATION': 'COLABORAÇÃO', 'COMPLACÊNCIA': 'COLABORAÇÃO',
 
         'CAUTIOUSNESS': 'PLANEJAMENTO', 'PONDERAÇÃO': 'PLANEJAMENTO', 'DELIBERATION': 'PLANEJAMENTO',
         'SELF-DISCIPLINE': 'DISCIPLINA', 'AUTODISCIPLINA': 'DISCIPLINA',
