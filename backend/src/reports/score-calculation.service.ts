@@ -185,7 +185,24 @@ export class ScoreCalculationService {
 
         Object.keys(dimensionScores).forEach(dimKey => {
             const score = dimensionScores[dimKey];
-            const fullKey = dimKey; // Usar chave original (Ex: CONCRETO-ABSTRATO)
+            const fullKey = dimKey; // Chave original do Banco (PT) - Ex: CONCRETO-ABSTRATO
+
+            // MAPEAR DE VOLTA PARA INGLÊS (COMPATIBILIDADE API)
+            const ptToEnMap: Record<string, string> = {
+                'CONCRETO-ABSTRATO': 'OPENNESS',
+                'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
+                'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION',
+                'LÓGICO-SENTIMENTAL': 'AGREEABLENESS',
+                'EMOÇÃO-RAZÃO': 'NEUROTICISM',
+                // Variações sem acento
+                'ADAPTAVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
+                'INTROVERSAO-EXTROVERSAO': 'EXTRAVERSION',
+                'LOGICO-SENTIMENTAL': 'AGREEABLENESS',
+                'EMOCAO-RAZAO': 'NEUROTICISM',
+                'EMOCAO-RAZÃO': 'NEUROTICISM',
+                'EMOÇÃO-RAZAO': 'NEUROTICISM'
+            };
+            const englishKey = ptToEnMap[fullKey] || fullKey;
 
             const classification = classifications.find(c =>
                 c.dimension === fullKey &&
@@ -271,9 +288,9 @@ export class ScoreCalculationService {
                 rawScore: Math.round(entry.rawSum / entry.count)
             }));
 
-            finalScores[fullKey] = {
-                traitKey: fullKey,
-                traitName: dimensionNames[dimKey] || dimKey,
+            finalScores[englishKey] = {
+                traitKey: englishKey,
+                traitName: fullKey, // Nome em Português para exibição
                 score: score,
                 normalizedScore: score,
                 level: level,
