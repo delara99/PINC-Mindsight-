@@ -337,6 +337,7 @@ export class TalkingToController {
                         needs: dimResult.needs.primary
                     };
 
+                    /*
                     // 2. Transforma Facetas (IPIP -> PINC) com Lógica de Sinônimos
                     const mapping = pincMapping[key];
                     if (mapping && scores[key].facets) {
@@ -369,7 +370,7 @@ export class TalkingToController {
 
                         // SUBSTITUI as facetas antigas pelas novas
                         scores[key].facets = newFacets;
-                    }
+                    */
                 }
             });
         }
