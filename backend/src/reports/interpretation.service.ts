@@ -487,14 +487,24 @@ export class InterpretationService {
      * Mapeia chaves em português para inglês (para buscar textos no banco)
      */
     private mapPortugueseToEnglishKey(key: string): string {
+        const normalizedKey = key.toUpperCase();
         const map: Record<string, string> = {
+            // Com acentos
             'CONCRETO-ABSTRATO': 'OPENNESS',
             'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
             'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION',
             'LÓGICO-SENTIMENTAL': 'AGREEABLENESS',
-            'EMOÇÃO-RAZÃO': 'NEUROTICISM'
+            'EMOÇÃO-RAZÃO': 'NEUROTICISM',
+
+            // Sem acentos / Variações possíveis
+            'ADAPTAVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
+            'INTROVERSAO-EXTROVERSAO': 'EXTRAVERSION',
+            'LOGICO-SENTIMENTAL': 'AGREEABLENESS',
+            'EMOCAO-RAZAO': 'NEUROTICISM',
+            'EMOCAO-RAZÃO': 'NEUROTICISM',
+            'EMOÇÃO-RAZAO': 'NEUROTICISM'
         };
 
-        return map[key] || key; // Se não achar mapeamento, retorna a própria chave
+        return map[normalizedKey] || key; // Se não achar mapeamento, retorna a própria chave
     }
 }
