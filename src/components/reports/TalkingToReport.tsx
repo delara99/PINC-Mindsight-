@@ -404,7 +404,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
                                                 return uniqueFacets.map((facet: any, idx: number) => {
                                                     const fName = facet.name || facet.facetName;
-                                                    const fScore = facet.score || facet.normalizedScore || 0;
+                                                    const fScore = facet.normalizedScore || facet.score || 0;
                                                     const fillColor = getTraitColor(trait.key, 'fill');
 
                                                     return (
