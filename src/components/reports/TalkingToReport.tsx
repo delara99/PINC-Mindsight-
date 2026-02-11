@@ -135,7 +135,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
     // Dados para o Radar Chart
     const radarData = scores.map((s: any) => ({
         trait: mapTraitToLabel(s.key),
-        A: s.score,
+        A: s.normalizedScore || s.score,
         fullMark: 100,
     }));
 
@@ -159,14 +159,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
         }
     };
 
-    // --- DIAGNÓSTICO DO USUÁRIO ---
-    React.useEffect(() => {
-        console.log("=== DIAGNÓSTICO TALKINGTO REPORT ===");
-        console.log("Recebidos scores do Backend:", scores);
-        console.log("Dados do Radar:", radarData);
-        console.log("Crossings:", crossings);
-        console.log("====================================");
-    }, [scores, radarData, crossings]);
+
 
     return (
         <div className="space-y-10 animate-in fade-in duration-700 font-sans relative">
@@ -282,13 +275,13 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                             </span>
                                         </div>
                                     </div>
-                                    <span className="text-3xl font-black text-slate-900 opacity-20 group-hover:opacity-100 transition-opacity">{trait.score}</span>
+                                    <span className="text-3xl font-black text-slate-900 opacity-20 group-hover:opacity-100 transition-opacity">{trait.normalizedScore || trait.score}</span>
                                 </div>
 
                                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-4">
                                     <div
                                         className={`h-full rounded-full transition-all duration-1000 ${getTraitColor(trait.key, 'fill')}`}
-                                        style={{ width: `${trait.score}%` }}
+                                        style={{ width: `${trait.normalizedScore || trait.score}%` }}
                                     ></div>
                                 </div>
 
@@ -332,7 +325,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
 
                                 <h3 className={`text-2xl font-black mb-2 text-slate-900 leading-tight`}>{trait.name}</h3>
 
-                                <div className="text-8xl font-black text-slate-900 tracking-tighter mb-4 scale-110 group-hover:scale-125 transition-transform duration-500 ease-out">{trait.score}</div>
+                                <div className="text-8xl font-black text-slate-900 tracking-tighter mb-4 scale-110 group-hover:scale-125 transition-transform duration-500 ease-out">{trait.normalizedScore || trait.score}</div>
 
                                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold bg-white/80 backdrop-blur-sm shadow-sm border border-black/5 text-slate-700 uppercase tracking-wider`}>
                                     {getLevelLabel(trait.level)}
@@ -472,7 +465,7 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                                             <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">{selectedTrait.name}</h3>
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/60 border border-black/5 uppercase tracking-wide text-slate-700`}>
-                                                    Score: {selectedTrait.score}
+                                                    Score: {selectedTrait.normalizedScore || selectedTrait.score}
                                                 </span>
                                                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${getLevelColor(selectedTrait.level)} uppercase tracking-wide`}>
                                                     {getLevelLabel(selectedTrait.level)}
