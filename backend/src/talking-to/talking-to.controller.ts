@@ -209,8 +209,14 @@ export class TalkingToController {
 
     // --- NOVA LÓGICA UNIFICADA ---
     private async generateUnifiedAnalysis(assignment: any) {
-        // 1. Usar o Motor Central de Cálculo (já blindado com fallback do TalkingTo)
-        const { scores: rawScores } = await this.scoreService.calculateScores(assignment.id);
+        // 1. Priorizar scores salvos no banco (Consistência com Relatório Especialista)
+        let rawScores = assignment.calculatedScores?.scores;
+
+        // Se não houver scores salvos, calcular agora
+        if (!rawScores) {
+            const result = await this.scoreService.calculateScores(assignment.id);
+            rawScores = result.scores;
+        }
 
         // --- CORREÇÃO DE COMPATIBILIDADE: Mapear chaves PT -> EN ---
         // O ScoreService agora retorna chaves nativas (CONCRETO-ABSTRATO), mas este controller
