@@ -187,25 +187,17 @@ export class ScoreCalculationService {
             const score = dimensionScores[dimKey];
             const fullKey = dimKey; // Chave original do Banco (PT) - Ex: CONCRETO-ABSTRATO
 
-            // MAPEAR DE VOLTA PARA INGLÊS (COM NORMALIZAÇÃO DE ACENTOS)
-            const normalizeKey = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-            const normalizedFullKey = normalizeKey(fullKey);
+            // MAPEAR DE VOLTA PARA INGLÊS (FUZZY MATCHING / PALAVRA-CHAVE)
+            // Ignora acentos, hifens e case. Foca na raiz da palavra.
+            const k = fullKey.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            let englishKey = fullKey; // Fallback
 
-            const ptToEnMap: Record<string, string> = {
-                'CONCRETO-ABSTRATO': 'OPENNESS',
-                'ADAPTAVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
-                'INTROVERSAO-EXTROVERSAO': 'EXTRAVERSION',
-                'LOGICO-SENTIMENTAL': 'AGREEABLENESS',
-                'EMOCAO-RAZAO': 'NEUROTICISM',
-                // Manter compatibilidade com chaves já sem acento se houver
-                'OPENNESS': 'OPENNESS',
-                'CONSCIENTIOUSNESS': 'CONSCIENTIOUSNESS',
-                'EXTRAVERSION': 'EXTRAVERSION',
-                'AGREEABLENESS': 'AGREEABLENESS',
-                'NEUROTICISM': 'NEUROTICISM'
-            };
-            // Tenta mapear pela chave normalizada (sem acento)
-            const englishKey = ptToEnMap[normalizedFullKey] || ptToEnMap[fullKey] || fullKey;
+            // Lógica de Detecção Robusta
+            if (k.includes('CONCRETO') || k.includes('ABSTRATO') || k.includes('OPENNESS')) englishKey = 'OPENNESS';
+            else if (k.includes('ADAPTAVEL') || k.includes('ESTRUTURADO') || k.includes('CONSCIENTIOUSNESS')) englishKey = 'CONSCIENTIOUSNESS';
+            else if (k.includes('INTROVERSAO') || k.includes('EXTROVERSAO') || k.includes('EXTRAVERSION')) englishKey = 'EXTRAVERSION';
+            else if (k.includes('LOGICO') || k.includes('SENTIMENTAL') || k.includes('AGREEABLENESS')) englishKey = 'AGREEABLENESS';
+            else if (k.includes('EMOCAO') || k.includes('RAZAO') || k.includes('NEUROTICISM') || k.includes('ESTABILIDADE')) englishKey = 'NEUROTICISM';
 
             const classification = classifications.find(c =>
                 c.dimension === fullKey &&
@@ -263,7 +255,7 @@ export class ScoreCalculationService {
                 .filter(fk => facetScores[fk].dimension === dimKey)
                 .forEach(fk => {
                     const rawNameComp = fk.split('_')[1] || fk; // Ex: O_Fantasia -> Fantasia
-                    const nameKey = rawNameComp.toLowerCase().replace(/[^a-z]/g, '');
+                    const nameKey = rawNameComp.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, '');
                     const translatedName = translationMap[nameKey] || rawNameComp; // Fallback para nome original
 
                     if (!facetMap.has(translatedName)) {
