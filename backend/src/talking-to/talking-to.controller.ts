@@ -207,6 +207,25 @@ export class TalkingToController {
         res.end(buffer);
     }
 
+    // --- DEBUG ROUTE (TEMPORARY) ---
+    @Get('debug/:id')
+    async debugAssignment(@Param('id') id: string) {
+        const assignment = await this.prisma.assessmentAssignment.findUnique({
+            where: { id },
+            include: { user: true, result: true }
+        });
+
+        return {
+            message: 'DEBUG INFO',
+            assignment_id: assignment?.id,
+            user_email: assignment?.user?.email,
+            status: assignment?.status,
+            has_result_relation: !!assignment?.result,
+            raw_result_scores: assignment?.result?.scores,
+            result_full_dump: assignment?.result
+        };
+    }
+
     // --- NOVA LÓGICA UNIFICADA ---
     private async generateUnifiedAnalysis(assignment: any) {
         // 1. Priorizar scores salvos no banco (assignment.result?.scores) - Consistência com Especialista
