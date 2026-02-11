@@ -185,15 +185,20 @@ export class ScoreCalculationService {
 
         const dimensionKeysMap: Record<string, string> = {
             'O': 'OPENNESS',
+            'CONCRETO-ABSTRATO': 'OPENNESS',
             'C': 'CONSCIENTIOUSNESS',
+            'ADAPTÁVEL-ESTRUTURADO': 'CONSCIENTIOUSNESS',
             'E': 'EXTRAVERSION',
+            'INTROVERSÃO-EXTROVERSÃO': 'EXTRAVERSION',
             'A': 'AGREEABLENESS',
-            'N': 'NEUROTICISM'
+            'LÓGICO-SENTIMENTAL': 'AGREEABLENESS',
+            'N': 'NEUROTICISM',
+            'EMOÇÃO-RAZÃO': 'NEUROTICISM'
         };
 
         Object.keys(dimensionScores).forEach(dimKey => {
             const score = dimensionScores[dimKey];
-            // Mapeia O->OPENNESS, etc.
+            // Mapeia O->OPENNESS, ou ADAPTÁVEL-ESTRUTURADO->CONSCIENTIOUSNESS
             const fullKey = dimensionKeysMap[dimKey] || dimKey;
 
             const classification = classifications.find(c =>
