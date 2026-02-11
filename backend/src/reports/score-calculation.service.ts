@@ -176,11 +176,11 @@ export class ScoreCalculationService {
         const finalScores: Record<string, ScoreResult> = {};
 
         const dimensionNames: Record<string, string> = {
-            'O': 'Abertura à Experiência',
-            'C': 'Conscienciosidade',
-            'E': 'Extroversão',
-            'A': 'Amabilidade',
-            'N': 'Estabilidade Emocional'
+            'O': 'CONCRETO-ABSTRATO',       // Was: Abertura à Experiência
+            'C': 'ADAPTÁVEL-ESTRUTURADO',   // Was: Conscienciosidade
+            'E': 'INTROVERSÃO-EXTROVERSÃO', // Was: Extroversão
+            'A': 'LÓGICO-SENTIMENTAL',      // Was: Amabilidade
+            'N': 'EMOÇÃO-RAZÃO'             // Was: Estabilidade Emocional
         };
 
         const dimensionKeysMap: Record<string, string> = {
@@ -208,46 +208,44 @@ export class ScoreCalculationService {
             // Recuperar e Limpar Facetas desta dimensão (Deduplicação + Tradução Backend)
             const facetMap = new Map<string, { name: string, scoreSum: number, count: number, rawSum: number }>();
 
+            // Mapeamento DEFINITIVO para Planilha PINC (IPIP Keys -> Planilha Keys)
             const translationMap: Record<string, string> = {
-                // Neuroticismo
-                'anxiety': 'Ansiedade', 'ansiedade': 'Ansiedade', 'factors_anxiety': 'Ansiedade',
-                'angryhostility': 'Hostilidade', 'hostilidade': 'Hostilidade', 'factors_angryhostility': 'Hostilidade',
-                'depression': 'Depressão', 'depressao': 'Depressão', 'factors_depression': 'Depressão',
-                'selfconsciousness': 'Autoconsciência', 'autoconsciencia': 'Autoconsciência', 'factors_selfconsciousness': 'Autoconsciência',
-                'impulsiveness': 'Impulsividade', 'impulsividade': 'Impulsividade', 'factors_impulsiveness': 'Impulsividade',
-                'vulnerability': 'Vulnerabilidade', 'factors_vulnerability': 'Vulnerabilidade',
+                // EMOÇÃO-RAZÃO (N)
+                'anxiety': 'inquieto-despreocupado', 'ansiedade': 'inquieto-despreocupado', 'factors_anxiety': 'inquieto-despreocupado',
+                'confidence': 'inquieto-despreocupado', 'confianca': 'inquieto-despreocupado',
+                'depression': 'inseguro-autoconfiante', 'depressao': 'inseguro-autoconfiante', 'factors_depression': 'inseguro-autoconfiante',
+                'selfconsciousness': 'inseguro-autoconfiante', // Aproximação se usado
+                'anger': 'irritável-tranquilo', 'raiva': 'irritável-tranquilo', 'hostility': 'irritável-tranquilo', 'hostilidade': 'irritável-tranquilo', 'factors_angryhostility': 'irritável-tranquilo',
+                'impulsiveness': 'reativo-controlado', 'impulsividade': 'reativo-controlado', 'factors_impulsiveness': 'reativo-controlado',
+                'vulnerability': 'reativo-controlado', 'vulnerabilidade': 'reativo-controlado', 'factors_vulnerability': 'reativo-controlado',
+                'moderation': 'reativo-controlado',
 
-                // Extroversão
-                'warmth': 'Acolhimento', 'acolhimento': 'Acolhimento', 'factors_warmth': 'Acolhimento',
-                'gregariousness': 'Gregarismo', 'gregarismo': 'Gregarismo', 'factors_gregariousness': 'Gregarismo',
-                'assertiveness': 'Assertividade', 'factors_assertiveness': 'Assertividade',
-                'activity': 'Nível de Atividade', 'atividade': 'Nível de Atividade', 'factors_activity': 'Nível de Atividade',
-                'excitementseeking': 'Busca por Emoção', 'busca de excitacao': 'Busca por Emoção', 'factors_excitementseeking': 'Busca por Emoção',
-                'positiveemotions': 'Emoções Positivas', 'emocoes positivas': 'Emoções Positivas', 'factors_positiveemotions': 'Emoções Positivas',
+                // INTROVERSÃO-EXTROVERSÃO (E)
+                'warmth': 'ouvinte-falante', 'acolhimento': 'ouvinte-falante', 'factors_warmth': 'ouvinte-falante', 'friendliness': 'ouvinte-falante',
+                'gregariousness': 'seletivo-interativo', 'gregarismo': 'seletivo-interativo', 'factors_gregariousness': 'seletivo-interativo', 'social': 'seletivo-interativo',
+                'assertiveness': 'contido-afirmativo', 'assertividade': 'contido-afirmativo', 'factors_assertiveness': 'contido-afirmativo', 'autoridade': 'contido-afirmativo',
+                'activity': 'reflexivo-ativo', 'atividade': 'reflexivo-ativo', 'factors_activity': 'reflexivo-ativo', 'niveldeatividade': 'reflexivo-ativo', 'orientacao': 'reflexivo-ativo',
 
-                // Abertura
-                'fantasy': 'Fantasia', 'fantasia': 'Fantasia', 'factors_fantasy': 'Fantasia',
-                'aesthetics': 'Estética', 'estetica': 'Estética', 'factors_aesthetics': 'Estética',
-                'feelings': 'Sentimentos', 'sentimentos': 'Sentimentos', 'factors_feelings': 'Sentimentos',
-                'actions': 'Ações', 'acoes': 'Ações', 'factors_actions': 'Ações',
-                'ideas': 'Ideias', 'factors_ideas': 'Ideias',
-                'values': 'Valores', 'factors_values': 'Valores',
+                // CONCRETO-ABSTRATO (O)
+                'fantasy': 'realista-imaginativo', 'fantasia': 'realista-imaginativo', 'factors_fantasy': 'realista-imaginativo', 'imagination': 'realista-imaginativo',
+                'aesthetics': 'prático-conceitual', 'estetica': 'prático-conceitual', 'factors_aesthetics': 'prático-conceitual', // Se usado como Proxy
+                'intellect': 'prático-conceitual', 'intelecto': 'prático-conceitual', 'ideas': 'prático-conceitual', 'ideias': 'prático-conceitual', 'factors_ideas': 'prático-conceitual',
+                'liberalism': 'conservador-aberto', 'liberalismo': 'conservador-aberto', 'values': 'conservador-aberto', 'valores': 'conservador-aberto', 'factors_values': 'conservador-aberto', 'abertura': 'conservador-aberto',
+                'feelings': 'sentimentos', 'actions': 'ações', // Sobras IPIP
 
-                // Amabilidade
-                'trust': 'Confiança', 'confianca': 'Confiança', 'factors_trust': 'Confiança',
-                'straightforwardness': 'Franqueza', 'franqueza': 'Franqueza', 'factors_straightforwardness': 'Franqueza',
-                'altruism': 'Altruísmo', 'altruismo': 'Altruísmo', 'factors_altruism': 'Altruísmo',
-                'compliance': 'Complacência', 'complacencia': 'Complacência', 'factors_compliance': 'Complacência',
-                'modesty': 'Modéstia', 'modestia': 'Modéstia', 'factors_modesty': 'Modéstia',
-                'tendermindedness': 'Sensibilidade', 'sensibilidade': 'Sensibilidade', 'factors_tendermindedness': 'Sensibilidade',
+                // LÓGICO-SENTIMENTAL (A)
+                'trust': 'confiança', // Sobra IPIP
+                'straightforwardness': 'crítico-tolerante', 'franqueza': 'crítico-tolerante', 'factors_straightforwardness': 'crítico-tolerante', 'morality': 'crítico-tolerante', 'moralidade': 'crítico-tolerante',
+                'altruism': 'independente-conectado', 'altruismo': 'independente-conectado', 'factors_altruism': 'independente-conectado',
+                'compliance': 'competitivo-colaborativo', 'complacencia': 'competitivo-colaborativo', 'factors_compliance': 'competitivo-colaborativo', 'cooperation': 'competitivo-colaborativo', 'cooperacao': 'competitivo-colaborativo', 'factors_cooperation': 'competitivo-colaborativo',
+                'modesty': 'modéstia', 'tendermindedness': 'sensibilidade',
 
-                // Conscienciosidade
-                'competence': 'Competência', 'competencia': 'Competência', 'factors_competence': 'Competência',
-                'order': 'Ordem / Organização', 'ordem': 'Ordem / Organização', 'factors_order': 'Ordem / Organização',
-                'dutifulness': 'Senso de Dever', 'dever': 'Senso de Dever', 'factors_dutifulness': 'Senso de Dever',
-                'achievementstriving': 'Esforço por Realização', 'realizacao': 'Esforço por Realização', 'factors_achievementstriving': 'Esforço por Realização',
-                'selfdiscipline': 'Autodisciplina', 'factors_selfdiscipline': 'Autodisciplina',
-                'deliberation': 'Deliberação', 'factors_deliberation': 'Deliberação'
+                // ADAPTÁVEL-ESTRUTURADO (C)
+                'competence': 'competência', // Sobra?
+                'deliberation': 'aventureiro-planejado', 'deliberacao': 'aventureiro-planejado', 'factors_deliberation': 'aventureiro-planejado', 'cautiousness': 'aventureiro-planejado', 'ponderacao': 'aventureiro-planejado',
+                'selfdiscipline': 'espontâneo-disciplinado', 'autodisciplina': 'espontâneo-disciplinado', 'factors_selfdiscipline': 'espontâneo-disciplinado', 'disciplina': 'espontâneo-disciplinado',
+                'achievementstriving': 'flexível-persistente', 'realizacao': 'flexível-persistente', 'factors_achievementstriving': 'flexível-persistente', 'persistence': 'flexível-persistente', 'persistencia': 'flexível-persistente', 'achievement': 'flexível-persistente',
+                'order': 'ordem', 'dutifulness': 'dever'
             };
 
             Object.keys(facetScores)
