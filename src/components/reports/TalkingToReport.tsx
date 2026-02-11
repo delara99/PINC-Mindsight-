@@ -540,17 +540,15 @@ function mapTraitToLabel(key: string) {
         'EXTRAVERSION': 'EXTROVERSÃO',
         'AGREEABLENESS': 'AMABILIDADE',
         'NEUROTICISM': 'ESTABILIDADE EMOCIONAL',
-        // PT Support
+        // PT Support (Accented & Unaccented mixed safely)
         'CONCRETO-ABSTRATO': 'ABERTURA',
         'ADAPTÁVEL-ESTRUTURADO': 'ESTRUTURA',
-        'INTROVERSÃO-EXTROVERSÃO': 'EXTROVERSÃO',
-        'LÓGICO-SENTIMENTAL': 'AMABILIDADE',
-        'EMOÇÃO-RAZÃO': 'ESTABILIDADE EMOCIONAL',
-        // Unaccented Support
-        'CONCRETO-ABSTRATO': 'ABERTURA',
         'ADAPTAVEL-ESTRUTURADO': 'ESTRUTURA',
+        'INTROVERSÃO-EXTROVERSÃO': 'EXTROVERSÃO',
         'INTROVERSAO-EXTROVERSAO': 'EXTROVERSÃO',
+        'LÓGICO-SENTIMENTAL': 'AMABILIDADE',
         'LOGICO-SENTIMENTAL': 'AMABILIDADE',
+        'EMOÇÃO-RAZÃO': 'ESTABILIDADE EMOCIONAL',
         'EMOCAO-RAZAO': 'ESTABILIDADE EMOCIONAL'
     };
     return map[key] || key.toUpperCase();
@@ -590,13 +588,12 @@ function getTraitColor(key: string, type: 'bg' | 'text' | 'text-dark' | 'fill' |
         // PT Support
         'CONCRETO-ABSTRATO': { bg: 'bg-yellow-400', text: 'text-yellow-600', 'text-dark': 'text-yellow-900', fill: 'bg-yellow-500', 'light-bg': 'bg-yellow-50' },
         'ADAPTÁVEL-ESTRUTURADO': { bg: 'bg-blue-400', text: 'text-blue-600', 'text-dark': 'text-blue-900', fill: 'bg-blue-500', 'light-bg': 'bg-blue-50' },
-        'INTROVERSÃO-EXTROVERSÃO': { bg: 'bg-orange-400', text: 'text-orange-600', 'text-dark': 'text-orange-900', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
-        'LÓGICO-SENTIMENTAL': { bg: 'bg-emerald-400', text: 'text-emerald-600', 'text-dark': 'text-emerald-900', fill: 'bg-emerald-500', 'light-bg': 'bg-emerald-50' },
-        'EMOÇÃO-RAZÃO': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' },
-        // Unaccented Support
         'ADAPTAVEL-ESTRUTURADO': { bg: 'bg-blue-400', text: 'text-blue-600', 'text-dark': 'text-blue-900', fill: 'bg-blue-500', 'light-bg': 'bg-blue-50' },
+        'INTROVERSÃO-EXTROVERSÃO': { bg: 'bg-orange-400', text: 'text-orange-600', 'text-dark': 'text-orange-900', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
         'INTROVERSAO-EXTROVERSAO': { bg: 'bg-orange-400', text: 'text-orange-600', 'text-dark': 'text-orange-900', fill: 'bg-orange-500', 'light-bg': 'bg-orange-50' },
+        'LÓGICO-SENTIMENTAL': { bg: 'bg-emerald-400', text: 'text-emerald-600', 'text-dark': 'text-emerald-900', fill: 'bg-emerald-500', 'light-bg': 'bg-emerald-50' },
         'LOGICO-SENTIMENTAL': { bg: 'bg-emerald-400', text: 'text-emerald-600', 'text-dark': 'text-emerald-900', fill: 'bg-emerald-500', 'light-bg': 'bg-emerald-50' },
+        'EMOÇÃO-RAZÃO': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' },
         'EMOCAO-RAZAO': { bg: 'bg-purple-400', text: 'text-purple-600', 'text-dark': 'text-purple-900', fill: 'bg-purple-500', 'light-bg': 'bg-purple-50' }
     };
     const def = { bg: 'bg-slate-200', text: 'text-slate-600', 'text-dark': 'text-slate-800', fill: 'bg-slate-500', 'light-bg': 'bg-slate-50' };
@@ -613,13 +610,12 @@ function getTraitIcon(key: string) {
         // PT Support
         'CONCRETO-ABSTRATO': <Sparkles />,
         'ADAPTÁVEL-ESTRUTURADO': <ShieldCheck />,
-        'INTROVERSÃO-EXTROVERSÃO': <Zap />,
-        'LÓGICO-SENTIMENTAL': <Users />,
-        'EMOÇÃO-RAZÃO': <BrainCircuit />,
-        // Unaccented Support
         'ADAPTAVEL-ESTRUTURADO': <ShieldCheck />,
+        'INTROVERSÃO-EXTROVERSÃO': <Zap />,
         'INTROVERSAO-EXTROVERSAO': <Zap />,
+        'LÓGICO-SENTIMENTAL': <Users />,
         'LOGICO-SENTIMENTAL': <Users />,
+        'EMOÇÃO-RAZÃO': <BrainCircuit />,
         'EMOCAO-RAZAO': <BrainCircuit />
     };
     return icons[key] || <Target />;
