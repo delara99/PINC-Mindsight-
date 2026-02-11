@@ -736,7 +736,10 @@ const adaptTraitToPINC = (trait: any) => {
     });
 
     // Recalculate Dimension Score (Average of PINC Facets)
-    let finalScore = adaptedFacets.length > 0 ? sumScores / adaptedFacets.length : (trait.score || 50);
+    // Prioritize original calculated dimension score if available (consistency with specialist report source)
+    let finalScore = (typeof trait.normalizedScore === 'number') ? trait.normalizedScore :
+        ((typeof trait.score === 'number') ? trait.score :
+            (adaptedFacets.length > 0 ? sumScores / adaptedFacets.length : 50));
 
     // Apply Dimension Inversion (Neuroticism -> Stability)
     if (config.invertDimension) {
