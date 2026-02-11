@@ -720,8 +720,8 @@ const adaptTraitToPINC = (trait: any) => {
             return rule.sources.some((src: string) => fName.includes(src));
         });
 
-        // Default to 50 if missing
-        let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 50) : 50;
+        // Default to 0 if missing (to distinguish from real 50)
+        let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 0) : 0;
 
         // Apply Inversion
         if (rule.invert) score = 100 - score;
