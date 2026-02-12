@@ -247,11 +247,11 @@ export class TalkingToController {
 
     // --- NOVA LÓGICA UNIFICADA ---
     private async generateUnifiedAnalysis(assignment: any) {
-        // 1. FORÇAR CÁLCULO DINÂMICO (Recalcular sempre) para alinhar com Especialista (que é Dinâmico)
-        // Isso descarta o histórico antigo (55) mas garante que ambos relatórios mostrem o mesmo dado atualizado (51)
-        let rawScores = null;
+        // 1. Priorizar scores salvos no banco (assignment.result?.scores) - Consistência com Especialista
+        // Isso garante que facetas históricas corretas sejam usadas (evitando zeros do recálculo live se houve mudança de config)
+        let rawScores = assignment.result?.scores;
 
-        // Se não houver scores salvos, calcular agora (Sempre true)
+        // Se não houver scores salvos, calcular agora
         if (!rawScores) {
             const result = await this.scoreService.calculateScores(assignment.id);
             rawScores = result.scores;

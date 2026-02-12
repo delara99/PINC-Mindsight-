@@ -710,8 +710,9 @@ const adaptTraitToPINC = (trait: any) => {
     if (!config) return null; // Not a main PINC dimension
 
     // Filter and Map Facets
-    const adaptedFacets: any[] = [];
     let sumScores = 0;
+    let validFacetCount = 0; // Track facets that actually have scores
+    let adaptedFacets: any[] = [];
 
     config.facets.forEach((rule: any) => {
         // Find raw facet
@@ -720,13 +721,17 @@ const adaptTraitToPINC = (trait: any) => {
             return rule.sources.some((src: string) => fName.includes(src));
         });
 
-        // Default to 0 if missing (to distinguish from real 50)
+        // Default to 0 if missing
         let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 0) : 0;
 
         // Apply Inversion
-        if (rule.invert) score = 100 - score;
+        if (rule.invert && score > 0) score = 100 - score; // Only invert valid scores
 
-        sumScores += score;
+        if (score > 0) {
+            sumScores += score;
+            validFacetCount++;
+        }
+
         adaptedFacets.push({
             facetName: rule.key, // Use facetName property for compatibility with TalkingToReport rendering which looks for f.name or f.facetName
             name: rule.key,      // Also name for safety
@@ -735,11 +740,16 @@ const adaptTraitToPINC = (trait: any) => {
         });
     });
 
-    // Recalculate Dimension Score (Average of PINC Facets)
-    // Prioritize original calculated dimension score if available (consistency with specialist report source)
-    let finalScore = (typeof trait.normalizedScore === 'number') ? trait.normalizedScore :
-        ((typeof trait.score === 'number') ? trait.score :
-            (adaptedFacets.length > 0 ? sumScores / adaptedFacets.length : 50));
+    // Recalculate Dimension Score (Average of VALID PINC Facets)
+    // Prioritize calculated average of non-zero facets to match specialist report logic
+    let finalScore = 0;
+
+    if (validFacetCount > 0) {
+        finalScore = sumScores / validFacetCount;
+    } else {
+        // Fallback: Use Backend Score directly if no facets mapped
+        finalScore = (typeof trait.normalizedScore === 'number') ? trait.normalizedScore : (trait.score || 50);
+    }
 
     // Apply Dimension Inversion (Neuroticism -> Stability)
     if (config.invertDimension) {
