@@ -163,6 +163,25 @@ export class TalkingToController {
         return this.generateUnifiedAnalysis(assignment);
     }
 
+    @Get('diagnose/:id')
+    async diagnoseReport(@Param('id') id: string) {
+        const assignment = await this.prisma.assessmentAssignment.findUnique({
+            where: { id },
+            include: { result: true }
+        });
+        if (!assignment) return { error: 'Assignment not found' };
+
+        const live = await this.scoreService.calculateScores(id);
+
+        return {
+            title: 'DIAGNÓSTICO DE DISCREPÂNCIA',
+            timestamp: new Date().toISOString(),
+            assignmentId: id,
+            SAVED_RESULT_IN_DB: assignment.result?.scores || 'NULL',
+            LIVE_CALCULATION_NOW: live.scores
+        };
+    }
+
     @UseGuards(AuthGuard('jwt'))
     @Get('export/pdf/:id')
     async exportPdf(@Request() req, @Param('id') id: string, @Res() res: Response) {
