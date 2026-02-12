@@ -212,12 +212,13 @@ export class ScoreCalculationService {
             const facetMap = new Map<string, { name: string, scoreSum: number, count: number, rawSum: number }>();
 
             // Mapeamento DEFINITIVO para Planilha PINC (IPIP Keys -> Planilha Keys)
+            // Inclui TODAS as variações possíveis: inglês, português, com/sem acentos, maiúsculas, etc
             const translationMap: Record<string, string> = {
                 // EMOÇÃO-RAZÃO (N)
                 'anxiety': 'inquieto-despreocupado', 'ansiedade': 'inquieto-despreocupado', 'factors_anxiety': 'inquieto-despreocupado',
-                'confidence': 'inquieto-despreocupado', 'confianca': 'inquieto-despreocupado',
+                'confidence': 'inquieto-despreocupado', 'confianca': 'inquieto-despreocupado', 'autoconfianca': 'inseguro-autoconfiante',
                 'depression': 'inseguro-autoconfiante', 'depressao': 'inseguro-autoconfiante', 'factors_depression': 'inseguro-autoconfiante',
-                'selfconsciousness': 'inseguro-autoconfiante', // Aproximação se usado
+                'selfconsciousness': 'inseguro-autoconfiante',
                 'anger': 'irritável-tranquilo', 'raiva': 'irritável-tranquilo', 'hostility': 'irritável-tranquilo', 'hostilidade': 'irritável-tranquilo', 'factors_angryhostility': 'irritável-tranquilo',
                 'impulsiveness': 'reativo-controlado', 'impulsividade': 'reativo-controlado', 'factors_impulsiveness': 'reativo-controlado',
                 'vulnerability': 'reativo-controlado', 'vulnerabilidade': 'reativo-controlado', 'factors_vulnerability': 'reativo-controlado',
@@ -228,27 +229,32 @@ export class ScoreCalculationService {
                 'gregariousness': 'seletivo-interativo', 'gregarismo': 'seletivo-interativo', 'factors_gregariousness': 'seletivo-interativo', 'social': 'seletivo-interativo',
                 'assertiveness': 'contido-afirmativo', 'assertividade': 'contido-afirmativo', 'factors_assertiveness': 'contido-afirmativo', 'autoridade': 'contido-afirmativo',
                 'activity': 'reflexivo-ativo', 'atividade': 'reflexivo-ativo', 'factors_activity': 'reflexivo-ativo', 'niveldeatividade': 'reflexivo-ativo', 'orientacao': 'reflexivo-ativo',
+                'excitement': 'reflexivo-ativo', 'emocoes': 'reflexivo-ativo', 'buscadeemocoes': 'reflexivo-ativo',
+                'cheerfulness': 'ouvinte-falante', 'alegria': 'ouvinte-falante',
 
                 // CONCRETO-ABSTRATO (O)
-                'fantasy': 'realista-imaginativo', 'fantasia': 'realista-imaginativo', 'factors_fantasy': 'realista-imaginativo', 'imagination': 'realista-imaginativo',
-                'aesthetics': 'prático-conceitual', 'estetica': 'prático-conceitual', 'factors_aesthetics': 'prático-conceitual', // Se usado como Proxy
+                'fantasy': 'realista-imaginativo', 'fantasia': 'realista-imaginativo', 'factors_fantasy': 'realista-imaginativo', 'imagination': 'realista-imaginativo', 'imaginacao': 'realista-imaginativo',
+                'aesthetics': 'prático-conceitual', 'estetica': 'prático-conceitual', 'factors_aesthetics': 'prático-conceitual',
                 'intellect': 'prático-conceitual', 'intelecto': 'prático-conceitual', 'ideas': 'prático-conceitual', 'ideias': 'prático-conceitual', 'factors_ideas': 'prático-conceitual',
                 'liberalism': 'conservador-aberto', 'liberalismo': 'conservador-aberto', 'values': 'conservador-aberto', 'valores': 'conservador-aberto', 'factors_values': 'conservador-aberto', 'abertura': 'conservador-aberto',
-                'feelings': 'sentimentos', 'actions': 'ações', // Sobras IPIP
+                'feelings': 'conservador-aberto', 'sentimentos': 'conservador-aberto', 'actions': 'realista-imaginativo', 'acoes': 'realista-imaginativo',
+                'opinioes': 'conservador-aberto', 'opiniao': 'conservador-aberto',
 
                 // LÓGICO-SENTIMENTAL (A)
-                'trust': 'confiança', // Sobra IPIP
+                'trust': 'crítico-tolerante',
                 'straightforwardness': 'crítico-tolerante', 'franqueza': 'crítico-tolerante', 'factors_straightforwardness': 'crítico-tolerante', 'morality': 'crítico-tolerante', 'moralidade': 'crítico-tolerante',
                 'altruism': 'independente-conectado', 'altruismo': 'independente-conectado', 'factors_altruism': 'independente-conectado',
                 'compliance': 'competitivo-colaborativo', 'complacencia': 'competitivo-colaborativo', 'factors_compliance': 'competitivo-colaborativo', 'cooperation': 'competitivo-colaborativo', 'cooperacao': 'competitivo-colaborativo', 'factors_cooperation': 'competitivo-colaborativo',
-                'modesty': 'modéstia', 'tendermindedness': 'sensibilidade',
+                'modesty': 'independente-conectado', 'modestia': 'independente-conectado', 'tendermindedness': 'independente-conectado', 'sensibilidade': 'independente-conectado',
+                'sympathy': 'independente-conectado', 'simpatia': 'independente-conectado',
 
                 // ADAPTÁVEL-ESTRUTURADO (C)
-                'competence': 'competência', // Sobra?
+                'competence': 'aventureiro-planejado', 'competencia': 'aventureiro-planejado',
                 'deliberation': 'aventureiro-planejado', 'deliberacao': 'aventureiro-planejado', 'factors_deliberation': 'aventureiro-planejado', 'cautiousness': 'aventureiro-planejado', 'ponderacao': 'aventureiro-planejado',
                 'selfdiscipline': 'espontâneo-disciplinado', 'autodisciplina': 'espontâneo-disciplinado', 'factors_selfdiscipline': 'espontâneo-disciplinado', 'disciplina': 'espontâneo-disciplinado',
                 'achievementstriving': 'flexível-persistente', 'realizacao': 'flexível-persistente', 'factors_achievementstriving': 'flexível-persistente', 'persistence': 'flexível-persistente', 'persistencia': 'flexível-persistente', 'achievement': 'flexível-persistente',
-                'order': 'ordem', 'dutifulness': 'dever'
+                'order': 'espontâneo-disciplinado', 'ordem': 'espontâneo-disciplinado', 'dutifulness': 'aventureiro-planejado', 'dever': 'aventureiro-planejado',
+                'selfeffic': 'flexível-persistente', 'autoeficacia': 'flexível-persistente'
             };
 
             Object.keys(facetScores)
