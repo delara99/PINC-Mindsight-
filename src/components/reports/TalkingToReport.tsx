@@ -709,14 +709,43 @@ const adaptTraitToPINC = (trait: any) => {
 
     if (!config) return null; // Not a main PINC dimension
 
-    // Usar facetas EXATAMENTE como vêm do backend (sem mapeamento)
-    // Isso garante consistência com os dados salvos no banco e com o relatório do Especialista
-    const adaptedFacets = (trait.facets || []).map((f: any) => ({
-        facetName: f.facetName || f.name || f.facetKey,
-        name: f.facetName || f.name || f.facetKey,
-        normalizedScore: f.normalizedScore || f.score || 0,
-        score: f.normalizedScore || f.score || 0
-    }));
+    // Processar facetas do backend
+    // Novos testes: Já vêm com polos separados ('ouvinte', 'falante')
+    // Testes antigos: Vêm com facetas compostas ('ouvinte-falante')
+    // Precisamos garantir que ambos funcionem
+    const adaptedFacets = (trait.facets || []).flatMap((f: any) => {
+        const facetName = f.facetName || f.name || f.facetKey;
+        const score = f.normalizedScore || f.score || 0;
+
+        // Se a faceta tem hífen, é composta - separar em polos
+        if (facetName.includes('-')) {
+            const poles = facetName.split('-');
+            if (poles.length === 2) {
+                return [
+                    {
+                        facetName: poles[0].trim(),
+                        name: poles[0].trim(),
+                        normalizedScore: score,
+                        score: score
+                    },
+                    {
+                        facetName: poles[1].trim(),
+                        name: poles[1].trim(),
+                        normalizedScore: 100 - score, // Polo oposto
+                        score: 100 - score
+                    }
+                ];
+            }
+        }
+
+        // Se não tem hífen, já é um polo separado - usar direto
+        return [{
+            facetName: facetName,
+            name: facetName,
+            normalizedScore: score,
+            score: score
+        }];
+    });
 
     // SEMPRE usar o score do backend (não recalcular)
     // O backend já calculou e salvou o score correto
