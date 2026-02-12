@@ -127,12 +127,64 @@ const adaptTraitToPINC = (trait: any) => {
 
     if (!config) return null; // Not a main PINC dimension
 
-    // Usar facetas EXATAMENTE como vêm do backend (sem mapeamento)
-    // Isso garante consistência com os dados salvos no banco
-    const adaptedFacets = (trait.facets || []).map((f: any) => ({
-        facet: f.facetName || f.name || f.facetKey,
-        normalizedScore: f.normalizedScore || f.score || 0
+    // Agrupar polos separados de volta em compostos para exibição
+    // Backend salva: ouvinte (48), falante (52)
+    // Relatório mostra: ouvinte-falante (48)
+    const rawFacets = (trait.facets || []).map((f: any) => ({
+        name: f.facetName || f.name || f.facetKey,
+        score: f.normalizedScore || f.score || 0
     }));
+
+    // Identificar pares de polos conhecidos
+    const KNOWN_PAIRS: Record<string, string[]> = {
+        'ouvinte-falante': ['ouvinte', 'falante'],
+        'seletivo-interativo': ['seletivo', 'interativo'],
+        'contido-afirmativo': ['contido', 'afirmativo'],
+        'reflexivo-ativo': ['reflexivo', 'ativo'],
+        'realista-imaginativo': ['realista', 'imaginativo'],
+        'prático-conceitual': ['prático', 'conceitual'],
+        'conservador-aberto': ['conservador', 'aberto'],
+        'aventureiro-planejado': ['aventureiro', 'planejado'],
+        'espontâneo-disciplinado': ['espontâneo', 'disciplinado'],
+        'flexível-persistente': ['flexível', 'persistente'],
+        'inquieto-despreocupado': ['inquieto', 'despreocupado'],
+        'inseguro-autoconfiante': ['inseguro', 'autoconfiante'],
+        'irritável-tranquilo': ['irritável', 'tranquilo'],
+        'reativo-controlado': ['reativo', 'controlado'],
+        'crítico-tolerante': ['crítico', 'tolerante'],
+        'independente-conectado': ['independente', 'conectado'],
+        'competitivo-colaborativo': ['competitivo', 'colaborativo']
+    };
+
+    // Agrupar facetas
+    const groupedFacets: any[] = [];
+    const usedFacets = new Set<string>();
+
+    Object.entries(KNOWN_PAIRS).forEach(([compositeName, [left, right]]) => {
+        const leftFacet = rawFacets.find(f => f.name.toLowerCase() === left.toLowerCase());
+        const rightFacet = rawFacets.find(f => f.name.toLowerCase() === right.toLowerCase());
+
+        if (leftFacet && rightFacet && !usedFacets.has(left) && !usedFacets.has(right)) {
+            groupedFacets.push({
+                facet: compositeName,
+                normalizedScore: leftFacet.score // Usa score do polo esquerdo
+            });
+            usedFacets.add(left);
+            usedFacets.add(right);
+        }
+    });
+
+    // Adicionar facetas que não foram agrupadas (fallback)
+    rawFacets.forEach(f => {
+        if (!usedFacets.has(f.name)) {
+            groupedFacets.push({
+                facet: f.name,
+                normalizedScore: f.score
+            });
+        }
+    });
+
+    const adaptedFacets = groupedFacets;
 
     // SEMPRE usar o score do backend (NÃO recalcular)
     // O backend já calculou e salvou o score correto no banco de dados

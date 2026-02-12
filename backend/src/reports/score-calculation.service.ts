@@ -282,17 +282,10 @@ export class ScoreCalculationService {
                 });
 
             // Gerar lista final única e com média dos duplicados (se houver)
+            // APENAS POLOS SEPARADOS - Elimina duplicação
             const relevantFacets = Array.from(facetMap.values()).flatMap(entry => {
                 const compositeScore = Math.round(entry.scoreSum / entry.count);
                 const compositeRawScore = Math.round(entry.rawSum / entry.count);
-
-                // Faceta composta (para compatibilidade com Big Five tradicional)
-                const compositeFacet = {
-                    facetKey: entry.name,
-                    facetName: entry.name,
-                    score: compositeScore,
-                    rawScore: compositeRawScore
-                };
 
                 // Separar em polos individuais para TalkingTO
                 // Ex: "ouvinte-falante" → "ouvinte" (score) + "falante" (100-score)
@@ -310,10 +303,16 @@ export class ScoreCalculationService {
                         score: 100 - compositeScore, // Polo oposto
                         rawScore: compositeRawScore
                     };
-                    return [compositeFacet, leftPole, rightPole];
+                    return [leftPole, rightPole]; // APENAS POLOS, SEM COMPOSTO
                 }
 
-                return [compositeFacet];
+                // Se não tiver hífen, salva como está (fallback)
+                return [{
+                    facetKey: entry.name,
+                    facetName: entry.name,
+                    score: compositeScore,
+                    rawScore: compositeRawScore
+                }];
             });
 
             finalScores[englishKey] = {
