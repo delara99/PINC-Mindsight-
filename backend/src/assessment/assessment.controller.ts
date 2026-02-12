@@ -220,9 +220,8 @@ export class AssessmentController {
 
         if (isAssignee) {
             console.log('[DEBUG] ✅ User IS the assignee - GRANTING ACCESS');
-            // Calcular scores reais antes de retornar
-            const calculatedScores = await this.calculateRealScores(id, user.tenantId);
-            return { ...assignment, calculatedScores };
+            // USAR SCORES SALVOS (não recalcular) para garantir consistência
+            return assignment;
         }
 
         // Se não for o dono, verificar outras permissões
@@ -230,9 +229,8 @@ export class AssessmentController {
         const isSuperAdmin = user.role === 'SUPER_ADMIN';
 
         if (isOwnerAdmin || isSuperAdmin) {
-            // Calcular scores reais antes de retornar
-            const calculatedScores = await this.calculateRealScores(id, user.tenantId);
-            return { ...assignment, calculatedScores };
+            // USAR SCORES SALVOS (não recalcular) para garantir consistência
+            return assignment;
         }
 
         // Verificar se há conexão ativa com permissão de compartilhar inventários
@@ -254,9 +252,8 @@ export class AssessmentController {
                 s => s.userId === assignment.userId
             );
             if (ownerSettings?.shareInventories === true) {
-                // Calcular scores reais antes de retornar
-                const calculatedScores = await this.calculateRealScores(id, user.tenantId);
-                return { ...assignment, calculatedScores };
+                // USAR SCORES SALVOS (não recalcular) para garantir consistência
+                return assignment;
             }
         }
 

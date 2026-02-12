@@ -740,16 +740,10 @@ const adaptTraitToPINC = (trait: any) => {
         });
     });
 
-    // Recalculate Dimension Score (Average of VALID PINC Facets)
-    // Prioritize calculated average of non-zero facets to match specialist report logic
-    let finalScore = 0;
-
-    if (validFacetCount > 0) {
-        finalScore = sumScores / validFacetCount;
-    } else {
-        // Fallback: Use Backend Score directly if no facets mapped
-        finalScore = (typeof trait.normalizedScore === 'number') ? trait.normalizedScore : (trait.score || 50);
-    }
+    // SEMPRE usar o score do backend (não recalcular)
+    // O backend já calculou e salvou o score correto
+    // Recalcular no frontend pode causar divergências se houver facetas faltando ou mapeamentos mudados
+    let finalScore = (typeof trait.normalizedScore === 'number') ? trait.normalizedScore : (trait.score || 50);
 
     // Apply Dimension Inversion (Neuroticism -> Stability)
     if (config.invertDimension) {
