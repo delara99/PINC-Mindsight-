@@ -197,7 +197,6 @@ export default function TalkingToReport({ reportData, userName, onDownloadPdf, i
                             <p className="text-slate-300 text-lg md:text-xl font-medium mt-2 max-w-2xl text-pretty">
                                 Análise de Perfil Comportamental Avançada de <strong className="text-white">{userName}</strong>
                             </p>
-                            <p className="text-xs text-purple-200/50 mt-2 font-mono tracking-widest uppercase">ID: {reportData.id}</p>
                         </div>
                     </div>
 
