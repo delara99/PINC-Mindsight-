@@ -221,7 +221,8 @@ export class AssessmentController {
         if (isAssignee) {
             console.log('[DEBUG] ✅ User IS the assignee - GRANTING ACCESS');
             // USAR SCORES SALVOS (não recalcular) para garantir consistência
-            return assignment;
+            const calculatedScores = assignment.result?.scores ? { scores: assignment.result.scores } : null;
+            return { ...assignment, calculatedScores };
         }
 
         // Se não for o dono, verificar outras permissões
@@ -230,7 +231,8 @@ export class AssessmentController {
 
         if (isOwnerAdmin || isSuperAdmin) {
             // USAR SCORES SALVOS (não recalcular) para garantir consistência
-            return assignment;
+            const calculatedScores = assignment.result?.scores ? { scores: assignment.result.scores } : null;
+            return { ...assignment, calculatedScores };
         }
 
         // Verificar se há conexão ativa com permissão de compartilhar inventários
@@ -253,7 +255,8 @@ export class AssessmentController {
             );
             if (ownerSettings?.shareInventories === true) {
                 // USAR SCORES SALVOS (não recalcular) para garantir consistência
-                return assignment;
+                const calculatedScores = assignment.result?.scores ? { scores: assignment.result.scores } : null;
+                return { ...assignment, calculatedScores };
             }
         }
 
