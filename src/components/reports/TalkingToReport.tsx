@@ -709,36 +709,14 @@ const adaptTraitToPINC = (trait: any) => {
 
     if (!config) return null; // Not a main PINC dimension
 
-    // Filter and Map Facets
-    let sumScores = 0;
-    let validFacetCount = 0; // Track facets that actually have scores
-    let adaptedFacets: any[] = [];
-
-    config.facets.forEach((rule: any) => {
-        // Find raw facet
-        const rawFacet = trait.facets?.find((f: any) => {
-            const fName = (f.name || f.facetName || '').toUpperCase();
-            return rule.sources.some((src: string) => fName.includes(src));
-        });
-
-        // Default to 0 if missing
-        let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 0) : 0;
-
-        // Apply Inversion
-        if (rule.invert && score > 0) score = 100 - score; // Only invert valid scores
-
-        if (score > 0) {
-            sumScores += score;
-            validFacetCount++;
-        }
-
-        adaptedFacets.push({
-            facetName: rule.key, // Use facetName property for compatibility with TalkingToReport rendering which looks for f.name or f.facetName
-            name: rule.key,      // Also name for safety
-            normalizedScore: score,
-            score: score
-        });
-    });
+    // Usar facetas EXATAMENTE como vêm do backend (sem mapeamento)
+    // Isso garante consistência com os dados salvos no banco e com o relatório do Especialista
+    const adaptedFacets = (trait.facets || []).map((f: any) => ({
+        facetName: f.facetName || f.name || f.facetKey,
+        name: f.facetName || f.name || f.facetKey,
+        normalizedScore: f.normalizedScore || f.score || 0,
+        score: f.normalizedScore || f.score || 0
+    }));
 
     // SEMPRE usar o score do backend (não recalcular)
     // O backend já calculou e salvou o score correto

@@ -127,27 +127,12 @@ const adaptTraitToPINC = (trait: any) => {
 
     if (!config) return null; // Not a main PINC dimension
 
-    // Filter and Map Facets (for display only, not for score calculation)
-    const adaptedFacets: any[] = [];
-
-    config.facets.forEach((rule: any) => {
-        // Find raw facet
-        const rawFacet = trait.facets?.find((f: any) => {
-            const fName = (f.name || f.facetName || '').toUpperCase();
-            return rule.sources.some((src: string) => fName.includes(src));
-        });
-
-        // Default to 50 if missing
-        let score = rawFacet ? (typeof rawFacet.score === 'number' ? rawFacet.score : rawFacet.normalizedScore || 50) : 50;
-
-        // Apply Inversion
-        if (rule.invert) score = 100 - score;
-
-        adaptedFacets.push({
-            facet: rule.key,
-            normalizedScore: score
-        });
-    });
+    // Usar facetas EXATAMENTE como vêm do backend (sem mapeamento)
+    // Isso garante consistência com os dados salvos no banco
+    const adaptedFacets = (trait.facets || []).map((f: any) => ({
+        facet: f.facetName || f.name || f.facetKey,
+        normalizedScore: f.normalizedScore || f.score || 0
+    }));
 
     // SEMPRE usar o score do backend (NÃO recalcular)
     // O backend já calculou e salvou o score correto no banco de dados
