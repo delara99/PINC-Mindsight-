@@ -276,12 +276,39 @@ export class ScoreCalculationService {
                 });
 
             // Gerar lista final única e com média dos duplicados (se houver)
-            const relevantFacets = Array.from(facetMap.values()).map(entry => ({
-                facetKey: entry.name, // Usamos o nome traduzido como chave para consistência
-                facetName: entry.name,
-                score: Math.round(entry.scoreSum / entry.count),
-                rawScore: Math.round(entry.rawSum / entry.count)
-            }));
+            const relevantFacets = Array.from(facetMap.values()).flatMap(entry => {
+                const compositeScore = Math.round(entry.scoreSum / entry.count);
+                const compositeRawScore = Math.round(entry.rawSum / entry.count);
+
+                // Faceta composta (para compatibilidade com Big Five tradicional)
+                const compositeFacet = {
+                    facetKey: entry.name,
+                    facetName: entry.name,
+                    score: compositeScore,
+                    rawScore: compositeRawScore
+                };
+
+                // Separar em polos individuais para TalkingTO
+                // Ex: "ouvinte-falante" → "ouvinte" (score) + "falante" (100-score)
+                const poles = entry.name.split('-');
+                if (poles.length === 2) {
+                    const leftPole = {
+                        facetKey: poles[0].trim(),
+                        facetName: poles[0].trim(),
+                        score: compositeScore,
+                        rawScore: compositeRawScore
+                    };
+                    const rightPole = {
+                        facetKey: poles[1].trim(),
+                        facetName: poles[1].trim(),
+                        score: 100 - compositeScore, // Polo oposto
+                        rawScore: compositeRawScore
+                    };
+                    return [compositeFacet, leftPole, rightPole];
+                }
+
+                return [compositeFacet];
+            });
 
             finalScores[englishKey] = {
                 traitKey: englishKey,
