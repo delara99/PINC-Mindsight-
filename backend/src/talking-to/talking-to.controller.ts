@@ -228,21 +228,11 @@ export class TalkingToController {
 
     // --- NOVA LÓGICA UNIFICADA ---
     private async generateUnifiedAnalysis(assignment: any) {
-        // 1. Priorizar scores salvos no banco (assignment.result?.scores) - Consistência com Especialista
-        let rawScores = assignment.result?.scores;
+        // 1. FORÇAR CÁLCULO DINÂMICO (Recalcular sempre) para alinhar com Especialista (que é Dinâmico)
+        // Isso descarta o histórico antigo (55) mas garante que ambos relatórios mostrem o mesmo dado atualizado (51)
+        let rawScores = null;
 
-        // FALLBACK EXPLÍCITO: Se a relação falhou, buscar direto na tabela de resultados
-        if (!rawScores) {
-            const explicitResult = await this.prisma.assessmentResult.findUnique({
-                where: { assignmentId: assignment.id }
-            });
-            if (explicitResult?.scores) {
-                rawScores = explicitResult.scores;
-                console.log(`[TalkingTo] Recovered scores via explicit query for ${assignment.id}`);
-            }
-        }
-
-        // Se não houver scores salvos, calcular agora (Último recurso)
+        // Se não houver scores salvos, calcular agora (Sempre true)
         if (!rawScores) {
             const result = await this.scoreService.calculateScores(assignment.id);
             rawScores = result.scores;
