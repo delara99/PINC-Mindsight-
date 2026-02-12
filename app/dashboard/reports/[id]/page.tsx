@@ -127,9 +127,8 @@ const adaptTraitToPINC = (trait: any) => {
 
     if (!config) return null; // Not a main PINC dimension
 
-    // Filter and Map Facets
+    // Filter and Map Facets (for display only, not for score calculation)
     const adaptedFacets: any[] = [];
-    let sumScores = 0;
 
     config.facets.forEach((rule: any) => {
         // Find raw facet
@@ -144,15 +143,16 @@ const adaptTraitToPINC = (trait: any) => {
         // Apply Inversion
         if (rule.invert) score = 100 - score;
 
-        sumScores += score;
         adaptedFacets.push({
             facet: rule.key,
             normalizedScore: score
         });
     });
 
-    // Recalculate Dimension Score (Average of PINC Facets)
-    let finalScore = adaptedFacets.length > 0 ? sumScores / adaptedFacets.length : (trait.score || 50);
+    // SEMPRE usar o score do backend (NÃO recalcular)
+    // O backend já calculou e salvou o score correto no banco de dados
+    // Recalcular aqui causava divergências com os dados oficiais
+    let finalScore = (typeof trait.normalizedScore === 'number') ? trait.normalizedScore : (trait.score || 50);
 
     // Apply Dimension Inversion (Neuroticism -> Stability)
     if (config.invertDimension) {
