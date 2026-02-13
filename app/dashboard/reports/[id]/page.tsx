@@ -161,8 +161,8 @@ const adaptTraitToPINC = (trait: any) => {
     const usedFacets = new Set<string>();
 
     Object.entries(KNOWN_PAIRS).forEach(([compositeName, [left, right]]) => {
-        const leftFacet = rawFacets.find(f => f.name.toLowerCase() === left.toLowerCase());
-        const rightFacet = rawFacets.find(f => f.name.toLowerCase() === right.toLowerCase());
+        const leftFacet = rawFacets.find((f: any) => f.name.toLowerCase() === left.toLowerCase());
+        const rightFacet = rawFacets.find((f: any) => f.name.toLowerCase() === right.toLowerCase());
 
         if (leftFacet && rightFacet && !usedFacets.has(leftFacet.name.toLowerCase()) && !usedFacets.has(rightFacet.name.toLowerCase())) {
             groupedFacets.push({
@@ -175,7 +175,7 @@ const adaptTraitToPINC = (trait: any) => {
     });
 
     // Adicionar facetas que não foram agrupadas (fallback)
-    rawFacets.forEach(f => {
+    rawFacets.forEach((f: any) => {
         if (!usedFacets.has(f.name.toLowerCase())) {
             groupedFacets.push({
                 facet: f.name,
