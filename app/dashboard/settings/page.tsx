@@ -193,24 +193,7 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Company Profile (existing) */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900">Perfil da Empresa</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>
-                            <input type="text" disabled value="Empresa Demo" className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Corporativo</label>
-                            <input type="email" disabled value="admin@empresa.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             {/* CMS Landing Page Customization */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
