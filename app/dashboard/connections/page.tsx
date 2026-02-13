@@ -244,8 +244,12 @@ export default function ConnectionsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Minhas Conexões</h1>
-                    <p className="text-gray-500 mt-1">Conecte-se com outros usuários para compartilhar resultados.</p>
+                    <h1 className="text-3xl font-bold text-gray-900">{isAdmin ? 'Gerenciar Conexões' : 'Minhas Conexões'}</h1>
+                    <p className="text-gray-500 mt-1">
+                        {isAdmin
+                            ? 'Visualize e gerencie as conexões ativas entre os usuários do sistema.'
+                            : 'Conecte-se com outros usuários para compartilhar resultados.'}
+                    </p>
                 </div>
                 {!isAdmin && (
                     <button
@@ -302,7 +306,7 @@ export default function ConnectionsPage() {
                             className={`pb-3 px-2 font-medium text-sm transition-colors relative flex items-center gap-2 ${activeTab === 'admin' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <Shield size={16} />
-                            Administração
+                            Conexões Ativas
                             {activeTab === 'admin' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
                         </button>
                     </>
@@ -473,9 +477,9 @@ export default function ConnectionsPage() {
                                     <Shield className="text-purple-600" size={28} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-1">Painel de Administração</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-1">Painel de Gerenciamento</h3>
                                     <p className="text-sm text-gray-600">
-                                        Gerencie todas as conexões do sistema. Você pode cancelar conexões e visualizar conversas.
+                                        Monitoramento das conexões ativas no sistema.
                                     </p>
                                 </div>
                             </div>
@@ -503,52 +507,54 @@ export default function ConnectionsPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {allConnections.map((conn: any) => (
-                                            <tr key={conn.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xs font-bold">
-                                                                {conn.userA.name?.[0] || 'U'}
+                                        {allConnections
+                                            ?.filter((c: any) => c.status === 'ACTIVE')
+                                            .map((conn: any) => (
+                                                <tr key={conn.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xs font-bold">
+                                                                    {conn.userA.name?.[0] || 'U'}
+                                                                </div>
+                                                                <span className="font-medium text-gray-900">{conn.userA.name || conn.userA.email}</span>
                                                             </div>
-                                                            <span className="font-medium text-gray-900">{conn.userA.name || conn.userA.email}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-sm ml-1">
-                                                            <span className="text-gray-400">↔</span>
-                                                            <div className="w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
-                                                                {conn.userB.name?.[0] || 'U'}
+                                                            <div className="flex items-center gap-2 text-sm ml-1">
+                                                                <span className="text-gray-400">↔</span>
+                                                                <div className="w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
+                                                                    {conn.userB.name?.[0] || 'U'}
+                                                                </div>
+                                                                <span className="font-medium text-gray-900">{conn.userB.name || conn.userB.email}</span>
                                                             </div>
-                                                            <span className="font-medium text-gray-900">{conn.userB.name || conn.userB.email}</span>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {conn.status === 'ACTIVE' && (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700">
-                                                            <CheckCircle2 size={12} /> Ativa
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {conn.status === 'ACTIVE' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700">
+                                                                <CheckCircle2 size={12} /> Ativa
+                                                            </span>
+                                                        )}
+                                                        {conn.status === 'CANCELLED' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
+                                                                <XCircle size={12} /> Cancelada
+                                                            </span>
+                                                        )}
+                                                        {conn.cancelledByUser && (
+                                                            <p className="text-xs text-gray-500 mt-1">Por: {conn.cancelledByUser.name}</p>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
+                                                            <MessageSquare size={12} /> {conn._count.messages}
                                                         </span>
-                                                    )}
-                                                    {conn.status === 'CANCELLED' && (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
-                                                            <XCircle size={12} /> Cancelada
-                                                        </span>
-                                                    )}
-                                                    {conn.cancelledByUser && (
-                                                        <p className="text-xs text-gray-500 mt-1">Por: {conn.cancelledByUser.name}</p>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
-                                                        <MessageSquare size={12} /> {conn._count.messages}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">
-                                                    {new Date(conn.createdAt).toLocaleDateString('pt-BR')}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        {/* Chat button temporarily hidden */}
-                                                        {/* {conn._count.messages > 0 && (
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                                        {new Date(conn.createdAt).toLocaleDateString('pt-BR')}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            {/* Chat button temporarily hidden */}
+                                                            {/* {conn._count.messages > 0 && (
                                                             <button
                                                                 onClick={() => router.push(`/dashboard/connections/${conn.id}`)}
                                                                 className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-bold hover:bg-blue-100 flex items-center gap-1"
@@ -556,24 +562,24 @@ export default function ConnectionsPage() {
                                                                 <MessageSquare size={12} /> Chat
                                                             </button>
                                                         )} */}
-                                                        {conn.status === 'ACTIVE' && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    const reason = prompt('Motivo do cancelamento (opcional):');
-                                                                    if (reason !== null) {
-                                                                        cancelConnectionMutation.mutate({ connectionId: conn.id, reason: reason || undefined });
-                                                                    }
-                                                                }}
-                                                                disabled={cancelConnectionMutation.isPending}
-                                                                className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-bold hover:bg-red-100 flex items-center gap-1 disabled:opacity-50"
-                                                            >
-                                                                <Trash2 size={12} /> Cancelar
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                            {conn.status === 'ACTIVE' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const reason = prompt('Motivo do cancelamento (opcional):');
+                                                                        if (reason !== null) {
+                                                                            cancelConnectionMutation.mutate({ connectionId: conn.id, reason: reason || undefined });
+                                                                        }
+                                                                    }}
+                                                                    disabled={cancelConnectionMutation.isPending}
+                                                                    className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-bold hover:bg-red-100 flex items-center gap-1 disabled:opacity-50"
+                                                                >
+                                                                    <Trash2 size={12} /> Cancelar
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                     </tbody>
                                 </table>
                             </div>

@@ -135,7 +135,9 @@ function SidebarContent({ user, pathname, onLogout, onUpgradeOpen, notifications
                         >
                             <Icon size={20} className={clsx(isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600")} />
                             <span className="flex-1">
-                                {item.label}
+                                {item.label === 'Minhas Conexões' && (user?.role === 'SUPER_ADMIN' || user?.role === 'TENANT_ADMIN')
+                                    ? 'Gerenciar Conexões'
+                                    : item.label}
                                 {isProtected && !isPinVerified && (
                                     <Lock size={12} className="inline ml-2 text-gray-300 mb-0.5" />
                                 )}
