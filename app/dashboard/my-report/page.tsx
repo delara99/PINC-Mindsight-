@@ -198,7 +198,7 @@ function MyReportContent() {
                         Sua análise ainda não foi gerada. Inicie sua jornada de autoconhecimento hoje mesmo.
                     </p>
                     <Link href="/dashboard/my-assessments" className="inline-flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
-                        Iniciar Diagnóstico <ArrowUpRight size={22} />
+                        Iniciar Questionário <ArrowUpRight size={22} />
                     </Link>
                 </div>
             </div>

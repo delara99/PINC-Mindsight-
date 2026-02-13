@@ -59,19 +59,36 @@ export class ScoreCalculationService {
     /**
      * Aplica inversão (3 - valor ou 7 - valor)
      */
+    /**
+     * Aplica inversão (Dinâmico: VALUE_MAP ou Linear)
+     */
     private applyReverse(value: number, formula: any): number {
-        if (!formula) return value;
+        if (!formula || !formula.formula) return value;
 
+        // Suporte a Mapeamento Explícito (1->4, 2->3...)
+        if (formula.formula.type === 'VALUE_MAP' && formula.formula.mapping) {
+            const mapped = formula.formula.mapping[value.toString()] || formula.formula.mapping[value];
+            if (mapped !== undefined) return mapped;
+        }
+
+        // Fallback Linear (Max - Valor)
         const maxScale = formula.formula.maxScale || 3;
         return maxScale - value;
     }
 
     /**
-     * Aplica normalização (valor / divisor * 100)
+     * Aplica normalização (Dinâmico: VALUE_MAP ou Linear)
      */
     private applyNormalization(value: number, formula: any): number {
-        if (!formula) return value;
+        if (!formula || !formula.formula) return value;
 
+        // Suporte a Mapeamento Explícito (1->25, 2->50...)
+        if (formula.formula.type === 'VALUE_MAP' && formula.formula.mapping) {
+            const mapped = formula.formula.mapping[value.toString()] || formula.formula.mapping[value];
+            if (mapped !== undefined) return mapped;
+        }
+
+        // Fallback Linear (Val / Div * Mult)
         const divisor = formula.formula.divisor || 3;
         const multiplier = formula.formula.multiplier || 100;
         return (value / divisor) * multiplier;

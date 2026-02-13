@@ -40,7 +40,7 @@ const CRITICAL_ADMIN_ITEMS = [
 
 const menuItems = [
     { label: 'Visão Geral', href: '/dashboard', icon: LayoutDashboard, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
-    { label: 'Meu Perfil TalkingTo', href: '/dashboard/my-report', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
+    { label: 'Meu Perfil Comportamental', href: '/dashboard/my-report', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN', 'MEMBER'] },
     { label: 'Relatórios', href: '/dashboard/reports', icon: FileText, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], notificationKey: 'relatorios' },
     { label: 'Avaliações', href: '/dashboard/assessments', icon: BrainCircuit, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'] },
     { label: 'Clientes', href: '/dashboard/clients', icon: Users, roles: ['TENANT_ADMIN', 'SUPER_ADMIN'], notificationKey: 'clientes' },
