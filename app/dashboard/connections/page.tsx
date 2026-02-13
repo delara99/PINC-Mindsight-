@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/auth-store';
 import { useRouter } from 'next/navigation';
@@ -233,6 +233,13 @@ export default function ConnectionsPage() {
         }
     };
 
+    // Redirecionar Admin para aba correta ao carregar
+    useEffect(() => {
+        if (isAdmin && activeTab === 'active') {
+            setActiveTab('approvals');
+        }
+    }, [isAdmin, activeTab]);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
@@ -240,38 +247,44 @@ export default function ConnectionsPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Minhas Conexões</h1>
                     <p className="text-gray-500 mt-1">Conecte-se com outros usuários para compartilhar resultados.</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setIsInviteModalOpen(true);
-                        setGeneratedLink(null);
-                        setLinkCopied(false);
-                    }}
-                    className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
-                >
-                    <UserPlus size={18} />
-                    Gerar Link de Convite
-                </button>
+                {!isAdmin && (
+                    <button
+                        onClick={() => {
+                            setIsInviteModalOpen(true);
+                            setGeneratedLink(null);
+                            setLinkCopied(false);
+                        }}
+                        className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
+                    >
+                        <UserPlus size={18} />
+                        Gerar Link de Convite
+                    </button>
+                )}
             </div>
 
             {/* Tabs */}
             <div className="flex gap-4 border-b border-gray-200">
-                <button
-                    onClick={() => setActiveTab('active')}
-                    className={`pb-3 px-2 font-medium text-sm transition-colors relative ${activeTab === 'active' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    Conexões Ativas
-                    {activeTab === 'active' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                </button>
-                <button
-                    onClick={() => setActiveTab('requests')}
-                    className={`pb-3 px-2 font-medium text-sm transition-colors relative ${activeTab === 'requests' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    Convites Recebidos
-                    {requests?.length > 0 && (
-                        <span className="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{requests.length}</span>
-                    )}
-                    {activeTab === 'requests' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                </button>
+                {!isAdmin && (
+                    <>
+                        <button
+                            onClick={() => setActiveTab('active')}
+                            className={`pb-3 px-2 font-medium text-sm transition-colors relative ${activeTab === 'active' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Conexões Ativas
+                            {activeTab === 'active' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('requests')}
+                            className={`pb-3 px-2 font-medium text-sm transition-colors relative ${activeTab === 'requests' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Convites Recebidos
+                            {requests?.length > 0 && (
+                                <span className="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{requests.length}</span>
+                            )}
+                            {activeTab === 'requests' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
+                        </button>
+                    </>
+                )}
                 {isAdmin && (
                     <>
                         <button
