@@ -208,7 +208,7 @@ export default function ReportsPage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Calendar size={16} />
-                                            <span>{report.completedAt ? new Date(report.completedAt).toLocaleDateString('pt-BR') : 'Data não disp.'}</span>
+                                            <span>{report.completedAt ? new Date(report.completedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Data não disp.'}</span>
                                         </div>
                                     </div>
 
@@ -237,26 +237,34 @@ export default function ReportsPage() {
                                                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex items-center justify-center gap-2 flex-shrink-0"
                                             >
                                                 <MessageCircle size={16} />
-                                                TalkingTO
+                                                Relatório TalkingTO
                                             </button>
 
                                             <button
                                                 onClick={() => router.push(`/dashboard/reports/${report.id}`)}
                                                 className="text-white hover:text-white/90 bg-[#cc0058] hover:bg-[#a30046] px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex-shrink-0"
                                             >
-                                                Ver Detalhes
+                                                Relatório Especialista
                                             </button>
 
-                                            {!report.viewedByAdmin && (
-                                                <button
-                                                    onClick={() => markAsViewedMutation.mutate(report.id)}
-                                                    disabled={markAsViewedMutation.isPending}
-                                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex items-center justify-center gap-2 disabled:opacity-50"
-                                                >
-                                                    <CheckCircle size={16} />
-                                                    {markAsViewedMutation.isPending ? 'Marcando...' : 'Visualizado'}
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    if (!report.viewedByAdmin) {
+                                                        markAsViewedMutation.mutate(report.id);
+                                                    }
+                                                }}
+                                                disabled={markAsViewedMutation.isPending || report.viewedByAdmin}
+                                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors w-full text-center flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-80
+                                                    ${report.viewedByAdmin
+                                                        ? 'bg-green-600 text-white cursor-default'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    }`}
+                                            >
+                                                <CheckCircle size={16} className={report.viewedByAdmin ? 'text-white' : 'text-gray-500'} />
+                                                {markAsViewedMutation.isPending && !report.viewedByAdmin
+                                                    ? 'Marcando...'
+                                                    : report.viewedByAdmin ? 'Visualizado' : 'Não Visualizado'}
+                                            </button>
 
                                             <button
                                                 onClick={() => {
