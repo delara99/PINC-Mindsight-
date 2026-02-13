@@ -67,7 +67,7 @@ export class AssessmentController {
                     where: {
                         userId: user.userId,
                         assessmentId: bigFiveModel.id,
-                        status: { not: 'COMPLETED' }
+                        status: { in: ['PENDING', 'IN_PROGRESS'] }
                     }
                 });
                 console.log(`[AutoAssign] User ${user.userId} has assignment for default model? ${!!alreadyAssigned ? 'YES' : 'NO'}`);
