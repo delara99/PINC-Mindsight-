@@ -594,7 +594,8 @@ export class AssessmentController {
                 userEmail: assignment.user.email,
                 assessmentTitle: assignment.assessment.title,
                 completedAt: assignment.completedAt,
-                scores: assignment.result?.scores || {}
+                scores: assignment.result?.scores || {},
+                viewedByAdmin: assignment.viewedByAdmin
             }));
         }
 
@@ -641,7 +642,8 @@ export class AssessmentController {
             userEmail: assignment.user.email,
             assessmentTitle: assignment.assessment.title,
             completedAt: assignment.completedAt,
-            scores: assignment.result?.scores || {}
+            scores: assignment.result?.scores || {},
+            viewedByAdmin: assignment.viewedByAdmin
         }));
     }
 
