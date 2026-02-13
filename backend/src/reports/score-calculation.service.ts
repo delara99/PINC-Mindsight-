@@ -74,6 +74,7 @@ export class ScoreCalculationService {
         }
 
         // 3. Process Responses & Normalize
+        // NOVA FÓRMULA DO ESPECIALISTA (com compatibilidade retroativa)
         const normalizedResponses: Record<string, number> = {}; // QuestionSequence (String key) -> Normalized Value (0-100)
 
         assignment.responses.forEach(r => {
@@ -88,29 +89,68 @@ export class ScoreCalculationService {
             // Correção de Tipo: API retorna 'answer', não 'value'
             let rawVal = r.answer || 0;
 
-            // Validação básica de range 1-6
-            if (rawVal < 1) rawVal = 1;
-            if (rawVal > 6) rawVal = 6;
-
             const mapping = mappings.find(m => m.questionId === qSeq);
 
-            if (mapping && mapping.isReversed) {
-                // Inversão: 7 - valor (para escala 1-6)
-                const inverted = 7 - rawVal;
-                // Normalização: (val - 1) / 5 * 100
-                normalizedResponses[qSeq.toString()] = Math.round(((inverted - 1) / 5) * 100);
+            // ============================================================================
+            // DETECÇÃO AUTOMÁTICA DE ESCALA (1-4 vs 1-6)
+            // ============================================================================
+            // Se resposta é 1-4: usa NOVA FÓRMULA (Especialista)
+            // Se resposta é 5-6: usa FÓRMULA ANTIGA (compatibilidade)
+            // ============================================================================
+
+            if (rawVal >= 1 && rawVal <= 4) {
+                // ========================================================================
+                // NOVA FÓRMULA DO ESPECIALISTA (Escala 1-4)
+                // ========================================================================
+
+                // Validação de range
+                if (rawVal < 1) rawVal = 1;
+                if (rawVal > 4) rawVal = 4;
+
+                // Mapeamento de valores normalizados (evita extremos absolutos 0 e 100)
+                const valueMap: Record<number, number> = {
+                    1: 0.05,  // DISCORDO
+                    2: 1,     // DISCORDO PARCIALMENTE
+                    3: 2,     // CONCORDO PARCIALMENTE
+                    4: 2.95   // CONCORDO
+                };
+
+                let normalizedValue = valueMap[rawVal] || 0.05;
+
+                if (mapping && mapping.isReversed) {
+                    // Inversão: 3 - valor (escala máxima = 3)
+                    normalizedValue = 3 - normalizedValue;
+                }
+
+                // Normalização para escala 0-100: (valor / 3) * 100
+                normalizedResponses[qSeq.toString()] = Math.round((normalizedValue / 3) * 100);
+
             } else {
-                // Normalização direta
-                normalizedResponses[qSeq.toString()] = Math.round(((rawVal - 1) / 5) * 100);
+                // ========================================================================
+                // FÓRMULA ANTIGA (Escala 1-6) - COMPATIBILIDADE COM TESTES ANTIGOS
+                // ========================================================================
+
+                // Validação de range
+                if (rawVal < 1) rawVal = 1;
+                if (rawVal > 6) rawVal = 6;
+
+                if (mapping && mapping.isReversed) {
+                    // Inversão: 7 - valor (para escala 1-6)
+                    const inverted = 7 - rawVal;
+                    // Normalização: (val - 1) / 5 * 100
+                    normalizedResponses[qSeq.toString()] = Math.round(((inverted - 1) / 5) * 100);
+                } else {
+                    // Normalização direta
+                    normalizedResponses[qSeq.toString()] = Math.round(((rawVal - 1) / 5) * 100);
+                }
             }
         });
 
-        // 4. Calculate Facet Scores (Weighted Average)
+        // 4. Calculate Facet Scores (MÉDIA SIMPLES - conforme especificação do especialista)
         interface FacetCalc {
             dimension: string;
             score: number;
             sum: number;
-            weightSum: number;
             count: number;
         }
         const facetScores: Record<string, FacetCalc> = {};
@@ -129,21 +169,20 @@ export class ScoreCalculationService {
                     dimension: mapping.dimension,
                     score: 0,
                     sum: 0,
-                    weightSum: 0,
                     count: 0
                 };
             }
 
-            facetScores[facetKey].sum += normVal * mapping.weight;
-            facetScores[facetKey].weightSum += mapping.weight;
+            // MÉDIA SIMPLES: soma valores sem considerar pesos
+            facetScores[facetKey].sum += normVal;
             facetScores[facetKey].count++;
         });
 
-        // Finalizar cálculo de facetas (média ponderada)
+        // Finalizar cálculo de facetas (média simples)
         Object.keys(facetScores).forEach(key => {
             const f = facetScores[key];
-            if (f.weightSum > 0) {
-                f.score = Math.round(f.sum / f.weightSum);
+            if (f.count > 0) {
+                f.score = Math.round(f.sum / f.count);
             }
         });
 
