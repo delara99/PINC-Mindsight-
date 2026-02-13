@@ -20,8 +20,63 @@ export interface ScoreResult {
 @Injectable()
 export class ScoreCalculationService {
     private readonly logger = new Logger(ScoreCalculationService.name);
+    private formulaCache: Map<string, any> = new Map();
 
     constructor(private prisma: PrismaService) { }
+
+    /**
+     * Busca fórmulas do banco de dados (com cache)
+     * Sistema 100% dinâmico - Admin controla tudo pela interface
+     */
+    private async getFormula(name: string): Promise<any> {
+        if (this.formulaCache.has(name)) {
+            return this.formulaCache.get(name);
+        }
+
+        const formula = await this.prisma.calculationFormula.findUnique({
+            where: { name, isActive: true }
+        });
+
+        if (formula) {
+            this.formulaCache.set(name, formula);
+        }
+
+        return formula;
+    }
+
+    /**
+     * Aplica mapeamento de valores (1-4 → 0.05, 1, 2, 2.95)
+     */
+    private applyValueMapping(rawValue: number, formula: any): number {
+        if (!formula || !formula.formula.mapping) {
+            return rawValue;
+        }
+
+        const mapping = formula.formula.mapping;
+        return mapping[rawValue] || rawValue;
+    }
+
+    /**
+     * Aplica inversão (3 - valor ou 7 - valor)
+     */
+    private applyReverse(value: number, formula: any): number {
+        if (!formula) return value;
+
+        const maxScale = formula.formula.maxScale || 3;
+        return maxScale - value;
+    }
+
+    /**
+     * Aplica normalização (valor / divisor * 100)
+     */
+    private applyNormalization(value: number, formula: any): number {
+        if (!formula) return value;
+
+        const divisor = formula.formula.divisor || 3;
+        const multiplier = formula.formula.multiplier || 100;
+        return (value / divisor) * multiplier;
+    }
+
 
     async calculateScores(assignmentId: string): Promise<{
         scores: Record<string, ScoreResult>;
