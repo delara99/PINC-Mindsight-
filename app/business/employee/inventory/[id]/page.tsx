@@ -276,14 +276,13 @@ export default function EmployeeTakeAssessmentPage() {
                             {currentQuestion.text}
                         </h2>
 
-                        {/* Opções */}
+                        {/* Opções - Escala 1-4 (Especificação do Especialista) */}
                         <div className="space-y-3">
                             {[
-                                { value: 1, label: 'Discordo totalmente' },
-                                { value: 2, label: 'Discordo' },
-                                // Neutro removido (PINC Model)
-                                { value: 4, label: 'Concordo' },
-                                { value: 5, label: 'Concordo totalmente' }
+                                { value: 1, label: 'Discordo' },
+                                { value: 2, label: 'Discordo parcialmente' },
+                                { value: 3, label: 'Concordo parcialmente' },
+                                { value: 4, label: 'Concordo' }
                             ].map((option) => {
                                 const isSelected = answers[currentQuestion.id] === option.value;
                                 return (
