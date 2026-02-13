@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/auth-store';
-import { FileText, User, Calendar, Award, CheckCircle, Trash2, RefreshCw, AlertCircle, MessageCircle } from 'lucide-react';
+import { FileText, User, Calendar, Award, CheckCircle, Trash2, RefreshCw, AlertCircle, MessageCircle, Search, X } from 'lucide-react';
 import { API_URL } from '../../../src/config/api';
 import { useState } from 'react';
 
@@ -44,6 +44,12 @@ export default function ReportsPage() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
+
+    // Filtros Avançados
+    const [searchTerm, setSearchTerm] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [viewStatus, setViewStatus] = useState<'all' | 'viewed' | 'not_viewed'>('all');
 
     // Query Ativos
     const { data: reports, isLoading: isLoadingReports } = useQuery<Report[]>({
@@ -123,38 +129,152 @@ export default function ReportsPage() {
     const currentData = activeTab === 'active' ? reports : deletedReports;
     const isLoading = activeTab === 'active' ? isLoadingReports : isLoadingDeleted;
 
+    // Lógica de Filtragem
+    const filteredReports = currentData?.filter(report => {
+        const matchesSearch = (
+            report.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            report.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            report.assessmentTitle.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        const matchesStatus =
+            viewStatus === 'all' ? true :
+                viewStatus === 'viewed' ? report.viewedByAdmin :
+                    !report.viewedByAdmin;
+
+        const reportDate = new Date(report.completedAt);
+        // Ajuste de data para comparar corretamente (zerar horas do input)
+        // new Date(startDate) retorna UTC, precisamos considerar timezone ou apenas string compare se formato for ISO
+        // Vamos simplificar comparando timestamps
+        const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+        const end = endDate ? new Date(endDate + 'T23:59:59') : null;
+
+        const matchesStart = start ? reportDate >= start : true;
+        const matchesEnd = end ? reportDate <= end : true;
+
+        return matchesSearch && matchesStatus && matchesStart && matchesEnd;
+    });
+
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-                    <p className="text-gray-500 mt-1">
-                        {activeTab === 'active'
-                            ? `${reports?.length || 0} avaliações completadas`
-                            : `${deletedReports?.length || 0} avaliações na lixeira`}
-                    </p>
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
+                        <p className="text-gray-500 mt-1">
+                            Gerencie e analise os resultados das avaliações.
+                        </p>
+                    </div>
+
+                    <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
+                        <button
+                            onClick={() => setActiveTab('active')}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'active'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-900'
+                                }`}
+                        >
+                            Ativos
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('deleted')}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === 'deleted'
+                                ? 'bg-white text-red-600 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-900'
+                                }`}
+                        >
+                            <Trash2 size={16} />
+                            Lixeira
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <button
-                        onClick={() => setActiveTab('active')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'active'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-900'
-                            }`}
-                    >
-                        Ativos
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('deleted')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === 'deleted'
-                            ? 'bg-white text-red-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-900'
-                            }`}
-                    >
-                        <Trash2 size={16} />
-                        Lixeira
-                    </button>
+                {/* --- BARRA DE FILTROS AVANÇADA --- */}
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        {/* Busca Textual */}
+                        <div className="flex-1 relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Buscar por nome, email ou teste..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 block w-full rounded-lg border-gray-300 bg-gray-50 border focus:bg-white focus:ring-primary focus:border-primary sm:text-sm py-2.5 transition-colors"
+                            />
+                        </div>
+
+                        {/* Filtros de Data */}
+                        <div className="flex gap-2">
+                            <div className="relative">
+                                <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">DE</span>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="block w-full rounded-lg border-gray-300 bg-gray-50 border focus:bg-white focus:ring-primary focus:border-primary sm:text-sm py-2 px-3 h-[42px]"
+                                />
+                            </div>
+                            <div className="relative">
+                                <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">ATÉ</span>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="block w-full rounded-lg border-gray-300 bg-gray-50 border focus:bg-white focus:ring-primary focus:border-primary sm:text-sm py-2 px-3 h-[42px]"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-100 pt-4">
+                        {/* Filtro de Status Visual */}
+                        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+                            <span className="text-xs font-bold text-gray-500 uppercase mr-2">Status:</span>
+                            <button
+                                onClick={() => setViewStatus('all')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${viewStatus === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                            >
+                                Todos ({currentData?.length || 0})
+                            </button>
+                            <button
+                                onClick={() => setViewStatus('not_viewed')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap flex items-center gap-1 ${viewStatus === 'not_viewed' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                            >
+                                <div className={`w-2 h-2 rounded-full ${viewStatus === 'not_viewed' ? 'bg-red-500' : 'bg-gray-300'}`} />
+                                Não Visualizados
+                            </button>
+                            <button
+                                onClick={() => setViewStatus('viewed')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap flex items-center gap-1 ${viewStatus === 'viewed' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                            >
+                                <CheckCircle size={12} />
+                                Visualizados
+                            </button>
+                        </div>
+
+                        {/* Botão Limpar e Contador */}
+                        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                            <span className="text-xs font-medium text-gray-400">
+                                Exibindo <strong>{filteredReports?.length || 0}</strong> resultados
+                            </span>
+                            {(searchTerm || startDate || endDate || viewStatus !== 'all') && (
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setStartDate('');
+                                        setEndDate('');
+                                        setViewStatus('all');
+                                    }}
+                                    className="text-xs font-bold text-red-600 hover:text-red-800 flex items-center gap-1"
+                                >
+                                    <X size={14} /> Limpar Filtros
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -162,7 +282,7 @@ export default function ReportsPage() {
                 <div className="flex items-center justify-center py-12">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
-            ) : !currentData || currentData.length === 0 ? (
+            ) : !filteredReports || filteredReports.length === 0 ? (
                 <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                         {activeTab === 'active' ? <FileText className="w-8 h-8 text-gray-400" /> : <Trash2 className="w-8 h-8 text-gray-400" />}
@@ -178,7 +298,7 @@ export default function ReportsPage() {
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {currentData.map((report) => (
+                    {filteredReports.map((report) => (
                         <div
                             key={report.id}
                             className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden"
