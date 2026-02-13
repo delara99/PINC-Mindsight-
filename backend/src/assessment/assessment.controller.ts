@@ -148,16 +148,13 @@ export class AssessmentController {
                     assignments = assignments.filter(a => {
                         // 1. Se for completado, SEMPRE MOSTRA (histórico)
                         if (a.status === 'COMPLETED') return true;
-                        // 2. Se não for Big Five, SEMPRE MOSTRA
-                        if (a.assessment.type !== 'BIG_FIVE') return true;
-                        // 3. Se for o Modelo Padrão Identificado, SEMPRE MOSTRA (para não-MEMBER)
-                        if (a.assessmentId === bigFiveModel.id) return true;
 
-                        // 4. Lógica de tempo para duplicatas (mantida)
-                        const assignmentCreatedAt = new Date(a.assignedAt).getTime();
-                        const timeDiffMinutes = (assignmentCreatedAt - userCreatedAt) / 1000 / 60;
-                        if (timeDiffMinutes < 2) return false;
-                        return true;
+                        // 2. Se não for Big Five, SEMPRE MOSTRA (outros tipos de teste)
+                        if (a.assessment.type !== 'BIG_FIVE') return true;
+
+                        // 3. Se for Big Five Pendente/Em Andamento, SÓ DEVE MOSTRAR O MODELO PADRÃO ATUAL
+                        // Qualquer outro modelo Big Five pendente é considerado obsoleto/fantasma e deve ser ocultado.
+                        return a.assessmentId === bigFiveModel.id;
                     });
                 }
             }
