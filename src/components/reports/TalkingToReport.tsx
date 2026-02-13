@@ -709,43 +709,68 @@ const adaptTraitToPINC = (trait: any) => {
 
     if (!config) return null; // Not a main PINC dimension
 
-    // Processar facetas do backend
-    // Novos testes: Já vêm com polos separados ('ouvinte', 'falante')
-    // Testes antigos: Vêm com facetas compostas ('ouvinte-falante')
-    // Precisamos garantir que ambos funcionem
-    const adaptedFacets = (trait.facets || []).flatMap((f: any) => {
-        const facetName = f.facetName || f.name || f.facetKey;
-        const score = f.normalizedScore || f.score || 0;
+    // Agrupar polos separados de volta em compostos (IGUAL AO RELATÓRIO ESPECIALISTA)
+    // Backend salva: ouvinte (48), falante (52)
+    // Relatório mostra: ouvinte-falante (48)
+    const rawFacets = (trait.facets || []).map((f: any) => ({
+        name: f.facetName || f.name || f.facetKey,
+        score: f.normalizedScore || f.score || 0
+    }));
 
-        // Se a faceta tem hífen, é composta - separar em polos
-        if (facetName.includes('-')) {
-            const poles = facetName.split('-');
-            if (poles.length === 2) {
-                return [
-                    {
-                        facetName: poles[0].trim(),
-                        name: poles[0].trim(),
-                        normalizedScore: score,
-                        score: score
-                    },
-                    {
-                        facetName: poles[1].trim(),
-                        name: poles[1].trim(),
-                        normalizedScore: 100 - score, // Polo oposto
-                        score: 100 - score
-                    }
-                ];
-            }
+    // Identificar pares de polos conhecidos
+    const KNOWN_PAIRS: Record<string, string[]> = {
+        'ouvinte-falante': ['ouvinte', 'falante'],
+        'seletivo-interativo': ['seletivo', 'interativo'],
+        'contido-afirmativo': ['contido', 'afirmativo'],
+        'reflexivo-ativo': ['reflexivo', 'ativo'],
+        'realista-imaginativo': ['realista', 'imaginativo'],
+        'prático-conceitual': ['prático', 'conceitual'],
+        'conservador-aberto': ['conservador', 'aberto'],
+        'aventureiro-planejado': ['aventureiro', 'planejado'],
+        'espontâneo-disciplinado': ['espontâneo', 'disciplinado'],
+        'flexível-persistente': ['flexível', 'persistente'],
+        'inquieto-despreocupado': ['inquieto', 'despreocupado'],
+        'inseguro-autoconfiante': ['inseguro', 'autoconfiante'],
+        'irritável-tranquilo': ['irritável', 'tranquilo'],
+        'reativo-controlado': ['reativo', 'controlado'],
+        'crítico-tolerante': ['crítico', 'tolerante'],
+        'independente-conectado': ['independente', 'conectado'],
+        'competitivo-colaborativo': ['competitivo', 'colaborativo']
+    };
+
+    // Agrupar facetas
+    const groupedFacets: any[] = [];
+    const usedFacets = new Set<string>();
+
+    Object.entries(KNOWN_PAIRS).forEach(([compositeName, [left, right]]) => {
+        const leftFacet = rawFacets.find((f: any) => f.name.toLowerCase() === left.toLowerCase());
+        const rightFacet = rawFacets.find((f: any) => f.name.toLowerCase() === right.toLowerCase());
+
+        if (leftFacet && rightFacet && !usedFacets.has(leftFacet.name.toLowerCase()) && !usedFacets.has(rightFacet.name.toLowerCase())) {
+            groupedFacets.push({
+                facetName: compositeName,
+                name: compositeName,
+                normalizedScore: leftFacet.score, // Usa score do polo esquerdo
+                score: leftFacet.score
+            });
+            usedFacets.add(leftFacet.name.toLowerCase());
+            usedFacets.add(rightFacet.name.toLowerCase());
         }
-
-        // Se não tem hífen, já é um polo separado - usar direto
-        return [{
-            facetName: facetName,
-            name: facetName,
-            normalizedScore: score,
-            score: score
-        }];
     });
+
+    // Adicionar facetas que não foram agrupadas (fallback)
+    rawFacets.forEach((f: any) => {
+        if (!usedFacets.has(f.name.toLowerCase())) {
+            groupedFacets.push({
+                facetName: f.name,
+                name: f.name,
+                normalizedScore: f.score,
+                score: f.score
+            });
+        }
+    });
+
+    const adaptedFacets = groupedFacets;
 
     // SEMPRE usar o score do backend (não recalcular)
     // O backend já calculou e salvou o score correto
