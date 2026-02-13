@@ -128,9 +128,16 @@ export class ScoreCalculationService {
             this.logger.warn('Nenhum mapeamento de questão encontrado no Motor de Cálculo!');
         }
 
+
         // 3. Process Responses & Normalize
-        // NOVA FÓRMULA DO ESPECIALISTA (com compatibilidade retroativa)
+        // SISTEMA DINÂMICO: Busca fórmulas do banco de dados (Admin controla tudo!)
         const normalizedResponses: Record<string, number> = {}; // QuestionSequence (String key) -> Normalized Value (0-100)
+
+        // Carregar fórmulas do banco (uma vez, com cache)
+        const valueMappingFormula = await this.getFormula('VALUE_MAPPING_1_4_SPECIALIST');
+        const reverseFormula = await this.getFormula('REVERSE_SCORING_1_4_SPECIALIST');
+        const normalizationFormula = await this.getFormula('NORMALIZATION_1_4_TO_0_100_SPECIALIST');
+
 
         assignment.responses.forEach(r => {
             const qUUID = r.questionId;
@@ -155,30 +162,31 @@ export class ScoreCalculationService {
 
             if (rawVal >= 1 && rawVal <= 4) {
                 // ========================================================================
-                // NOVA FÓRMULA DO ESPECIALISTA (Escala 1-4)
+                // NOVA FÓRMULA (Escala 1-4) - DINÂMICA DO BANCO DE DADOS
+                // Admin controla os valores pela interface!
                 // ========================================================================
 
                 // Validação de range
                 if (rawVal < 1) rawVal = 1;
                 if (rawVal > 4) rawVal = 4;
 
-                // Mapeamento de valores normalizados (evita extremos absolutos 0 e 100)
-                const valueMap: Record<number, number> = {
-                    1: 0.05,  // DISCORDO
-                    2: 1,     // DISCORDO PARCIALMENTE
-                    3: 2,     // CONCORDO PARCIALMENTE
-                    4: 2.95   // CONCORDO
-                };
+                // 1. Aplicar mapeamento de valores (DINÂMICO - do banco de dados)
+                let normalizedValue = this.applyValueMapping(rawVal, valueMappingFormula);
 
-                let normalizedValue = valueMap[rawVal] || 0.05;
-
-                if (mapping && mapping.isReversed) {
-                    // Inversão: 3 - valor (escala máxima = 3)
-                    normalizedValue = 3 - normalizedValue;
+                // 2. Aplicar inversão se necessário (DINÂMICO - do banco de dados)
+                if (mapping && mapping.isReversed && reverseFormula) {
+                    normalizedValue = this.applyReverse(normalizedValue, reverseFormula);
                 }
 
-                // Normalização para escala 0-100: (valor / 3) * 100
-                normalizedResponses[qSeq.toString()] = Math.round((normalizedValue / 3) * 100);
+                // 3. Normalizar para 0-100 (DINÂMICO - do banco de dados)
+                if (normalizationFormula) {
+                    normalizedResponses[qSeq.toString()] = Math.round(
+                        this.applyNormalization(normalizedValue, normalizationFormula)
+                    );
+                } else {
+                    // Fallback se fórmula não existir no banco
+                    normalizedResponses[qSeq.toString()] = Math.round((normalizedValue / 3) * 100);
+                }
 
             } else {
                 // ========================================================================
