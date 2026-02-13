@@ -164,19 +164,19 @@ const adaptTraitToPINC = (trait: any) => {
         const leftFacet = rawFacets.find(f => f.name.toLowerCase() === left.toLowerCase());
         const rightFacet = rawFacets.find(f => f.name.toLowerCase() === right.toLowerCase());
 
-        if (leftFacet && rightFacet && !usedFacets.has(left) && !usedFacets.has(right)) {
+        if (leftFacet && rightFacet && !usedFacets.has(leftFacet.name.toLowerCase()) && !usedFacets.has(rightFacet.name.toLowerCase())) {
             groupedFacets.push({
                 facet: compositeName,
                 normalizedScore: leftFacet.score // Usa score do polo esquerdo
             });
-            usedFacets.add(left);
-            usedFacets.add(right);
+            usedFacets.add(leftFacet.name.toLowerCase());
+            usedFacets.add(rightFacet.name.toLowerCase());
         }
     });
 
     // Adicionar facetas que não foram agrupadas (fallback)
     rawFacets.forEach(f => {
-        if (!usedFacets.has(f.name)) {
+        if (!usedFacets.has(f.name.toLowerCase())) {
             groupedFacets.push({
                 facet: f.name,
                 normalizedScore: f.score
