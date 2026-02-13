@@ -235,10 +235,10 @@ export default function ConnectionsPage() {
 
     // Redirecionar Admin para aba correta ao carregar
     useEffect(() => {
-        if (isAdmin && activeTab === 'active') {
-            setActiveTab('approvals');
+        if (isAdmin && activeTab !== 'admin') {
+            setActiveTab('admin');
         }
-    }, [isAdmin, activeTab]);
+    }, [isAdmin]);
 
     return (
         <div className="space-y-6">
@@ -290,26 +290,14 @@ export default function ConnectionsPage() {
                     </>
                 )}
                 {isAdmin && (
-                    <>
-                        <button
-                            onClick={() => setActiveTab('approvals')}
-                            className={`pb-3 px-2 font-medium text-sm transition-colors relative ${activeTab === 'approvals' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Aprovações Pendentes
-                            {pendingApprovals?.length > 0 && (
-                                <span className="ml-2 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingApprovals.length}</span>
-                            )}
-                            {activeTab === 'approvals' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('admin')}
-                            className={`pb-3 px-2 font-medium text-sm transition-colors relative flex items-center gap-2 ${activeTab === 'admin' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <Shield size={16} />
-                            Conexões Ativas
-                            {activeTab === 'admin' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                        </button>
-                    </>
+                    <button
+                        onClick={() => setActiveTab('admin')}
+                        className={`pb-3 px-2 font-medium text-sm transition-colors relative flex items-center gap-2 ${activeTab === 'admin' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Shield size={16} />
+                        Conexões Ativas
+                        {activeTab === 'admin' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
+                    </button>
                 )}
             </div>
 
