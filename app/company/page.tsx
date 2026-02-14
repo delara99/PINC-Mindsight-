@@ -134,10 +134,7 @@ export default function CompanyPage() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                                <SparklesIcon size={18} />
-                                <span className="text-sm font-semibold">Baseado em Ciência</span>
-                            </div>
+
 
                             <h1 className="text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
                                 Entenda pessoas, desenvolva relações e tome decisões melhores
@@ -164,10 +161,7 @@ export default function CompanyPage() {
                             </div>
 
                             <div className="mt-8 flex items-center gap-6 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle size={20} className="text-green-300" />
-                                    <span>Sem cartão de crédito</span>
-                                </div>
+
                                 <div className="flex items-center gap-2">
                                     <CheckCircle size={20} className="text-green-300" />
                                     <span>Resultados instantâneos</span>
@@ -270,10 +264,7 @@ export default function CompanyPage() {
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                         >
-                            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 rounded-full text-white text-sm font-bold mb-6 shadow-lg shadow-purple-500/20 shadow-pink-500/20 border border-white/10">
-                                <SparklesIcon size={16} />
-                                <span>Nova Tecnologia Exclusiva</span>
-                            </div>
+
                             <h2 className="text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
                                 Conheça a <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">PINC COACH</span>
                             </h2>
