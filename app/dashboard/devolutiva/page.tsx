@@ -82,10 +82,7 @@ export default function DevolutivaPage() {
         <div className="space-y-8">
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto">
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
-                    <Sparkles size={16} />
-                    Funcionalidade Premium
-                </div>
+
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
                     Fale com um Especialista
                 </h1>
