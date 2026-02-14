@@ -224,7 +224,7 @@ export default function Home() {
                                         <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">Composição (Facetas)</span>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 blur-sm select-none">
                                         {[
                                             { label: "Valores", val: 50, color: "bg-yellow-400" },
                                             { label: "Fantasia", val: 86, color: "bg-yellow-400" },
