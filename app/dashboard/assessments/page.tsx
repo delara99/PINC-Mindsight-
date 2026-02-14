@@ -233,9 +233,9 @@ export default function AssessmentsListPage() {
     // Filter Clients based on Tab
     const filteredClients = clients?.filter(client => {
         if (activeTab === 'B2B') {
-            return client.role === 'TENANT_ADMIN';
+            return client.userType === 'COMPANY';
         } else {
-            return client.role === 'MEMBER';
+            return client.userType !== 'COMPANY';
         }
     }) || [];
 
