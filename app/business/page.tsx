@@ -102,10 +102,7 @@ export default function BusinessLandingPage() {
 
                 <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center relative z-10">
                     <div className="order-2 md:order-1">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold uppercase tracking-widest mb-6 border border-purple-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
-                            Solução Corporativa v2.0
-                        </div>
+
                         <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-tight mb-6 tracking-tight">
                             Decisões de gente baseadas em <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">dados.</span>
                         </h1>
