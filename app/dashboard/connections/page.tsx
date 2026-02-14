@@ -398,7 +398,7 @@ export default function ConnectionsPage() {
                     ) : !pendingApprovals ? (
                         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" /></div>
                     ) : pendingApprovals.length === 0 ? (
-                        <div className="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                             <Shield size={48} className="mx-auto text-gray-300 mb-3" />
                             <h3 className="text-lg font-medium text-gray-900">Nenhuma aprovação pendente</h3>
                             <p className="text-gray-500 mt-1">Todas as conexões foram processadas.</p>
