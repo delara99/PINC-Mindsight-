@@ -81,9 +81,7 @@ export default function AboutPage() {
                         animate="visible"
                         variants={fadeIn}
                     >
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-pink-50 text-pink-600 text-sm font-bold tracking-wide mb-6">
-                            CIÊNCIA DO COMPORTAMENTO
-                        </span>
+
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-6">
                             Entender como você funciona <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600">muda tudo.</span>
                         </h1>
@@ -370,7 +368,7 @@ export default function AboutPage() {
                             href="/auth/register"
                             className="inline-flex items-center justify-center gap-3 bg-gray-900 hover:bg-black text-white text-lg font-bold px-10 py-5 rounded-full transition-all hover:scale-105 shadow-xl hover:shadow-2xl"
                         >
-                            👉 Quero meu relatório agora
+                            Quero meu relatório agora
                         </Link>
                     </div>
                 </div>
