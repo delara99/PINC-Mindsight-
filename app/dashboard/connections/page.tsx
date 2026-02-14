@@ -385,7 +385,7 @@ export default function ConnectionsPage() {
                             ))}
                         </div>
                     )
-                ) : (
+                ) : activeTab === 'approvals' ? (
                     // Admin Approvals Tab
                     loadingApprovals ? (
                         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" /></div>
@@ -454,7 +454,7 @@ export default function ConnectionsPage() {
                             ))}
                         </div>
                     )
-                )}
+                ) : null}
 
                 {/* Admin Management Tab */}
                 {activeTab === 'admin' && (
