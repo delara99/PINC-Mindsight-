@@ -279,7 +279,7 @@ export default function AssessmentsListPage() {
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
-                                        {assessment.type === 'BIG_FIVE' ? 'Big Five' : assessment.type}
+                                        {assessment.type === 'BIG_FIVE' ? 'TalkingTO' : assessment.type}
                                     </span>
                                     {assessment.isTemplate && <span className="bg-green-50 text-green-700 text-xs font-bold px-2 py-1 rounded uppercase">Template</span>}
                                     {assessment.isDefault && (
@@ -442,8 +442,8 @@ export default function AssessmentsListPage() {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <span className={`text-xs font-bold px-2 py-1 rounded uppercase ${assignment.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                                        assignment.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' :
-                                                            'bg-gray-100 text-gray-600'
+                                                    assignment.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' :
+                                                        'bg-gray-100 text-gray-600'
                                                     }`}>
                                                     {assignment.status === 'COMPLETED' ? 'Concluído' :
                                                         assignment.status === 'IN_PROGRESS' ? 'Em Andamento' : 'Pendente'}
