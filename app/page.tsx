@@ -69,10 +69,14 @@ export default function Home() {
             <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-0.5 select-none hover:opacity-90 transition-opacity">
-                            <span className="text-[42px] font-bold leading-none tracking-tighter text-purple-700 font-sans" style={{ letterSpacing: '-0.05em' }}>p</span>
-                            <span className="text-[42px] font-bold leading-none tracking-tighter text-black font-sans" style={{ letterSpacing: '-0.05em' }}>inc.</span>
-                        </div>
+                        <Image
+                            src="/logo-pinc-teste.png"
+                            alt="PINC - Plataforma de Inteligência Comportamental"
+                            width={120}
+                            height={40}
+                            className="h-10 w-auto object-contain"
+                            priority
+                        />
                     </div>
 
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide text-gray-500">
