@@ -70,7 +70,7 @@ export default function Home() {
                 <div className="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Image
-                            src="/logo-pinc-teste v2.svg"
+                            src="/logo-pinc-teste v3.svg"
                             alt="PINC - Plataforma de Inteligência Comportamental"
                             width={120}
                             height={40}
